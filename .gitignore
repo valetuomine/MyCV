@@ -1,0 +1,17 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# .NET build output
+[Bb]in/
+[Oo]bj/
+
+# NuGet and local tooling artifacts
+*.nupkg
+*.snupkg
+packages/
+
+# OS/editor files
+.DS_Store
+Thumbs.db
