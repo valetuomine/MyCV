@@ -1,0 +1,21 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- checkout: self
+  fetchDepth: 1
+
+- bash: |
+    set -euo pipefail
+    git config user.name "Valtteri Tuominen"
+    git config user.email "valetuomine@users.noreply.github.com"
+    git -c http.extraheader="AUTHORIZATION: bearer ${GITHUB_TOKEN}" \
+      push "https://github.com/valetuomine/MyCV.git" HEAD:main
+  displayName: Sync main to GitHub
+  env:
+    GITHUB_TOKEN: $(GITHUB_TOKEN)
