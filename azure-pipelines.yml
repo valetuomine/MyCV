@@ -19,8 +19,18 @@ steps:
     git config user.name "Valtteri Tuominen"
     git config user.email "valetuomine@users.noreply.github.com"
     github_auth=$(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 -w 0)
-    git -c http.extraheader="AUTHORIZATION: basic ${github_auth}" \
-      push "https://github.com/valetuomine/MyCV.git" HEAD:main
+    github_url="https://github.com/valetuomine/MyCV.git"
+    git_auth_config=( -c "http.extraheader=AUTHORIZATION: basic ${github_auth}" )
+
+    git "${git_auth_config[@]}" push "$github_url" HEAD:main
+
+    while read -r _ branch_ref; do
+      branch=${branch_ref#refs/heads/}
+      if [ "$branch" != "main" ]; then
+        echo "Deleting GitHub branch: $branch"
+        git "${git_auth_config[@]}" push "$github_url" ":refs/heads/$branch"
+      fi
+    done < <(git "${git_auth_config[@]}" ls-remote --heads "$github_url")
   displayName: Sync main to GitHub
   env:
     GITHUB_TOKEN: $(GITHUB_TOKEN)
