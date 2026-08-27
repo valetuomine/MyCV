@@ -34,3 +34,28 @@ steps:
   displayName: Sync main to GitHub
   env:
     GITHUB_TOKEN: $(GITHUB_TOKEN)
+
+- bash: |
+    set -euo pipefail
+    if [ -z "${DISCORD_WEBHOOK_URL:-}" ]; then
+      echo "DISCORD_WEBHOOK_URL is not available. Add it as a secret pipeline variable."
+      exit 1
+    fi
+    payload=$(jq -n \
+      --arg status "${BUILD_STATUS:-Unknown}" \
+      --arg build "${BUILD_NUMBER:-Unknown}" \
+      --arg commit "${SOURCE_VERSION:-Unknown}" \
+      --arg url "${BUILD_URL:-}" \
+      '{content: ("Azure pipeline " + $status + "\nBuild: " + $build + "\nCommit: " + $commit + "\n" + $url), allowed_mentions: {parse: []}}')
+    curl --fail --silent --show-error \
+      -H "Content-Type: application/json" \
+      --data-raw "$payload" \
+      "$DISCORD_WEBHOOK_URL"
+  displayName: Notify Discord
+  condition: always()
+  env:
+    DISCORD_WEBHOOK_URL: $(DISCORD_WEBHOOK_URL)
+    BUILD_STATUS: $(Agent.JobStatus)
+    BUILD_NUMBER: $(Build.BuildNumber)
+    SOURCE_VERSION: $(Build.SourceVersion)
+    BUILD_URL: $(System.CollectionUri)$(System.TeamProject)/_build/results?buildId=$(Build.BuildId)
