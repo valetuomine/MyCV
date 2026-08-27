@@ -12,9 +12,14 @@ steps:
 
 - bash: |
     set -euo pipefail
+    if [ -z "${GITHUB_TOKEN:-}" ]; then
+      echo "GITHUB_TOKEN is not available. Add it as a secret pipeline variable."
+      exit 1
+    fi
     git config user.name "Valtteri Tuominen"
     git config user.email "valetuomine@users.noreply.github.com"
-    git -c http.extraheader="AUTHORIZATION: bearer ${GITHUB_TOKEN}" \
+    github_auth=$(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 -w 0)
+    git -c http.extraheader="AUTHORIZATION: basic ${github_auth}" \
       push "https://github.com/valetuomine/MyCV.git" HEAD:main
   displayName: Sync main to GitHub
   env:
