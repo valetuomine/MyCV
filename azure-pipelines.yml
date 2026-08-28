@@ -43,11 +43,11 @@ steps:
       exit 1
     fi
     if [ "${BUILD_REASON:-}" = "PullRequest" ]; then
-      message="New or updated pull request targeting main\nAzure PR validation: ${BUILD_STATUS:-Unknown}"
+      message="New or updated pull request targeting main"$'\n'"Azure PR validation: ${BUILD_STATUS:-Unknown}"
     elif [ "${BUILD_STATUS:-}" = "Succeeded" ]; then
-      message="Azure pipeline completed successfully\nGitHub main updated successfully after Azure merge"
+      message="Azure pipeline completed successfully"$'\n'"GitHub main updated successfully after Azure merge"
     else
-      message="Azure pipeline ${BUILD_STATUS:-Unknown} while updating GitHub main\nGitHub main was not confirmed as updated"
+      message="Azure pipeline ${BUILD_STATUS:-Unknown} while updating GitHub main"$'\n'"GitHub main was not confirmed as updated"
     fi
     payload=$(jq -n \
       --arg message "$message" \
