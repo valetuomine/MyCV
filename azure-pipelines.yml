@@ -32,6 +32,7 @@ steps:
       fi
     done < <(git "${git_auth_config[@]}" ls-remote --heads "$github_url")
   displayName: Sync main to GitHub
+  condition: ne(variables['Build.Reason'], 'PullRequest')
   env:
     GITHUB_TOKEN: $(GITHUB_TOKEN)
 
@@ -41,12 +42,12 @@ steps:
       echo "DISCORD_WEBHOOK_URL is not available. Add it as a secret pipeline variable."
       exit 1
     fi
-    if [ "${BUILD_STATUS:-}" = "Succeeded" ]; then
-      message="Azure pipeline completed successfully
-    GitHub main updated successfully after Azure merge"
+    if [ "${BUILD_REASON:-}" = "PullRequest" ]; then
+      message="New or updated pull request targeting main\nAzure PR validation: ${BUILD_STATUS:-Unknown}"
+    elif [ "${BUILD_STATUS:-}" = "Succeeded" ]; then
+      message="Azure pipeline completed successfully\nGitHub main updated successfully after Azure merge"
     else
-      message="Azure pipeline ${BUILD_STATUS:-Unknown} while updating GitHub main
-    GitHub main was not confirmed as updated"
+      message="Azure pipeline ${BUILD_STATUS:-Unknown} while updating GitHub main\nGitHub main was not confirmed as updated"
     fi
     payload=$(jq -n \
       --arg message "$message" \
@@ -64,6 +65,7 @@ steps:
   env:
     DISCORD_WEBHOOK_URL: $(DISCORD_WEBHOOK_URL)
     BUILD_STATUS: $(Agent.JobStatus)
+    BUILD_REASON: $(Build.Reason)
     BUILD_NUMBER: $(Build.BuildNumber)
     SOURCE_VERSION: $(Build.SourceVersion)
     BUILD_URL: $(System.CollectionUri)$(System.TeamProject)/_build/results?buildId=$(Build.BuildId)
