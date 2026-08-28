@@ -22,7 +22,14 @@ steps:
     github_url="https://github.com/valetuomine/MyCV.git"
     git_auth_config=( -c "http.extraheader=AUTHORIZATION: basic ${github_auth}" )
 
-    git "${git_auth_config[@]}" push "$github_url" HEAD:main
+    github_main_sha=$(git "${git_auth_config[@]}" ls-remote "$github_url" refs/heads/main | awk '{print $1}')
+    if [ -z "$github_main_sha" ]; then
+      echo "GitHub main branch was not found."
+      exit 1
+    fi
+    git "${git_auth_config[@]}" push \
+      --force-with-lease="refs/heads/main:$github_main_sha" \
+      "$github_url" HEAD:main
 
     while read -r _ branch_ref; do
       branch=${branch_ref#refs/heads/}
