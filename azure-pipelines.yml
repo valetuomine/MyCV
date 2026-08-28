@@ -55,7 +55,7 @@ steps:
       --arg build "${BUILD_NUMBER:-Unknown}" \
       --arg commit "${SOURCE_VERSION:-Unknown}" \
       --arg url "${BUILD_URL:-}" \
-      '{content: ($message + "\nStatus: " + $status + "\nBuild: " + $build + "\nCommit: " + $commit + "\n" + $url), allowed_mentions: {parse: []}}')
+      '{content: ($message + "\n[MyCV - Build: " + $build + "](" + $url + ")" + "\nStatus: " + $status + "\nCommit: " + $commit), allowed_mentions: {parse: []}}')
     curl --fail --silent --show-error \
       -H "Content-Type: application/json" \
       --data-raw "$payload" \
