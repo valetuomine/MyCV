@@ -42,9 +42,11 @@ steps:
       exit 1
     fi
     if [ "${BUILD_STATUS:-}" = "Succeeded" ]; then
-      message="GitHub main updated successfully after Azure merge"
+      message="Azure pipeline completed successfully
+    GitHub main updated successfully after Azure merge"
     else
-      message="Azure pipeline ${BUILD_STATUS:-Unknown} while updating GitHub main"
+      message="Azure pipeline ${BUILD_STATUS:-Unknown} while updating GitHub main
+    GitHub main was not confirmed as updated"
     fi
     payload=$(jq -n \
       --arg message "$message" \
