@@ -41,12 +41,18 @@ steps:
       echo "DISCORD_WEBHOOK_URL is not available. Add it as a secret pipeline variable."
       exit 1
     fi
+    if [ "${BUILD_STATUS:-}" = "Succeeded" ]; then
+      message="GitHub main updated successfully after Azure merge"
+    else
+      message="Azure pipeline ${BUILD_STATUS:-Unknown} while updating GitHub main"
+    fi
     payload=$(jq -n \
+      --arg message "$message" \
       --arg status "${BUILD_STATUS:-Unknown}" \
       --arg build "${BUILD_NUMBER:-Unknown}" \
       --arg commit "${SOURCE_VERSION:-Unknown}" \
       --arg url "${BUILD_URL:-}" \
-      '{content: ("Azure pipeline " + $status + "\nBuild: " + $build + "\nCommit: " + $commit + "\n" + $url), allowed_mentions: {parse: []}}')
+      '{content: ($message + "\nStatus: " + $status + "\nBuild: " + $build + "\nCommit: " + $commit + "\n" + $url), allowed_mentions: {parse: []}}')
     curl --fail --silent --show-error \
       -H "Content-Type: application/json" \
       --data-raw "$payload" \
