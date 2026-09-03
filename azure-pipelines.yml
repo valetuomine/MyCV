@@ -78,7 +78,7 @@ steps:
       --arg commit "${SOURCE_VERSION:-Unknown}" \
       --arg url "${BUILD_URL:-}" \
       --argjson color "$color" \
-      '{content: $message, embeds: [({title: $title, description: $description, color: $color, fields: [{name: "Status", value: $status, inline: true}, {name: "Build", value: $build, inline: true}, {name: "Commit", value: ("`" + $commit + "`"), inline: false}], footer: {text: "MyCV | Azure Pipelines"}} + (if $url == "" then {} else {url: $url} end))], allowed_mentions: {parse: []}}')
+      '{content: ($message + "\n\u200b"), embeds: [({title: $title, description: $description, color: $color, fields: [{name: "Status", value: $status, inline: true}, {name: "Build", value: $build, inline: true}, {name: "Commit", value: ("`" + $commit + "`"), inline: false}], footer: {text: "MyCV | Azure Pipelines"}} + (if $url == "" then {} else {url: $url} end))], allowed_mentions: {parse: []}}')
     curl --fail --silent --show-error \
       -H "Content-Type: application/json" \
       --data-raw "$payload" \
