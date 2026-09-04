@@ -11,7 +11,6 @@ steps:
   fetchDepth: 1
 
 - bash: |
-    set -euo pipefail
     if [ -z "${GITHUB_TOKEN:-}" ]; then
       echo "GITHUB_TOKEN is not available. Add it as a secret pipeline variable."
       exit 1
@@ -42,53 +41,3 @@ steps:
   condition: ne(variables['Build.Reason'], 'PullRequest')
   env:
     GITHUB_TOKEN: $(GITHUB_TOKEN)
-
-- bash: |
-    set -euo pipefail
-    if [ -z "${DISCORD_WEBHOOK_URL:-}" ]; then
-      echo "DISCORD_WEBHOOK_URL is not available. Add it as a secret pipeline variable."
-      exit 1
-    fi
-    if [ "${BUILD_REASON:-}" = "PullRequest" ]; then
-      message="New or updated Pull Request targeting Main"
-      title="Pull Request Validation"
-      description="Azure PR validation: ${BUILD_STATUS:-Unknown}"
-    elif [ "${BUILD_STATUS:-}" = "Succeeded" ]; then
-      message="Azure Pipeline completed successfully"
-      title="Build Succeeded"
-      description="GitHub Main updated successfully after Azure merge"
-    else
-      message="Azure Pipeline ${BUILD_STATUS:-Unknown} while updating GitHub Main"
-      title="Build Failed"
-      description="GitHub Main was not confirmed as updated"
-    fi
-    if [ "${BUILD_STATUS:-}" = "Succeeded" ]; then
-      color=3066993
-    elif [ "${BUILD_STATUS:-}" = "Canceled" ]; then
-      color=16776960
-    else
-      color=15158332
-    fi
-    payload=$(jq -n \
-      --arg message "$message" \
-      --arg title "$title" \
-      --arg description "$description" \
-      --arg status "${BUILD_STATUS:-Unknown}" \
-      --arg build "${BUILD_NUMBER:-Unknown}" \
-      --arg commit "${SOURCE_VERSION:-Unknown}" \
-      --arg url "${BUILD_URL:-}" \
-      --argjson color "$color" \
-      '{content: ($message + "\n\u200b"), embeds: [({title: $title, description: $description, color: $color, fields: [{name: "Status", value: $status, inline: true}, {name: "Build", value: $build, inline: true}, {name: "Commit", value: ("`" + $commit + "`"), inline: false}], footer: {text: "MyCV | Azure Pipelines"}} + (if $url == "" then {} else {url: $url} end))], allowed_mentions: {parse: []}}')
-    curl --fail --silent --show-error \
-      -H "Content-Type: application/json" \
-      --data-raw "$payload" \
-      "$DISCORD_WEBHOOK_URL"
-  displayName: Notify Discord
-  condition: always()
-  env:
-    DISCORD_WEBHOOK_URL: $(DISCORD_WEBHOOK_URL)
-    BUILD_STATUS: $(Agent.JobStatus)
-    BUILD_REASON: $(Build.Reason)
-    BUILD_NUMBER: $(Build.BuildNumber)
-    SOURCE_VERSION: $(Build.SourceVersion)
-    BUILD_URL: $(System.CollectionUri)$(System.TeamProject)/_build/results?buildId=$(Build.BuildId)
