@@ -6,38 +6,44 @@ trigger:
 pool:
   vmImage: ubuntu-latest
 
-steps:
-- checkout: self
-  fetchDepth: 1
-
-- bash: |
-    if [ -z "${GITHUB_TOKEN:-}" ]; then
-      echo "GITHUB_TOKEN is not available. Add it as a secret pipeline variable."
-      exit 1
-    fi
-    git config user.name "Valtteri Tuominen"
-    git config user.email "valetuomine@users.noreply.github.com"
-    github_auth=$(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 -w 0)
-    github_url="https://github.com/valetuomine/MyCV.git"
-    git_auth_config=( -c "http.extraheader=AUTHORIZATION: basic ${github_auth}" )
-
-    github_main_sha=$(git "${git_auth_config[@]}" ls-remote "$github_url" refs/heads/main | awk '{print $1}')
-    if [ -z "$github_main_sha" ]; then
-      echo "GitHub main branch was not found."
-      exit 1
-    fi
-    git "${git_auth_config[@]}" push \
-      --force-with-lease="refs/heads/main:$github_main_sha" \
-      "$github_url" HEAD:main
-
-    while read -r _ branch_ref; do
-      branch=${branch_ref#refs/heads/}
-      if [ "$branch" != "main" ]; then
-        echo "Deleting GitHub branch: $branch"
-        git "${git_auth_config[@]}" push "$github_url" ":refs/heads/$branch"
-      fi
-    done < <(git "${git_auth_config[@]}" ls-remote --heads "$github_url")
+stages:
+- stage: GitHubSync
   displayName: Sync main to GitHub
-  condition: ne(variables['Build.Reason'], 'PullRequest')
-  env:
-    GITHUB_TOKEN: $(GITHUB_TOKEN)
+  jobs:
+  - job: PushToGitHub
+    displayName: Push main to GitHub
+    steps:
+    - checkout: self
+      fetchDepth: 1
+
+    - bash: |
+        if [ -z "${GITHUB_TOKEN:-}" ]; then
+          echo "GITHUB_TOKEN is not available. Add it as a secret pipeline variable."
+          exit 1
+        fi
+        git config user.name "Valtteri Tuominen"
+        git config user.email "valetuomine@users.noreply.github.com"
+        github_auth=$(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 -w 0)
+        github_url="https://github.com/valetuomine/MyCV.git"
+        git_auth_config=( -c "http.extraheader=AUTHORIZATION: basic ${github_auth}" )
+
+        github_main_sha=$(git "${git_auth_config[@]}" ls-remote "$github_url" refs/heads/main | awk '{print $1}')
+        if [ -z "$github_main_sha" ]; then
+          echo "GitHub main branch was not found."
+          exit 1
+        fi
+        git "${git_auth_config[@]}" push \
+          --force-with-lease="refs/heads/main:$github_main_sha" \
+          "$github_url" HEAD:main
+
+        while read -r _ branch_ref; do
+          branch=${branch_ref#refs/heads/}
+          if [ "$branch" != "main" ]; then
+            echo "Deleting GitHub branch: $branch"
+            git "${git_auth_config[@]}" push "$github_url" ":refs/heads/$branch"
+          fi
+        done < <(git "${git_auth_config[@]}" ls-remote --heads "$github_url")
+      displayName: Sync main to GitHub
+      condition: ne(variables['Build.Reason'], 'PullRequest')
+      env:
+        GITHUB_TOKEN: $(GITHUB_TOKEN)
