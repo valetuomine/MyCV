@@ -1,0 +1,47 @@
+name: Notify Discord after main merge
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
+
+jobs:
+  notify:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Discord notification
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          MERGED_BY: ${{ github.event.pull_request.merged_by.login }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${DISCORD_WEBHOOK_URL:-}" ]; then
+            echo "DISCORD_WEBHOOK_URL is not configured."
+            exit 1
+          fi
+
+          payload=$(jq -n \
+            --arg title "$PR_TITLE" \
+            --arg url "$PR_URL" \
+            --arg merged_by "$MERGED_BY" \
+            '{
+              content: ("Pull request merged into main: " + $title),
+              embeds: [{
+                title: $title,
+                url: $url,
+                description: ("Merged by " + $merged_by),
+                color: 3066993
+              }],
+              allowed_mentions: {parse: []}
+            }')
+
+          curl --fail --silent --show-error \
+            -H "Content-Type: application/json" \
+            --data-raw "$payload" \
+            "$DISCORD_WEBHOOK_URL"
