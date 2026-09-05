@@ -23,6 +23,8 @@ jobs:
             exit 1
           fi
 
+          discord_url="${DISCORD_WEBHOOK_URL%/github}"
+
           payload=$(jq -n \
             --arg message "$COMMIT_MESSAGE" \
             --arg url "$COMMIT_URL" \
@@ -42,4 +44,4 @@ jobs:
           curl --fail --silent --show-error \
             -H "Content-Type: application/json" \
             --data-raw "$payload" \
-            "$DISCORD_WEBHOOK_URL"
+            "$discord_url"
