@@ -30,11 +30,11 @@ jobs:
             --arg url "$COMMIT_URL" \
             --arg author "$COMMIT_AUTHOR" \
             '{
-              content: "GitHub main branch updated",
+              content: "Merge completed automatically from an Azure DevOps pull request.",
               embeds: [{
-                title: "New update on main",
+                title: "Azure DevOps PR merged into main",
                 url: $url,
-                description: $message,
+                description: ("The merge was completed automatically by Azure DevOps.\n\n" + $message),
                 author: {name: $author},
                 color: 3066993
               }],
