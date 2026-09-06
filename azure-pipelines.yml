@@ -3,12 +3,35 @@ trigger:
     include:
       - main
 
+pr:
+  branches:
+    include:
+      - main
+
 pool:
   vmImage: ubuntu-latest
 
 stages:
+- stage: Build
+  displayName: Build solution
+  jobs:
+  - job: DotnetBuild
+    displayName: Build .NET solution
+    steps:
+    - checkout: self
+
+    - task: UseDotNet@2
+      displayName: Install .NET SDK
+      inputs:
+        packageType: sdk
+        version: 10.x
+
+    - script: dotnet build src/MyCV.sln --configuration Release
+      displayName: Build solution
+
 - stage: GitHubSync
   displayName: Sync main to GitHub
+  condition: ne(variables['Build.Reason'], 'PullRequest')
   jobs:
   - job: PushToGitHub
     displayName: Push main to GitHub
@@ -44,6 +67,5 @@ stages:
           fi
         done < <(git "${git_auth_config[@]}" ls-remote --heads "$github_url")
       displayName: Sync main to GitHub
-      condition: ne(variables['Build.Reason'], 'PullRequest')
       env:
         GITHUB_TOKEN: $(GITHUB_TOKEN)

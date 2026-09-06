@@ -1,6 +1,5 @@
 using CV.DataAccess;
 using CV.Logic.Services;
-using CV.LogicInterface.ServiceInterfaces;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -30,8 +29,6 @@ if (builder.Environment.IsDevelopment())
         });
     });
 }
-
-builder.Services.AddTransient<IProfileService, ProfileService>();
 
 var app = builder.Build();
 
