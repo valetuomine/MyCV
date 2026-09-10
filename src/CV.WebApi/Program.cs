@@ -1,5 +1,6 @@
 using CV.DataAccess;
 using CV.Logic.Services;
+using CV.LogicInterface.ServiceInterfaces;
 using CV.WebApi.Middleware;
 using Microsoft.EntityFrameworkCore;
 
@@ -32,6 +33,8 @@ if (builder.Environment.IsDevelopment())
         });
     });
 }
+
+builder.Services.AddTransient<IProfileService, ProfileService>();
 
 var app = builder.Build();
 
