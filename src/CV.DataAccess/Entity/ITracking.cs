@@ -6,9 +6,9 @@ namespace CV.DataAccess.Entity
     public interface ITracking
     {
         /// <summary>
-        /// Gets or sets the database-generated identifier.
+        /// Gets or sets the identifier.
         /// </summary>
-        int Id { get; set; }
+        Guid Id { get; set; }
 
         /// <summary>
         /// Gets or sets the date and time when the entity was created.

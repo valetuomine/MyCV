@@ -11,10 +11,10 @@ namespace CV.Logic.Services
     {
         private readonly CvContext _dataContext = dataContext;
 
-        public async Task<ProfileDto> GetProfile(int profileId, CancellationToken cancellationToken = default)
+        public async Task<ProfileDto> GetProfile(Guid profileId, CancellationToken cancellationToken = default)
         {
             // Guards direct callers that bypass the controller's route validation (e.g. background jobs, other services).
-            if (profileId <= 0)
+            if (profileId == Guid.Empty)
             {
                 throw new BadRequestException($"Invalid profile ID: {profileId}");
             }
