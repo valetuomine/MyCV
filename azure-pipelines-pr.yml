@@ -1,0 +1,27 @@
+trigger: none
+
+pr:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+- stage: Build
+  displayName: Build solution
+  jobs:
+  - job: DotnetBuild
+    displayName: Build .NET solution
+    steps:
+    - checkout: self
+
+    - task: UseDotNet@2
+      displayName: Install .NET SDK
+      inputs:
+        packageType: sdk
+        version: 10.x
+
+    - script: dotnet build src/MyCV.sln --configuration Release
+      displayName: Build solution
