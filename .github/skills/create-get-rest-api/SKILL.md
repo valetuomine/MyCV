@@ -1,24 +1,26 @@
 ---
 name: create-get-rest-api
-description: 'Create a layered ASP.NET Core GET REST API with an interface, EF Core service, controller endpoint, DTO mapping, validation, exceptions, dependency injection, and focused tests. Use when adding a new read-only resource endpoint that should follow the MyCV architecture.'
+description: 'Create a layered ASP.NET Core REST API with GET, POST, and PUT endpoints, interfaces, EF Core services, controller endpoints, DTO mapping, validation, exceptions, dependency injection, and focused tests. Use when adding a resource endpoint that should follow the MyCV architecture.'
 argument-hint: '[resource name and lookup key, for example: candidate by public ID]'
 user-invocable: true
 ---
 
-# Create a GET REST API
+# Create a REST API
 
-Use this workflow for a new read-only endpoint in the MyCV solution. Preserve the existing project boundaries and naming conventions.
+Use this workflow for a new resource endpoint in the MyCV solution. Preserve the existing project boundaries and naming conventions.
 
 ## Architecture
 
 Implement the request through these layers:
 
 1. `CV.LogicInterface/Dto/<Resource>Dto.cs` contains the response contract when one does not already exist.
-2. `CV.LogicInterface/ServiceInterfaces/I<Resource>Service.cs` declares the use-case operation.
-3. `CV.Logic/Services/<Resource>Service.cs` owns validation, data access, mapping, and domain/API exceptions.
-4. `CV.Logic/Mappers/<Resource>Mapper.cs` maps the EF entity to the DTO when a mapping is needed.
-5. `CV.WebApi/Controllers/<Resource>Controller.cs` exposes the HTTP GET endpoint and remains thin.
-6. `CV.WebApi/Program.cs` registers the interface-to-service mapping with dependency injection.
+2. `CV.LogicInterface/Dto/Create<Resource>Request.cs` contains POST input fields when creation is supported.
+3. `CV.LogicInterface/Dto/Update<Resource>Request.cs` contains PUT replacement fields when updates are supported.
+4. `CV.LogicInterface/ServiceInterfaces/I<Resource>Service.cs` declares the use-case operations.
+5. `CV.Logic/Services/<Resource>Service.cs` owns validation, data access, mapping, and domain/API exceptions.
+6. `CV.Logic/Mappers/<Resource>Mapper.cs` maps the EF entity to and from DTOs when mapping is needed.
+7. `CV.WebApi/Controllers/<Resource>Controller.cs` exposes the HTTP endpoints and remains thin.
+8. `CV.WebApi/Program.cs` registers the interface-to-service mapping with dependency injection.
 
 First inspect a nearby resource implementation and follow its namespaces, brace style, registration lifetime, and exception handling.
 
@@ -70,6 +72,77 @@ Rules:
 
 For non-Guid keys, validate according to the key's domain rules and use the matching EF predicate.
 
+## POST Create
+
+When adding a create operation, follow the Profile implementation:
+
+Service contract:
+
+```csharp
+Task<<Resource>Dto> Create<Resource>(Create<Resource>Request request, CancellationToken cancellationToken = default);
+```
+
+Service flow:
+
+1. Validate required request fields in the service so direct service callers receive the same behavior as HTTP callers.
+2. Map the request to a new entity with `request.MapRequestToEntity()`.
+3. Call `AddAsync` with the request cancellation token, then call `SaveChangesAsync` with the same token.
+4. Map the saved entity to the response DTO and return it. The database-generated `Id` is available after saving.
+
+Do not accept or assign persistence-generated identifiers from a create request unless the domain explicitly requires it. Do not return the EF entity directly.
+
+Controller endpoint:
+
+```csharp
+[HttpPost]
+public async Task<ActionResult<<Resource>Dto>> Create<Resource>(
+    Create<Resource>Request request,
+    CancellationToken cancellationToken)
+{
+    var result = await resourceService.Create<Resource>(request, cancellationToken);
+    return CreatedAtAction(nameof(Get<Resource>), new { resourceId = result.Id }, result);
+}
+```
+
+Use `CreatedAtAction` so the response is `201 Created` and includes a `Location` for the GET endpoint. Ensure the route value name matches the GET action parameter.
+
+## PUT Replace
+
+Use PUT for a full replacement of an existing resource, following the Profile implementation. The update request should contain every replaceable field; nullable fields are explicitly cleared when sent as `null`.
+
+Service contract:
+
+```csharp
+Task<<Resource>Dto> Update<Resource>(
+    Guid resourceId,
+    Update<Resource>Request request,
+    CancellationToken cancellationToken = default);
+```
+
+Service flow:
+
+1. Reject `Guid.Empty` or another invalid route identifier with `BadRequestException`.
+2. Validate required request fields.
+3. Load the entity without `AsNoTracking()` so EF Core tracks the update. Throw `NotFoundException` when it does not exist.
+4. Apply editable fields with `request.MapRequestToEntity(dbResource)`; do not replace the entity instance or modify its identifier.
+5. Set tracking fields such as `UpdatedAt`, save with the cancellation token, and map the updated entity to the response DTO.
+
+Controller endpoint:
+
+```csharp
+[HttpPut("{resourceId:guid}")]
+public async Task<ActionResult<<Resource>Dto>> Update<Resource>(
+    Guid resourceId,
+    Update<Resource>Request request,
+    CancellationToken cancellationToken)
+{
+    var result = await resourceService.Update<Resource>(resourceId, request, cancellationToken);
+    return Ok(result);
+}
+```
+
+Do not silently treat a missing resource as an insert. Keep PUT replacement semantics distinct from PATCH-style partial updates; add PATCH only when the API explicitly needs partial changes.
+
 ## Mapping
 
 Add an extension mapper when an entity should not be exposed directly:
@@ -84,7 +157,24 @@ public static <Resource>Dto MapEntityToDto(this <Resource> dbResource)
 }
 ```
 
-Keep mapping explicit and do not expose persistence-only fields, navigation objects, or tracking state.
+For write endpoints, keep request-to-entity assignments in the mapper as well. Use one method to create a new entity from a create request and one method to apply an update request to the tracked entity:
+
+```csharp
+public static <Resource> MapRequestToEntity(this Create<Resource>Request request)
+{
+    return new <Resource>
+    {
+        // Map editable request fields explicitly.
+    };
+}
+
+public static void MapRequestToEntity(this Update<Resource>Request request, <Resource> dbResource)
+{
+    // Apply editable request fields explicitly.
+}
+```
+
+The service should call these mapper methods and remain responsible for validation, loading tracked entities, setting tracking fields such as `UpdatedAt`, and saving changes. Keep mapping explicit and do not expose persistence-only fields, navigation objects, or tracking state.
 
 ## Controller
 
@@ -126,6 +216,8 @@ After implementation:
 
 1. Build the solution or the affected projects.
 2. Run focused tests if the repository has them.
-3. Verify the endpoint's happy path, empty identifier behavior, missing-resource behavior, and cancellation propagation where practical.
-4. Confirm Swagger exposes `GET /api/<resource>/{resourceId}` and that the response is the DTO, not the EF entity.
-5. Check that no controller or service returns tracked entities or leaks persistence-only fields.
+3. Verify GET's happy path, empty identifier behavior, missing-resource behavior, and cancellation propagation where practical.
+4. For POST, verify required-field validation, `201 Created`, the `Location` header, and the generated identifier in the response.
+5. For PUT, verify invalid-identifier validation, required-field validation, missing-resource behavior, full replacement including nullable fields, `UpdatedAt`, and `200 OK`.
+6. Confirm Swagger exposes the supported routes and that responses are DTOs, not EF entities.
+7. Check that no controller or service returns tracked entities or leaks persistence-only fields.
