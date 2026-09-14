@@ -1,8 +1,7 @@
-﻿namespace CV.LogicInterface.Dto
+namespace CV.LogicInterface.Dto
 {
-    public class ProfileDto
+    public class UpdateProfileRequest
     {
-        public Guid Id { get; set; }
         public string FullName { get; set; } = null!;
         public string Title { get; set; } = null!;
         public string? Summary { get; set; }

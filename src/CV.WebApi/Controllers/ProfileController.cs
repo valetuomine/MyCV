@@ -9,10 +9,30 @@ namespace CV.WebApi.Controllers
     [ApiController]
     public class ProfileController(IProfileService profileService) : ControllerBase
     {
+        [HttpPost]
+        public async Task<ActionResult<ProfileDto>> CreateProfile(
+            CreateProfileRequest request,
+            CancellationToken cancellationToken)
+        {
+            var result = await profileService.CreateProfile(request, cancellationToken);
+
+            return CreatedAtAction(nameof(GetProfile), new { profileId = result.Id }, result);
+        }
+
         [HttpGet("{profileId}")]
         public async Task<ActionResult<ProfileDto>> GetProfile(Guid profileId, CancellationToken cancellationToken)
         {
             var result = await profileService.GetProfile(profileId, cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpPut("{profileId:guid}")]
+        public async Task<ActionResult<ProfileDto>> UpdateProfile(
+            Guid profileId,
+            UpdateProfileRequest request,
+            CancellationToken cancellationToken)
+        {
+            var result = await profileService.UpdateProfile(profileId, request, cancellationToken);
             return Ok(result);
         }
     }
