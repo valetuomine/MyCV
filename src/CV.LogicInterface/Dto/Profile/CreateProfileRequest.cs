@@ -1,4 +1,4 @@
-namespace CV.LogicInterface.Dto
+namespace CV.LogicInterface.Dto.Profile
 {
     public class CreateProfileRequest
     {

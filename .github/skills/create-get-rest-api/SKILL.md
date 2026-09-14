@@ -13,9 +13,9 @@ Use this workflow for a new resource endpoint in the MyCV solution. Preserve the
 
 Implement the request through these layers:
 
-1. `CV.LogicInterface/Dto/<Resource>Dto.cs` contains the response contract when one does not already exist.
-2. `CV.LogicInterface/Dto/Create<Resource>Request.cs` contains POST input fields when creation is supported.
-3. `CV.LogicInterface/Dto/Update<Resource>Request.cs` contains PUT replacement fields when updates are supported.
+1. `CV.LogicInterface/Dto/<Resource>/<Resource>Dto.cs` contains the response contract when one does not already exist.
+2. `CV.LogicInterface/Dto/<Resource>/Create<Resource>Request.cs` contains POST input fields when creation is supported.
+3. `CV.LogicInterface/Dto/<Resource>/Update<Resource>Request.cs` contains PUT replacement fields when updates are supported.
 4. `CV.LogicInterface/ServiceInterfaces/I<Resource>Service.cs` declares the use-case operations.
 5. `CV.Logic/Services/<Resource>Service.cs` owns validation, data access, mapping, and domain/API exceptions.
 6. `CV.Logic/Mappers/<Resource>Mapper.cs` maps the EF entity to and from DTOs when mapping is needed.
@@ -23,6 +23,8 @@ Implement the request through these layers:
 8. `CV.WebApi/Program.cs` registers the interface-to-service mapping with dependency injection.
 
 First inspect a nearby resource implementation and follow its namespaces, brace style, registration lifetime, and exception handling.
+
+Keep each resource's DTO contracts together in a resource-specific folder under `CV.LogicInterface/Dto`. Use the namespace `CV.LogicInterface.Dto.<Resource>` for those contracts.
 
 ## Service Contract
 

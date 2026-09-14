@@ -1,5 +1,5 @@
 ﻿using CV.DataAccess.Entity;
-using CV.LogicInterface.Dto;
+using CV.LogicInterface.Dto.Profile;
 
 namespace CV.Logic.Mappers
 {

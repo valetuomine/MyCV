@@ -1,4 +1,4 @@
-﻿using CV.LogicInterface.Dto;
+﻿using CV.LogicInterface.Dto.Profile;
 using CV.LogicInterface.ServiceInterfaces;
 using Microsoft.AspNetCore.Mvc;
 using RouteAttribute = Microsoft.AspNetCore.Mvc.RouteAttribute;

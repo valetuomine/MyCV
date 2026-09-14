@@ -1,7 +1,7 @@
 ﻿using CV.Common.Exceptions;
 using CV.DataAccess;
 using CV.Logic.Mappers;
-using CV.LogicInterface.Dto;
+using CV.LogicInterface.Dto.Profile;
 using CV.LogicInterface.ServiceInterfaces;
 using Microsoft.EntityFrameworkCore;
 
