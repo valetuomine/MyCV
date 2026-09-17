@@ -39,6 +39,7 @@ namespace CV.Logic.Mappers
             dbProfile.Location = request.Location;
             dbProfile.LinkedInUrl = request.LinkedInUrl;
             dbProfile.GitHubUrl = request.GitHubUrl;
+            dbProfile.UpdatedAt = DateTime.UtcNow;
         }
 
         /// <summary>
@@ -57,6 +58,19 @@ namespace CV.Logic.Mappers
                 Location = dbProfile.Location,
                 LinkedInUrl = dbProfile.LinkedInUrl,
                 GitHubUrl = dbProfile.GitHubUrl
+            };
+        }
+
+        /// <summary>
+        /// Maps a profile entity to a candidate entity with the profile ID set.
+        /// </summary>
+        /// <param name="dbProfile">The profile entity to map.</param>
+        /// <returns>A candidate entity with the profile ID set.</returns>
+        public static Candidate MapProfileIdToCandidate (this Profile dbProfile)
+        {
+            return new Candidate
+            {
+                ProfileId = dbProfile.Id
             };
         }
     }

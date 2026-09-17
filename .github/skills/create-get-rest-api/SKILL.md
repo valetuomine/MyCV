@@ -108,6 +108,8 @@ public async Task<ActionResult<<Resource>Dto>> Create<Resource>(
 
 Use `CreatedAtAction` so the response is `201 Created` and includes a `Location` for the GET endpoint. Ensure the route value name matches the GET action parameter.
 
+When a resource bootstraps a related aggregate record, create both records in the bootstrap resource's service. For this CV application, `Profile` is created first and `Candidate` is created with `ProfileId` during the same POST and `SaveChangesAsync` operation. The UI does not POST Candidate directly. Candidate currently exposes GET only; later related resources can update Candidate with their generated IDs.
+
 ## PUT Replace
 
 Use PUT for a full replacement of an existing resource, following the Profile implementation. The update request should contain every replaceable field; nullable fields are explicitly cleared when sent as `null`.

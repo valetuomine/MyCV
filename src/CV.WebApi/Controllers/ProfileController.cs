@@ -19,7 +19,7 @@ namespace CV.WebApi.Controllers
             return CreatedAtAction(nameof(GetProfile), new { profileId = result.Id }, result);
         }
 
-        [HttpGet("{profileId}")]
+        [HttpGet("{profileId:guid}")]
         public async Task<ActionResult<ProfileDto>> GetProfile(Guid profileId, CancellationToken cancellationToken)
         {
             var result = await profileService.GetProfile(profileId, cancellationToken);

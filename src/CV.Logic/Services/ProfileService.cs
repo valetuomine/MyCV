@@ -1,5 +1,6 @@
 ﻿using CV.Common.Exceptions;
 using CV.DataAccess;
+using CV.DataAccess.Entity;
 using CV.Logic.Mappers;
 using CV.LogicInterface.Dto.Profile;
 using CV.LogicInterface.ServiceInterfaces;
@@ -16,8 +17,10 @@ namespace CV.Logic.Services
             ValidateRequest(request.FullName, request.Title);
 
             var dbProfile = request.MapRequestToEntity();
+            var dbCandidate = dbProfile.MapProfileIdToCandidate();
 
             await _dataContext.Profile.AddAsync(dbProfile, cancellationToken);
+            await _dataContext.Candidate.AddAsync(dbCandidate, cancellationToken);
             await _dataContext.SaveChangesAsync(cancellationToken);
 
             return dbProfile.MapEntityToDto();
@@ -52,7 +55,6 @@ namespace CV.Logic.Services
                 .FirstOrDefaultAsync(profile => profile.Id == profileId, cancellationToken) ?? throw new NotFoundException($"Profile not found with Id: {profileId}");
                 
             request.MapRequestToEntity(dbProfile);
-            dbProfile.UpdatedAt = DateTime.UtcNow;
 
             await _dataContext.SaveChangesAsync(cancellationToken);
 

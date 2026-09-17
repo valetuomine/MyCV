@@ -35,6 +35,7 @@ if (builder.Environment.IsDevelopment())
 }
 
 builder.Services.AddTransient<IProfileService, ProfileService>();
+builder.Services.AddTransient<ICandidateService, CandidateService>();
 
 var app = builder.Build();
 
