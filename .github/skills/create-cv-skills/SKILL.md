@@ -1,5 +1,5 @@
 ---
-name: create-get-rest-api
+name: create-cv-skills
 description: 'Create a layered ASP.NET Core REST API with GET, POST, and PUT endpoints, interfaces, EF Core services, controller endpoints, DTO mapping, validation, exceptions, dependency injection, and focused tests. Use when adding a resource endpoint that should follow the MyCV architecture.'
 argument-hint: '[resource name and lookup key, for example: candidate by public ID]'
 user-invocable: true
