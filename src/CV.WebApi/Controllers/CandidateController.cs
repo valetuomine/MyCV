@@ -17,5 +17,12 @@ namespace CV.WebApi.Controllers
             var result = await candidateService.GetCandidate(candidateId, cancellationToken);
             return Ok(result);
         }
+
+        [HttpDelete("{candidateId:guid}")]
+        public async Task<IActionResult> DeleteCandidate(Guid candidateId, CancellationToken cancellationToken)
+        {
+            await candidateService.DeleteCandidate(candidateId, cancellationToken);
+            return NoContent();
+        }
     }
 }
