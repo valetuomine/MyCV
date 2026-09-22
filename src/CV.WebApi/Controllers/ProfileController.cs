@@ -26,6 +26,13 @@ namespace CV.WebApi.Controllers
             return Ok(result);
         }
 
+        [HttpDelete("{profileId:guid}")]
+        public async Task<IActionResult> DeleteProfile(Guid profileId, CancellationToken cancellationToken)
+        {
+            await profileService.DeleteProfile(profileId, cancellationToken);
+            return NoContent();
+        }
+
         [HttpPut("{profileId:guid}")]
         public async Task<ActionResult<ProfileDto>> UpdateProfile(
             Guid profileId,

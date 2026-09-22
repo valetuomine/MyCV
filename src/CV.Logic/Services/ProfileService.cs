@@ -17,10 +17,32 @@ namespace CV.Logic.Services
             ValidateRequest(request.FullName, request.Title);
 
             var dbProfile = request.MapRequestToEntity();
-            var dbCandidate = dbProfile.MapProfileIdToCandidate();
+            Candidate? dbCandidate = null;
+
+            if (request.CandidatePublicId is Guid candidatePublicId)
+            {
+                var candidate = await _dataContext.Candidate
+                    .FirstOrDefaultAsync(ca => ca.PublicId == candidatePublicId, cancellationToken)
+                    ?? throw new NotFoundException($"Candidate not found with PublicId: {candidatePublicId}");
+
+                if (candidate.ProfileId is not null)
+                {
+                    throw new BadRequestException("Candidate already has a profile.");
+                }
+
+                candidate.ProfileId = dbProfile.Id;
+                dbCandidate = candidate;
+            }
+            else
+            {
+                dbCandidate = dbProfile.MapProfileIdToCandidate();
+            }
 
             await _dataContext.Profile.AddAsync(dbProfile, cancellationToken);
-            await _dataContext.Candidate.AddAsync(dbCandidate, cancellationToken);
+            if (request.CandidatePublicId is null)
+            {
+                await _dataContext.Candidate.AddAsync(dbCandidate, cancellationToken);
+            }
             await _dataContext.SaveChangesAsync(cancellationToken);
 
             return dbProfile.MapEntityToDto();
@@ -40,6 +62,26 @@ namespace CV.Logic.Services
             return dbProfile == null
                 ? throw new NotFoundException($"Profile not found with Id: {profileId}")
                 : dbProfile.MapEntityToDto();
+        }
+
+        public async Task DeleteProfile(Guid profileId, CancellationToken cancellationToken = default)
+        {
+            if (profileId == Guid.Empty)
+            {
+                throw new BadRequestException($"Invalid profile ID: {profileId}");
+            }
+
+            var dbProfile = await _dataContext.Profile
+                .FirstOrDefaultAsync(profile => profile.Id == profileId, cancellationToken)
+                ?? throw new NotFoundException($"Profile not found with Id: {profileId}");
+
+            var dbCandidate = await _dataContext.Candidate
+                .FirstOrDefaultAsync(candidate => candidate.ProfileId == profileId, cancellationToken);
+
+            dbCandidate?.ProfileId = null;
+
+            _dataContext.Profile.Remove(dbProfile);
+            await _dataContext.SaveChangesAsync(cancellationToken);
         }
 
         public async Task<ProfileDto> UpdateProfile(Guid profileId, UpdateProfileRequest request, CancellationToken cancellationToken = default)

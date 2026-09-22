@@ -24,6 +24,13 @@ namespace CV.LogicInterface.ServiceInterfaces
         Task<ProfileDto> GetProfile(Guid profileId, CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Deletes a profile while preserving its candidate row.
+        /// </summary>
+        /// <param name="profileId">The identifier of the profile to delete.</param>
+        /// <param name="cancellationToken">The token used to cancel the operation.</param>
+        Task DeleteProfile(Guid profileId, CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Replaces a profile by its identifier.
         /// </summary>
         /// <param name="profileId">The identifier of the profile to replace.</param>

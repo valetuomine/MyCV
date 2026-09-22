@@ -26,6 +26,16 @@ First inspect a nearby resource implementation and follow its namespaces, brace 
 
 Keep each resource's DTO contracts together in a resource-specific folder under `CV.LogicInterface/Dto`. Use the namespace `CV.LogicInterface.Dto.<Resource>` for those contracts.
 
+Document every DTO class and every DTO property with concise XML `<summary>` documentation when the DTO is created. Property summaries should describe the property's API meaning, including whether an identifier is internal, public, related, required, or optional.
+
+## DELETE Relationships
+
+Use `DELETE /api/<resource>/{resourceId}` and return `204 No Content` after a successful delete. Validate the route identifier in the service, load the tracked entity, throw `NotFoundException` when it does not exist, remove it, and call `SaveChangesAsync` with the cancellation token.
+
+For this CV application, Candidate is the relationship owner. Deleting a Candidate must delete every related row using the IDs stored on Candidate, such as `ProfileId` and future `WorkHistoryId` values. Keep that cascade behavior in `CvContext` so every Candidate deletion follows the same rule.
+
+Deleting a Profile must not delete Candidate. The Profile service must find the Candidate whose `ProfileId` points to the profile, set that `ProfileId` to `null`, remove only the Profile, and save both changes together. A later Profile POST may accept an optional `CandidatePublicId`; when supplied, it must find the existing Candidate, verify its `ProfileId` is null, attach the new Profile ID, and avoid creating a second Candidate. When omitted, Profile POST creates both a new Profile and Candidate.
+
 ## Service Contract
 
 Declare an asynchronous operation with a cancellation token:
