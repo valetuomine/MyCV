@@ -14,5 +14,12 @@ namespace CV.LogicInterface.ServiceInterfaces
         /// <param name="cancellationToken">The token used to cancel the operation.</param>
         /// <returns>The candidate matching the specified identifier.</returns>
         Task<CandidateDto> GetCandidate(Guid candidateId, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Deletes a candidate and its related rows.
+        /// </summary>
+        /// <param name="candidateId">The identifier of the candidate to delete.</param>
+        /// <param name="cancellationToken">The token used to cancel the operation.</param>
+        Task DeleteCandidate(Guid candidateId, CancellationToken cancellationToken = default);
     }
 }

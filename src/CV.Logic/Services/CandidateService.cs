@@ -26,5 +26,20 @@ namespace CV.Logic.Services
                 ? throw new NotFoundException($"Candidate not found with Id: {candidateId}")
                 : dbCandidate.MapEntityToDto();
         }
+
+        public async Task DeleteCandidate(Guid candidateId, CancellationToken cancellationToken = default)
+        {
+            if (candidateId == Guid.Empty)
+            {
+                throw new BadRequestException($"Invalid candidate ID: {candidateId}");
+            }
+
+            var dbCandidate = await _dataContext.Candidate
+                .FirstOrDefaultAsync(candidate => candidate.Id == candidateId, cancellationToken)
+                ?? throw new NotFoundException($"Candidate not found with Id: {candidateId}");
+
+            _dataContext.Candidate.Remove(dbCandidate);
+            await _dataContext.SaveChangesAsync(cancellationToken);
+        }
     }
 }
