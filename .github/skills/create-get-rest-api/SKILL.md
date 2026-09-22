@@ -66,9 +66,8 @@ public class <Resource>Service(CvContext dataContext) : BaseService(dataContext)
             .AsNoTracking()
             .FirstOrDefaultAsync(resource => resource.Id == resourceId, cancellationToken);
 
-        return dbResource == null
-            ? throw new NotFoundException($"<Resource> not found with Id: {resourceId}")
-            : dbResource.MapEntityToDto();
+        return dbResource?.MapEntityToDto()
+            ?? throw new NotFoundException($"<Resource> not found with Id: {resourceId}");
     }
 }
 ```
@@ -78,7 +77,7 @@ Rules:
 - Validate direct service callers, even if the controller also validates or model binding rejects malformed input.
 - Pass the request cancellation token into every EF Core async operation.
 - Use `AsNoTracking()` for read-only queries.
-- Throw the repository's `BadRequestException` for invalid identifiers and `NotFoundException` when no row exists. Do not return `null` for a missing required resource.
+- Throw the repository's `BadRequestException` for invalid identifiers and `NotFoundException` when no row exists. For nullable query results, map and throw with the null-coalescing pattern (`dbResource?.MapEntityToDto() ?? throw ...`). Do not return `null` for a missing required resource.
 - Keep query and business behavior in the service, not in the controller.
 - Include related data only when the response contract requires it; avoid accidental over-fetching.
 
@@ -199,18 +198,20 @@ Use attribute routing and constructor injection:
 [ApiController]
 public class <Resource>Controller(I<Resource>Service resourceService) : ControllerBase
 {
+    private readonly I<Resource>Service _resourceService = resourceService;
+
     [HttpGet("{resourceId}")]
     public async Task<ActionResult<<Resource>Dto>> Get<Resource>(
         Guid resourceId,
         CancellationToken cancellationToken)
     {
-        var result = await resourceService.Get<Resource>(resourceId, cancellationToken);
+        var result = await _resourceService.Get<Resource>(resourceId, cancellationToken);
         return Ok(result);
     }
 }
 ```
 
-Keep the controller responsible only for HTTP concerns: route binding, calling the service, and returning the successful response. Let the existing exception handler translate service exceptions into error responses.
+Keep the controller responsible only for HTTP concerns: route binding, calling the private service field, and returning the successful response. Let the existing exception handler translate service exceptions into error responses.
 
 Use route constraints or controller-level validation only when they match existing project conventions; do not duplicate service business rules unnecessarily.
 

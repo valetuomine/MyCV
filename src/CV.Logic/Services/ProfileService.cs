@@ -59,9 +59,8 @@ namespace CV.Logic.Services
                 .AsNoTracking()
                 .FirstOrDefaultAsync(la => la.Id == profileId, cancellationToken);
 
-            return dbProfile == null
-                ? throw new NotFoundException($"Profile not found with Id: {profileId}")
-                : dbProfile.MapEntityToDto();
+            return dbProfile?.MapEntityToDto()
+                ?? throw new NotFoundException($"Profile not found with Id: {profileId}");
         }
 
         public async Task DeleteProfile(Guid profileId, CancellationToken cancellationToken = default)

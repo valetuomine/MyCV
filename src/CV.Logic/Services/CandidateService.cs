@@ -22,9 +22,8 @@ namespace CV.Logic.Services
                 .AsNoTracking()
                 .FirstOrDefaultAsync(candidate => candidate.Id == candidateId, cancellationToken);
 
-            return dbCandidate == null
-                ? throw new NotFoundException($"Candidate not found with Id: {candidateId}")
-                : dbCandidate.MapEntityToDto();
+            return dbCandidate?.MapEntityToDto()
+                ?? throw new NotFoundException($"Candidate not found with Id: {candidateId}");
         }
 
         public async Task DeleteCandidate(Guid candidateId, CancellationToken cancellationToken = default)

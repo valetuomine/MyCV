@@ -9,12 +9,14 @@ namespace CV.WebApi.Controllers
     [ApiController]
     public class ProfileController(IProfileService profileService) : ControllerBase
     {
+        private readonly IProfileService _profileService = profileService;
+
         [HttpPost]
         public async Task<ActionResult<ProfileDto>> CreateProfile(
             CreateProfileRequest request,
             CancellationToken cancellationToken)
         {
-            var result = await profileService.CreateProfile(request, cancellationToken);
+            var result = await _profileService.CreateProfile(request, cancellationToken);
 
             return CreatedAtAction(nameof(GetProfile), new { profileId = result.Id }, result);
         }
@@ -22,14 +24,14 @@ namespace CV.WebApi.Controllers
         [HttpGet("{profileId:guid}")]
         public async Task<ActionResult<ProfileDto>> GetProfile(Guid profileId, CancellationToken cancellationToken)
         {
-            var result = await profileService.GetProfile(profileId, cancellationToken);
+            var result = await _profileService.GetProfile(profileId, cancellationToken);
             return Ok(result);
         }
 
         [HttpDelete("{profileId:guid}")]
         public async Task<IActionResult> DeleteProfile(Guid profileId, CancellationToken cancellationToken)
         {
-            await profileService.DeleteProfile(profileId, cancellationToken);
+            await _profileService.DeleteProfile(profileId, cancellationToken);
             return NoContent();
         }
 
@@ -39,7 +41,7 @@ namespace CV.WebApi.Controllers
             UpdateProfileRequest request,
             CancellationToken cancellationToken)
         {
-            var result = await profileService.UpdateProfile(profileId, request, cancellationToken);
+            var result = await _profileService.UpdateProfile(profileId, request, cancellationToken);
             return Ok(result);
         }
     }
