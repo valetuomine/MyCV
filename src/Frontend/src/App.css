@@ -1,0 +1,61 @@
+#root {
+  min-height: 100vh;
+}
+
+.app-shell {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  isolation: isolate;
+  background: #07111d;
+  color: #f2f7f6;
+}
+
+.app-background {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.app-content {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  align-content: center;
+  min-height: 100vh;
+  max-width: 42rem;
+  padding: 4rem clamp(1.5rem, 8vw, 8rem);
+}
+
+.eyebrow {
+  margin: 0 0 1.5rem;
+  color: #66d6c6;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+h1 {
+  max-width: 12ch;
+  margin: 0;
+  font-size: clamp(2.75rem, 7vw, 5.75rem);
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 0.98;
+}
+
+.intro {
+  max-width: 32rem;
+  margin: 2rem 0 0;
+  color: #c4d7d5;
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+@media (max-width: 640px) {
+  .app-content {
+    padding: 3rem 1.5rem;
+  }
+}
