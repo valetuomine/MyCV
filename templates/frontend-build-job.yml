@@ -1,0 +1,27 @@
+parameters:
+- name: pool
+  type: object
+
+jobs:
+- job: FrontendBuild
+  displayName: Build frontend
+  pool: ${{ parameters.pool }}
+  steps:
+  - checkout: self
+
+  - task: NodeTool@0
+    displayName: Install Node.js
+    inputs:
+      versionSpec: 22.x
+
+  - script: npm ci
+    displayName: Install frontend dependencies
+    workingDirectory: src/Frontend
+
+  - script: npm run lint
+    displayName: Lint frontend
+    workingDirectory: src/Frontend
+
+  - script: npm run build
+    displayName: Build frontend
+    workingDirectory: src/Frontend

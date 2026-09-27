@@ -28,3 +28,17 @@ stages:
       parameters:
         pool:
           vmImage: ubuntu-latest
+
+- stage: FrontendBuild
+  displayName: Build frontend
+  jobs:
+  - ${{ if eq(parameters.agentPool, 'self-hosted') }}:
+    - template: templates/frontend-build-job.yml
+      parameters:
+        pool:
+          name: Default
+  - ${{ else }}:
+    - template: templates/frontend-build-job.yml
+      parameters:
+        pool:
+          vmImage: ubuntu-latest
