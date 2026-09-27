@@ -17,6 +17,18 @@ Use this workflow when recreating the MyCV frontend inside `src/Frontend`.
 - Official React Bits Grainient component installed through the shadcn registry
 - Node.js `24.21.0` managed with NVM
 
+## Frontend Conventions
+
+- Create a Zod schema whenever creating a form. Keep the schema next to the form when it is local to that form, or in the form's feature folder when it is shared.
+- Infer form input types from the Zod schema where practical so validation and TypeScript types stay aligned.
+- Install npm packages from the directory containing the package's `package.json`. For this repository, frontend packages must be installed from `src/Frontend`, not the repository root:
+
+```powershell
+Push-Location src/Frontend
+npm install <package-name>
+Pop-Location
+```
+
 Use the installed Node version before running the setup commands:
 
 ```powershell
