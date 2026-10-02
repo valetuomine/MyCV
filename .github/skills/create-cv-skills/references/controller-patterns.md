@@ -44,3 +44,20 @@ Use `CreatedAtAction` for POST so the response is `201 Created` with a `Location
 Use `204 No Content` after a successful DELETE. Keep controllers responsible only for route binding, calling the private service field, and returning successful HTTP responses. Let the existing exception handler translate service exceptions.
 
 Use route constraints or controller validation only when they match existing project conventions. Do not duplicate service business rules unnecessarily.
+
+## Swagger request examples
+
+Add a typed example provider for every action that accepts a request body, and annotate the action with `SwaggerRequestExample`. Include realistic values that form a valid request, including all required languages for localized requests. Register the provider assembly and enable `ExampleFilters()` in `AddSwaggerGen` once in `Program.cs`:
+
+```csharp
+builder.Services.AddSwaggerExamplesFromAssemblyOf<CreateProfileRequestExample>();
+builder.Services.AddSwaggerGen(options => options.ExampleFilters());
+```
+
+```csharp
+[SwaggerRequestExample(typeof(CreateProfileRequest), typeof(CreateProfileRequestExample))]
+[HttpPost]
+public async Task<ActionResult<ResourceDto>> CreateResource(...)
+```
+
+Do not add request-body examples to GET or DELETE actions that have no request body.

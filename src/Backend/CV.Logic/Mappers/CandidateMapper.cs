@@ -18,6 +18,8 @@ namespace CV.Logic.Mappers
             return new CandidateDto
             {
                 Id = dbCandidate.Id,
+                CreatedAt = TimestampMapper.ToFinlandTime(dbCandidate.CreatedAt),
+                UpdatedAt = TimestampMapper.ToFinlandTime(dbCandidate.UpdatedAt),
                 PublicId = dbCandidate.PublicId,
                 ProfileId = dbCandidate.ProfileId
             };

@@ -11,6 +11,16 @@ namespace CV.LogicInterface.Dto.Candidate
         public Guid Id { get; set; }
 
         /// <summary>
+        /// Gets or sets when the candidate was created, with the Finland UTC offset.
+        /// </summary>
+        public DateTimeOffset CreatedAt { get; set; }
+
+        /// <summary>
+        /// Gets or sets when the candidate was last updated, with the Finland UTC offset.
+        /// </summary>
+        public DateTimeOffset? UpdatedAt { get; set; }
+
+        /// <summary>
         /// Gets or sets the public candidate identifier used for external references.
         /// </summary>
         public Guid PublicId { get; set; }

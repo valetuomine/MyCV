@@ -11,19 +11,9 @@ namespace CV.LogicInterface.Dto.Profile
         public string FullName { get; set; } = null!;
 
         /// <summary>
-        /// Gets or sets the candidate's professional title.
+        /// Gets or sets the complete set of profile translations, including the required Finnish translation.
         /// </summary>
-        public string Title { get; set; } = null!;
-
-        /// <summary>
-        /// Gets or sets the candidate's professional summary.
-        /// </summary>
-        public string? Summary { get; set; }
-
-        /// <summary>
-        /// Gets or sets the candidate's location.
-        /// </summary>
-        public string? Location { get; set; }
+        public IReadOnlyCollection<ProfileTranslationRequest> Translations { get; set; } = [];
 
         /// <summary>
         /// Gets or sets the candidate's LinkedIn profile URL.

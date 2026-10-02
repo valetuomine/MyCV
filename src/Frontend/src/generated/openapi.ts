@@ -80,8 +80,71 @@ export interface paths {
             };
             requestBody?: {
                 content: {
+                    /**
+                     * @example {
+                     *       "fullName": "Jane Doe",
+                     *       "translations": [
+                     *         {
+                     *           "languageCode": "fi",
+                     *           "title": "Ohjelmistokehittäjä",
+                     *           "summary": "Rakennan verkkopalveluita.",
+                     *           "location": "Tampere, Suomi"
+                     *         },
+                     *         {
+                     *           "languageCode": "en",
+                     *           "title": "Software Developer",
+                     *           "summary": "I build web applications.",
+                     *           "location": "Tampere, Finland"
+                     *         }
+                     *       ],
+                     *       "linkedInUrl": "https://www.linkedin.com/in/jane-doe",
+                     *       "gitHubUrl": "https://github.com/jane-doe"
+                     *     }
+                     */
                     "application/json": components["schemas"]["CreateProfileRequest"];
+                    /**
+                     * @example {
+                     *       "fullName": "Jane Doe",
+                     *       "translations": [
+                     *         {
+                     *           "languageCode": "fi",
+                     *           "title": "Ohjelmistokehittäjä",
+                     *           "summary": "Rakennan verkkopalveluita.",
+                     *           "location": "Tampere, Suomi"
+                     *         },
+                     *         {
+                     *           "languageCode": "en",
+                     *           "title": "Software Developer",
+                     *           "summary": "I build web applications.",
+                     *           "location": "Tampere, Finland"
+                     *         }
+                     *       ],
+                     *       "linkedInUrl": "https://www.linkedin.com/in/jane-doe",
+                     *       "gitHubUrl": "https://github.com/jane-doe"
+                     *     }
+                     */
                     "text/json": components["schemas"]["CreateProfileRequest"];
+                    /**
+                     * @example {
+                     *       "fullName": "Jane Doe",
+                     *       "translations": [
+                     *         {
+                     *           "languageCode": "fi",
+                     *           "title": "Ohjelmistokehittäjä",
+                     *           "summary": "Rakennan verkkopalveluita.",
+                     *           "location": "Tampere, Suomi"
+                     *         },
+                     *         {
+                     *           "languageCode": "en",
+                     *           "title": "Software Developer",
+                     *           "summary": "I build web applications.",
+                     *           "location": "Tampere, Finland"
+                     *         }
+                     *       ],
+                     *       "linkedInUrl": "https://www.linkedin.com/in/jane-doe",
+                     *       "gitHubUrl": "https://github.com/jane-doe"
+                     *     }
+                     */
                     "application/*+json": components["schemas"]["CreateProfileRequest"];
                 };
             };
@@ -92,9 +155,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["ProfileDto"];
-                        "application/json": components["schemas"]["ProfileDto"];
-                        "text/json": components["schemas"]["ProfileDto"];
+                        "text/plain": components["schemas"]["ProfileAdminDto"];
+                        "application/json": components["schemas"]["ProfileAdminDto"];
+                        "text/json": components["schemas"]["ProfileAdminDto"];
                     };
                 };
             };
@@ -114,7 +177,9 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    lang?: string;
+                };
                 header?: never;
                 path: {
                     profileId: string;
@@ -147,8 +212,71 @@ export interface paths {
             };
             requestBody?: {
                 content: {
+                    /**
+                     * @example {
+                     *       "fullName": "Jane Doe",
+                     *       "translations": [
+                     *         {
+                     *           "languageCode": "fi",
+                     *           "title": "Ohjelmistokehittäjä",
+                     *           "summary": "Rakennan verkkopalveluita.",
+                     *           "location": "Tampere, Suomi"
+                     *         },
+                     *         {
+                     *           "languageCode": "en",
+                     *           "title": "Software Developer",
+                     *           "summary": "I build web applications.",
+                     *           "location": "Tampere, Finland"
+                     *         }
+                     *       ],
+                     *       "linkedInUrl": "https://www.linkedin.com/in/jane-doe",
+                     *       "gitHubUrl": "https://github.com/jane-doe"
+                     *     }
+                     */
                     "application/json": components["schemas"]["UpdateProfileRequest"];
+                    /**
+                     * @example {
+                     *       "fullName": "Jane Doe",
+                     *       "translations": [
+                     *         {
+                     *           "languageCode": "fi",
+                     *           "title": "Ohjelmistokehittäjä",
+                     *           "summary": "Rakennan verkkopalveluita.",
+                     *           "location": "Tampere, Suomi"
+                     *         },
+                     *         {
+                     *           "languageCode": "en",
+                     *           "title": "Software Developer",
+                     *           "summary": "I build web applications.",
+                     *           "location": "Tampere, Finland"
+                     *         }
+                     *       ],
+                     *       "linkedInUrl": "https://www.linkedin.com/in/jane-doe",
+                     *       "gitHubUrl": "https://github.com/jane-doe"
+                     *     }
+                     */
                     "text/json": components["schemas"]["UpdateProfileRequest"];
+                    /**
+                     * @example {
+                     *       "fullName": "Jane Doe",
+                     *       "translations": [
+                     *         {
+                     *           "languageCode": "fi",
+                     *           "title": "Ohjelmistokehittäjä",
+                     *           "summary": "Rakennan verkkopalveluita.",
+                     *           "location": "Tampere, Suomi"
+                     *         },
+                     *         {
+                     *           "languageCode": "en",
+                     *           "title": "Software Developer",
+                     *           "summary": "I build web applications.",
+                     *           "location": "Tampere, Finland"
+                     *         }
+                     *       ],
+                     *       "linkedInUrl": "https://www.linkedin.com/in/jane-doe",
+                     *       "gitHubUrl": "https://github.com/jane-doe"
+                     *     }
+                     */
                     "application/*+json": components["schemas"]["UpdateProfileRequest"];
                 };
             };
@@ -159,9 +287,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["ProfileDto"];
-                        "application/json": components["schemas"]["ProfileDto"];
-                        "text/json": components["schemas"]["ProfileDto"];
+                        "text/plain": components["schemas"]["ProfileAdminDto"];
+                        "application/json": components["schemas"]["ProfileAdminDto"];
+                        "text/json": components["schemas"]["ProfileAdminDto"];
                     };
                 };
             };
@@ -192,6 +320,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Profile/{profileId}/admin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    profileId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProfileAdminDto"];
+                        "application/json": components["schemas"]["ProfileAdminDto"];
+                        "text/json": components["schemas"]["ProfileAdminDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -199,6 +366,10 @@ export interface components {
         CandidateDto: {
             /** Format: uuid */
             id?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string | null;
             /** Format: uuid */
             publicId?: string;
             /** Format: uuid */
@@ -208,15 +379,29 @@ export interface components {
             /** Format: uuid */
             candidatePublicId?: string | null;
             fullName?: string | null;
-            title?: string | null;
-            summary?: string | null;
-            location?: string | null;
+            translations?: components["schemas"]["ProfileTranslationRequest"][] | null;
             linkedInUrl?: string | null;
             gitHubUrl?: string | null;
+        };
+        ProfileAdminDto: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string | null;
+            fullName?: string | null;
+            linkedInUrl?: string | null;
+            gitHubUrl?: string | null;
+            translations?: components["schemas"]["ProfileTranslationDto"][] | null;
         };
         ProfileDto: {
             /** Format: uuid */
             id?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string | null;
             fullName?: string | null;
             title?: string | null;
             summary?: string | null;
@@ -224,11 +409,25 @@ export interface components {
             linkedInUrl?: string | null;
             gitHubUrl?: string | null;
         };
-        UpdateProfileRequest: {
-            fullName?: string | null;
+        ProfileTranslationDto: {
+            languageCode?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string | null;
             title?: string | null;
             summary?: string | null;
             location?: string | null;
+        };
+        ProfileTranslationRequest: {
+            languageCode?: string | null;
+            title?: string | null;
+            summary?: string | null;
+            location?: string | null;
+        };
+        UpdateProfileRequest: {
+            fullName?: string | null;
+            translations?: components["schemas"]["ProfileTranslationRequest"][] | null;
             linkedInUrl?: string | null;
             gitHubUrl?: string | null;
         };

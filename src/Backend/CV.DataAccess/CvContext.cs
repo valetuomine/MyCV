@@ -7,12 +7,14 @@ namespace CV.DataAccess
     public class CvContext(DbContextOptions<CvContext> options) : DbContext(options)
     {
         public DbSet<Profile> Profile { get; set; } = null!;
+        public DbSet<ProfileTranslation> ProfileTranslation { get; set; } = null!;
         public DbSet<Candidate> Candidate { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
             modelBuilder.ApplyConfiguration(new ProfileConfiguration());
+            modelBuilder.ApplyConfiguration(new ProfileTranslationConfiguration());
             modelBuilder.ApplyConfiguration(new CandidateConfiguration());
 
             // Alternative: automatically apply all IEntityTypeConfiguration implementations

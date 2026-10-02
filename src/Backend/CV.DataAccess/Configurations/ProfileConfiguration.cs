@@ -20,16 +20,6 @@ namespace CV.DataAccess.Configurations
                 .IsRequired()
                 .HasMaxLength(100);
 
-            builder.Property(profile => profile.Title)
-                .IsRequired()
-                .HasMaxLength(100);
-
-            builder.Property(profile => profile.Summary)
-                .HasMaxLength(2500);
-
-            builder.Property(profile => profile.Location)
-                .HasMaxLength(100);
-
             builder.Property(profile => profile.LinkedInUrl)
                 .HasMaxLength(500);
 

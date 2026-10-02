@@ -11,10 +11,11 @@ namespace CV.Logic.Services
     public class ProfileService(CvContext dataContext) : BaseService(dataContext), IProfileService
     {
         private readonly CvContext _dataContext = dataContext;
+        private static readonly HashSet<string> SupportedLanguageCodes = ["fi", "en"];
 
-        public async Task<ProfileDto> CreateProfile(CreateProfileRequest request, CancellationToken cancellationToken = default)
+        public async Task<ProfileAdminDto> CreateProfile(CreateProfileRequest request, CancellationToken cancellationToken = default)
         {
-            ValidateRequest(request.FullName, request.Title);
+            ValidateRequest(request.FullName, request.Translations);
 
             var dbProfile = request.MapRequestToEntity();
             Candidate? dbCandidate = null;
@@ -45,10 +46,27 @@ namespace CV.Logic.Services
             }
             await _dataContext.SaveChangesAsync(cancellationToken);
 
-            return dbProfile.MapEntityToDto();
+            return dbProfile.MapEntityToAdminDto();
         }
 
-        public async Task<ProfileDto> GetProfile(Guid profileId, CancellationToken cancellationToken = default)
+        public async Task<ProfileDto> GetProfile(Guid profileId, string? languageCode, CancellationToken cancellationToken = default)
+        {
+            if (profileId == Guid.Empty)
+            {
+                throw new BadRequestException($"Invalid profile ID: {profileId}");
+            }
+
+            var normalizedLanguageCode = NormalizeLanguageCode(languageCode);
+            var dbProfile = await _dataContext.Profile
+                .Include(profile => profile.Translations)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(profile => profile.Id == profileId, cancellationToken);
+
+            return dbProfile?.MapEntityToDto(normalizedLanguageCode)
+                ?? throw new NotFoundException($"Profile not found with Id: {profileId}");
+        }
+
+        public async Task<ProfileAdminDto> GetProfileAdmin(Guid profileId, CancellationToken cancellationToken = default)
         {
             if (profileId == Guid.Empty)
             {
@@ -56,11 +74,12 @@ namespace CV.Logic.Services
             }
 
             var dbProfile = await _dataContext.Profile
+                .Include(profile => profile.Translations)
                 .AsNoTracking()
-                .FirstOrDefaultAsync(la => la.Id == profileId, cancellationToken);
-
-            return dbProfile?.MapEntityToDto()
+                .FirstOrDefaultAsync(profile => profile.Id == profileId, cancellationToken)
                 ?? throw new NotFoundException($"Profile not found with Id: {profileId}");
+
+            return dbProfile.MapEntityToAdminDto();
         }
 
         public async Task DeleteProfile(Guid profileId, CancellationToken cancellationToken = default)
@@ -83,31 +102,81 @@ namespace CV.Logic.Services
             await _dataContext.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task<ProfileDto> UpdateProfile(Guid profileId, UpdateProfileRequest request, CancellationToken cancellationToken = default)
+        public async Task<ProfileAdminDto> UpdateProfile(Guid profileId, UpdateProfileRequest request, CancellationToken cancellationToken = default)
         {
             if (profileId == Guid.Empty)
             {
                 throw new BadRequestException($"Invalid profile ID: {profileId}");
             }
 
-            ValidateRequest(request.FullName, request.Title);
+            ValidateRequest(request.FullName, request.Translations);
 
             var dbProfile = await _dataContext.Profile
+                .Include(profile => profile.Translations)
                 .FirstOrDefaultAsync(profile => profile.Id == profileId, cancellationToken) ?? throw new NotFoundException($"Profile not found with Id: {profileId}");
-                
+
             request.MapRequestToEntity(dbProfile);
 
             await _dataContext.SaveChangesAsync(cancellationToken);
 
-            return dbProfile.MapEntityToDto();
+            return dbProfile.MapEntityToAdminDto();
         }
 
-        private static void ValidateRequest(string fullName, string title)
+        private static void ValidateRequest(string fullName, IReadOnlyCollection<ProfileTranslationRequest> translations)
         {
-            if (string.IsNullOrWhiteSpace(fullName) || string.IsNullOrWhiteSpace(title))
+            if (string.IsNullOrWhiteSpace(fullName))
             {
-                throw new BadRequestException("FullName and Title are required.");
+                throw new BadRequestException("FullName is required.");
             }
+
+            if (translations is null || translations.Count == 0)
+            {
+                throw new BadRequestException("At least one profile translation is required.");
+            }
+
+            var normalizedLanguageCodes = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var translation in translations)
+            {
+                if (translation is null || string.IsNullOrWhiteSpace(translation.LanguageCode))
+                {
+                    throw new BadRequestException("Each translation requires a language code.");
+                }
+
+                var normalizedLanguageCode = translation.LanguageCode.Trim().ToLowerInvariant();
+                if (!SupportedLanguageCodes.Contains(normalizedLanguageCode))
+                {
+                    throw new BadRequestException($"Unsupported language code: {translation.LanguageCode}");
+                }
+
+                if (!normalizedLanguageCodes.Add(normalizedLanguageCode))
+                {
+                    throw new BadRequestException($"Duplicate translation language code: {normalizedLanguageCode}");
+                }
+
+                if (string.IsNullOrWhiteSpace(translation.Title))
+                {
+                    throw new BadRequestException($"Title is required for language: {normalizedLanguageCode}");
+                }
+            }
+
+            if (!normalizedLanguageCodes.Contains(ProfileMapper.DefaultLanguageCode))
+            {
+                throw new BadRequestException("A Finnish (fi) translation is required.");
+            }
+        }
+
+        private static string NormalizeLanguageCode(string? languageCode)
+        {
+            var normalizedLanguageCode = string.IsNullOrWhiteSpace(languageCode)
+                ? ProfileMapper.DefaultLanguageCode
+                : languageCode.Trim().ToLowerInvariant();
+
+            if (!SupportedLanguageCodes.Contains(normalizedLanguageCode))
+            {
+                throw new BadRequestException($"Unsupported language code: {languageCode}");
+            }
+
+            return normalizedLanguageCode;
         }
     }
 }

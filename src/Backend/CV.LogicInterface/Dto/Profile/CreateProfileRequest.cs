@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace CV.LogicInterface.Dto.Profile
 {
     /// <summary>
@@ -8,6 +10,7 @@ namespace CV.LogicInterface.Dto.Profile
         /// <summary>
         /// Gets or sets the public identifier of an existing candidate to reattach the profile to.
         /// </summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public Guid? CandidatePublicId { get; set; }
 
         /// <summary>
@@ -16,19 +19,9 @@ namespace CV.LogicInterface.Dto.Profile
         public string FullName { get; set; } = null!;
 
         /// <summary>
-        /// Gets or sets the candidate's professional title.
+        /// Gets or sets the profile translations, including the required Finnish translation.
         /// </summary>
-        public string Title { get; set; } = null!;
-
-        /// <summary>
-        /// Gets or sets the candidate's professional summary.
-        /// </summary>
-        public string? Summary { get; set; }
-
-        /// <summary>
-        /// Gets or sets the candidate's location.
-        /// </summary>
-        public string? Location { get; set; }
+        public IReadOnlyCollection<ProfileTranslationRequest> Translations { get; set; } = [];
 
         /// <summary>
         /// Gets or sets the candidate's LinkedIn profile URL.

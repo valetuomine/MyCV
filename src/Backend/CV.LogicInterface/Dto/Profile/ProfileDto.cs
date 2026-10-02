@@ -11,6 +11,16 @@ namespace CV.LogicInterface.Dto.Profile
         public Guid Id { get; set; }
 
         /// <summary>
+        /// Gets or sets when the profile was created, with the Finland UTC offset.
+        /// </summary>
+        public DateTimeOffset CreatedAt { get; set; }
+
+        /// <summary>
+        /// Gets or sets when the profile was last updated, with the Finland UTC offset.
+        /// </summary>
+        public DateTimeOffset? UpdatedAt { get; set; }
+
+        /// <summary>
         /// Gets or sets the candidate's full name.
         /// </summary>
         public string FullName { get; set; } = null!;
