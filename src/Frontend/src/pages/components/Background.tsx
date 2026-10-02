@@ -1,8 +1,9 @@
-import { useState, type JSX, type ReactNode } from 'react'
-import Grainient from './Grainient'
+import { useState, type JSX, type ReactNode } from "react"
+import Grainient from "./Grainient"
 
 const cssColor = (name: string, fallback: string) =>
-  getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback
+  getComputedStyle(document.documentElement).getPropertyValue(name).trim() ||
+  fallback
 
 interface BackgroundProps {
   children: ReactNode
@@ -10,9 +11,9 @@ interface BackgroundProps {
 
 export default function Background({ children }: BackgroundProps): JSX.Element {
   const [palette] = useState(() => ({
-    color1: cssColor('--color-cv-teal', '#22b8a7'),
-    color2: cssColor('--color-cv-blue', '#1b5f7a'),
-    color3: cssColor('--color-cv-deep', '#176474'),
+    color1: cssColor("--color-cv-teal", "#22b8a7"),
+    color2: cssColor("--color-cv-blue", "#1b5f7a"),
+    color3: cssColor("--color-cv-deep", "#176474"),
   }))
 
   return (

@@ -141,7 +141,7 @@ namespace CV.Logic.Mappers
         /// </summary>
         /// <param name="dbProfile">The profile entity to map.</param>
         /// <returns>A candidate entity with the profile ID set.</returns>
-        public static Candidate MapProfileIdToCandidate (this Profile dbProfile)
+        public static Candidate MapProfileIdToCandidate(this Profile dbProfile)
         {
             return new Candidate
             {

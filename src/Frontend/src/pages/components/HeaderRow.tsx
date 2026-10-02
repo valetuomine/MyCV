@@ -1,4 +1,4 @@
-import type { JSX, ReactNode } from 'react'
+import type { JSX, ReactNode } from "react"
 
 interface HeaderRowProps {
   children: ReactNode

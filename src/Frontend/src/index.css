@@ -1,36 +1,36 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
 @theme {
-	--color-cv-background: #07111d;
-	--color-cv-teal: #22b8a7;
-	--color-cv-blue: #1b5f7a;
-	--color-cv-deep: #176474;
-	--color-cv-paper: #f2f7f6;
-	--color-cv-muted: #a9c4c2;
-	--color-cv-accent: #7be0d1;
-	--color-cv-copy: #d2e2e0;
-	--color-cv-meta: #9dbdbb;
-	--font-cv-sans: 'Manrope', sans-serif;
-	--font-cv-mono: 'DM Mono', monospace;
-	--font-cv-ui: 'Inter', sans-serif;
-	--shadow-glow: 0 0 1rem var(--color-cv-accent);
+  --color-cv-background: #07111d;
+  --color-cv-teal: #22b8a7;
+  --color-cv-blue: #1b5f7a;
+  --color-cv-deep: #176474;
+  --color-cv-paper: #f2f7f6;
+  --color-cv-muted: #a9c4c2;
+  --color-cv-accent: #7be0d1;
+  --color-cv-copy: #d2e2e0;
+  --color-cv-meta: #9dbdbb;
+  --font-cv-sans: "Manrope", sans-serif;
+  --font-cv-mono: "DM Mono", monospace;
+  --font-cv-ui: "Inter", sans-serif;
+  --shadow-glow: 0 0 1rem var(--color-cv-accent);
 }
 
 :root {
-	font-family: var(--font-cv-sans);
-	font-synthesis: none;
-	text-rendering: optimizeLegibility;
-	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
+  font-family: var(--font-cv-sans);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 * {
-	box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 body {
-	min-width: 320px;
-	min-height: 100vh;
-	margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
 }
