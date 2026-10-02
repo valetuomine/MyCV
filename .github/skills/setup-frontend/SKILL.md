@@ -19,6 +19,17 @@ Use this workflow when recreating the MyCV frontend inside `src/Frontend`.
 
 ## Frontend Conventions
 
+- Prefer Tailwind utility classes for new UI styling, including layout, spacing, sizing, typography, colors, borders, shadows, responsive behavior, and interaction states.
+- Create one focused React component per `.tsx` file. Use PascalCase filenames and default-export the component, for example `Header.tsx`, `Navigation.tsx`, or `ContentSection.tsx`.
+- Keep page-specific components under `src/pages/components/` and import them with paths relative to the page, such as `./components/Header`.
+- Define a local props interface for every component that accepts props. Use `ReactNode` for layout components that render arbitrary content through `children`.
+- Keep page state and data selection in the page component. Pass selected data and event handlers into child components through typed props instead of duplicating state in presentational components.
+- Build complex page sections through small composable components. A layout component such as `Background` or `HeaderRow` should accept `children`, while focused components such as `Navigation` or `ContentSection` should receive the data they render.
+- Use `type JSX` and `type ReactNode` imports from `react` when needed, and keep component files free of unused React imports.
+- Define recurring colors, fonts, and shadows as named `@theme` tokens in `src/index.css`, then use their generated utilities (for example, `bg-cv-accent` and `font-cv-mono`) instead of repeating arbitrary values.
+- Prefer Tailwind's standard scale when it matches the intended value (for example, use `max-w-7xl` for `80rem`). Use arbitrary values only when the standard scale does not express the design cleanly.
+- Add custom CSS only when Tailwind cannot express the behavior clearly, such as complex animations, pseudo-elements, WebGL or canvas surfaces, or reusable behavior that would make JSX difficult to read.
+- Keep custom CSS scoped to its owning component or an intentional shared global concern. Do not add a custom CSS class when an equivalent, readable Tailwind composition is available.
 - Create a Zod schema whenever creating a form. Keep the schema next to the form when it is local to that form, or in the form's feature folder when it is shared.
 - Infer form input types from the Zod schema where practical so validation and TypeScript types stay aligned.
 - Install npm packages from the directory containing the package's `package.json`. For this repository, frontend packages must be installed from `src/Frontend`, not the repository root:
@@ -65,7 +76,7 @@ npx shadcn@4.20.0 add @react-bits/Grainient-TS-TW
 Pop-Location
 ```
 
-Use the component from `src/components/Grainient.tsx` and import it with:
+Use the component from `src/pages/components/Grainient.tsx` and import it from page components with:
 
 ```tsx
 import Grainient from './components/Grainient'
