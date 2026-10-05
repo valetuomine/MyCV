@@ -1,7 +1,8 @@
 import { useState, type JSX } from "react"
 import Background from "./components/Background"
 import ContentSection from "./components/ContentSection"
-import Header from "./components/Header"
+import Navigation from "./components/Navigation"
+import ProfileForm from "./Profile/ProfileForm"
 
 const sections = [
   {
@@ -47,12 +48,20 @@ export default function App(): JSX.Element {
 
   return (
     <Background>
-      <Header
-        sections={sections}
-        selectedIndex={selectedIndex}
-        onSelect={setSelectedIndex}
-      />
-      <ContentSection section={selectedSection} />
+      <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col py-6 sm:py-8">
+        <Navigation
+          sections={sections}
+          selectedIndex={selectedIndex}
+          onSelect={setSelectedIndex}
+        />
+        <div className="flex flex-1 items-center pb-16 pt-16 sm:pb-24 sm:pt-20">
+          {selectedIndex === 0 ? (
+            <ProfileForm />
+          ) : (
+            <ContentSection section={selectedSection} />
+          )}
+        </div>
+      </div>
     </Background>
   )
 }

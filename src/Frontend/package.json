@@ -14,12 +14,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.9.1",
     "@reduxjs/toolkit": "^2.12.0",
     "@tailwindcss/vite": "^4.3.3",
+    "framer-motion": "^14.0.0",
     "jotai": "^3.0.0",
-    "ogl": "^1.0.11",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-hook-form": "^7.89.0",
     "react-redux": "^9.3.0",
     "tailwindcss": "^4.3.3",
     "zod": "^4.6.5"

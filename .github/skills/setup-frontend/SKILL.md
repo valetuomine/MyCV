@@ -1,6 +1,6 @@
 ---
 name: setup-frontend
-description: 'Set up the MyCV frontend with React, TypeScript, Vite, Tailwind CSS, and the official React Bits Grainient background. Use when recreating the frontend shell or rebuilding the CV background from the documented palette and motion settings.'
+description: 'Set up or recreate the MyCV frontend with React, TypeScript, Vite, Tailwind CSS, and the white radial-gradient CV design. Use when rebuilding the frontend shell, typography, theme, or background.'
 argument-hint: '[optional frontend setup or background change]'
 user-invocable: true
 ---
@@ -14,7 +14,8 @@ Use this workflow when recreating the MyCV frontend inside `src/Frontend`.
 - React with TypeScript
 - Vite using the `react-ts` template
 - Tailwind CSS v4 with `@tailwindcss/vite`
-- Official React Bits Grainient component installed through the shadcn registry
+- CSS radial-gradient background, themed through CSS custom properties
+- DM Serif Display headings and IBM Plex Sans interface/body text
 - Node.js `24.21.0` managed with NVM
 
 ## Frontend Conventions
@@ -32,6 +33,8 @@ Use this workflow when recreating the MyCV frontend inside `src/Frontend`.
 - Keep custom CSS scoped to its owning component or an intentional shared global concern. Do not add a custom CSS class when an equivalent, readable Tailwind composition is available.
 - Create a Zod schema whenever creating a form. Keep the schema next to the form when it is local to that form, or in the form's feature folder when it is shared.
 - Infer form input types from the Zod schema where practical so validation and TypeScript types stay aligned.
+- Build forms with React Hook Form (`react-hook-form`) and `@hookform/resolvers/zod`. Wrap RHF-backed sections in `FormProvider` and make reusable inputs read state with `useFormContext`/`useWatch`, using typed field names.
+- `RHFInput` renders the profile's story text normally. When `useIsAdmin()` from `src/auth/useIsAdmin.ts` is true, show a contextual edit button on hover/focus (and an Add action for empty values); clicking opens the RHF input inline. Done validates the field and closes the editor. Edits remain local form state for now; implement persistence separately when the Save mutation is added. The current auth hook is a stub and returns `false`, so admin edit controls are disabled.
 - Install npm packages from the directory containing the package's `package.json`. For this repository, frontend packages must be installed from `src/Frontend`, not the repository root:
 
 ```powershell
@@ -56,7 +59,7 @@ Remove-Item src/Frontend/.gitkeep -ErrorAction SilentlyContinue
 Push-Location src/Frontend
 npx create-vite@6.5.0 . --template react-ts
 npm install
-npm install tailwindcss @tailwindcss/vite ogl
+npm install tailwindcss @tailwindcss/vite
 npm install -D @types/node
 Pop-Location
 ```
@@ -64,56 +67,25 @@ Pop-Location
 Configure the Vite alias `@` to resolve to `src`, add `@/*` to `tsconfig.app.json`, and import Tailwind in `src/index.css`:
 
 ```css
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 ```
 
-Then install the official component:
+Define design colors and font families as `@theme` variables in `src/index.css`.
 
-```powershell
-Push-Location src/Frontend
-npx shadcn@4.20.0 add @react-bits/Grainient-TS-TW
-Pop-Location
+## CV Background and Layout
+
+`src/pages/components/Background.tsx` owns the page background and content layer. Keep the background decorative and behind the content, with `aria-hidden="true"` and `pointer-events-none`. The current treatment is a radial gradient from white near the top center to the slate edge color:
+
+```css
+radial-gradient(
+  125% 125% at 50% 10%,
+  var(--color-cv-background) 40%,
+  var(--color-cv-gradient-edge) 100%
+)
 ```
 
-Use the component from `src/pages/components/Grainient.tsx` and import it from page components with:
-
-```tsx
-import Grainient from './components/Grainient'
-```
-
-## Grainient Preset
-
-This is the current preferred CV background. Keep `timeSpeed` at `0.5`.
-
-```tsx
-<Grainient
-  timeSpeed={0.5}
-  colorBalance={-0.14}
-  warpStrength={0.68}
-  warpFrequency={4.6}
-  warpSpeed={0.28}
-  warpAmplitude={42}
-  blendAngle={63}
-  blendSoftness={0.48}
-  rotationAmount={160}
-  noiseScale={2.05}
-  grainAmount={0.01}
-  grainScale={2}
-  grainAnimated={false}
-  contrast={1.24}
-  gamma={0.98}
-  saturation={0.76}
-  centerX={-0.55}
-  centerY={0.12}
-  zoom={1.7}
-  color1="#22B8A7"
-  color2="#1B496F"
-  color3="#07111D"
-/>
-```
-
-Place it as a full-screen, non-interactive background behind the CV content. Use a class such as `position: absolute; inset: 0; z-index: 0; pointer-events: none;` and keep content above it with a higher stacking context.
+Define both colors in the `@theme` section of `src/index.css`; don't hardcode repeated palette values in components. Keep page content in a higher stacking context than the background. The current CV layout uses a left-aligned navigation and content, DM Serif Display for headings, and IBM Plex Sans for navigation and body copy.
 
 ## Verification
 
