@@ -21,11 +21,6 @@ namespace CV.LogicInterface.Dto.Candidate
         public DateTimeOffset? UpdatedAt { get; set; }
 
         /// <summary>
-        /// Gets or sets the public candidate identifier used for external references.
-        /// </summary>
-        public Guid PublicId { get; set; }
-
-        /// <summary>
         /// Gets or sets the related profile identifier, when a profile is assigned.
         /// </summary>
         public Guid? ProfileId { get; set; }

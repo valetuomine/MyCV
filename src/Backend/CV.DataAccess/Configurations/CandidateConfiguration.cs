@@ -16,13 +16,6 @@ namespace CV.DataAccess.Configurations
             builder.Property(candidate => candidate.Id)
                 .HasColumnName("ID");
 
-            builder.Property(candidate => candidate.PublicId)
-                .IsRequired()
-                .ValueGeneratedOnAdd();
-
-            builder.HasIndex(candidate => candidate.PublicId)
-                .IsUnique();
-
             builder.HasIndex(candidate => candidate.ProfileId)
                 .IsUnique();
 

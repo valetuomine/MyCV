@@ -1,4 +1,4 @@
-﻿using CV.Common.Exceptions;
+using CV.Common.Exceptions;
 using CV.DataAccess;
 using CV.DataAccess.Entity;
 using CV.Logic.Mappers;
@@ -20,11 +20,11 @@ namespace CV.Logic.Services
             var dbProfile = request.MapRequestToEntity();
             Candidate? dbCandidate = null;
 
-            if (request.CandidatePublicId is Guid candidatePublicId)
+            if (request.CandidateId is Guid candidateId)
             {
                 var candidate = await _dataContext.Candidate
-                    .FirstOrDefaultAsync(ca => ca.PublicId == candidatePublicId, cancellationToken)
-                    ?? throw new NotFoundException($"Candidate not found with PublicId: {candidatePublicId}");
+                    .FirstOrDefaultAsync(ca => ca.Id == candidateId, cancellationToken)
+                    ?? throw new NotFoundException($"Candidate not found with Id: {candidateId}");
 
                 if (candidate.ProfileId is not null)
                 {
@@ -40,13 +40,15 @@ namespace CV.Logic.Services
             }
 
             await _dataContext.Profile.AddAsync(dbProfile, cancellationToken);
-            if (request.CandidatePublicId is null)
+            if (request.CandidateId is null)
             {
                 await _dataContext.Candidate.AddAsync(dbCandidate, cancellationToken);
             }
             await _dataContext.SaveChangesAsync(cancellationToken);
 
-            return dbProfile.MapEntityToAdminDto();
+            var result = dbProfile.MapEntityToAdminDto();
+            result.CandidateId = dbCandidate.Id;
+            return result;
         }
 
         public async Task<ProfileDto> GetProfile(Guid profileId, string? languageCode, CancellationToken cancellationToken = default)
@@ -79,7 +81,14 @@ namespace CV.Logic.Services
                 .FirstOrDefaultAsync(profile => profile.Id == profileId, cancellationToken)
                 ?? throw new NotFoundException($"Profile not found with Id: {profileId}");
 
-            return dbProfile.MapEntityToAdminDto();
+            var result = dbProfile.MapEntityToAdminDto();
+            result.CandidateId = await _dataContext.Candidate
+                .AsNoTracking()
+                .Where(candidate => candidate.ProfileId == profileId)
+                .Select(candidate => (Guid?)candidate.Id)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            return result;
         }
 
         public async Task DeleteProfile(Guid profileId, CancellationToken cancellationToken = default)
@@ -119,7 +128,14 @@ namespace CV.Logic.Services
 
             await _dataContext.SaveChangesAsync(cancellationToken);
 
-            return dbProfile.MapEntityToAdminDto();
+            var result = dbProfile.MapEntityToAdminDto();
+            result.CandidateId = await _dataContext.Candidate
+                .AsNoTracking()
+                .Where(candidate => candidate.ProfileId == profileId)
+                .Select(candidate => (Guid?)candidate.Id)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            return result;
         }
 
         private static void ValidateRequest(string fullName, IReadOnlyCollection<ProfileTranslationRequest> translations)

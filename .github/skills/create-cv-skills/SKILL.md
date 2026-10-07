@@ -1,13 +1,13 @@
 ---
 name: create-cv-skills
-description: 'Create a layered ASP.NET Core REST API with GET, POST, and PUT endpoints, interfaces, EF Core services, controller endpoints, DTO mapping, validation, exceptions, dependency injection, and focused tests. Use when adding a resource endpoint that should follow the MyCV architecture.'
+description: 'Create or change a MyCV layered ASP.NET Core REST API and its React client integration. Use when implementing Candidate/Profile APIs, public candidate-ID routes, DTO mapping, validation, EF Core services, RTK Query fetching, Jotai UI state, or updating this project architecture.'
 argument-hint: '[resource name and lookup key, for example: candidate by public ID]'
 user-invocable: true
 ---
 
 # Create a REST API
 
-Use this workflow when adding a resource endpoint to MyCV. Preserve the existing project boundaries, naming conventions, and nearby implementation patterns.
+Use this workflow when adding or changing a MyCV resource endpoint or the frontend integration that consumes it. Preserve the existing project boundaries, naming conventions, and nearby implementation patterns.
 
 ## Workflow
 
@@ -18,8 +18,10 @@ Use this workflow when adding a resource endpoint to MyCV. Preserve the existing
 5. Add thin controller actions using [controller-patterns.md](references/controller-patterns.md). For every action with a request body, add a typed Swagger request example and register its provider; body-less actions do not need request examples.
 6. Apply [relationship-rules.md](references/relationship-rules.md) when the resource participates in the Candidate/Profile aggregate.
 7. Register the service in `CV.WebApi/Program.cs` using the established lifetime.
-8. Follow [verification.md](references/verification.md) before finishing.
+8. When changing an EF entity or configuration, scaffold a new migration and keep the model snapshot current; do not apply production migrations automatically.
+9. For frontend work tied to the endpoint, follow [frontend-patterns.md](references/frontend-patterns.md).
+10. Follow [verification.md](references/verification.md) before finishing.
 
 ## Scope
 
-This skill covers the common GET, POST, and PUT resource workflow. Use the focused references for implementation details rather than duplicating those rules here. Keep application-specific relationship behavior isolated from general REST guidance.
+This skill covers the common GET, POST, PUT, and DELETE resource workflow. Use the focused references for implementation details rather than duplicating those rules here. Keep application-specific relationship behavior isolated from general REST guidance.

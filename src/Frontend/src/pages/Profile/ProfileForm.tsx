@@ -3,28 +3,32 @@ import { FormProvider, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import RHFInput from "../components/RHFInput"
-import { InputType } from "../../types"
 import useIsAdmin from "../../auth/useIsAdmin"
+import type { components } from "../../generated/openapi"
 
 const profileSchema = z.object({
   fullName: z.string().trim().min(1, "Full name is required"),
-  email: z.email("Enter a valid email"),
   github: z.string(),
   linkedin: z.string(),
 })
 
 type ProfileFormValues = z.infer<typeof profileSchema>
+type Profile = components["schemas"]["ProfileDto"]
 
-export default function ProfileForm(): JSX.Element {
-  const isAdmin = useIsAdmin()
+export default function ProfileForm({
+  profile,
+}: {
+  profile: Profile
+}): JSX.Element {
+  const hasAdminMode = useIsAdmin()
+  const isAdmin = import.meta.env.DEV && hasAdminMode
   const [isEditing, setIsEditing] = useState(false)
   const methods = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      fullName: "Valtteri Tuominen",
-      email: "hello@mycv.dev",
-      github: "github.com/valetuominen",
-      linkedin: "linkedin.com/in/valetuomine/",
+      fullName: profile.fullName ?? "",
+      github: profile.gitHubUrl ?? "",
+      linkedin: profile.linkedInUrl ?? "",
     },
   })
 
@@ -54,14 +58,6 @@ export default function ProfileForm(): JSX.Element {
                 isEditing
                 required
                 autoComplete="name"
-              />
-              <RHFInput<ProfileFormValues>
-                name="email"
-                label="Email"
-                type={InputType.Email}
-                isEditing
-                required
-                autoComplete="email"
               />
               <RHFInput<ProfileFormValues>
                 name="github"
@@ -107,20 +103,24 @@ export default function ProfileForm(): JSX.Element {
                   className="text-inherit"
                 />
               </h1>
+              {profile.title && (
+                <p className="mt-4 font-cv-sans text-lg text-cv-paper">
+                  {profile.title}
+                </p>
+              )}
+              {profile.summary && (
+                <p className="mt-3 max-w-xl text-base leading-[1.7] text-cv-copy">
+                  {profile.summary}
+                </p>
+              )}
+              {profile.location && (
+                <p className="mt-3 text-sm text-cv-muted">{profile.location}</p>
+              )}
               <p
                 className="mt-6 max-w-xl animate-fade-up text-base leading-[1.7] text-cv-copy sm:mt-8"
                 style={{ animationDelay: "200ms" }}
               >
-                You can reach me at{" "}
-                <RHFInput<ProfileFormValues>
-                  name="email"
-                  label="Email"
-                  type={InputType.Email}
-                  isEditing={false}
-                  link
-                  className="text-cv-paper"
-                />
-                , explore my work on{" "}
+                Explore my work on{" "}
                 <RHFInput<ProfileFormValues>
                   name="github"
                   label="GitHub"

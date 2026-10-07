@@ -17,6 +17,16 @@ node_modules/
 dist/
 .vite/
 
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+**/appsettings.*.json
+!**/appsettings.*.example.json
+
+# Local-only deployment notes
+docs/azure-deployment.md
+
 # OS/editor files
 .DS_Store
 Thumbs.db

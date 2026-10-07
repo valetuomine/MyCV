@@ -1,4 +1,4 @@
-﻿using CV.LogicInterface.Dto.Profile;
+using CV.LogicInterface.Dto.Profile;
 
 namespace CV.LogicInterface.ServiceInterfaces
 {

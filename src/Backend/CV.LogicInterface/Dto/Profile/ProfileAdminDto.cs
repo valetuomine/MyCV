@@ -26,6 +26,11 @@ namespace CV.LogicInterface.Dto.Profile
         public string FullName { get; set; } = null!;
 
         /// <summary>
+        /// Gets or sets the identifier of the associated candidate, when one exists.
+        /// </summary>
+        public Guid? CandidateId { get; set; }
+
+        /// <summary>
         /// Gets or sets the candidate's LinkedIn profile URL, shared across languages.
         /// </summary>
         public string? LinkedInUrl { get; set; }

@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "generate-types": "openapi-typescript http://localhost:62070/swagger/v1/swagger.json -o src/generated/openapi.ts",
+    "generate-types": "openapi-typescript http://localhost:5062/swagger/v1/swagger.json -o src/generated/openapi.ts",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -23,6 +23,7 @@
     "react-dom": "^19.1.0",
     "react-hook-form": "^7.89.0",
     "react-redux": "^9.3.0",
+    "react-router-dom": "^7.18.4",
     "tailwindcss": "^4.3.3",
     "zod": "^4.6.5"
   },

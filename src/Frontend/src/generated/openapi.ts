@@ -371,13 +371,11 @@ export interface components {
             /** Format: date-time */
             updatedAt?: string | null;
             /** Format: uuid */
-            publicId?: string;
-            /** Format: uuid */
             profileId?: string | null;
         };
         CreateProfileRequest: {
             /** Format: uuid */
-            candidatePublicId?: string | null;
+            candidateId?: string | null;
             fullName?: string | null;
             translations?: components["schemas"]["ProfileTranslationRequest"][] | null;
             linkedInUrl?: string | null;
@@ -391,6 +389,8 @@ export interface components {
             /** Format: date-time */
             updatedAt?: string | null;
             fullName?: string | null;
+            /** Format: uuid */
+            candidateId?: string | null;
             linkedInUrl?: string | null;
             gitHubUrl?: string | null;
             translations?: components["schemas"]["ProfileTranslationDto"][] | null;

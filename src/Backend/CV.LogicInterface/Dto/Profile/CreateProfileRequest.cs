@@ -8,10 +8,10 @@ namespace CV.LogicInterface.Dto.Profile
     public class CreateProfileRequest
     {
         /// <summary>
-        /// Gets or sets the public identifier of an existing candidate to reattach the profile to.
+        /// Gets or sets the identifier of an existing candidate to reattach the profile to.
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public Guid? CandidatePublicId { get; set; }
+        public Guid? CandidateId { get; set; }
 
         /// <summary>
         /// Gets or sets the candidate's full name.

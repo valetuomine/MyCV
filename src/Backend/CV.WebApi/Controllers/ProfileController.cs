@@ -1,6 +1,5 @@
-﻿using CV.LogicInterface.Dto.Profile;
+using CV.LogicInterface.Dto.Profile;
 using CV.LogicInterface.ServiceInterfaces;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Filters;
 using CV.WebApi.Swagger.Examples;
@@ -14,7 +13,6 @@ namespace CV.WebApi.Controllers
     {
         private readonly IProfileService _profileService = profileService;
 
-        //[Authorize(Policy = "CvAdmin")]
         [HttpPost]
         [SwaggerRequestExample(typeof(CreateProfileRequest), typeof(CreateProfileRequestExample))]
         public async Task<ActionResult<ProfileAdminDto>> CreateProfile(
@@ -36,7 +34,6 @@ namespace CV.WebApi.Controllers
             return Ok(result);
         }
 
-        //[Authorize(Policy = "CvAdmin")]
         [HttpGet("{profileId:guid}/admin")]
         public async Task<ActionResult<ProfileAdminDto>> GetProfileAdmin(Guid profileId, CancellationToken cancellationToken)
         {
@@ -44,7 +41,6 @@ namespace CV.WebApi.Controllers
             return Ok(result);
         }
 
-        //[Authorize(Policy = "CvAdmin")]
         [HttpDelete("{profileId:guid}")]
         public async Task<IActionResult> DeleteProfile(Guid profileId, CancellationToken cancellationToken)
         {
@@ -52,7 +48,6 @@ namespace CV.WebApi.Controllers
             return NoContent();
         }
 
-        //[Authorize(Policy = "CvAdmin")]
         [HttpPut("{profileId:guid}")]
         [SwaggerRequestExample(typeof(UpdateProfileRequest), typeof(UpdateProfileRequestExample))]
         public async Task<ActionResult<ProfileAdminDto>> UpdateProfile(
