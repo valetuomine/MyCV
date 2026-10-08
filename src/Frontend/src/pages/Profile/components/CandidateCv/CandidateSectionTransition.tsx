@@ -15,7 +15,7 @@ export default function CandidateSectionTransition({
   children,
 }: CandidateSectionTransitionProps): JSX.Element {
   return (
-    <div className="flex flex-1 items-center pb-16 pt-16 sm:pb-24 sm:pt-20">
+    <div className="flex flex-1 items-center overflow-clip pb-16 pt-16 sm:pb-24 sm:pt-20">
       <AnimatePresence mode="wait" custom={direction}>
         <motion.div
           key={sectionIndex}
@@ -35,7 +35,7 @@ export default function CandidateSectionTransition({
           initial="enter"
           animate="center"
           exit="exit"
-          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.55, ease: [0.42, 0, 0.58, 1] }}
           aria-label={sectionLabel}
           role="region"
         >
