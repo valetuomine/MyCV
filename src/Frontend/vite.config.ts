@@ -17,6 +17,21 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      onwarn(warning, warn) {
+        const moduleId = warning.id?.replace(/\\/g, '/')
+        if (
+          warning.code === 'INVALID_ANNOTATION' &&
+          moduleId?.includes('node_modules/zod/')
+        ) {
+          return
+        }
+
+        warn(warning)
+      },
+    },
+  },
   resolve: {
     alias: {
       '@': path.resolve(path.dirname(fileURLToPath(import.meta.url)), 'src'),
