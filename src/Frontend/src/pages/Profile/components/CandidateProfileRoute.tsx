@@ -3,7 +3,7 @@ import type { JSX } from "react"
 import { useParams } from "react-router-dom"
 import { useGetCandidateQuery } from "../../../api/candidateQueries"
 import { useGetProfileQuery } from "../../../api/profileQueries"
-import CandidateCv from "./CandidateCv"
+import CandidateCv from "./CandidateCv/CandidateCv"
 
 export default function CandidateProfileRoute(): JSX.Element {
   const { candidateId } = useParams()

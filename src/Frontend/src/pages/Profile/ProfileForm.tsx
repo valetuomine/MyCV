@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import RHFInput from "../components/RHFInput"
 import useIsAdmin from "../../auth/useIsAdmin"
-import type { components } from "../../generated/openapi"
+import type { Profile } from "../../api/profileQueries"
 
 const profileSchema = z.object({
   fullName: z.string().trim().min(1, "Full name is required"),
@@ -13,7 +13,6 @@ const profileSchema = z.object({
 })
 
 type ProfileFormValues = z.infer<typeof profileSchema>
-type Profile = components["schemas"]["ProfileDto"]
 
 export default function ProfileForm({
   profile,

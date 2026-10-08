@@ -22,7 +22,7 @@ Use this workflow when recreating the MyCV frontend inside `src/Frontend`.
 
 - Prefer Tailwind utility classes for new UI styling, including layout, spacing, sizing, typography, colors, borders, shadows, responsive behavior, and interaction states.
 - Create one focused React component per `.tsx` file. Use PascalCase filenames and default-export the component, for example `Header.tsx`, `Navigation.tsx`, or `ContentSection.tsx`.
-- Keep page-specific components under `src/pages/components/` and import them with paths relative to the page, such as `./components/Header`.
+- Keep shared page components under `src/pages/components/` and feature-specific components near their owning feature, such as `src/pages/Profile/components/CandidateCv/`.
 - Define a local props interface for every component that accepts props. Use `ReactNode` for layout components that render arbitrary content through `children`.
 - Keep page state and data selection in the page component. Pass selected data and event handlers into child components through typed props instead of duplicating state in presentational components.
 - Build complex page sections through small composable components. A layout component such as `Background` or `HeaderRow` should accept `children`, while focused components such as `Navigation` or `ContentSection` should receive the data they render.
@@ -86,7 +86,7 @@ radial-gradient(
 )
 ```
 
-Define both colors in the `@theme` section of `src/index.css`; don't hardcode repeated palette values in components. Keep page content in a higher stacking context than the background. The current CV layout uses a left-aligned navigation and content, DM Serif Display for headings, and IBM Plex Sans for navigation and body copy.
+Define both colors in the `@theme` section of `src/index.css`; don't hardcode repeated palette values in components. Keep page content in a higher stacking context than the background. The current candidate CV shows the API-backed Profile followed by a “More to come...” slide; it does not use a clickable navigation bar. Mouse-wheel input and ArrowDown/ArrowUp move between slides. Keep the selected index in Jotai through `useCandidateSectionNavigation`, clamp it to the available slide count, and pass its direction to `CandidateSectionTransition` so each slide animates in from the appropriate edge. `SectionNavigationHint` provides the visible slide count and navigation instructions. Keep these CV-specific components under `src/pages/Profile/components/CandidateCv/`. Use DM Serif Display for headings and IBM Plex Sans for body copy.
 
 ## Verification
 
