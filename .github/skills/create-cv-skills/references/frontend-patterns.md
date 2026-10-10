@@ -17,6 +17,11 @@
 - Derive API response types from `src/generated/openapi.ts`. After changing API DTOs or routes, regenerate OpenAPI types from the running Development API using the frontend's `generate-types` script; do not hand-edit the generated file.
 - Add frontend dependencies only when absent; reuse the existing React Router, Redux Toolkit/RTK Query, Jotai, and React Redux packages.
 
+## Form component conventions
+
+- Define a named props interface for form-related components instead of using an inline object type in the component signature.
+- Use descriptive prop names that match the value's role (for example, `values: Profile` for form data), while keeping the appropriate domain type.
+
 ## Admin mutation safety
 
 Define Profile POST and PUT as RTK Query mutations in `profileQueries.ts`, with OpenAPI request/response types; invalidate the matching Profile query after a successful PUT.

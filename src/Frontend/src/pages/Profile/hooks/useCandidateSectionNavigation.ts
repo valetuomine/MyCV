@@ -2,7 +2,10 @@ import { useAtom } from "jotai"
 import { useEffect, useRef, useState } from "react"
 import { selectedSectionIndexAtom } from "../../../state/cvAtoms"
 
-export default function useCandidateSectionNavigation(sectionCount: number) {
+export default function useCandidateSectionNavigation(
+  sectionCount: number,
+  isNavigationEnabled = true,
+) {
   const [storedSelectedIndex, setSelectedIndex] = useAtom(
     selectedSectionIndexAtom,
   )
@@ -20,6 +23,10 @@ export default function useCandidateSectionNavigation(sectionCount: number) {
   }, [selectedIndex, setSelectedIndex, storedSelectedIndex])
 
   useEffect(() => {
+    if (!isNavigationEnabled) {
+      return
+    }
+
     const container = containerRef.current
     if (!container) {
       return
@@ -83,7 +90,7 @@ export default function useCandidateSectionNavigation(sectionCount: number) {
       container.removeEventListener("wheel", handleWheel)
       window.removeEventListener("keydown", handleKeyDown)
     }
-  }, [maxIndex, setSelectedIndex])
+  }, [isNavigationEnabled, maxIndex, setSelectedIndex])
 
   return { containerRef, direction, selectedIndex }
 }

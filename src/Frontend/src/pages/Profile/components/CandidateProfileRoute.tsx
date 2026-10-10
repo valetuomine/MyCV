@@ -39,7 +39,7 @@ export default function CandidateProfileRoute(): JSX.Element {
     )
   }
 
-  return <CandidateCv profile={profileQuery.data} />
+  return <CandidateCv values={profileQuery.data} />
 }
 
 function requestError(error: unknown, resource: string): string {

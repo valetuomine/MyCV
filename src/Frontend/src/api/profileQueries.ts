@@ -2,9 +2,9 @@ import type { components } from "../generated/openapi"
 import { baseApi } from "./baseApi"
 
 export type Profile = components["schemas"]["ProfileDto"]
-type ProfileAdmin = components["schemas"]["ProfileAdminDto"]
+export type ProfileAdmin = components["schemas"]["ProfileAdminDto"]
 type CreateProfileRequest = components["schemas"]["CreateProfileRequest"]
-type UpdateProfileRequest = components["schemas"]["UpdateProfileRequest"]
+export type UpdateProfileRequest = components["schemas"]["UpdateProfileRequest"]
 
 interface UpdateProfileArgs {
   profileId: string
