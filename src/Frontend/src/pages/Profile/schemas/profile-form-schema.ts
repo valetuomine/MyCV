@@ -3,16 +3,31 @@ import { LanguageCode } from "../../../types"
 
 const profileTranslationSchema = z.object({
   languageCode: z.enum([LanguageCode.Finnish, LanguageCode.English]),
-  title: z.string(),
-  summary: z.string().nullable(),
-  location: z.string().nullable(),
+  title: z.string().max(100, "Title must be 100 characters or fewer"),
+  summary: z
+    .string()
+    .max(2500, "Summary must be 2500 characters or fewer")
+    .nullable(),
+  location: z
+    .string()
+    .max(100, "Location must be 100 characters or fewer")
+    .nullable(),
 })
+
+const urlSchema = z
+  .string()
+  .max(500, "Link must be 500 characters or fewer")
+  .nullable()
 
 export const profileSchema = z
   .object({
-    fullName: z.string().trim().min(1, "Full name is required"),
-    linkedInUrl: z.string().nullable(),
-    gitHubUrl: z.string().nullable(),
+    fullName: z
+      .string()
+      .trim()
+      .min(1, "Full name is required")
+      .max(100, "Full name must be 100 characters or fewer"),
+    linkedInUrl: urlSchema,
+    gitHubUrl: urlSchema,
     translations: z.array(profileTranslationSchema),
   })
   .superRefine(({ translations }, context) => {
@@ -57,7 +72,11 @@ export const profileSchema = z
       context.addIssue({
         code: "custom",
         message: "Finnish title is required",
-        path: ["translations", translations.indexOf(finnishTranslation), "title"],
+        path: [
+          "translations",
+          translations.indexOf(finnishTranslation),
+          "title",
+        ],
       })
     }
   })

@@ -4,6 +4,8 @@ import { useParams } from "react-router-dom"
 import { useGetCandidateQuery } from "../../../api/candidateQueries"
 import { useGetProfileQuery } from "../../../api/profileQueries"
 import CandidateCv from "./CandidateCv/CandidateCv"
+import ProfileSkeleton from "./ProfileSkeleton"
+import RouteMessage from "./RouteMessage"
 
 export default function CandidateProfileRoute(): JSX.Element {
   const { candidateId } = useParams()
@@ -11,51 +13,74 @@ export default function CandidateProfileRoute(): JSX.Element {
     skip: !candidateId,
   })
   const profileId = candidateQuery.data?.profileId
-  const profileQuery = useGetProfileQuery(
-    profileId ? { profileId } : skipToken,
-  )
+  const profileQuery = useGetProfileQuery(profileId ? { profileId } : skipToken)
 
   if (candidateQuery.isLoading) {
-    return <p role="status">Loading candidate…</p>
+    return <ProfileSkeleton />
   }
 
   if (candidateQuery.isError) {
-    return <p role="alert">{requestError(candidateQuery.error, "Candidate")}</p>
+    const { message, retryable } = describeError(candidateQuery.error)
+    return (
+      <RouteMessage
+        tone="error"
+        onRetry={retryable ? () => void candidateQuery.refetch() : undefined}
+      >
+        {message}
+      </RouteMessage>
+    )
   }
 
   if (!profileId) {
-    return <p role="status">This candidate does not have a profile yet.</p>
+    return (
+      <RouteMessage>This candidate does not have a profile yet.</RouteMessage>
+    )
   }
 
   if (profileQuery.isLoading) {
-    return <p role="status">Loading profile…</p>
+    return <ProfileSkeleton />
   }
 
   if (profileQuery.isError || !profileQuery.data) {
+    const { message, retryable } = describeError(profileQuery.error)
     return (
-      <p role="alert">
-        {requestError(profileQuery.error, "Candidate profile")}
-      </p>
+      <RouteMessage
+        tone="error"
+        onRetry={retryable ? () => void profileQuery.refetch() : undefined}
+      >
+        {message}
+      </RouteMessage>
     )
   }
 
   return <CandidateCv values={profileQuery.data} />
 }
 
-function requestError(error: unknown, resource: string): string {
-  if (typeof error === "object" && error !== null) {
-    if ("status" in error) {
-      if (error.status === 404) {
-        return `${resource} was not found. Check the candidate ID in the URL.`
-      }
+function describeError(error: unknown): {
+  message: string
+  retryable: boolean
+} {
+  const status =
+    typeof error === "object" && error !== null && "status" in error
+      ? error.status
+      : undefined
 
-      return `${resource} request failed (${String(error.status)}).`
-    }
-
-    if ("message" in error && typeof error.message === "string") {
-      return `${resource} request failed: ${error.message}`
+  if (status === 404) {
+    return {
+      message: "We couldn't find that CV. Check the link and try again.",
+      retryable: false,
     }
   }
 
-  return `${resource} request failed.`
+  if (status === "FETCH_ERROR" || status === "TIMEOUT_ERROR") {
+    return {
+      message: "Can't reach the server. Check your connection and try again.",
+      retryable: true,
+    }
+  }
+
+  return {
+    message: "Something went wrong while loading this CV.",
+    retryable: true,
+  }
 }

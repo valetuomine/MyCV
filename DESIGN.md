@@ -1,0 +1,221 @@
+---
+name: MyCV
+description: A quiet, dark-first CV page where the candidate's name is the artwork and one emerald accent does all the signalling.
+colors:
+  accent: "#047857"
+  accent-ink: "#ffffff"
+  accent-dark: "#4fd1a5"
+  accent-ink-dark: "#04130d"
+  paper: "#fafafa"
+  surface: "#ffffff"
+  line: "#e4e4e7"
+  field-line: "#8a8a93"
+  ink: "#09090b"
+  copy: "#3f3f46"
+  muted: "#5f5f68"
+  meta: "#6e6e77"
+  danger: "#dc2626"
+  midnight: "#09090b"
+  surface-dark: "#111113"
+  line-dark: "#26262b"
+  field-line-dark: "#6b6b74"
+  ink-dark: "#f4f4f5"
+  copy-dark: "#b4b4bb"
+  muted-dark: "#9e9ea6"
+  meta-dark: "#85858e"
+  danger-dark: "#f87171"
+typography:
+  display:
+    fontFamily: "Geist Variable, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "clamp(3rem, 8.5vw, 7rem)"
+    fontWeight: 600
+    lineHeight: 0.95
+    letterSpacing: "-0.05em"
+  title:
+    fontFamily: "Geist Variable, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "1.5rem"
+    fontWeight: 500
+    lineHeight: 1.33
+    letterSpacing: "-0.025em"
+  body:
+    fontFamily: "Geist Variable, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "1.125rem"
+    fontWeight: 400
+    lineHeight: 1.625
+  label:
+    fontFamily: "Geist Mono Variable, ui-monospace, monospace"
+    fontSize: "0.75rem"
+    fontWeight: 400
+    lineHeight: 1.33
+    letterSpacing: "0.1em"
+rounded:
+  input: "0.5rem"
+  panel: "1.5rem"
+  pill: "9999px"
+spacing:
+  xs: "0.5rem"
+  sm: "0.75rem"
+  md: "1rem"
+  lg: "2.5rem"
+  xl: "3.5rem"
+  page-gutter: "clamp(1.5rem, 5vw, 5.5rem)"
+components:
+  button-primary:
+    backgroundColor: "{colors.accent}"
+    textColor: "{colors.accent-ink}"
+    rounded: "{rounded.pill}"
+    padding: "0.625rem 1.25rem"
+  button-primary-hover:
+    backgroundColor: "{colors.ink}"
+  button-secondary:
+    backgroundColor: "transparent"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.pill}"
+    padding: "0.625rem 1.25rem"
+  input:
+    backgroundColor: "{colors.paper}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.input}"
+    padding: "0.625rem 0.875rem"
+  portrait-panel:
+    backgroundColor: "{colors.surface}"
+    rounded: "{rounded.panel}"
+---
+
+# Design System: MyCV
+
+## Overview
+
+**Creative North Star: "The Quiet Exhibit"**
+
+The candidate's name is the exhibit and everything else is gallery wall. A zinc-neutral canvas, a single emerald accent and a very large, tightly tracked name carry the page. Chrome stays small: mono eyebrow labels, pill buttons and a thin-lined portrait panel. The system is dark-first in feel but ships equal light and dark themes switched by the visitor.
+
+Atmosphere comes from a faint grid, soft accent glows, film grain and a pointer-following spotlight, all low opacity and non-interactive. They add depth without competing with content. Motion is a short staggered rise-in, never a showpiece.
+
+**Key Characteristics:**
+
+- One accent colour on a zinc neutral scale; no second hue.
+- Oversized display name (up to 7rem) with tight tracking, set against small mono labels.
+- Pill-shaped actions, soft rounded panels, hairline borders.
+- Flat surfaces; depth from ambient background, not stacked cards.
+- Equal light and dark themes via semantic `cv-*` tokens.
+
+## Colors
+
+A restrained zinc palette with one emerald accent. Components use only the semantic `--cv-*` variables defined in `src/Frontend/src/index.css`, which `data-theme` on `<html>` swaps.
+
+### Primary
+
+- **Deep Emerald** (#047857, light theme): accent for the primary button, job title line and focus outlines.
+- **Mint Signal** (#4fd1a5, dark theme): the same role on dark; its ink colour is **Near-Black Green** (#04130d).
+
+### Neutral
+
+- **Paper** (#fafafa / dark #09090b): page background.
+- **Surface** (#ffffff / dark #111113): panels and the portrait card.
+- **Hairline** (#e4e4e7 / dark #26262b): decorative borders and dividers.
+- **Field Line** (#8a8a93 / dark #6b6b74): input borders; at least 3:1 against the page.
+- **Ink** (#09090b / dark #f4f4f5): headings and primary text.
+- **Copy** (#3f3f46 / dark #b4b4bb): body text.
+- **Muted** (#5f5f68 / dark #9e9ea6) and **Meta** (#6e6e77 / dark #85858e): secondary info, placeholders, update dates; both at least 4.5:1 on page and surface.
+- **Danger** (#dc2626 / dark #f87171): validation errors only.
+
+### Named Rules
+
+**The One Voice Rule.** The accent marks identity, action and focus only. It never fills large areas; glows stay at or below 10% opacity.
+
+**The Semantic Token Rule.** Components use `cv-*` utilities, never raw hex or Tailwind palette colours, so both themes stay in sync.
+
+## Typography
+
+**Display Font:** Geist Variable (self-hosted via Fontsource, with ui-sans-serif, system-ui)
+**Body Font:** Geist Variable
+**Label/Mono Font:** Geist Mono Variable (with ui-monospace)
+
+**Character:** One family at extreme size contrast, plus a mono voice for metadata. Hierarchy comes from scale, tracking and colour rather than from font changes.
+
+### Hierarchy
+
+- **Display** (600, clamp(3rem, 8.5vw, 7rem), 0.95, tracking -0.05em): the candidate's name. Section titles use clamp(3rem, 7vw, 5.5rem) at line-height 1.
+- **Title** (500, 1.25-1.5rem, tracking -0.025em): job title in accent colour.
+- **Body** (400, 1.125rem, 1.625): summary text, capped at 52ch.
+- **Label** (400 mono, 0.75rem, tracking 0.1em, uppercase): eyebrows, "Curriculum vitae", form labels.
+
+### Named Rules
+
+**The Mono Whisper Rule.** Geist Mono is for labels and metadata only, always small; never for paragraphs.
+
+## Layout
+
+A single full-height column (`min-h-dvh`) with a fluid page gutter of clamp(1.5rem, 5vw, 5.5rem). The profile view is a two-column grid at `lg` (1.5fr text, 1fr portrait) with 3.5rem to 4rem gaps; below `lg` it stacks. Text blocks are left-aligned with `max-w` caps (52ch body, 14ch section titles). The theme toggle is pinned top right in the gutter. Spacing rhythm is generous and uneven on purpose: tight between label, name and title, then 2.5rem before actions.
+
+## Elevation & Depth
+
+Flat by default. Surfaces are separated by hairline borders and tonal difference, not shadows. Depth lives in the background layer.
+
+### Shadow Vocabulary
+
+- **Panel** (`0 2rem 4rem -2rem rgb(24 24 27 / 0.18)`, dark `rgb(0 0 0 / 0.8)`): the portrait panel only.
+- **Accent glow** (`0 0.5rem 2rem -0.75rem` accent at 55%): appears only on primary button hover.
+
+### Named Rules
+
+**The Flat-By-Default Rule.** Shadows are earned: the portrait panel gets one at rest, buttons only on hover.
+
+## Shapes
+
+Three radii: **pill** (full) for buttons and the theme toggle, **panel** (1.5rem) for the portrait card, **input** (0.5rem) for form fields. 1px hairline borders everywhere. Corners never mix within a component.
+
+## Components
+
+### Buttons
+
+- **Shape:** pill (9999px), padding 0.625rem 1.25rem, 0.875rem medium text.
+- **Primary:** accent fill with accent ink text; hover turns fill to ink and adds the accent glow.
+- **Secondary:** transparent with hairline border; hover darkens border and adds a faint overlay. "Edit profile" uses the same style with a dashed border.
+- **Press / Focus:** `translate-y-px scale-[0.98]` on active; 2px accent outline, 2px offset on focus-visible; 150ms ease-out. External links add a "↗" that nudges up and right on hover.
+
+### Inputs / Fields
+
+- **Style:** 0.5rem radius, field-line border, faint wash fill, mono uppercase label above.
+- **Focus:** border becomes accent with a 3px accent ring at 20%.
+- **Error / Disabled:** danger border and ring, message below with `role="alert"`; disabled at 60% opacity.
+
+### Portrait Panel
+
+- 1.5rem radius, hairline border, surface fill, panel shadow, height clamp(20rem, 68dvh, 40rem). With no photo it shows oversized accent initials over a faint diagonal accent wash.
+
+### Theme Toggle
+
+- 2.75rem (44px) circle, hairline border, wash fill; fixed top right.
+
+### Background
+
+- Fixed non-interactive layer: two static radial-gradient glows (no blur filter), a 4rem grid masked to the upper centre, a spring-following accent spotlight moved by transform (mouse pointers only, disabled for reduced motion) and 6% grain.
+
+### Section Transitions (reserved; not in the UI while the CV has one section)
+
+The CV once paged between full-viewport sections. That code was removed when the only second section was a "More to come" placeholder. Bring these behaviours back when real content sections exist:
+
+- **Transition:** outgoing and incoming section each move 1.5rem on the Y axis and fade, 250ms, `cubic-bezier(0.23, 1, 0.32, 1)`, one section at a time (wait mode). Moving forward enters from below and exits upward; moving back reverses. Animate `y`, never a raw `transform` string, so reduced motion applies.
+- **Section content entrance:** the shared spring (stiffness 100, damping 20), 18px rise, 0.09s stagger. A section built from `ContentSection` used an eyebrow in accent mono, an h1 capped at 14ch (clamp(3rem, 7vw, 5.5rem)) and a 52ch description, entering with a 0.25s delay.
+- **Progress hint:** a bottom bar above a hairline top border: a mono counter ("01 / 02"), one 2.5rem-wide bar per section (active in accent at full width, inactive hairline at half width, scaled on X over 150ms), a "Scroll to explore" line with an arrow, and a key hint (`kbd`) visible from `sm` up. It appeared only with more than one section.
+- **Input:** wheel with a 700ms throttle, and ArrowUp and ArrowDown (ignored while focus is in an input, button, link or editable field, and when Ctrl, Alt or Meta is held).
+- **Known problems to fix when rebuilding:** wheel capture must not block Ctrl+wheel zoom or scrolling of content taller than the viewport, and touch needs a path (swipe or visible next and previous controls). Prefer one tall scroll with anchors if sections are read like a page.
+
+## Do's and Don'ts
+
+### Do:
+
+- **Do** use `cv-*` tokens and keep both themes working.
+- **Do** keep the accent to identity, action and focus.
+- **Do** let the name be the largest element on the page.
+- **Do** use the shared spring (stiffness 100, damping 20) and an 18px rise for entrances; respect reduced motion.
+- **Do** keep focus-visible outlines on every interactive element.
+
+### Don't:
+
+- **Don't** add a second accent colour or gradient fills beyond the name's ink-to-muted fade.
+- **Don't** put shadows or cards on content by default.
+- **Don't** use mono type for body copy.
+- **Don't** let background effects exceed ~10% opacity or capture pointer events.

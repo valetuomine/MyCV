@@ -1,5 +1,9 @@
 import type { JSX, SubmitEventHandler } from "react"
 import RHFInput from "../../../components/RHFInput"
+import {
+  primaryButton,
+  secondaryButton,
+} from "../../../components/buttonStyles"
 import type { ProfileSchema } from "../../schemas/profile-form-schema"
 
 interface EditableProfileFormProps {
@@ -22,13 +26,20 @@ export default function EditableProfileForm({
       noValidate
       aria-busy={isSaving}
     >
-      <h1 className="m-0 font-cv-serif text-4xl font-normal">Edit profile</h1>
-      <div className="grid w-full gap-5 sm:grid-cols-2">
+      <h1 className="m-0 font-cv-display text-4xl font-semibold tracking-tighter">
+        Edit profile
+      </h1>
+      <fieldset
+        disabled={isSaving}
+        className="m-0 grid min-w-0 gap-5 border-0 p-0 sm:grid-cols-2"
+      >
+        <legend className="sr-only">Basic details</legend>
         <RHFInput<ProfileSchema>
           name="fullName"
           label="Full name"
           isEditing
           required
+          maxLength={100}
           autoComplete="name"
         />
         <RHFInput<ProfileSchema>
@@ -36,6 +47,7 @@ export default function EditableProfileForm({
           label="GitHub"
           isEditing
           type="url"
+          maxLength={500}
           autoComplete="url"
         />
         <RHFInput<ProfileSchema>
@@ -43,69 +55,85 @@ export default function EditableProfileForm({
           label="LinkedIn"
           isEditing
           type="url"
+          maxLength={500}
           autoComplete="url"
         />
-      </div>
+      </fieldset>
       <fieldset
         disabled={isSaving}
         className="m-0 grid min-w-0 gap-5 border-0 p-0"
       >
-        <legend className="mb-2 font-cv-serif text-2xl font-normal">
+        <legend className="mb-2 flex w-full items-baseline gap-3 border-t border-cv-line pt-6 font-cv-display text-xl font-semibold tracking-tight">
           Finnish
+          <span className="font-cv-mono text-xs font-normal tracking-wide text-cv-muted uppercase">
+            Required
+          </span>
         </legend>
         <RHFInput<ProfileSchema>
           name="translations.0.title"
           label="Professional title (Finnish)"
           isEditing
           required
+          maxLength={100}
         />
         <RHFInput<ProfileSchema>
           name="translations.0.summary"
           label="Summary (Finnish)"
           isEditing
+          multiline
+          maxLength={2500}
         />
         <RHFInput<ProfileSchema>
           name="translations.0.location"
           label="Location (Finnish)"
           isEditing
+          maxLength={100}
         />
-        <legend className="mb-2 font-cv-serif text-2xl font-normal">
+      </fieldset>
+      <fieldset
+        disabled={isSaving}
+        className="m-0 grid min-w-0 gap-5 border-0 p-0"
+      >
+        <legend className="mb-2 flex w-full items-baseline gap-3 border-t border-cv-line pt-6 font-cv-display text-xl font-semibold tracking-tight">
           English
+          <span className="font-cv-mono text-xs font-normal tracking-wide text-cv-muted uppercase">
+            Optional
+          </span>
         </legend>
         <RHFInput<ProfileSchema>
           name="translations.1.title"
           label="Professional title (English)"
           isEditing
+          maxLength={100}
         />
         <RHFInput<ProfileSchema>
           name="translations.1.summary"
           label="Summary (English)"
           isEditing
+          multiline
+          maxLength={2500}
         />
         <RHFInput<ProfileSchema>
           name="translations.1.location"
           label="Location (English)"
           isEditing
+          maxLength={100}
         />
       </fieldset>
       {saveError && (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-sm text-cv-danger">
           {saveError}
         </p>
       )}
       <div className="flex flex-wrap gap-3">
-        <button
-          type="submit"
-          disabled={isSaving}
-          className="rounded border border-cv-paper bg-cv-paper px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-white hover:text-cv-paper focus-visible:outline-2 focus-visible:outline-cv-accent"
-        >
+        <button type="submit" disabled={isSaving} className={primaryButton}>
           {isSaving ? "Saving…" : "Save"}
         </button>
         <button
           type="button"
           onClick={onCancel}
           disabled={isSaving}
-          className="rounded border border-cv-muted bg-transparent px-5 py-2 text-sm font-medium text-cv-paper transition-colors hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-cv-accent"
+          className={secondaryButton}
         >
           Cancel
         </button>

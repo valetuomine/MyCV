@@ -1,37 +1,107 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
-@theme {
-  --color-cv-background: #ffffff;
-  --color-cv-gradient-edge: #475569;
-  --color-cv-paper: #111111;
-  --color-cv-muted: #626262;
-  --color-cv-accent: #222222;
-  --color-cv-copy: #404040;
-  --color-cv-meta: #777777;
-  --font-cv-serif: "DM Serif Display", Georgia, serif;
-  --font-cv-sans: "IBM Plex Sans", sans-serif;
-  --font-cv-mono: "IBM Plex Sans", sans-serif;
-  --font-cv-ui: "IBM Plex Sans", sans-serif;
-  --shadow-glow: 0 0 1rem rgb(0 0 0 / 0.12);
-  --animate-fade-up: fade-up 0.6s ease-out both;
+/*
+ * Theming: components only use semantic `cv-*` utilities (bg-cv-background,
+ * text-cv-ink, ...). Their values come from the raw `--cv-*` variables below,
+ * which are swapped by `data-theme` on <html>. To add a theme or retune a
+ * palette, change only these variable blocks.
+ */
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --cv-background: #fafafa;
+  --cv-surface: #ffffff;
+  --cv-line: #e4e4e7;
+  --cv-field-line: #8a8a93;
+  --cv-ink: #09090b;
+  --cv-copy: #3f3f46;
+  --cv-muted: #5f5f68;
+  --cv-meta: #6e6e77;
+  --cv-accent: #047857;
+  --cv-accent-ink: #ffffff;
+  --cv-danger: #dc2626;
+  --cv-wash: rgb(9 9 11 / 0.025);
+  --cv-overlay: rgb(9 9 11 / 0.05);
+  --cv-grid-line: rgb(9 9 11 / 0.05);
+  --cv-shadow-panel: 0 2rem 4rem -2rem rgb(24 24 27 / 0.18);
+}
 
-  @keyframes fade-up {
-    from {
-      opacity: 0;
-      transform: translateY(0.75rem);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --cv-background: #09090b;
+  --cv-surface: #111113;
+  --cv-line: #26262b;
+  --cv-field-line: #6b6b74;
+  --cv-ink: #f4f4f5;
+  --cv-copy: #b4b4bb;
+  --cv-muted: #9e9ea6;
+  --cv-meta: #85858e;
+  --cv-accent: #4fd1a5;
+  --cv-accent-ink: #04130d;
+  --cv-danger: #f87171;
+  --cv-wash: rgb(255 255 255 / 0.03);
+  --cv-overlay: rgb(255 255 255 / 0.06);
+  --cv-grid-line: rgb(255 255 255 / 0.045);
+  --cv-shadow-panel: 0 2rem 4rem -2rem rgb(0 0 0 / 0.8);
+}
+
+@theme inline {
+  --color-cv-background: var(--cv-background);
+  --color-cv-surface: var(--cv-surface);
+  --color-cv-line: var(--cv-line);
+  --color-cv-field: var(--cv-field-line);
+  --color-cv-ink: var(--cv-ink);
+  --color-cv-copy: var(--cv-copy);
+  --color-cv-muted: var(--cv-muted);
+  --color-cv-meta: var(--cv-meta);
+  --color-cv-accent: var(--cv-accent);
+  --color-cv-accent-ink: var(--cv-accent-ink);
+  --color-cv-danger: var(--cv-danger);
+  --color-cv-wash: var(--cv-wash);
+  --color-cv-overlay: var(--cv-overlay);
+  --shadow-cv-panel: var(--cv-shadow-panel);
+  --shadow-cv-accent: 0 0.5rem 2rem -0.75rem
+    color-mix(in srgb, var(--cv-accent) 55%, transparent);
+}
+
+@theme {
+  --font-cv-display: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-cv-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-cv-mono: "Geist Mono Variable", ui-monospace, monospace;
+}
+
+@utility bg-cv-grid {
+  background-image:
+    linear-gradient(to right, var(--cv-grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--cv-grid-line) 1px, transparent 1px);
+  background-size: 4rem 4rem;
+  mask-image: radial-gradient(70% 60% at 50% 30%, #000 20%, transparent 100%);
+}
+
+@utility bg-cv-glow {
+  background-image: radial-gradient(
+    closest-side,
+    var(--glow, var(--cv-accent)),
+    transparent
+  );
+}
+
+@utility bg-cv-spotlight {
+  background-image: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--cv-accent) 9%, transparent),
+    transparent 70%
+  );
+}
+
+@utility bg-cv-grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 :root {
   font-family: var(--font-cv-sans);
-  color: var(--color-cv-paper);
-  background: var(--color-cv-background);
+  color: var(--cv-ink);
+  background: var(--cv-background);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -44,6 +114,11 @@
 
 body {
   min-width: 320px;
-  min-height: 100vh;
+  min-height: 100dvh;
   margin: 0;
+}
+
+::selection {
+  background: var(--cv-accent);
+  color: var(--cv-accent-ink);
 }

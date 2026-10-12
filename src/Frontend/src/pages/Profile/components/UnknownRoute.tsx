@@ -2,5 +2,9 @@ import type { JSX } from "react"
 import RouteMessage from "./RouteMessage"
 
 export default function UnknownRoute(): JSX.Element {
-  return <RouteMessage>That page could not be found.</RouteMessage>
+  return (
+    <RouteMessage description="The link may be mistyped or the CV may have moved. Check the address, or open a CV with its candidate ID.">
+      We couldn't find that page.
+    </RouteMessage>
+  )
 }

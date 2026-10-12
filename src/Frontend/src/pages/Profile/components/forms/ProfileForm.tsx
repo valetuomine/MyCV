@@ -24,13 +24,9 @@ import ReadOnlyProfileForm from "./ReadOnlyProfileForm"
 
 interface ProfileFormProps {
   values: Profile
-  onEditingChange: (isEditing: boolean) => void
 }
 
-export default function ProfileForm({
-  values,
-  onEditingChange,
-}: ProfileFormProps): JSX.Element {
+export default function ProfileForm({ values }: ProfileFormProps): JSX.Element {
   const hasAdminMode = useIsAdmin()
   const isAdmin = import.meta.env.DEV && hasAdminMode
   const [isEditing, setIsEditing] = useState(false)
@@ -68,7 +64,7 @@ export default function ProfileForm({
         profileId: values.id,
         body: toUpdateProfileRequest(data),
       }).unwrap()
-      changeEditingState(false)
+      setIsEditing(false)
     } catch (error: unknown) {
       setSaveError(getProfileFormError(error, "Profile update"))
     }
@@ -77,17 +73,12 @@ export default function ProfileForm({
   const cancelEditing = (): void => {
     reset(formValues)
     setSaveError(undefined)
-    changeEditingState(false)
+    setIsEditing(false)
   }
 
   const startEditing = (): void => {
     setSaveError(undefined)
-    changeEditingState(true)
-  }
-
-  const changeEditingState = (editing: boolean): void => {
-    setIsEditing(editing)
-    onEditingChange(editing)
+    setIsEditing(true)
   }
 
   const isError = !values.id
@@ -98,7 +89,7 @@ export default function ProfileForm({
 
   return (
     <FormProvider {...profileForm}>
-      <div className="grid w-full justify-items-start gap-8 sm:pl-[clamp(0rem,8vw,7rem)]">
+      <div className="grid w-full gap-8">
         {isEditing ? (
           profileAdminQuery.data ? (
             <EditableProfileForm

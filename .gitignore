@@ -30,3 +30,9 @@ docs/azure-deployment.md
 # OS/editor files
 .DS_Store
 Thumbs.db
+
+# Impeccable (installed locally via npx impeccable install)
+.impeccable/
+.github/skills/impeccable/
+.github/agents/impeccable-*.agent.md
+.github/hooks/impeccable.json

@@ -1,6 +1,6 @@
 ---
 name: setup-frontend
-description: 'Set up or recreate the MyCV frontend with React, TypeScript, Vite, Tailwind CSS, and the white radial-gradient CV design. Use when rebuilding the frontend shell, typography, theme, or background.'
+description: 'Set up or recreate the MyCV frontend with React, TypeScript, Vite, Tailwind CSS, and the dark emerald-accent CV design. Use when rebuilding the frontend shell, typography, theme, or background.'
 argument-hint: '[optional frontend setup or background change]'
 user-invocable: true
 ---
@@ -14,8 +14,9 @@ Use this workflow when recreating the MyCV frontend inside `src/Frontend`.
 - React with TypeScript
 - Vite using the `react-ts` template
 - Tailwind CSS v4 with `@tailwindcss/vite`
-- CSS radial-gradient background, themed through CSS custom properties
-- DM Serif Display headings and IBM Plex Sans interface/body text
+- CSS-layered background (glows, grid, grain, cursor spotlight) with light and dark themes through CSS custom properties
+- Framer Motion for motion, Jotai for UI state (section index, theme)
+- Geist headings/body text and Geist Mono labels
 - Node.js `24.21.0` managed with NVM
 
 ## Frontend Conventions
@@ -28,7 +29,7 @@ Use this workflow when recreating the MyCV frontend inside `src/Frontend`.
 - Build complex page sections through small composable components. A layout component such as `Background` or `HeaderRow` should accept `children`, while focused components such as `Navigation` or `ContentSection` should receive the data they render.
 - Use `type JSX` and `type ReactNode` imports from `react` when needed, and keep component files free of unused React imports.
 - Put shared application types in `src/types.ts`, then import them where needed. For finite string values used both at runtime and as prop types, export a `const` object with `as const` and derive the corresponding type from its values (for example, `export const InputType = { Email: "email" } as const` and `export type InputType = (typeof InputType)[keyof typeof InputType]`). This supports named values without TypeScript enums, which are incompatible with `erasableSyntaxOnly`. Keep component-only props interfaces local to their component.
-- Define recurring colors, fonts, and shadows as named `@theme` tokens in `src/index.css`, then use their generated utilities (for example, `bg-cv-accent` and `font-cv-mono`) instead of repeating arbitrary values.
+- Define recurring colors as themed `--cv-*` variables exposed through `@theme inline` in `src/index.css`, and fonts and other tokens in `@theme`, then use their generated utilities (for example, `bg-cv-accent` and `font-cv-mono`) instead of repeating arbitrary values. Never use `white`, `black`, or hex values in components.
 - Prefer Tailwind's standard scale when it matches the intended value (for example, use `max-w-7xl` for `80rem`). Use arbitrary values only when the standard scale does not express the design cleanly.
 - Add custom CSS only when Tailwind cannot express the behavior clearly, such as complex animations, pseudo-elements, WebGL or canvas surfaces, or reusable behavior that would make JSX difficult to read.
 - Keep custom CSS scoped to its owning component or an intentional shared global concern. Do not add a custom CSS class when an equivalent, readable Tailwind composition is available.
@@ -68,25 +69,51 @@ Pop-Location
 Configure the Vite alias `@` to resolve to `src`, add `@/*` to `tsconfig.app.json`, and import Tailwind in `src/index.css`:
 
 ```css
-@import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap");
 @import "tailwindcss";
 ```
 
-Define design colors and font families as `@theme` variables in `src/index.css`.
+Define the theme variables, font tokens, and the `bg-cv-grid`/`bg-cv-grain` utilities in `src/index.css` as described in the design system below.
+
+## Design System
+
+The look is a modern, editorial developer CV: left-aligned asymmetric layouts, large tight Geist display type, one emerald accent, and quiet surfaces. It was designed with the taste-skill set (`design-taste-frontend`, `redesign-existing-projects`) installed in the git-ignored `src/Frontend/.agents/skills` and `.claude/skills` folders and recorded in `src/Frontend/skills-lock.json`; read those skills for deeper guidance before redesigning.
+
+### Theming (light and dark)
+
+- Raw palette variables (`--cv-background`, `--cv-surface`, `--cv-line`, `--cv-ink`, `--cv-copy`, `--cv-muted`, `--cv-meta`, `--cv-accent`, `--cv-accent-ink`, `--cv-danger`, `--cv-wash`, `--cv-overlay`, `--cv-grid-line`, `--cv-shadow-panel`) live in two blocks in `src/index.css`: `:root, :root[data-theme="light"]` and `:root[data-theme="dark"]`. Retuning or adding a theme edits only those blocks.
+- `@theme inline` maps them to Tailwind utilities (`bg-cv-background`, `text-cv-ink`, `border-cv-line`, `bg-cv-overlay`, `shadow-cv-panel`). Components use only these semantic utilities.
+- Light theme uses a darker emerald accent for contrast; dark theme uses a mint accent. `--cv-accent-ink` is the text colour on accent fills.
+- `ThemeToggle` (rendered by `Background`, top-right) stores the choice in `themeAtom` (`src/state/themeAtoms.ts`, Jotai `atomWithStorage`, key `cv-theme`, default from `prefers-color-scheme`) and sets `data-theme` on `<html>`. An inline script in `index.html` applies the theme before first paint to avoid a flash; keep its storage key in sync with `themeStorageKey`.
+- The `Theme` const object lives in `src/types.ts`.
+
+### Visual rules
+
+- One accent colour only, saturation kept moderate, one neutral (zinc) gray family. No purple/blue "AI gradient", no pure `#000`, no warm cream/brass palettes.
+- Typography: Geist for display and body, Geist Mono for small uppercase labels and metadata. Display text uses negative tracking (`tracking-tighter`), tight leading, `text-balance`; body copy stays within about 52–65ch with `text-pretty`. No serif fonts.
+- Layout: left-aligned and asymmetric (text column plus portrait column), `max-w-7xl` container, `min-h-dvh` instead of `100vh`, generous whitespace. Avoid centered heroes and three-equal-card rows.
+- Surfaces: use borders (`border-cv-line`), `divide-y`, or spacing instead of heavy cards; shadows come from `shadow-cv-panel`/`shadow-cv-accent` and are tinted, never plain black. One radius scale: full pills for buttons and toggles, `rounded-3xl` for large framed media, `rounded-lg` for inputs.
+- Buttons come from `src/pages/components/buttonStyles.ts` (`primaryButton`, `secondaryButton`, `externalLinkArrow`) and always have hover, `active` press feedback (`active:scale-[0.98]`), and a visible `focus-visible` outline.
+- Do not duplicate information: the role appears once (hero subtitle). Location (with pin icon) and the last-updated date appear in the left hero text.
+
+### Motion
+
+- Use Framer Motion with spring physics (`type: "spring", stiffness: 100, damping: 20`) and staggered entry (`staggerChildren`) instead of linear easing or mounting everything at once. Animate only `transform` and `opacity`.
+- Wrap CV pages in `MotionConfig reducedMotion="user"` so reduced-motion preferences are honored.
+- Keep infinite loops to small status details (pulse dot, hint arrow, skeleton shimmer).
+
+### States
+
+- Loading, error, empty, and not-found screens render through `RouteMessage` (props `tone` and `showHomeButton`); never show bare unstyled text.
+- Placeholder content uses skeleton bars (`animate-cv-shimmer`), not spinners.
+- Form errors render inline under the field with `role="alert"` and `aria-describedby`, using `text-cv-danger`.
+- The profile photo slot is `ProfilePortrait`: it shows the image when an `imageUrl` exists, otherwise a monogram. The API has no photo field yet.
 
 ## CV Background and Layout
 
-`src/pages/components/Background.tsx` owns the page background and content layer. Keep the background decorative and behind the content, with `aria-hidden="true"` and `pointer-events-none`. The current treatment is a radial gradient from white near the top center to the slate edge color:
+`src/pages/components/Background.tsx` owns the page background and content layer. Keep the background decorative and behind the content, with `aria-hidden="true"` and `pointer-events-none`. It layers soft accent glows, a masked grid (`bg-cv-grid`), a grain overlay (`bg-cv-grain`, both custom `@utility` classes in `src/index.css`), and a mouse-following spotlight driven by Framer Motion values. Keep page content in a higher stacking context than the background. Use a single `<main>` landmark per page (`Background` renders a `div`).
 
-```css
-radial-gradient(
-  125% 125% at 50% 10%,
-  var(--color-cv-background) 40%,
-  var(--color-cv-gradient-edge) 100%
-)
-```
-
-Define both colors in the `@theme` section of `src/index.css`; don't hardcode repeated palette values in components. Keep page content in a higher stacking context than the background. The current candidate CV shows the API-backed Profile followed by a “More to come...” slide; it does not use a clickable navigation bar. Mouse-wheel input and ArrowDown/ArrowUp move between slides. Keep the selected index in Jotai through `useCandidateSectionNavigation`, clamp it to the available slide count, and pass its direction to `CandidateSectionTransition` so each slide animates in from the appropriate edge. `SectionNavigationHint` provides the visible slide count and navigation instructions. Keep these CV-specific components under `src/pages/Profile/components/CandidateCv/`. Use DM Serif Display for headings and IBM Plex Sans for body copy.
+The candidate CV shows the API-backed Profile (left text column plus the portrait on the right) followed by a "More to come" slide; it does not use a clickable navigation bar. Mouse-wheel input and ArrowDown/ArrowUp move between slides. Keep the selected index in Jotai through `useCandidateSectionNavigation`, clamp it to the available slide count, and pass its direction to `CandidateSectionTransition` so each slide animates in from the appropriate edge. `SectionNavigationHint` provides the visible slide count, progress, and navigation instructions. Keep these CV-specific components under `src/pages/Profile/components/CandidateCv/`.
 
 ## Verification
 

@@ -25,3 +25,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Installed agent skills (restorable from skills-lock.json)
+.agents/skills
+.claude/skills

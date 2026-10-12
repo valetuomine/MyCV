@@ -1,4 +1,5 @@
 import type { JSX } from "react"
+import { secondaryButton } from "../../../components/buttonStyles"
 
 interface ProfileFormStatusProps {
   error?: string
@@ -13,14 +14,13 @@ export default function ProfileFormStatus({
 }: ProfileFormStatusProps): JSX.Element {
   return (
     <div className="grid gap-3" aria-busy={isLoading}>
-      <p role={error ? "alert" : "status"}>
+      <p
+        role={error ? "alert" : "status"}
+        className={error ? "text-cv-danger" : "text-cv-copy"}
+      >
         {error ?? "Loading profile details…"}
       </p>
-      <button
-        type="button"
-        onClick={onCancel}
-        className="w-fit rounded border border-cv-muted bg-transparent px-5 py-2 text-sm font-medium text-cv-paper transition-colors hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-cv-accent"
-      >
+      <button type="button" onClick={onCancel} className={`${secondaryButton} w-fit`}>
         Cancel
       </button>
     </div>

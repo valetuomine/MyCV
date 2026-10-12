@@ -1,56 +1,26 @@
-import { useState, type JSX } from "react"
+import { useEffect, type JSX } from "react"
 import type { Profile } from "../../../../api/profileQueries"
-import Background from "../../../components/Background"
-import CandidateSectionTransition from "./CandidateSectionTransition"
-import SectionNavigationHint from "./SectionNavigationHint"
-import ContentSection from "../../../components/ContentSection"
 import ProfileForm from "../forms/ProfileForm"
-import useCandidateSectionNavigation from "../../hooks/useCandidateSectionNavigation"
-
-const sections = [
-  {
-    label: "Profile",
-  },
-  {
-    label: "More to come...",
-  },
-]
 
 interface CandidateCvProps {
   values: Profile
 }
 
 export default function CandidateCv({ values }: CandidateCvProps): JSX.Element {
-  const [isEditing, setIsEditing] = useState(false)
-  const { containerRef, direction, selectedIndex } =
-    useCandidateSectionNavigation(sections.length, !isEditing)
-
-  const selectedSection = sections[selectedIndex]
+  useEffect(() => {
+    document.title = values.fullName ? `${values.fullName} · CV` : "MyCV"
+    return () => {
+      document.title = "MyCV"
+    }
+  }, [values.fullName])
 
   return (
-    <Background>
-      <div
-        ref={containerRef}
-        className="mx-auto flex min-h-screen w-full max-w-6xl flex-col py-6 sm:py-8"
-      >
-        <CandidateSectionTransition
-          direction={direction}
-          sectionIndex={selectedIndex}
-          sectionLabel={selectedSection.label}
-        >
-          {selectedIndex === 0 ? (
-            <ProfileForm values={values} onEditingChange={setIsEditing} />
-          ) : (
-            <ContentSection section={{ title: selectedSection.label }} />
-          )}
-        </CandidateSectionTransition>
-        {!isEditing && (
-          <SectionNavigationHint
-            selectedIndex={selectedIndex}
-            sectionCount={sections.length}
-          />
-        )}
+    <main className="mx-auto flex min-h-dvh w-full max-w-7xl flex-col pt-20 lg:pt-4">
+      <div className="flex flex-1 items-center overflow-clip py-12 sm:py-16">
+        <div className="w-full">
+          <ProfileForm values={values} />
+        </div>
       </div>
-    </Background>
+    </main>
   )
 }
