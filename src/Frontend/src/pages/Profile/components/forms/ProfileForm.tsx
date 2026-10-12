@@ -28,7 +28,7 @@ interface ProfileFormProps {
 
 export default function ProfileForm({ values }: ProfileFormProps): JSX.Element {
   const hasAdminMode = useIsAdmin()
-  const isAdmin = import.meta.env.DEV && hasAdminMode
+  const isAdmin = hasAdminMode
   const [isEditing, setIsEditing] = useState(false)
   const [saveError, setSaveError] = useState<string>()
   const [updateProfile, updateProfileState] = useUpdateProfileMutation()

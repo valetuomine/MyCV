@@ -5,6 +5,7 @@ import {
   useSpring,
 } from "framer-motion"
 import type { JSX, PointerEvent, ReactNode } from "react"
+import SignOutButton from "../../auth/SignOutButton"
 import ThemeToggle from "./ThemeToggle"
 
 interface BackgroundProps {
@@ -47,7 +48,8 @@ export default function Background({ children }: BackgroundProps): JSX.Element {
         <div className="absolute inset-0 bg-cv-grain opacity-[0.06]" />
       </div>
       <div className="relative z-10 min-h-dvh px-6 sm:px-[clamp(1.5rem,5vw,5.5rem)]">
-        <div className="absolute top-5 right-6 z-20 sm:right-[clamp(1.5rem,5vw,5.5rem)]">
+        <div className="absolute top-5 right-6 z-20 flex items-start gap-2 sm:right-[clamp(1.5rem,5vw,5.5rem)]">
+          <SignOutButton />
           <ThemeToggle />
         </div>
         {children}

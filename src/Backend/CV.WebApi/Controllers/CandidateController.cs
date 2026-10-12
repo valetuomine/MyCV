@@ -1,5 +1,6 @@
 using CV.LogicInterface.Dto.Candidate;
 using CV.LogicInterface.ServiceInterfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RouteAttribute = Microsoft.AspNetCore.Mvc.RouteAttribute;
 
@@ -21,6 +22,7 @@ namespace CV.WebApi.Controllers
         }
 
         [HttpDelete("{candidateId:guid}")]
+        [Authorize(Policy = "CvAdmin")]
         public async Task<IActionResult> DeleteCandidate(Guid candidateId, CancellationToken cancellationToken)
         {
             await _candidateService.DeleteCandidate(candidateId, cancellationToken);

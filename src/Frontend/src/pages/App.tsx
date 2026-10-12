@@ -1,6 +1,8 @@
 import { lazy, Suspense, type JSX } from "react"
 import { LazyMotion, MotionConfig, domAnimation } from "framer-motion"
 import { Route, Routes } from "react-router-dom"
+import AdminLoginRoute from "../auth/AdminLoginRoute"
+import AuthCallbackRoute from "../auth/AuthCallbackRoute"
 import Background from "./components/Background"
 import Home from "./Profile/components/Home"
 import ProfileSkeleton from "./Profile/components/ProfileSkeleton"
@@ -22,6 +24,8 @@ export default function App(): JSX.Element {
         <Background>
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/auth/callback" element={<AuthCallbackRoute />} />
+            <Route path="/:candidateId/admin" element={<AdminLoginRoute />} />
             <Route
               path="/:candidateId"
               element={
