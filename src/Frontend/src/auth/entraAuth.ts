@@ -67,22 +67,3 @@ export async function acquireApiAuthenticationResult(
     return null
   }
 }
-
-export function tokenHasCvAdminRole(accessToken: string): boolean {
-  try {
-    const encodedPayload = accessToken.split(".")[1]
-    if (!encodedPayload) {
-      return false
-    }
-
-    const normalizedPayload = encodedPayload
-      .replace(/-/g, "+")
-      .replace(/_/g, "/")
-      .padEnd(Math.ceil(encodedPayload.length / 4) * 4, "=")
-    const claims = JSON.parse(atob(normalizedPayload)) as { roles?: unknown }
-
-    return Array.isArray(claims.roles) && claims.roles.includes("CvAdmin")
-  } catch {
-    return false
-  }
-}

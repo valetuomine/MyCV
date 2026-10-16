@@ -31,6 +31,11 @@ namespace CV.LogicInterface.Dto.Profile
         public Guid? CandidateId { get; set; }
 
         /// <summary>
+        /// Gets or sets the immutable public URL segment of the associated candidate.
+        /// </summary>
+        public string? PublicUrlSegment { get; set; }
+
+        /// <summary>
         /// Gets or sets the candidate's LinkedIn profile URL, shared across languages.
         /// </summary>
         public string? LinkedInUrl { get; set; }

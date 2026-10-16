@@ -8,18 +8,24 @@ namespace CV.LogicInterface.ServiceInterfaces
     public interface ICandidateService
     {
         /// <summary>
-        /// Retrieves a candidate by its identifier.
+        /// Retrieves a candidate by its public URL segment.
         /// </summary>
-        /// <param name="candidateId">The identifier of the candidate to retrieve.</param>
+        /// <param name="publicUrlSegment">The public URL segment of the candidate to retrieve.</param>
         /// <param name="cancellationToken">The token used to cancel the operation.</param>
         /// <returns>The candidate matching the specified identifier.</returns>
-        Task<CandidateDto> GetCandidate(Guid candidateId, CancellationToken cancellationToken = default);
+        Task<CandidateDto> GetCandidateByPublicUrlSegment(
+            string publicUrlSegment,
+            CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Deletes a candidate and its related rows.
         /// </summary>
         /// <param name="candidateId">The identifier of the candidate to delete.</param>
         /// <param name="cancellationToken">The token used to cancel the operation.</param>
-        Task DeleteCandidate(Guid candidateId, CancellationToken cancellationToken = default);
+        Task DeleteCandidate(
+            Guid candidateId,
+            string? actorObjectId,
+            bool canManageAny,
+            CancellationToken cancellationToken = default);
     }
 }

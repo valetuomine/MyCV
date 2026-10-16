@@ -2,7 +2,12 @@ import { InteractionStatus } from "@azure/msal-browser"
 import { useMsal } from "@azure/msal-react"
 import { useEffect, useRef, type JSX } from "react"
 import { useNavigate } from "react-router-dom"
-import { returnCandidateKey } from "./AdminLoginRoute"
+import {
+  clearLoginReturnPaths,
+  returnPublicUrlSegmentKey,
+  returnAdminPathKey,
+} from "../adminLoginStorage"
+import { RoutePaths } from "../../routePaths"
 
 export default function AuthCallbackRoute(): JSX.Element {
   const { accounts, inProgress, instance } = useMsal()
@@ -14,17 +19,21 @@ export default function AuthCallbackRoute(): JSX.Element {
       return
     }
 
-    const candidateId = sessionStorage.getItem(returnCandidateKey)
-    sessionStorage.removeItem(returnCandidateKey)
+    const publicUrlSegment = sessionStorage.getItem(returnPublicUrlSegmentKey)
+    const returnAdminPath = sessionStorage.getItem(returnAdminPathKey)
+    clearLoginReturnPaths()
 
     if (accounts[0]) {
       instance.setActiveAccount(accounts[0])
     }
 
-    navigate(
-      accounts[0] && candidateId ? `/${encodeURIComponent(candidateId)}` : "/",
-      { replace: true },
-    )
+    const destination =
+      accounts[0] && returnAdminPath === RoutePaths.AdminCreateProfile
+        ? RoutePaths.AdminCreateProfile
+        : accounts[0] && publicUrlSegment
+          ? RoutePaths.CandidateProfile(publicUrlSegment)
+          : RoutePaths.Home
+    navigate(destination, { replace: true })
     hasNavigated.current = true
   }, [accounts, inProgress, instance, navigate])
 

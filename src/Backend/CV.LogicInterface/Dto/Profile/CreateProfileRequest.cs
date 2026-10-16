@@ -14,6 +14,11 @@ namespace CV.LogicInterface.Dto.Profile
         public Guid? CandidateId { get; set; }
 
         /// <summary>
+        /// Gets or sets the unique public URL segment for a new candidate.
+        /// </summary>
+        public string? PublicUrlSegment { get; set; }
+
+        /// <summary>
         /// Gets or sets the candidate's full name.
         /// </summary>
         public string FullName { get; set; } = null!;

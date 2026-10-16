@@ -32,17 +32,31 @@ namespace CV.DataAccess.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("OwnerEntraObjectId")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
                     b.Property<Guid?>("ProfileId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PublicUrlSegment")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("OwnerEntraObjectId");
+
                     b.HasIndex("ProfileId")
                         .IsUnique()
                         .HasFilter("[ProfileId] IS NOT NULL");
+
+                    b.HasIndex("PublicUrlSegment")
+                        .IsUnique();
 
                     b.ToTable("Candidate", (string)null);
                 });

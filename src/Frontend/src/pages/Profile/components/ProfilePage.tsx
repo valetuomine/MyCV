@@ -1,12 +1,12 @@
 import { useEffect, type JSX } from "react"
-import type { Profile } from "../../../../api/profileQueries"
-import ProfileForm from "../forms/ProfileForm"
+import type { Profile } from "../../../api/profileQueries"
+import ProfileForm from "./forms/ProfileForm"
 
-interface CandidateCvProps {
+interface ProfilePageProps {
   values: Profile
 }
 
-export default function CandidateCv({ values }: CandidateCvProps): JSX.Element {
+export default function ProfilePage({ values }: ProfilePageProps): JSX.Element {
   useEffect(() => {
     document.title = values.fullName ? `${values.fullName} · CV` : "MyCV"
     return () => {

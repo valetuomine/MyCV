@@ -3,7 +3,7 @@ import { baseApi } from "./baseApi"
 
 export type Profile = components["schemas"]["ProfileDto"]
 export type ProfileAdmin = components["schemas"]["ProfileAdminDto"]
-type CreateProfileRequest = components["schemas"]["CreateProfileRequest"]
+export type CreateProfileRequest = components["schemas"]["CreateProfileRequest"]
 export type UpdateProfileRequest = components["schemas"]["UpdateProfileRequest"]
 
 interface UpdateProfileArgs {
@@ -39,8 +39,8 @@ export const profileQueries = baseApi.injectEndpoints({
         body,
       }),
       invalidatesTags: (result) =>
-        result?.candidateId
-          ? [{ type: "Candidate", id: result.candidateId }]
+        result?.publicUrlSegment
+          ? [{ type: "Candidate", id: result.publicUrlSegment }]
           : [],
     }),
     updateProfile: builder.mutation<ProfileAdmin, UpdateProfileArgs>({

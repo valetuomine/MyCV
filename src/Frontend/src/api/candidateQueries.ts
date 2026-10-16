@@ -6,10 +6,10 @@ type Candidate = components["schemas"]["CandidateDto"]
 export const candidateQueries = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getCandidate: builder.query<Candidate, string>({
-      query: (candidateId) =>
-        `/api/Candidate/${encodeURIComponent(candidateId)}`,
-      providesTags: (_result, _error, candidateId) => [
-        { type: "Candidate", id: candidateId },
+      query: (publicUrlSegment) =>
+        `/api/Candidate/${encodeURIComponent(publicUrlSegment)}`,
+      providesTags: (_result, _error, publicUrlSegment) => [
+        { type: "Candidate", id: publicUrlSegment },
       ],
     }),
   }),

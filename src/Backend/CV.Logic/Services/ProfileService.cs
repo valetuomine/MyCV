@@ -5,23 +5,40 @@ using CV.Logic.Mappers;
 using CV.LogicInterface.Dto.Profile;
 using CV.LogicInterface.ServiceInterfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Text.RegularExpressions;
 
 namespace CV.Logic.Services
 {
-    public class ProfileService(CvContext dataContext) : BaseService(dataContext), IProfileService
+    public partial class ProfileService(CvContext dataContext) : BaseService(dataContext), IProfileService
     {
         private readonly CvContext _dataContext = dataContext;
         private static readonly HashSet<string> SupportedLanguageCodes = ["fi", "en"];
 
-        public async Task<ProfileAdminDto> CreateProfile(CreateProfileRequest request, CancellationToken cancellationToken = default)
+        [GeneratedRegex("^[a-z0-9]+(?:-[a-z0-9]+)*$", RegexOptions.None, matchTimeoutMilliseconds: 100)]
+        private static partial Regex PublicUrlSegmentRegex();
+
+        public async Task<ProfileAdminDto> CreateProfile(
+            CreateProfileRequest request,
+            string ownerObjectId,
+            bool canManageAny,
+            CancellationToken cancellationToken = default)
         {
             ValidateRequest(request.FullName, request.Translations);
+            if (string.IsNullOrWhiteSpace(ownerObjectId))
+            {
+                throw new BadRequestException("The authenticated Entra object ID is required.");
+            }
 
             var dbProfile = request.MapRequestToEntity();
             Candidate? dbCandidate = null;
 
             if (request.CandidateId is Guid candidateId)
             {
+                if (!canManageAny)
+                {
+                    throw new NotFoundException($"Candidate not found with Id: {candidateId}");
+                }
+
                 var candidate = await _dataContext.Candidate
                     .FirstOrDefaultAsync(ca => ca.Id == candidateId, cancellationToken)
                     ?? throw new NotFoundException($"Candidate not found with Id: {candidateId}");
@@ -36,7 +53,16 @@ namespace CV.Logic.Services
             }
             else
             {
-                dbCandidate = dbProfile.MapProfileIdToCandidate();
+                var publicUrlSegment = NormalizeAndValidatePublicUrlSegment(request.PublicUrlSegment);
+                if (await _dataContext.Candidate.AnyAsync(
+                    candidate => candidate.PublicUrlSegment == publicUrlSegment,
+                    cancellationToken))
+                {
+                    throw new BadRequestException(
+                        $"A public CV with URL segment '{publicUrlSegment}' already exists.");
+                }
+
+                dbCandidate = dbProfile.MapProfileIdToCandidate(publicUrlSegment, ownerObjectId);
             }
 
             await _dataContext.Profile.AddAsync(dbProfile, cancellationToken);
@@ -48,6 +74,7 @@ namespace CV.Logic.Services
 
             var result = dbProfile.MapEntityToAdminDto();
             result.CandidateId = dbCandidate.Id;
+            result.PublicUrlSegment = dbCandidate.PublicUrlSegment;
             return result;
         }
 
@@ -68,12 +95,18 @@ namespace CV.Logic.Services
                 ?? throw new NotFoundException($"Profile not found with Id: {profileId}");
         }
 
-        public async Task<ProfileAdminDto> GetProfileAdmin(Guid profileId, CancellationToken cancellationToken = default)
+        public async Task<ProfileAdminDto> GetProfileAdmin(
+            Guid profileId,
+            string? actorObjectId,
+            bool canManageAny,
+            CancellationToken cancellationToken = default)
         {
             if (profileId == Guid.Empty)
             {
                 throw new BadRequestException($"Invalid profile ID: {profileId}");
             }
+
+            await EnsureCanManageProfile(profileId, actorObjectId, canManageAny, cancellationToken);
 
             var dbProfile = await _dataContext.Profile
                 .Include(profile => profile.Translations)
@@ -82,21 +115,30 @@ namespace CV.Logic.Services
                 ?? throw new NotFoundException($"Profile not found with Id: {profileId}");
 
             var result = dbProfile.MapEntityToAdminDto();
-            result.CandidateId = await _dataContext.Candidate
+            var candidate = await _dataContext.Candidate
                 .AsNoTracking()
                 .Where(candidate => candidate.ProfileId == profileId)
-                .Select(candidate => (Guid?)candidate.Id)
+                .Select(candidate => new { candidate.Id, candidate.PublicUrlSegment })
                 .FirstOrDefaultAsync(cancellationToken);
+
+            result.CandidateId = candidate?.Id;
+            result.PublicUrlSegment = candidate?.PublicUrlSegment;
 
             return result;
         }
 
-        public async Task DeleteProfile(Guid profileId, CancellationToken cancellationToken = default)
+        public async Task DeleteProfile(
+            Guid profileId,
+            string? actorObjectId,
+            bool canManageAny,
+            CancellationToken cancellationToken = default)
         {
             if (profileId == Guid.Empty)
             {
                 throw new BadRequestException($"Invalid profile ID: {profileId}");
             }
+
+            await EnsureCanManageProfile(profileId, actorObjectId, canManageAny, cancellationToken);
 
             var dbProfile = await _dataContext.Profile
                 .FirstOrDefaultAsync(profile => profile.Id == profileId, cancellationToken)
@@ -111,12 +153,19 @@ namespace CV.Logic.Services
             await _dataContext.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task<ProfileAdminDto> UpdateProfile(Guid profileId, UpdateProfileRequest request, CancellationToken cancellationToken = default)
+        public async Task<ProfileAdminDto> UpdateProfile(
+            Guid profileId,
+            UpdateProfileRequest request,
+            string? actorObjectId,
+            bool canManageAny,
+            CancellationToken cancellationToken = default)
         {
             if (profileId == Guid.Empty)
             {
                 throw new BadRequestException($"Invalid profile ID: {profileId}");
             }
+
+            await EnsureCanManageProfile(profileId, actorObjectId, canManageAny, cancellationToken);
 
             ValidateRequest(request.FullName, request.Translations);
 
@@ -129,11 +178,13 @@ namespace CV.Logic.Services
             await _dataContext.SaveChangesAsync(cancellationToken);
 
             var result = dbProfile.MapEntityToAdminDto();
-            result.CandidateId = await _dataContext.Candidate
+            var candidate = await _dataContext.Candidate
                 .AsNoTracking()
                 .Where(candidate => candidate.ProfileId == profileId)
-                .Select(candidate => (Guid?)candidate.Id)
+                .Select(candidate => new { candidate.Id, candidate.PublicUrlSegment })
                 .FirstOrDefaultAsync(cancellationToken);
+            result.CandidateId = candidate?.Id;
+            result.PublicUrlSegment = candidate?.PublicUrlSegment;
 
             return result;
         }
@@ -193,6 +244,48 @@ namespace CV.Logic.Services
             }
 
             return normalizedLanguageCode;
+        }
+
+        private static string NormalizeAndValidatePublicUrlSegment(string? publicUrlSegment)
+        {
+            var normalizedPublicUrlSegment = publicUrlSegment?.Trim().ToLowerInvariant();
+            if (string.IsNullOrWhiteSpace(normalizedPublicUrlSegment)
+                || normalizedPublicUrlSegment.Length > 100
+                || !PublicUrlSegmentRegex().IsMatch(normalizedPublicUrlSegment))
+            {
+                throw new BadRequestException(
+                    "PublicUrlSegment must be 1-100 lowercase letters or numbers separated by single hyphens.");
+            }
+
+            if (normalizedPublicUrlSegment == "admin")
+            {
+                throw new BadRequestException("The public CV URL segment 'admin' is reserved.");
+            }
+
+            return normalizedPublicUrlSegment;
+        }
+
+        private async Task EnsureCanManageProfile(
+            Guid profileId,
+            string? actorObjectId,
+            bool canManageAny,
+            CancellationToken cancellationToken)
+        {
+            if (canManageAny)
+            {
+                return;
+            }
+
+            var isOwner = !string.IsNullOrWhiteSpace(actorObjectId)
+                && await _dataContext.Candidate.AnyAsync(
+                    candidate => candidate.ProfileId == profileId
+                        && candidate.OwnerEntraObjectId == actorObjectId,
+                    cancellationToken);
+
+            if (!isOwner)
+            {
+                throw new NotFoundException($"Profile not found with Id: {profileId}");
+            }
         }
     }
 }

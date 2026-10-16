@@ -9,6 +9,7 @@ namespace CV.WebApi.Swagger.Examples
         {
             return new CreateProfileRequest
             {
+                PublicUrlSegment = "valtteri-tuominen",
                 FullName = "Jane Doe",
                 Translations =
                 [

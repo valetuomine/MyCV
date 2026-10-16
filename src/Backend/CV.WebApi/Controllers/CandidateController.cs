@@ -12,20 +12,26 @@ namespace CV.WebApi.Controllers
     {
         private readonly ICandidateService _candidateService = candidateService;
 
-        [HttpGet("{candidateId:guid}")]
+        [HttpGet("{publicUrlSegment}")]
         public async Task<ActionResult<CandidateDto>> GetCandidate(
-            Guid candidateId,
+            string publicUrlSegment,
             CancellationToken cancellationToken)
         {
-            var result = await _candidateService.GetCandidate(candidateId, cancellationToken);
+            var result = await _candidateService.GetCandidateByPublicUrlSegment(
+                publicUrlSegment,
+                cancellationToken);
             return Ok(result);
         }
 
         [HttpDelete("{candidateId:guid}")]
-        [Authorize(Policy = "CvAdmin")]
+        [Authorize]
         public async Task<IActionResult> DeleteCandidate(Guid candidateId, CancellationToken cancellationToken)
         {
-            await _candidateService.DeleteCandidate(candidateId, cancellationToken);
+            await _candidateService.DeleteCandidate(
+                candidateId,
+                User.FindFirst("oid")?.Value,
+                User.IsInRole("CvAdmin"),
+                cancellationToken);
             return NoContent();
         }
     }

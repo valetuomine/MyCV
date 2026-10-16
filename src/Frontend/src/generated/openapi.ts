@@ -4,7 +4,7 @@
  */
 
 export interface paths {
-    "/api/Candidate/{candidateId}": {
+    "/api/Candidate/{publicUrlSegment}": {
         parameters: {
             query?: never;
             header?: never;
@@ -16,7 +16,7 @@ export interface paths {
                 query?: never;
                 header?: never;
                 path: {
-                    candidateId: string;
+                    publicUrlSegment: string;
                 };
                 cookie?: never;
             };
@@ -35,6 +35,22 @@ export interface paths {
                 };
             };
         };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Candidate/{candidateId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
         put?: never;
         post?: never;
         delete: {
@@ -82,6 +98,7 @@ export interface paths {
                 content: {
                     /**
                      * @example {
+                     *       "publicUrlSegment": "valtteri-tuominen",
                      *       "fullName": "Jane Doe",
                      *       "translations": [
                      *         {
@@ -104,6 +121,7 @@ export interface paths {
                     "application/json": components["schemas"]["CreateProfileRequest"];
                     /**
                      * @example {
+                     *       "publicUrlSegment": "valtteri-tuominen",
                      *       "fullName": "Jane Doe",
                      *       "translations": [
                      *         {
@@ -126,6 +144,7 @@ export interface paths {
                     "text/json": components["schemas"]["CreateProfileRequest"];
                     /**
                      * @example {
+                     *       "publicUrlSegment": "valtteri-tuominen",
                      *       "fullName": "Jane Doe",
                      *       "translations": [
                      *         {
@@ -366,6 +385,7 @@ export interface components {
         CandidateDto: {
             /** Format: uuid */
             id?: string;
+            publicUrlSegment?: string | null;
             /** Format: date-time */
             createdAt?: string;
             /** Format: date-time */
@@ -376,6 +396,7 @@ export interface components {
         CreateProfileRequest: {
             /** Format: uuid */
             candidateId?: string | null;
+            publicUrlSegment?: string | null;
             fullName?: string | null;
             translations?: components["schemas"]["ProfileTranslationRequest"][] | null;
             linkedInUrl?: string | null;
@@ -391,6 +412,7 @@ export interface components {
             fullName?: string | null;
             /** Format: uuid */
             candidateId?: string | null;
+            publicUrlSegment?: string | null;
             linkedInUrl?: string | null;
             gitHubUrl?: string | null;
             translations?: components["schemas"]["ProfileTranslationDto"][] | null;

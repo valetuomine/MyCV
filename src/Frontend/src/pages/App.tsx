@@ -1,19 +1,21 @@
 import { lazy, Suspense, type JSX } from "react"
 import { LazyMotion, MotionConfig, domAnimation } from "framer-motion"
 import { Route, Routes } from "react-router-dom"
-import AdminLoginRoute from "../auth/AdminLoginRoute"
-import AuthCallbackRoute from "../auth/AuthCallbackRoute"
+import AdminLoginRoute from "../auth/routes/AdminLoginRoute"
+import AuthCallbackRoute from "../auth/routes/AuthCallbackRoute"
+import AdminCreateProfileRoute from "./Admin/routes/AdminCreateProfileRoute"
 import Background from "./components/Background"
-import Home from "./Profile/components/Home"
+import Home from "./Profile/components/routes/Home"
 import ProfileSkeleton from "./Profile/components/ProfileSkeleton"
-import UnknownRoute from "./Profile/components/UnknownRoute"
+import UnknownRoute from "./Profile/components/routes/UnknownRoute"
+import { RoutePaths } from "../routePaths"
 
 const loadCandidateProfileRoute = () =>
-  import("./Profile/components/CandidateProfileRoute")
+  import("./Profile/components/routes/CandidateProfileRoute")
 const CandidateProfileRoute = lazy(loadCandidateProfileRoute)
 
 // Start fetching the route chunk alongside the first render on deep links.
-if (window.location.pathname !== "/") {
+if (window.location.pathname !== RoutePaths.Home) {
   void loadCandidateProfileRoute()
 }
 
@@ -23,11 +25,21 @@ export default function App(): JSX.Element {
       <LazyMotion features={domAnimation} strict>
         <Background>
           <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/auth/callback" element={<AuthCallbackRoute />} />
-            <Route path="/:candidateId/admin" element={<AdminLoginRoute />} />
+            <Route path={RoutePaths.Home} element={<Home />} />
             <Route
-              path="/:candidateId"
+              path={RoutePaths.AuthCallback}
+              element={<AuthCallbackRoute />}
+            />
+            <Route
+              path={RoutePaths.AdminCreateProfile}
+              element={<AdminCreateProfileRoute />}
+            />
+            <Route
+              path={RoutePaths.CandidateAdminPattern}
+              element={<AdminLoginRoute />}
+            />
+            <Route
+              path={RoutePaths.CandidateProfilePattern}
               element={
                 <Suspense fallback={<ProfileSkeleton />}>
                   <CandidateProfileRoute />

@@ -2,7 +2,7 @@ import { skipToken } from "@reduxjs/toolkit/query"
 import { useMemo, useState, type JSX } from "react"
 import { FormProvider, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import useIsAdmin from "../../../../auth/useIsAdmin"
+import useCanEditProfile from "../../../../auth/useCanEditProfile"
 import {
   useGetProfileAdminQuery,
   useUpdateProfileMutation,
@@ -27,8 +27,7 @@ interface ProfileFormProps {
 }
 
 export default function ProfileForm({ values }: ProfileFormProps): JSX.Element {
-  const hasAdminMode = useIsAdmin()
-  const isAdmin = hasAdminMode
+  const { canEdit, publicUrlSegment } = useCanEditProfile(values.id)
   const [isEditing, setIsEditing] = useState(false)
   const [saveError, setSaveError] = useState<string>()
   const [updateProfile, updateProfileState] = useUpdateProfileMutation()
@@ -97,6 +96,7 @@ export default function ProfileForm({ values }: ProfileFormProps): JSX.Element {
               onSubmit={saveProfile}
               isSaving={updateProfileState.isLoading}
               saveError={saveError}
+              publicUrlSegment={publicUrlSegment}
             />
           ) : (
             <ProfileFormStatus
@@ -108,7 +108,7 @@ export default function ProfileForm({ values }: ProfileFormProps): JSX.Element {
         ) : (
           <ReadOnlyProfileForm
             values={values}
-            onEdit={isAdmin ? startEditing : undefined}
+            onEdit={canEdit ? startEditing : undefined}
           />
         )}
       </div>

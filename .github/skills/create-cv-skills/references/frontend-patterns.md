@@ -2,11 +2,14 @@
 
 ## Route and data loading
 
-- Use React Router for browser navigation. Public Candidate profiles use one route parameter only: `/:candidateId`; do not append `/profile`.
-- The Static Web Apps deployment must provide SPA navigation fallback to `/index.html` so a deep link such as `/<candidateId>` loads the React app.
+- Keep components rendered directly by React Router in feature-local `routes` folders (for example, `pages/Profile/components/routes`, `pages/Admin/routes`, and `auth/routes`). Keep reusable UI and route helpers with their feature components, outside the route folders.
+- Keep frontend route patterns and navigation destinations in `src/routePaths.ts` as the `RoutePaths` object. Use PascalCase members (for example, `RoutePaths.Home`) for fixed routes and path builders rather than repeating path strings in route registration, navigation, or authentication redirects. Keep API endpoint URLs with their RTK Query endpoints.
+- Treat auth return-path session-storage values as one-shot navigation markers, not authentication or database state. Remove them after reading in the callback, on redirect failure, at the authenticated destination once MSAL is idle, and when abandoning the flow for Home or sign-out. Sign-out must return to a public route rather than the protected route that would immediately start sign-in again.
+- Use React Router for browser navigation. Public Candidate profiles use one route parameter only: `/:publicUrlSegment`; do not append `/profile`.
+- The Static Web Apps deployment must provide SPA navigation fallback to `/index.html` so a deep link such as `/<publicUrlSegment>` loads the React app.
 - Fetch server state with RTK Query (`createApi`/`fetchBaseQuery`) and generated hooks. Do not create ad-hoc `fetch` effects for endpoint-backed resources or duplicate the same data in Jotai.
 - Keep RTK Query endpoint definitions in resource-specific files: `src/api/candidateQueries.ts` for Candidate operations and `src/api/profileQueries.ts` for Profile operations. Profile queries include public and admin reads; Profile POST/PUT are mutations. Share the `baseApi` instance so the store registers one reducer and middleware.
-- Load `GET /api/Candidate/{candidateId}` first. Use its `profileId` to conditionally load `GET /api/Profile/{profileId}`. Handle loading, errors, unknown candidates, and candidates without a profile explicitly.
+- Load `GET /api/Candidate/{publicUrlSegment}` first. Use its `profileId` to conditionally load `GET /api/Profile/{profileId}`. Handle loading, errors, unknown candidates, and candidates without a profile explicitly.
 - Keep local/shared UI state in Jotai atoms where it is used across components; do not put server response caches in Jotai.
 - Wrap the app with Redux Toolkit's `<Provider>`, Jotai's `<Provider>`, and `<BrowserRouter>` in the entry point. Register the RTK Query reducer and middleware in the Redux store.
 
@@ -21,9 +24,14 @@
 
 - Define a named props interface for form-related components instead of using an inline object type in the component signature.
 - Use descriptive prop names that match the value's role (for example, `values: Profile` for form data), while keeping the appropriate domain type.
+- When create and update forms share fields, extract only the common field rendering into a reusable component. Keep `useForm`, create-only `defaultValues`, authentication, API mutations, submit/cancel actions, and mutation status in the owning route or form controller.
+- Keep create-only fields such as `publicUrlSegment` outside the shared Profile fields. Use the base `ProfileSchema` for common field names and extend it with `CreateProfileSchema` for create-only data.
+- Keep typed create-form defaults beside the matching Zod schema and pass them to `useForm` from the route. Initialize required nested collections (such as Finnish and English translation rows); do not embed defaults or submission behavior in shared field-rendering components.
+- In form controllers, destructure the React Hook Form methods used by the component (for example, `handleSubmit` and `reset`) from the `useForm` result instead of repeatedly accessing them through the form object. Use `useWatch` for field subscriptions in React Compiler components; calling `form.watch()` triggers the compiler's `incompatible-library` warning and skips compilation. Only destructure `reset` when the controller has a reset flow, such as cancelling edits.
+- For edit forms hydrated from RTK Query, map the API result to the form shape and pass it through React Hook Form's `values` option so asynchronously loaded data populates the form; reset to the same mapped values when cancelling edits. Reserve `defaultValues` for fixed initial state such as a blank create form.
 
 ## Admin mutation safety
 
 Define Profile POST and PUT as RTK Query mutations in `profileQueries.ts`, with OpenAPI request/response types; invalidate the matching Profile query after a successful PUT.
 
-Profile create/update/delete/admin-read and Candidate delete require the API's `CvAdmin` policy. The frontend uses MSAL with the delegated `access_as_user` scope, attaches the access token to RTK Query requests, and silently acquires/renews tokens where possible. On an interaction-required MSAL error, redirect through Entra and return to the current route. A frontend admin flag is only for UI affordances; the API policy is the authorization boundary. Entra client configuration, the API audience, and tenant MFA setup are documented in the repository README. When creating a Profile, use the returned `candidateId` to navigate to `/${candidateId}`; Candidate `Id` is intentionally the public route identifier, never the internal Profile ID.
+Profile POST requires authentication and the API assigns the validated Entra `oid` claim as the candidate owner. Profile update/delete/admin-read and Candidate delete are permitted to that owner or a caller with the global `CvAdmin` role; the API is the authorization boundary. The frontend may query the admin Profile endpoint to determine whether to show editing controls, but must not treat that result as security enforcement. The frontend uses MSAL with the delegated `access_as_user` scope, attaches the access token to RTK Query requests, and silently acquires/renews tokens where possible. On an interaction-required MSAL error, redirect through Entra and return to the current route. Entra client configuration, the API audience, and tenant MFA setup are documented in the repository README. When creating a Profile, use the returned `publicUrlSegment` for the public route; `candidateId` remains an internal identifier and is never the public URL.

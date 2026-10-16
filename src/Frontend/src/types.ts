@@ -20,3 +20,11 @@ export const Theme = {
 } as const
 
 export type Theme = (typeof Theme)[keyof typeof Theme]
+
+export const CopyStatus = {
+  Idle: "idle",
+  Copied: "copied",
+  Error: "error",
+} as const
+
+export type CopyStatus = (typeof CopyStatus)[keyof typeof CopyStatus]

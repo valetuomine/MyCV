@@ -18,6 +18,7 @@ namespace CV.Logic.Mappers
             return new CandidateDto
             {
                 Id = dbCandidate.Id,
+                PublicUrlSegment = dbCandidate.PublicUrlSegment,
                 CreatedAt = TimestampMapper.ToFinlandTime(dbCandidate.CreatedAt),
                 UpdatedAt = TimestampMapper.ToFinlandTime(dbCandidate.UpdatedAt),
                 ProfileId = dbCandidate.ProfileId

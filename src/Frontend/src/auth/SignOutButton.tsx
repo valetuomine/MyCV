@@ -1,12 +1,12 @@
 import { InteractionStatus } from "@azure/msal-browser"
 import { useMsal } from "@azure/msal-react"
 import { useState, type JSX } from "react"
-import { useLocation } from "react-router-dom"
+import { clearLoginReturnPaths } from "./adminLoginStorage"
+import { RoutePaths } from "../routePaths"
 import { secondaryButton } from "../pages/components/buttonStyles"
 
 export default function SignOutButton(): JSX.Element | null {
   const { accounts, inProgress, instance } = useMsal()
-  const location = useLocation()
   const [signOutError, setSignOutError] = useState(false)
 
   if (accounts.length === 0) {
@@ -16,10 +16,11 @@ export default function SignOutButton(): JSX.Element | null {
   const isBusy = inProgress !== InteractionStatus.None
   const handleSignOut = (): void => {
     setSignOutError(false)
+    clearLoginReturnPaths()
     void instance
       .logoutRedirect({
         account: instance.getActiveAccount() ?? accounts[0],
-        postLogoutRedirectUri: `${window.location.origin}${location.pathname}`,
+        postLogoutRedirectUri: `${window.location.origin}${RoutePaths.Home}`,
       })
       .catch(() => setSignOutError(true))
   }

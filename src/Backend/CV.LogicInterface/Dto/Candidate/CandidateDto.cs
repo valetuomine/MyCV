@@ -6,9 +6,14 @@ namespace CV.LogicInterface.Dto.Candidate
     public class CandidateDto
     {
         /// <summary>
-        /// Gets or sets the candidate identifier.
+        /// Gets or sets the candidate's internal identifier.
         /// </summary>
         public Guid Id { get; set; }
+
+        /// <summary>
+        /// Gets or sets the public, URL-safe candidate slug.
+        /// </summary>
+        public string PublicUrlSegment { get; set; } = null!;
 
         /// <summary>
         /// Gets or sets when the candidate was created, with the Finland UTC offset.

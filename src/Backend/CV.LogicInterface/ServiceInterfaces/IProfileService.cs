@@ -13,7 +13,11 @@ namespace CV.LogicInterface.ServiceInterfaces
         /// <param name="request">The profile values to create.</param>
         /// <param name="cancellationToken">The token used to cancel the operation.</param>
         /// <returns>The created profile.</returns>
-        Task<ProfileAdminDto> CreateProfile(CreateProfileRequest request, CancellationToken cancellationToken = default);
+        Task<ProfileAdminDto> CreateProfile(
+            CreateProfileRequest request,
+            string ownerObjectId,
+            bool canManageAny,
+            CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Retrieves the profile using the requested language, defaulting to Finnish.
@@ -30,14 +34,22 @@ namespace CV.LogicInterface.ServiceInterfaces
         /// <param name="profileId">The identifier of the profile to retrieve.</param>
         /// <param name="cancellationToken">The token used to cancel the operation.</param>
         /// <returns>The profile and all its translations.</returns>
-        Task<ProfileAdminDto> GetProfileAdmin(Guid profileId, CancellationToken cancellationToken = default);
+        Task<ProfileAdminDto> GetProfileAdmin(
+            Guid profileId,
+            string? actorObjectId,
+            bool canManageAny,
+            CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Deletes a profile while preserving its candidate row.
         /// </summary>
         /// <param name="profileId">The identifier of the profile to delete.</param>
         /// <param name="cancellationToken">The token used to cancel the operation.</param>
-        Task DeleteProfile(Guid profileId, CancellationToken cancellationToken = default);
+        Task DeleteProfile(
+            Guid profileId,
+            string? actorObjectId,
+            bool canManageAny,
+            CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Replaces a profile by its identifier.
@@ -46,6 +58,11 @@ namespace CV.LogicInterface.ServiceInterfaces
         /// <param name="request">The replacement profile values.</param>
         /// <param name="cancellationToken">The token used to cancel the operation.</param>
         /// <returns>The updated profile.</returns>
-        Task<ProfileAdminDto> UpdateProfile(Guid profileId, UpdateProfileRequest request, CancellationToken cancellationToken = default);
+        Task<ProfileAdminDto> UpdateProfile(
+            Guid profileId,
+            UpdateProfileRequest request,
+            string? actorObjectId,
+            bool canManageAny,
+            CancellationToken cancellationToken = default);
     }
 }

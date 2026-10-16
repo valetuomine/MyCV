@@ -11,22 +11,32 @@ namespace CV.Logic.Services
     {
         private readonly CvContext _dataContext = dataContext;
 
-        public async Task<CandidateDto> GetCandidate(Guid candidateId, CancellationToken cancellationToken = default)
+        public async Task<CandidateDto> GetCandidateByPublicUrlSegment(
+            string publicUrlSegment,
+            CancellationToken cancellationToken = default)
         {
-            if (candidateId == Guid.Empty)
+            var normalizedPublicUrlSegment = publicUrlSegment?.Trim().ToLowerInvariant();
+            if (string.IsNullOrWhiteSpace(normalizedPublicUrlSegment))
             {
-                throw new BadRequestException($"Invalid candidate ID: {candidateId}");
+                throw new BadRequestException("Candidate public URL segment is required.");
             }
 
             var dbCandidate = await _dataContext.Candidate
                 .AsNoTracking()
-                .FirstOrDefaultAsync(candidate => candidate.Id == candidateId, cancellationToken);
+                .FirstOrDefaultAsync(
+                    candidate => candidate.PublicUrlSegment == normalizedPublicUrlSegment,
+                    cancellationToken);
 
             return dbCandidate?.MapEntityToDto()
-                ?? throw new NotFoundException($"Candidate not found with Id: {candidateId}");
+                ?? throw new NotFoundException(
+                    $"Candidate not found with public URL segment: {normalizedPublicUrlSegment}");
         }
 
-        public async Task DeleteCandidate(Guid candidateId, CancellationToken cancellationToken = default)
+        public async Task DeleteCandidate(
+            Guid candidateId,
+            string? actorObjectId,
+            bool canManageAny,
+            CancellationToken cancellationToken = default)
         {
             if (candidateId == Guid.Empty)
             {
@@ -36,6 +46,12 @@ namespace CV.Logic.Services
             var dbCandidate = await _dataContext.Candidate
                 .FirstOrDefaultAsync(candidate => candidate.Id == candidateId, cancellationToken)
                 ?? throw new NotFoundException($"Candidate not found with Id: {candidateId}");
+
+            if (!canManageAny && (string.IsNullOrWhiteSpace(actorObjectId)
+                || dbCandidate.OwnerEntraObjectId != actorObjectId))
+            {
+                throw new NotFoundException($"Candidate not found with Id: {candidateId}");
+            }
 
             _dataContext.Candidate.Remove(dbCandidate);
             await _dataContext.SaveChangesAsync(cancellationToken);

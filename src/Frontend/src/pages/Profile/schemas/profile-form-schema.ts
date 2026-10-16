@@ -81,4 +81,43 @@ export const profileSchema = z
     }
   })
 
+export const createProfileSchema = profileSchema.safeExtend({
+  publicUrlSegment: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .min(1, "Your CV link is required")
+    .max(100, "Your CV link must be 100 characters or fewer")
+    .regex(
+      /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+      "Use letters and numbers separated by single hyphens",
+    )
+    .refine(
+      (publicUrlSegment) => publicUrlSegment !== "admin",
+      "This CV link is reserved",
+    ),
+})
+
 export type ProfileSchema = z.infer<typeof profileSchema>
+export type CreateProfileSchema = z.infer<typeof createProfileSchema>
+
+export const createProfileDefaultValues: CreateProfileSchema = {
+  publicUrlSegment: "",
+  fullName: "",
+  linkedInUrl: "",
+  gitHubUrl: "",
+  translations: [
+    {
+      languageCode: LanguageCode.Finnish,
+      title: "",
+      summary: "",
+      location: "",
+    },
+    {
+      languageCode: LanguageCode.English,
+      title: "",
+      summary: "",
+      location: "",
+    },
+  ],
+}

@@ -1,10 +1,14 @@
 import type {
   Profile,
   ProfileAdmin,
+  CreateProfileRequest,
   UpdateProfileRequest,
 } from "../../../api/profileQueries"
 import { LanguageCode } from "../../../types"
-import type { ProfileSchema } from "../schemas/profile-form-schema"
+import type {
+  CreateProfileSchema,
+  ProfileSchema,
+} from "../schemas/profile-form-schema"
 
 export function mapAdminProfileToForm(profile: ProfileAdmin): ProfileSchema {
   const translationFor = (languageCode: LanguageCode) => {
@@ -76,5 +80,14 @@ export function toUpdateProfileRequest(
         summary: translation.summary?.trim() || null,
         location: translation.location?.trim() || null,
       })),
+  }
+}
+
+export function toCreateProfileRequest(
+  data: CreateProfileSchema,
+): CreateProfileRequest {
+  return {
+    ...toUpdateProfileRequest(data),
+    publicUrlSegment: data.publicUrlSegment,
   }
 }

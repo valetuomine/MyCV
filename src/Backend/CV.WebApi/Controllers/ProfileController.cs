@@ -15,13 +15,23 @@ namespace CV.WebApi.Controllers
         private readonly IProfileService _profileService = profileService;
 
         [HttpPost]
-        [Authorize(Policy = "CvAdmin")]
+        [Authorize]
         [SwaggerRequestExample(typeof(CreateProfileRequest), typeof(CreateProfileRequestExample))]
         public async Task<ActionResult<ProfileAdminDto>> CreateProfile(
             CreateProfileRequest request,
             CancellationToken cancellationToken)
         {
-            var result = await _profileService.CreateProfile(request, cancellationToken);
+            var ownerObjectId = User.FindFirst("oid")?.Value;
+            if (string.IsNullOrWhiteSpace(ownerObjectId))
+            {
+                return Unauthorized();
+            }
+
+            var result = await _profileService.CreateProfile(
+                request,
+                ownerObjectId,
+                User.IsInRole("CvAdmin"),
+                cancellationToken);
 
             return CreatedAtAction(nameof(GetProfile), new { profileId = result.Id }, result);
         }
@@ -37,30 +47,43 @@ namespace CV.WebApi.Controllers
         }
 
         [HttpGet("{profileId:guid}/admin")]
-        [Authorize(Policy = "CvAdmin")]
+        [Authorize]
         public async Task<ActionResult<ProfileAdminDto>> GetProfileAdmin(Guid profileId, CancellationToken cancellationToken)
         {
-            var result = await _profileService.GetProfileAdmin(profileId, cancellationToken);
+            var result = await _profileService.GetProfileAdmin(
+                profileId,
+                User.FindFirst("oid")?.Value,
+                User.IsInRole("CvAdmin"),
+                cancellationToken);
             return Ok(result);
         }
 
         [HttpDelete("{profileId:guid}")]
-        [Authorize(Policy = "CvAdmin")]
+        [Authorize]
         public async Task<IActionResult> DeleteProfile(Guid profileId, CancellationToken cancellationToken)
         {
-            await _profileService.DeleteProfile(profileId, cancellationToken);
+            await _profileService.DeleteProfile(
+                profileId,
+                User.FindFirst("oid")?.Value,
+                User.IsInRole("CvAdmin"),
+                cancellationToken);
             return NoContent();
         }
 
         [HttpPut("{profileId:guid}")]
-        [Authorize(Policy = "CvAdmin")]
+        [Authorize]
         [SwaggerRequestExample(typeof(UpdateProfileRequest), typeof(UpdateProfileRequestExample))]
         public async Task<ActionResult<ProfileAdminDto>> UpdateProfile(
             Guid profileId,
             UpdateProfileRequest request,
             CancellationToken cancellationToken)
         {
-            var result = await _profileService.UpdateProfile(profileId, request, cancellationToken);
+            var result = await _profileService.UpdateProfile(
+                profileId,
+                request,
+                User.FindFirst("oid")?.Value,
+                User.IsInRole("CvAdmin"),
+                cancellationToken);
             return Ok(result);
         }
     }

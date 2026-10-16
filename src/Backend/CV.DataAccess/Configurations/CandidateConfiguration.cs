@@ -16,6 +16,18 @@ namespace CV.DataAccess.Configurations
             builder.Property(candidate => candidate.Id)
                 .HasColumnName("ID");
 
+            builder.Property(candidate => candidate.PublicUrlSegment)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            builder.Property(candidate => candidate.OwnerEntraObjectId)
+                .HasMaxLength(128);
+
+            builder.HasIndex(candidate => candidate.PublicUrlSegment)
+                .IsUnique();
+
+            builder.HasIndex(candidate => candidate.OwnerEntraObjectId);
+
             builder.HasIndex(candidate => candidate.ProfileId)
                 .IsUnique();
 

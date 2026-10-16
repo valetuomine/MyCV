@@ -1,6 +1,7 @@
 import { m as motion, type Variants } from "framer-motion"
 import { useId, useState, type JSX } from "react"
 import type { Profile } from "../../../../api/profileQueries"
+import { CopyStatus } from "../../../../types"
 import RHFInput from "../../../components/RHFInput"
 import {
   externalLinkArrow,
@@ -63,8 +64,19 @@ export default function ReadOnlyProfileForm({
   values,
   onEdit,
 }: ReadOnlyProfileFormProps): JSX.Element {
+  const [copyStatus, setCopyStatus] = useState<CopyStatus>(CopyStatus.Idle)
+  const publicUrl = `${window.location.origin}${window.location.pathname}`
   const updatedAt = formatProfileDate(values.updatedAt ?? values.createdAt)
   const hasActions = Boolean(values.gitHubUrl || values.linkedInUrl || onEdit)
+
+  const copyPublicUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(publicUrl)
+      setCopyStatus(CopyStatus.Copied)
+    } catch {
+      setCopyStatus(CopyStatus.Error)
+    }
+  }
 
   return (
     <motion.div
@@ -137,6 +149,28 @@ export default function ReadOnlyProfileForm({
             <ExpandableSummary text={values.summary} />
           </motion.div>
         )}
+        <motion.div
+          variants={item}
+          className="mt-8 grid justify-items-start gap-2"
+        >
+          <button
+            type="button"
+            onClick={() => void copyPublicUrl()}
+            className={secondaryButton}
+          >
+            Copy CV link
+          </button>
+          {copyStatus !== CopyStatus.Idle && (
+            <p
+              role={copyStatus === CopyStatus.Error ? "alert" : "status"}
+              className={`m-0 text-sm ${copyStatus === CopyStatus.Error ? "text-cv-danger" : "text-cv-muted"}`}
+            >
+              {copyStatus === CopyStatus.Copied
+                ? "CV link copied to clipboard."
+                : "Could not copy the CV link. Copy the page address from your browser."}
+            </p>
+          )}
+        </motion.div>
         {hasActions && (
           <motion.div variants={item} className="mt-10 flex flex-wrap gap-3">
             <RHFInput<ProfileSchema>

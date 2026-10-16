@@ -44,6 +44,16 @@ export function formatProfileDate(value?: string | null): string | undefined {
 
 export function getProfileFormError(error: unknown, action: string): string {
   if (typeof error === "object" && error !== null) {
+    if (
+      "data" in error &&
+      typeof error.data === "object" &&
+      error.data !== null &&
+      "detail" in error.data &&
+      typeof error.data.detail === "string"
+    ) {
+      return error.data.detail
+    }
+
     if ("status" in error) {
       if (error.status === 400 || error.status === 422) {
         return `${action} failed. Check that every field is valid and within its length limit.`

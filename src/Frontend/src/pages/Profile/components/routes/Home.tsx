@@ -1,9 +1,11 @@
-import { useId, useState, type FormEvent, type JSX } from "react"
+import { useEffect, useId, useState, type JSX, type SubmitEvent } from "react"
 import { useNavigate } from "react-router-dom"
-import { primaryButton } from "../../components/buttonStyles"
+import { clearLoginReturnPaths } from "../../../../auth/adminLoginStorage"
+import { primaryButton } from "../../../components/buttonStyles"
+import { RoutePaths } from "../../../../routePaths"
 
-// Accepts a bare candidate ID or a full CV link and returns the ID.
-function extractCandidateId(input: string): string {
+// Accepts a bare public URL segment or a full CV link and returns the segment.
+function extractPublicUrlSegment(input: string): string {
   const value = input.trim()
   try {
     const segments = new URL(value).pathname.split("/").filter(Boolean)
@@ -20,15 +22,19 @@ export default function Home(): JSX.Element {
   const [value, setValue] = useState("")
   const [error, setError] = useState<string>()
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
+  useEffect(() => {
+    clearLoginReturnPaths()
+  }, [])
+
+  const handleSubmit = (event: SubmitEvent<HTMLFormElement>): void => {
     event.preventDefault()
-    const candidateId = extractCandidateId(value)
-    if (!candidateId) {
-      setError("Enter a candidate ID or a CV link.")
+    const publicUrlSegment = extractPublicUrlSegment(value)
+    if (!publicUrlSegment) {
+      setError("Enter a CV link or public address.")
       return
     }
 
-    navigate(`/${encodeURIComponent(candidateId)}`)
+    navigate(RoutePaths.CandidateProfile(publicUrlSegment))
   }
 
   return (
@@ -46,8 +52,8 @@ export default function Home(): JSX.Element {
             Open a CV
           </h1>
           <p className="m-0 max-w-[52ch] text-lg leading-relaxed text-pretty text-cv-copy">
-            Every CV has its own link. Paste a candidate ID or the full link to
-            view it.
+            Every CV has its own link. Paste a CV link or public address to view
+            it.
           </p>
         </div>
         <form noValidate onSubmit={handleSubmit} className="grid w-full gap-2">
@@ -55,7 +61,7 @@ export default function Home(): JSX.Element {
             htmlFor={inputId}
             className="font-cv-mono text-xs tracking-wide text-cv-muted uppercase"
           >
-            Candidate ID or link
+            CV link or address
           </label>
           <div className="flex flex-wrap gap-3">
             <input

@@ -1,16 +1,16 @@
 import { skipToken } from "@reduxjs/toolkit/query"
 import type { JSX } from "react"
 import { useParams } from "react-router-dom"
-import { useGetCandidateQuery } from "../../../api/candidateQueries"
-import { useGetProfileQuery } from "../../../api/profileQueries"
-import CandidateCv from "./CandidateCv/CandidateCv"
-import ProfileSkeleton from "./ProfileSkeleton"
-import RouteMessage from "./RouteMessage"
+import { useGetCandidateQuery } from "../../../../api/candidateQueries"
+import { useGetProfileQuery } from "../../../../api/profileQueries"
+import ProfilePage from "../ProfilePage"
+import ProfileSkeleton from "../ProfileSkeleton"
+import RouteMessage from "../RouteMessage"
 
 export default function CandidateProfileRoute(): JSX.Element {
-  const { candidateId } = useParams()
-  const candidateQuery = useGetCandidateQuery(candidateId ?? "", {
-    skip: !candidateId,
+  const { publicUrlSegment } = useParams()
+  const candidateQuery = useGetCandidateQuery(publicUrlSegment ?? "", {
+    skip: !publicUrlSegment,
   })
   const profileId = candidateQuery.data?.profileId
   const profileQuery = useGetProfileQuery(profileId ? { profileId } : skipToken)
@@ -53,7 +53,7 @@ export default function CandidateProfileRoute(): JSX.Element {
     )
   }
 
-  return <CandidateCv values={profileQuery.data} />
+  return <ProfilePage values={profileQuery.data} />
 }
 
 function describeError(error: unknown): {

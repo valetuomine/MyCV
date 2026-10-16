@@ -1,6 +1,7 @@
 import type { JSX, ReactNode } from "react"
 import { useNavigate } from "react-router-dom"
 import { primaryButton, secondaryButton } from "../../components/buttonStyles"
+import { RoutePaths } from "../../../routePaths"
 
 interface RouteMessageProps {
   children: ReactNode
@@ -52,7 +53,7 @@ export default function RouteMessage({
             {showHomeButton && (
               <button
                 type="button"
-                onClick={() => navigate("/")}
+                onClick={() => navigate(RoutePaths.Home)}
                 className={secondaryButton}
               >
                 Open a CV
