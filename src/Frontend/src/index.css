@@ -22,7 +22,7 @@
   --cv-danger: #dc2626;
   --cv-wash: rgb(9 9 11 / 0.025);
   --cv-overlay: rgb(9 9 11 / 0.05);
-  --cv-grid-line: rgb(9 9 11 / 0.05);
+  --cv-dot: rgb(9 9 11 / 0.14);
   --cv-shadow-panel: 0 2rem 4rem -2rem rgb(24 24 27 / 0.18);
 }
 
@@ -41,7 +41,7 @@
   --cv-danger: #f87171;
   --cv-wash: rgb(255 255 255 / 0.03);
   --cv-overlay: rgb(255 255 255 / 0.06);
-  --cv-grid-line: rgb(255 255 255 / 0.045);
+  --cv-dot: rgb(255 255 255 / 0.11);
   --cv-shadow-panel: 0 2rem 4rem -2rem rgb(0 0 0 / 0.8);
 }
 
@@ -68,14 +68,57 @@
   --font-cv-display: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
   --font-cv-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
   --font-cv-mono: "Geist Mono Variable", ui-monospace, monospace;
+
+  --animate-cv-pulse: cv-pulse 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+  --animate-cv-sweep: cv-sweep 8s linear infinite;
+
+  @keyframes cv-pulse {
+    0% {
+      transform: scale(1);
+      opacity: 0.55;
+    }
+    80%,
+    100% {
+      transform: scale(2.75);
+      opacity: 0;
+    }
+  }
+
+  @keyframes cv-sweep {
+    to {
+      transform: rotate(1turn);
+    }
+  }
 }
 
-@utility bg-cv-grid {
-  background-image:
-    linear-gradient(to right, var(--cv-grid-line) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--cv-grid-line) 1px, transparent 1px);
-  background-size: 4rem 4rem;
+/* Dot matrix; bg-cv-dots-lit is the accent copy revealed under the pointer.
+   Both share the same 24px cell so the lit dots sit exactly on the base ones. */
+@utility bg-cv-dots {
+  background-image: radial-gradient(
+    circle at center,
+    var(--dot, var(--cv-dot)) 1px,
+    transparent 1.5px
+  );
+  background-size: 24px 24px;
+}
+
+@utility bg-cv-dots-fade {
   mask-image: radial-gradient(70% 60% at 50% 30%, #000 20%, transparent 100%);
+}
+
+@utility bg-cv-dots-lit {
+  --dot: color-mix(in srgb, var(--cv-accent) 75%, transparent);
+  mask-image: radial-gradient(closest-side, #000 15%, transparent);
+}
+
+/* Comet-like highlight that orbits a card border (rotated by animate-cv-sweep). */
+@utility bg-cv-sweep {
+  background-image: conic-gradient(
+    from 0deg,
+    transparent 0 70%,
+    color-mix(in srgb, var(--cv-accent) 70%, transparent) 88%,
+    transparent 96%
+  );
 }
 
 @utility bg-cv-glow {
@@ -121,4 +164,15 @@ body {
 ::selection {
   background: var(--cv-accent);
   color: var(--cv-accent-ink);
+}
+
+/*
+ * Theme switch: ThemeToggle flags <html> while a view transition runs and
+ * reveals the new theme with a clip-path circle, so the default cross-fade
+ * is turned off for that transition only.
+ */
+:root[data-theme-transition]::view-transition-old(root),
+:root[data-theme-transition]::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
 }

@@ -3,6 +3,7 @@ import {
   useMotionValue,
   useReducedMotion,
   useSpring,
+  useTransform,
 } from "framer-motion"
 import type { JSX, PointerEvent, ReactNode } from "react"
 import SignOutButton from "../../auth/SignOutButton"
@@ -17,6 +18,12 @@ export default function Background({ children }: BackgroundProps): JSX.Element {
   const pointerY = useMotionValue(-1000)
   const spotlightX = useSpring(pointerX, { stiffness: 100, damping: 20 })
   const spotlightY = useSpring(pointerY, { stiffness: 100, damping: 20 })
+
+  const litDotsPosition = useTransform(
+    [spotlightX, spotlightY],
+    ([x, y]) => `calc(14rem - ${x}px) calc(14rem - ${y}px)`,
+  )
+
   const prefersReducedMotion = useReducedMotion()
 
   const trackPointer = (event: PointerEvent<HTMLElement>): void => {
@@ -40,10 +47,18 @@ export default function Background({ children }: BackgroundProps): JSX.Element {
       >
         <div className="absolute -top-48 left-[8%] size-176 bg-cv-glow opacity-10" />
         <div className="absolute -right-40 bottom-0 size-128 bg-cv-glow opacity-5 [--glow:var(--cv-copy)]" />
-        <div className="absolute inset-0 bg-cv-grid" />
+        <div className="absolute inset-0 bg-cv-dots bg-cv-dots-fade" />
         <motion.div
           className="absolute top-0 left-0 -mt-[34rem] -ml-[34rem] size-[68rem] bg-cv-spotlight will-change-transform"
           style={{ x: spotlightX, y: spotlightY }}
+        />
+        <motion.div
+          className="absolute top-0 left-0 -mt-[14rem] -ml-[14rem] size-[28rem] bg-cv-dots bg-cv-dots-lit will-change-transform"
+          style={{
+            x: spotlightX,
+            y: spotlightY,
+            backgroundPosition: litDotsPosition,
+          }}
         />
         <div className="absolute inset-0 bg-cv-grain opacity-[0.06]" />
       </div>

@@ -1,5 +1,5 @@
 import { m as motion, type Variants } from "framer-motion"
-import { useId, useState, type JSX } from "react"
+import { useEffect, useId, useState, type JSX } from "react"
 import type { Profile } from "../../../../api/profileQueries"
 import { CopyStatus } from "../../../../types"
 import RHFInput from "../../../components/RHFInput"
@@ -30,6 +30,20 @@ const item: Variants = {
     transition: { type: "spring", stiffness: 100, damping: 20 },
   },
 }
+
+// The name rises into view from behind the heading's clipped bottom edge.
+const nameReveal: Variants = {
+  hidden: { y: "110%" },
+  visible: {
+    y: "0%",
+    transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1] },
+  },
+}
+
+const copiedResetMs = 2000
+
+const swapLabel =
+  "col-start-1 row-start-1 transition-[opacity,translate] duration-200 ease-out motion-reduce:transition-none"
 
 function ExpandableSummary({ text }: { text: string }): JSX.Element {
   const [expanded, setExpanded] = useState(false)
@@ -68,6 +82,19 @@ export default function ReadOnlyProfileForm({
   const publicUrl = `${window.location.origin}${window.location.pathname}`
   const updatedAt = formatProfileDate(values.updatedAt ?? values.createdAt)
   const hasActions = Boolean(values.gitHubUrl || values.linkedInUrl || onEdit)
+  const isCopied = copyStatus === CopyStatus.Copied
+
+  useEffect(() => {
+    if (copyStatus !== CopyStatus.Copied) {
+      return
+    }
+
+    const timeout = window.setTimeout(
+      () => setCopyStatus(CopyStatus.Idle),
+      copiedResetMs,
+    )
+    return () => window.clearTimeout(timeout)
+  }, [copyStatus])
 
   const copyPublicUrl = async () => {
     try {
@@ -90,29 +117,30 @@ export default function ReadOnlyProfileForm({
           variants={item}
           className="flex items-center gap-3 font-cv-mono text-xs tracking-widest text-cv-copy uppercase"
         >
-          <span
-            aria-hidden="true"
-            className="size-2 rounded-full bg-cv-accent"
-          />
+          <span aria-hidden="true" className="relative grid size-2">
+            <span className="absolute inset-0 animate-cv-pulse rounded-full bg-cv-accent motion-reduce:hidden print:hidden" />
+            <span className="relative size-2 rounded-full bg-cv-accent" />
+          </span>
           Curriculum vitae
           {updatedAt && (
             <span className="text-cv-meta normal-case tracking-normal">
-              · Updated {updatedAt}
+              Updated {updatedAt}
             </span>
           )}
         </motion.p>
-        <motion.h1
-          variants={item}
+        <h1
           dir="auto"
-          className="mt-8 font-cv-display text-[clamp(3rem,8.5vw,7rem)] leading-[0.95] font-semibold tracking-tighter text-balance wrap-anywhere"
+          className="mt-8 overflow-clip font-cv-display text-[clamp(3rem,8.5vw,7rem)] leading-[0.95] font-semibold tracking-tighter text-balance wrap-anywhere"
         >
-          <RHFInput<ProfileSchema>
-            name="fullName"
-            label="Full name"
-            isEditing={false}
-            className="block bg-linear-to-b from-cv-ink to-cv-muted bg-clip-text pt-[0.15em] pb-[0.08em] text-transparent print:bg-none print:text-cv-ink forced-colors:bg-none forced-colors:text-[CanvasText]"
-          />
-        </motion.h1>
+          <motion.span variants={nameReveal} className="block">
+            <RHFInput<ProfileSchema>
+              name="fullName"
+              label="Full name"
+              isEditing={false}
+              className="block bg-linear-to-b from-cv-ink to-cv-muted bg-clip-text pt-[0.15em] pb-[0.08em] text-transparent print:bg-none print:text-cv-ink forced-colors:bg-none forced-colors:text-[CanvasText]"
+            />
+          </motion.span>
+        </h1>
         {values.title && (
           <motion.p
             variants={item}
@@ -151,55 +179,84 @@ export default function ReadOnlyProfileForm({
         )}
         <motion.div
           variants={item}
-          className="mt-8 grid justify-items-start gap-2"
+          className="mt-10 flex flex-wrap items-start gap-3"
         >
-          <button
-            type="button"
-            onClick={() => void copyPublicUrl()}
-            className={secondaryButton}
-          >
-            Copy CV link
-          </button>
-          {copyStatus !== CopyStatus.Idle && (
-            <p
-              role={copyStatus === CopyStatus.Error ? "alert" : "status"}
-              className={`m-0 text-sm ${copyStatus === CopyStatus.Error ? "text-cv-danger" : "text-cv-muted"}`}
+          <div className="grid justify-items-start gap-2">
+            <button
+              type="button"
+              onClick={() => void copyPublicUrl()}
+              className={secondaryButton}
             >
-              {copyStatus === CopyStatus.Copied
-                ? "CV link copied to clipboard."
-                : "Could not copy the CV link. Copy the page address from your browser."}
-            </p>
+              {/* Both labels share one grid cell, so the button keeps its width. */}
+              <span className="grid">
+                <span
+                  className={`${swapLabel} ${isCopied ? "-translate-y-2 opacity-0" : "opacity-100"}`}
+                >
+                  Copy CV link
+                </span>
+                <span
+                  aria-hidden="true"
+                  className={`${swapLabel} inline-flex items-center justify-center gap-1.5 text-cv-accent ${isCopied ? "opacity-100" : "translate-y-2 opacity-0"}`}
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="size-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.25"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path
+                      d="m5 12.5 4.5 4.5L19 7.5"
+                      pathLength={1}
+                      className={`[stroke-dasharray:1] transition-[stroke-dashoffset] duration-300 ease-out motion-reduce:transition-none ${isCopied ? "[stroke-dashoffset:0] delay-100" : "[stroke-dashoffset:1]"}`}
+                    />
+                  </svg>
+                  Copied
+                </span>
+              </span>
+            </button>
+            <span role="status" className="sr-only">
+              {isCopied ? "CV link copied to clipboard." : ""}
+            </span>
+            {copyStatus === CopyStatus.Error && (
+              <p role="alert" className="m-0 max-w-52 text-sm text-cv-danger">
+                Could not copy the CV link. Copy the page address from your
+                browser.
+              </p>
+            )}
+          </div>
+          {hasActions && (
+            <>
+              <RHFInput<ProfileSchema>
+                name="gitHubUrl"
+                label="GitHub"
+                isEditing={false}
+                link
+                displayLabel="GitHub"
+                linkClassName={`${primaryButton} ${externalLinkArrow}`}
+              />
+              <RHFInput<ProfileSchema>
+                name="linkedInUrl"
+                label="LinkedIn"
+                isEditing={false}
+                link
+                displayLabel="LinkedIn"
+                linkClassName={`${secondaryButton} ${externalLinkArrow}`}
+              />
+              {onEdit && (
+                <button
+                  type="button"
+                  onClick={onEdit}
+                  className={`${secondaryButton} border-dashed`}
+                >
+                  Edit profile
+                </button>
+              )}
+            </>
           )}
         </motion.div>
-        {hasActions && (
-          <motion.div variants={item} className="mt-10 flex flex-wrap gap-3">
-            <RHFInput<ProfileSchema>
-              name="gitHubUrl"
-              label="GitHub"
-              isEditing={false}
-              link
-              displayLabel="GitHub"
-              linkClassName={`${primaryButton} ${externalLinkArrow}`}
-            />
-            <RHFInput<ProfileSchema>
-              name="linkedInUrl"
-              label="LinkedIn"
-              isEditing={false}
-              link
-              displayLabel="LinkedIn"
-              linkClassName={`${secondaryButton} ${externalLinkArrow}`}
-            />
-            {onEdit && (
-              <button
-                type="button"
-                onClick={onEdit}
-                className={`${secondaryButton} border-dashed`}
-              >
-                Edit profile
-              </button>
-            )}
-          </motion.div>
-        )}
       </section>
       <motion.div
         variants={item}
