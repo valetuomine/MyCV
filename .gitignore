@@ -23,6 +23,8 @@ dist/
 !.env.example
 **/appsettings.*.json
 !**/appsettings.*.example.json
+# Personal MCP server configuration for Claude Code
+.mcp.json
 
 # Local-only deployment notes
 docs/azure-deployment.md
@@ -44,3 +46,5 @@ agent/skills/
 .claude/skills/*
 !.claude/skills/setup-frontend/
 !.claude/skills/create-cv-skills/
+!.claude/skills/write-user-story/
+!.claude/skills/create-pull-request/

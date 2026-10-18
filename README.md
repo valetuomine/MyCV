@@ -23,16 +23,16 @@ The Vite development server proxies `/api` requests to the ASP.NET Core API, so 
 
    The API and Swagger UI are available at `http://localhost:5062` and `http://localhost:5062/swagger`.
 
-3. In a separate terminal, create a profile through the local Swagger `POST /api/Profile` endpoint. The request needs a `fullName` and at least one Finnish (`fi`) translation with a `title`. The response's `candidateId` is the URL identifier; it is the Candidate row's ID, not the Profile ID.
-
-4. Copy `src/Frontend/.env.example` to `src/Frontend/.env.local`, leave `VITE_API_BASE_URL` empty to use the local Vite proxy, then start the frontend:
+3. Copy `src/Frontend/.env.example` to `src/Frontend/.env.local`, leave `VITE_API_BASE_URL` empty to use the local Vite proxy, then start the frontend in a separate terminal:
 
    ```powershell
    Copy-Item src/Frontend/.env.example src/Frontend/.env.local
    npm --prefix src/Frontend run dev
    ```
 
-   Set `VITE_ENTRA_CLIENT_ID`, `VITE_ENTRA_TENANT_ID`, and `VITE_ENTRA_API_SCOPE` in `.env.local` from the Entra app registrations before using admin sign-in. Open `http://localhost:3000/<candidate-id>`, using `candidateId` returned when creating the profile. The frontend loads the Candidate by its ID, then loads that Candidate's profile. Vite forwards API requests to the backend. The ID appears in a public URL and is not a secret.
+   Set `VITE_ENTRA_CLIENT_ID`, `VITE_ENTRA_TENANT_ID`, and `VITE_ENTRA_API_SCOPE` in `.env.local` from the Entra app registrations (see [Entra admin authentication](#entra-admin-authentication)). Creating and editing a profile requires sign-in.
+
+4. Create a profile: open `http://localhost:3000/admin` and sign in with Entra. Enter the full name, a Finnish title, and the CV address: lowercase letters, numbers and hyphens, for example `etunimi-sukunimi`. After saving, the browser opens the CV at `http://localhost:3000/<cv-address>`. The signed-in user becomes the profile's owner. The CV address is public and not a secret.
 
 ## Entra admin authentication
 
@@ -48,7 +48,7 @@ Complete these steps in the Entra admin center. Use the same tenant for both reg
 
 5. **Grant the frontend API permission.** In the frontend registration, open **API permissions > Add a permission > My APIs**, select `MyCV API`, then add the delegated `access_as_user` permission. Grant admin consent for the tenant if required by your organization's consent settings.
 
-6. **Assign admin access.** Open **Enterprise applications**, select the `MyCV API` enterprise application, then **Users and groups > Add user/group**. Assign the appropriate users or groups the `MyCV administrator` role. A user who is not assigned this API role can sign in but will not get admin controls or API access.
+6. **Assign admin access.** Open **Enterprise applications**, select the `MyCV API` enterprise application, then **Users and groups > Add user/group**. Assign the appropriate users or groups the `MyCV administrator` role. A user with this role can manage every profile. A user without it can still sign in, create a profile, and edit the profiles they own.
 
 7. **Configure local settings.** Copy `src/Frontend/.env.example` to `src/Frontend/.env.local` and set these values (all are public IDs/scope, not secrets):
 
@@ -69,11 +69,11 @@ Complete these steps in the Entra admin center. Use the same tenant for both reg
 
    Set `AzureAd:Audience` to the API's **Application ID URI**, which must match the access token's `aud` claim. With the URI configured in step 2, this is `api://<API_CLIENT_ID>`. Restart the API after changing User Secrets, and restart Vite after changing `.env.local`.
 
-8. **Run and verify locally.** Start the API with `dotnet run --project src/Backend/CV.WebApi --launch-profile http` and the frontend with `npm --prefix src/Frontend run dev -- --strictPort`. Keep port 3000 free; the registered redirect URI must match exactly, so do not use Vite's fallback port 3001. Open `http://localhost:3000/<candidate-id>/admin`, complete Entra sign-in, and confirm the browser returns to `http://localhost:3000/<candidate-id>`. An assigned admin should see editing controls; an unassigned user should not. The API independently requires the `CvAdmin` role.
+8. **Run and verify locally.** Start the API with `dotnet run --project src/Backend/CV.WebApi --launch-profile http` and the frontend with `npm --prefix src/Frontend run dev -- --strictPort`. Keep port 3000 free; the registered redirect URI must match exactly, so do not use Vite's fallback port 3001. Open `http://localhost:3000/<cv-address>/admin`, complete Entra sign-in, and confirm the browser returns to `http://localhost:3000/<cv-address>`. The profile's owner and users with the `CvAdmin` role should see editing controls; other users should not. The API checks ownership or the `CvAdmin` role independently.
 
 Microsoft Authenticator is used through the tenant's normal MFA flow. To require MFA, enable the method for the users under **Protection > Authentication methods > Policies**, and configure a Conditional Access policy targeting the `MyCV API` cloud app to require MFA. Conditional Access availability depends on the tenant's licensing and policy permissions; the app itself does not bypass or replace those controls.
 
-When MSAL can no longer silently acquire an API access token, the frontend redirects through Entra for interaction and returns to the current CV route. The API validates token expiration, issuer, audience, and the `CvAdmin` role on every protected request.
+When MSAL can no longer silently acquire an API access token, the frontend redirects through Entra for interaction and returns to the current CV route. The API validates token expiration, issuer and audience on every protected request, and checks profile ownership or the `CvAdmin` role before changing data.
 
 ## Configuration and secrets
 
@@ -82,4 +82,4 @@ When MSAL can no longer silently acquire an API access token, the frontend redir
 - Frontend `.env.local` files are ignored by Git. `VITE_*` values are still included in the built JavaScript and are public configuration only—never put passwords, API keys, or tokens there.
 - The repository ignores `.env*` and environment-specific `appsettings.*.json` files, with `.env.example` as the safe tracked template. Check `git status` before committing local configuration.
 
-The Profile create/update/delete/admin-read endpoints and Candidate delete endpoint require a valid Entra access token with the `CvAdmin` app role. Public profile and Candidate reads remain anonymous. CORS is not authorization.
+Creating a profile requires a valid Entra access token, and the signed-in user becomes the profile's owner. The Profile update, delete and admin-read endpoints and the Candidate delete endpoint also require the caller to be the profile's owner or to have the `CvAdmin` app role. Public profile and Candidate reads remain anonymous. CORS is not authorization.

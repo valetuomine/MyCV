@@ -1,0 +1,118 @@
+parameters:
+- name: pool
+  type: object
+
+jobs:
+- job: UpdateWorkItems
+  displayName: Move merged work items forward
+  pool: ${{ parameters.pool }}
+  steps:
+  - checkout: none
+
+  # Finds the pull request that produced this merge commit on main and moves its linked
+  # work items forward. Linked Tasks are handled first and move to "Closed". A linked
+  # User Story then moves to "Waiting for Deployment" only when none of its child Tasks
+  # is still open, so linking the parent story to a Task's pull request keeps the story
+  # in progress until its last Task is merged. User Stories are also skipped when the pull
+  # request has the "Jatkuu" label, which marks a follow-up pull request for a story that
+  # is still in progress.
+  - bash: |
+      set -euo pipefail
+
+      api="${COLLECTION_URI}${TEAM_PROJECT}/_apis"
+      auth="Authorization: Bearer ${SYSTEM_ACCESSTOKEN}"
+      repo_api="$api/git/repositories/$REPOSITORY_ID"
+
+      pr_id=$(curl -sS --fail-with-body -X POST -H "$auth" -H "Content-Type: application/json" \
+        "$repo_api/pullrequestquery?api-version=7.1" \
+        -d "{\"queries\":[{\"type\":\"lastMergeCommit\",\"items\":[\"$COMMIT_SHA\"]}]}" \
+        | jq -r --arg sha "$COMMIT_SHA" '(.results[0][$sha] // [])[0].pullRequestId // empty')
+
+      if [ -z "$pr_id" ]; then
+        echo "Commit $COMMIT_SHA was not merged through a pull request. Nothing to update."
+        exit 0
+      fi
+      echo "Commit $COMMIT_SHA was merged through pull request $pr_id."
+
+      skip_stories=false
+      if curl -sS --fail-with-body -H "$auth" "$repo_api/pullRequests/$pr_id/labels?api-version=7.1" \
+        | jq -e '[.value[].name | ascii_downcase] | index("jatkuu")' > /dev/null; then
+        skip_stories=true
+        echo "Pull request has the Jatkuu label: User Stories stay in their current state."
+      fi
+
+      work_item_ids=$(curl -sS --fail-with-body -H "$auth" \
+        "$repo_api/pullRequests/$pr_id/workitems?api-version=7.1" | jq -r '.value[].id')
+
+      if [ -z "$work_item_ids" ]; then
+        echo "Pull request $pr_id has no linked work items."
+        exit 0
+      fi
+
+      is_open() {
+        [ "$1" != "Closed" ] && [ "$1" != "Removed" ]
+      }
+
+      set_state() {
+        curl -sS --fail-with-body -X PATCH -H "$auth" -H "Content-Type: application/json-patch+json" \
+          "$api/wit/workitems/$1?api-version=7.1" \
+          -d "[{\"op\":\"add\",\"path\":\"/fields/System.State\",\"value\":\"$2\"}]" > /dev/null
+      }
+
+      ids_csv=$(echo "$work_item_ids" | paste -sd, -)
+      items=$(curl -sS --fail-with-body -H "$auth" \
+        "$api/wit/workitems?ids=$ids_csv&fields=System.State,System.WorkItemType&api-version=7.1")
+
+      # Tasks first, so that a story's open-Task check below sees them as closed.
+      for id in $(echo "$items" | jq -r '.value[] | select(.fields["System.WorkItemType"] == "Task") | .id'); do
+        state=$(echo "$items" | jq -r --argjson id "$id" '.value[] | select(.id == $id) | .fields["System.State"]')
+        if is_open "$state"; then
+          set_state "$id" "Closed"
+          echo "Task #$id moved from '$state' to 'Closed'."
+        else
+          echo "Task #$id stays in state '$state'."
+        fi
+      done
+
+      for id in $(echo "$items" | jq -r '.value[] | select(.fields["System.WorkItemType"] == "User Story") | .id'); do
+        story=$(curl -sS --fail-with-body -H "$auth" \
+          "$api/wit/workitems/$id?\$expand=relations&api-version=7.1")
+        state=$(echo "$story" | jq -r '.fields["System.State"]')
+
+        if [ "$skip_stories" = true ]; then
+          echo "User Story #$id stays in state '$state' (Jatkuu label)."
+          continue
+        fi
+        if [ "$state" = "Waiting for Deployment" ] || ! is_open "$state"; then
+          echo "User Story #$id stays in state '$state'."
+          continue
+        fi
+
+        child_ids=$(echo "$story" | jq -r '[.relations[]? | select(.rel == "System.LinkTypes.Hierarchy-Forward") | .url | split("/") | last] | join(",")')
+        if [ -n "$child_ids" ]; then
+          open_tasks=$(curl -sS --fail-with-body -H "$auth" \
+            "$api/wit/workitems?ids=$child_ids&fields=System.State,System.WorkItemType&errorPolicy=omit&api-version=7.1" \
+            | jq -r '[.value[] | select(. != null) | select(.fields["System.WorkItemType"] == "Task")
+                | select(.fields["System.State"] != "Closed" and .fields["System.State"] != "Removed")
+                | "#\(.id)"] | join(", ")')
+          if [ -n "$open_tasks" ]; then
+            echo "User Story #$id stays in state '$state': child Tasks still open ($open_tasks)."
+            continue
+          fi
+        fi
+
+        set_state "$id" "Waiting for Deployment"
+        echo "User Story #$id moved from '$state' to 'Waiting for Deployment'."
+      done
+
+      other=$(echo "$items" | jq -r '[.value[] | select(.fields["System.WorkItemType"] != "Task" and .fields["System.WorkItemType"] != "User Story") | "#\(.id) (\(.fields["System.WorkItemType"]))"] | join(", ")')
+      if [ -n "$other" ]; then
+        echo "Not changed (other work item types): $other"
+      fi
+    displayName: Move linked work items forward
+    env:
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+      COLLECTION_URI: $(System.CollectionUri)
+      TEAM_PROJECT: $(System.TeamProject)
+      REPOSITORY_ID: $(Build.Repository.ID)
+      COMMIT_SHA: $(Build.SourceVersion)

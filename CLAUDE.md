@@ -1,0 +1,53 @@
+# MyCV
+
+A personal CV site: an ASP.NET Core REST API (`src/Backend`) and a React, TypeScript and Vite client (`src/Frontend`), tracked in Azure DevOps (organization `valetuominen`, project `MyCV`). See `README.md` for local setup, `DESIGN.md` and `PRODUCT.md` for the UI and product direction.
+
+## Workflow
+
+Every change is tied to an Azure DevOps work item and reaches `main` through a pull request that the user approves and completes.
+
+1. **Start from a work item.** When the user names one ("User Story 47", "Task 50"), read it first. Otherwise find a matching story, or create one with `/write-user-story`.
+2. **Do the work** on the working tree. Follow `/create-cv-skills` for backend APIs and their client integration, and `/setup-frontend` for the frontend shell and design.
+3. **Ship it with `/create-pull-request`.** It creates the branch, runs the pipeline checks, splits the work into commits, pushes, opens the PR linked to the work item, and posts a reviewer comment.
+4. **The user reviews and completes the PR.** After the merge, the `main` pipeline moves the linked work items forward (`templates/work-item-state-job.yml`).
+
+When the user corrects how a step was done, update the skill or this file so the correction lasts, and say which file changed.
+
+## Never
+
+- Commit or push directly to `main`.
+- Complete, approve or set auto-complete on a pull request.
+- Move work items to `Waiting for Deployment` or `Closed` by hand. The pipeline does it after the merge.
+- Commit secrets or local settings: `.env.local`, `.mcp.json`, user secrets.
+- Skip, disable or weaken a failing check to get it to pass.
+
+## Conventions
+
+| What | Language and format |
+|---|---|
+| Work item titles and descriptions | Finnish, see `/write-user-story` |
+| Work item tags | `Frontend`, `Backend`, `Database`, `Pipeline`, `Skills`, `Versioning` |
+| Branches | `feat/US-<id>_<Title_slug>` or `feat/<task id>_<Title_slug>` |
+| Commit messages | English, `US-<id>: <imperative summary>` or `<task id>: <summary>` |
+| PR titles | `User Story <id>: <work item title>` or `Task <id>: <work item title>` |
+| PR reviewer comments | Finnish |
+| Code, comments and docs in the repo | English |
+
+## Checks
+
+The PR pipeline runs these. Run the ones for the areas you changed before pushing:
+
+```powershell
+dotnet build src/MyCV.sln --configuration Release
+dotnet ef migrations has-pending-model-changes --project src/Backend/CV.DataAccess/CV.DataAccess.csproj --startup-project src/Backend/CV.WebApi/CV.WebApi.csproj
+npm --prefix src/Frontend run lint
+npm --prefix src/Frontend run build
+```
+
+Format changed C# with `dotnet format` and changed frontend files with Prettier.
+
+## Tools
+
+- **Azure DevOps** is reached through the `azure-devops` MCP server (`.mcp.json`, local only). It signs in with a personal access token from the `PERSONAL_ACCESS_TOKEN` environment variable, because the browser sign-in does not accept the user's personal Microsoft account.
+- **Git:** `origin` pushes only to Azure DevOps. The `main` pipeline mirrors `main` to GitHub after each merge, so feature branches never go to GitHub.
+- **Project skills** live in `.claude/skills/`. Each one is tracked through an exception in `.gitignore`. Add a new exception when you add a skill.

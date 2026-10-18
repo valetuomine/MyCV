@@ -43,8 +43,22 @@ stages:
         pool:
           vmImage: ubuntu-latest
 
+- stage: WorkItems
+  displayName: Update work items
+  dependsOn:
+  - Build
+  - FrontendBuild
+  jobs:
+  - template: templates/work-item-state-job.yml
+    parameters:
+      pool:
+        vmImage: ubuntu-latest
+
 - stage: GitHubSync
   displayName: Sync main to GitHub
+  dependsOn:
+  - Build
+  - FrontendBuild
   jobs:
   - job: PushToGitHub
     displayName: Push main to GitHub
