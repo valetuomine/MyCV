@@ -71,6 +71,8 @@
 
   --animate-cv-pulse: cv-pulse 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
   --animate-cv-sweep: cv-sweep 8s linear infinite;
+  /* Held invisible briefly so screens that resolve quickly never flash. */
+  --animate-cv-fade-in-delayed: cv-fade-in 200ms ease-out 300ms both;
 
   @keyframes cv-pulse {
     0% {
@@ -80,6 +82,12 @@
     80%,
     100% {
       transform: scale(2.75);
+      opacity: 0;
+    }
+  }
+
+  @keyframes cv-fade-in {
+    from {
       opacity: 0;
     }
   }

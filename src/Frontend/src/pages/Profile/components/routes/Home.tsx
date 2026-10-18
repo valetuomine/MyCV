@@ -1,6 +1,17 @@
-import { useEffect, useId, useState, type JSX, type SubmitEvent } from "react"
-import { useNavigate } from "react-router-dom"
-import { clearLoginReturnPaths } from "../../../../auth/adminLoginStorage"
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type JSX,
+  type SubmitEvent,
+} from "react"
+import { Navigate, useNavigate } from "react-router-dom"
+import {
+  clearAuthReturnPaths,
+  logoutReturnPublicUrlSegmentKey,
+} from "../../../../auth/adminLoginStorage"
+import { signedOutLocationState } from "../../../../auth/signedOutState"
 import { primaryButton } from "../../../components/buttonStyles"
 import { RoutePaths } from "../../../../routePaths"
 
@@ -22,9 +33,32 @@ export default function Home(): JSX.Element {
   const [value, setValue] = useState("")
   const [error, setError] = useState<string>()
 
+  // Set by SignOutButton: the profile to return to, or "" to stay on Home.
+  const [logoutReturnSegment] = useState(() =>
+    sessionStorage.getItem(logoutReturnPublicUrlSegmentKey),
+  )
+  const hasHandledLogout = useRef(false)
+
   useEffect(() => {
-    clearLoginReturnPaths()
-  }, [])
+    clearAuthReturnPaths()
+    if (logoutReturnSegment === "" && !hasHandledLogout.current) {
+      hasHandledLogout.current = true
+      navigate(RoutePaths.Home, {
+        replace: true,
+        state: signedOutLocationState,
+      })
+    }
+  }, [logoutReturnSegment, navigate])
+
+  if (logoutReturnSegment) {
+    return (
+      <Navigate
+        to={RoutePaths.CandidateProfile(logoutReturnSegment)}
+        replace
+        state={signedOutLocationState}
+      />
+    )
+  }
 
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>): void => {
     event.preventDefault()

@@ -36,7 +36,7 @@ Use this workflow when recreating the MyCV frontend inside `src/Frontend`.
 - Create a Zod schema whenever creating a form. Keep the schema next to the form when it is local to that form, or in the form's feature folder when it is shared.
 - Infer form input types from the Zod schema where practical so validation and TypeScript types stay aligned.
 - Build forms with React Hook Form (`react-hook-form`) and `@hookform/resolvers/zod`. Wrap RHF-backed sections in `FormProvider` and make reusable inputs read state with `useFormContext`/`useWatch`, using typed field names.
-- Keep profile content in its normal story layout for viewing. When `useIsAdmin()` from `src/auth/useIsAdmin.ts` is true, show one form-level Edit action; edit all fields together in a conventional form with Save and Cancel actions, not per-field edit buttons. Use React Hook Form and the Zod resolver to validate the full form before leaving edit mode, reset changes on Cancel, and render each validation message beneath its field with `aria-describedby`. Forward applicable native input attributes while keeping React Hook Form-controlled props internal. Edits remain local form state for now; implement persistence separately when the Save mutation is added. The current auth hook is a stub and returns `false`, so admin controls are disabled.
+- Keep profile content in its normal story layout for viewing. When `useCanEditProfile(profileId)` from `src/auth/useCanEditProfile.ts` returns `canEdit`, show one form-level Edit action; edit all fields together in a conventional form with Save and Cancel actions, not per-field edit buttons. Use React Hook Form and the Zod resolver to validate the full form before leaving edit mode, reset changes on Cancel, and render each validation message beneath its field with `aria-describedby`. Forward applicable native input attributes while keeping React Hook Form-controlled props internal. Save persists through `useUpdateProfileMutation`. `canEdit` only hides or shows controls; the API enforces who may edit.
 - Install npm packages from the directory containing the package's `package.json`. For this repository, frontend packages must be installed from `src/Frontend`, not the repository root:
 
 ```powershell
@@ -100,12 +100,16 @@ The look is a modern, editorial developer CV: left-aligned asymmetric layouts, l
 
 - Use Framer Motion with spring physics (`type: "spring", stiffness: 100, damping: 20`) and staggered entry (`staggerChildren`) instead of linear easing or mounting everything at once. Animate only `transform` and `opacity`.
 - Wrap CV pages in `MotionConfig reducedMotion="user"` so reduced-motion preferences are honored.
-- Keep infinite loops to small status details (pulse dot, hint arrow, skeleton shimmer).
+- Keep infinite loops to small status details (pulse dot, hint arrow, skeleton pulse).
+- Give screens that usually resolve in well under a second (auth redirects, callbacks) `animate-cv-fade-in-delayed` from `src/index.css`. It holds them invisible for 300ms before fading in, so fast paths never flash. `RouteMessage` applies it with `delayed`.
 
 ### States
 
-- Loading, error, empty, and not-found screens render through `RouteMessage` (props `tone` and `showHomeButton`); never show bare unstyled text.
-- Placeholder content uses skeleton bars (`animate-cv-shimmer`), not spinners.
+- Loading, error, empty, not-found, and auth screens render through `RouteMessage`; never show bare unstyled text. `tone` takes the `Tone` const from `src/types.ts`: `Tone.Neutral`, `Tone.Pending` (the dot pulses with `animate-cv-pulse`, hidden under reduced motion; sets `aria-busy`), or `Tone.Error` (danger dot, `role="alert"`). Pass `onRetry`/`showHomeButton` for the default Try again and Open a CV buttons, or `actions` to replace them. Put identifiers such as a public URL segment in `<code>` inside the heading; `RouteMessage` styles it as a chip.
+- Every message screen needs a way forward: a failure offers Try again plus a way back (Back to CV or Open a CV); never leave the user on a dead end.
+- All sign-in states render through `src/auth/SignInMessage.tsx`: not configured, cancelled (neutral tone), failed (error tone), pending (names what is being signed in to, for example "Signing in to manage `segment`"), and slow. After 5 seconds without a redirect, the pending screen offers Reload page rather than calling MSAL again, because a second login call while one is in flight fails with `interaction_in_progress`.
+- `Background` renders `SignOutButton` and `ThemeToggle` top-right. When signed in, `SignOutButton` shows the account name (email in the `title`) beside Sign out, hidden below `sm`. `Background` also renders `SignedOutNotice`, a bottom-centred pill that confirms a sign-out for 4 seconds inside an always-present `role="status"` region.
+- Placeholder content uses skeleton bars (`motion-safe:animate-pulse`), not spinners.
 - Form errors render inline under the field with `role="alert"` and `aria-describedby`, using `text-cv-danger`.
 - The profile photo slot is `ProfilePortrait`: it shows the image when an `imageUrl` exists, otherwise a monogram. The API has no photo field yet.
 

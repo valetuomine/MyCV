@@ -39,5 +39,8 @@ Thumbs.db
 
 # Agent skills (restore with npx skills experimental_install; skills-lock.json is tracked)
 .agents/skills/
-.claude/skills/
 agent/skills/
+# Installed skills are ignored; the project's own skills are tracked.
+.claude/skills/*
+!.claude/skills/setup-frontend/
+!.claude/skills/create-cv-skills/

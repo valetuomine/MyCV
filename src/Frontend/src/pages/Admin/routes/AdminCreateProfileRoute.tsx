@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom"
 import { useCreateProfileMutation } from "../../../api/profileQueries"
 import { isEntraConfigured } from "../../../auth/entraAuth"
 import { returnAdminPathKey } from "../../../auth/adminLoginStorage"
+import SignInMessage from "../../../auth/SignInMessage"
 import useEntraLoginRedirect from "../../../auth/useEntraLoginRedirect"
 import { RoutePaths } from "../../../routePaths"
 import { primaryButton, secondaryButton } from "../../components/buttonStyles"
@@ -24,7 +25,7 @@ export default function AdminCreateProfileRoute(): JSX.Element {
   const navigate = useNavigate()
   const [submitError, setSubmitError] = useState<string>()
   const [createProfile, createState] = useCreateProfileMutation()
-  const { signInError, retrySignIn } = useEntraLoginRedirect({
+  const { signInFailure, isRedirectSlow, retrySignIn } = useEntraLoginRedirect({
     enabled: true,
     redirectPath: RoutePaths.AdminCreateProfile,
     storageKey: returnAdminPathKey,
@@ -71,44 +72,20 @@ export default function AdminCreateProfileRoute(): JSX.Element {
     }
   })
 
-  if (!isEntraConfigured) {
+  if (
+    !isEntraConfigured ||
+    !accounts[0] ||
+    inProgress !== InteractionStatus.None
+  ) {
     return (
-      <main className="mx-auto grid min-h-dvh w-full max-w-6xl content-center gap-4 px-6 text-cv-copy">
-        <h1 className="m-0 font-cv-display text-3xl font-semibold text-cv-ink">
-          Sign-in is not configured
-        </h1>
-        <p className="m-0 max-w-[52ch] text-cv-copy">
-          Configure Microsoft sign-in for this deployment before creating a
-          profile.
-        </p>
-        <button
-          type="button"
-          onClick={() => navigate(RoutePaths.Home)}
-          className={`${secondaryButton} w-fit`}
-        >
-          Back
-        </button>
-      </main>
-    )
-  }
-
-  if (!accounts[0] || inProgress !== InteractionStatus.None) {
-    return (
-      <main className="mx-auto grid min-h-dvh w-full max-w-6xl content-center justify-items-start gap-5 px-6 text-cv-copy">
-        <h1 className="m-0 font-cv-display text-3xl font-semibold text-cv-ink sm:text-4xl">
-          Sign in to create a profile
-        </h1>
-        <p className="m-0 max-w-[52ch] text-cv-copy">
-          {signInError
-            ? "Microsoft sign-in could not be started. Please try again."
-            : "Redirecting to Microsoft sign-in…"}
-        </p>
-        {signInError && (
-          <button type="button" onClick={retrySignIn} className={primaryButton}>
-            Sign in
-          </button>
-        )}
-      </main>
+      <SignInMessage
+        pendingTitle="Signing in to create a profile"
+        signInFailure={signInFailure}
+        isRedirectSlow={isRedirectSlow}
+        onRetry={retrySignIn}
+        backLabel="Open a CV"
+        onBack={() => navigate(RoutePaths.Home)}
+      />
     )
   }
 

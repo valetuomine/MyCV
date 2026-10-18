@@ -28,3 +28,18 @@ export const CopyStatus = {
 } as const
 
 export type CopyStatus = (typeof CopyStatus)[keyof typeof CopyStatus]
+
+export const Tone = {
+  Neutral: "neutral",
+  Pending: "pending",
+  Error: "error",
+} as const
+
+export type Tone = (typeof Tone)[keyof typeof Tone]
+
+export const SignInFailure = {
+  Cancelled: "cancelled",
+  Failed: "failed",
+} as const
+
+export type SignInFailure = (typeof SignInFailure)[keyof typeof SignInFailure]

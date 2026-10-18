@@ -6,6 +6,7 @@ import { useGetProfileQuery } from "../../../../api/profileQueries"
 import ProfilePage from "../ProfilePage"
 import ProfileSkeleton from "../ProfileSkeleton"
 import RouteMessage from "../RouteMessage"
+import { Tone } from "../../../../types"
 
 export default function CandidateProfileRoute(): JSX.Element {
   const { publicUrlSegment } = useParams()
@@ -23,7 +24,7 @@ export default function CandidateProfileRoute(): JSX.Element {
     const { message, retryable } = describeError(candidateQuery.error)
     return (
       <RouteMessage
-        tone="error"
+        tone={Tone.Error}
         onRetry={retryable ? () => void candidateQuery.refetch() : undefined}
       >
         {message}
@@ -45,7 +46,7 @@ export default function CandidateProfileRoute(): JSX.Element {
     const { message, retryable } = describeError(profileQuery.error)
     return (
       <RouteMessage
-        tone="error"
+        tone={Tone.Error}
         onRetry={retryable ? () => void profileQuery.refetch() : undefined}
       >
         {message}

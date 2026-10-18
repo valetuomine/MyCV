@@ -6,6 +6,7 @@ import {
   useTransform,
 } from "framer-motion"
 import type { JSX, PointerEvent, ReactNode } from "react"
+import SignedOutNotice from "../../auth/SignedOutNotice"
 import SignOutButton from "../../auth/SignOutButton"
 import ThemeToggle from "./ThemeToggle"
 
@@ -69,6 +70,7 @@ export default function Background({ children }: BackgroundProps): JSX.Element {
         </div>
         {children}
       </div>
+      <SignedOutNotice />
     </div>
   )
 }

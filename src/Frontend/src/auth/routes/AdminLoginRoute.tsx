@@ -2,20 +2,21 @@ import { InteractionStatus } from "@azure/msal-browser"
 import { useMsal } from "@azure/msal-react"
 import { useEffect, type JSX } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { isEntraConfigured } from "../entraAuth"
 import { returnPublicUrlSegmentKey } from "../adminLoginStorage"
+import SignInMessage from "../SignInMessage"
 import useEntraLoginRedirect from "../useEntraLoginRedirect"
 import { RoutePaths } from "../../routePaths"
 
 export default function AdminLoginRoute(): JSX.Element {
-  const { publicUrlSegment } = useParams()
+  const { publicUrlSegment = "" } = useParams()
   const { accounts, inProgress } = useMsal()
   const navigate = useNavigate()
-  const { signInError } = useEntraLoginRedirect({
+
+  const { signInFailure, isRedirectSlow, retrySignIn } = useEntraLoginRedirect({
     enabled: Boolean(publicUrlSegment),
-    redirectPath: RoutePaths.CandidateProfile(publicUrlSegment ?? ""),
+    redirectPath: RoutePaths.CandidateAdmin(publicUrlSegment),
     storageKey: returnPublicUrlSegmentKey,
-    storageValue: publicUrlSegment ?? "",
+    storageValue: publicUrlSegment,
   })
 
   useEffect(() => {
@@ -30,17 +31,22 @@ export default function AdminLoginRoute(): JSX.Element {
     }
   }, [accounts, inProgress, navigate, publicUrlSegment])
 
-  const message = !isEntraConfigured
-    ? "Entra sign-in is not configured for this deployment."
-    : signInError
-      ? "Sign-in could not be started. Please try again."
-      : "Redirecting to Microsoft sign-in…"
-
   return (
-    <main className="mx-auto grid min-h-dvh w-full max-w-6xl content-center gap-3 px-6 text-cv-copy">
-      <p role={signInError || !isEntraConfigured ? "alert" : "status"}>
-        {message}
-      </p>
-    </main>
+    <SignInMessage
+      pendingTitle={
+        <>
+          Signing in to manage <code>{publicUrlSegment}</code>
+        </>
+      }
+      signInFailure={signInFailure}
+      isRedirectSlow={isRedirectSlow}
+      onRetry={retrySignIn}
+      backLabel="Back to CV"
+      onBack={() =>
+        navigate(RoutePaths.CandidateProfile(publicUrlSegment), {
+          replace: true,
+        })
+      }
+    />
   )
 }

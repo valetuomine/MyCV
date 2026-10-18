@@ -4,7 +4,6 @@
 
 - Keep components rendered directly by React Router in feature-local `routes` folders (for example, `pages/Profile/components/routes`, `pages/Admin/routes`, and `auth/routes`). Keep reusable UI and route helpers with their feature components, outside the route folders.
 - Keep frontend route patterns and navigation destinations in `src/routePaths.ts` as the `RoutePaths` object. Use PascalCase members (for example, `RoutePaths.Home`) for fixed routes and path builders rather than repeating path strings in route registration, navigation, or authentication redirects. Keep API endpoint URLs with their RTK Query endpoints.
-- Treat auth return-path session-storage values as one-shot navigation markers, not authentication or database state. Remove them after reading in the callback, on redirect failure, at the authenticated destination once MSAL is idle, and when abandoning the flow for Home or sign-out. Sign-out must return to a public route rather than the protected route that would immediately start sign-in again.
 - Use React Router for browser navigation. Public Candidate profiles use one route parameter only: `/:publicUrlSegment`; do not append `/profile`.
 - The Static Web Apps deployment must provide SPA navigation fallback to `/index.html` so a deep link such as `/<publicUrlSegment>` loads the React app.
 - Fetch server state with RTK Query (`createApi`/`fetchBaseQuery`) and generated hooks. Do not create ad-hoc `fetch` effects for endpoint-backed resources or duplicate the same data in Jotai.
@@ -12,6 +11,13 @@
 - Load `GET /api/Candidate/{publicUrlSegment}` first. Use its `profileId` to conditionally load `GET /api/Profile/{profileId}`. Handle loading, errors, unknown candidates, and candidates without a profile explicitly.
 - Keep local/shared UI state in Jotai atoms where it is used across components; do not put server response caches in Jotai.
 - Wrap the app with Redux Toolkit's `<Provider>`, Jotai's `<Provider>`, and `<BrowserRouter>` in the entry point. Register the RTK Query reducer and middleware in the Redux store.
+
+## Sign-in and sign-out
+
+- Start sign-in with `useEntraLoginRedirect` from the route that needs it, and set its `redirectPath` (MSAL's `redirectStartPage`) to that same route, for example `RoutePaths.CandidateAdmin(publicUrlSegment)` rather than the public profile. MSAL completes a redirect on the start page, so a cancelled or failed sign-in lands back on the screen that can explain it and offer a retry. Once an account exists, that route forwards to its destination.
+- MSAL reports redirect failures only through its event stream. `src/auth/entraAuth.ts` records `ACQUIRE_TOKEN_FAILURE` events for redirect interactions in a small store; read it with `useSyncExternalStore(subscribeRedirectSignInError, getRedirectSignInError)`. While a failure is recorded, never start another redirect automatically; wait for the user's retry, otherwise a cancel loops straight back to Microsoft. Use `isSignInCancelled` to tell a cancel (`user_cancelled`, `access_denied`) from a real error. Call `clearRedirectSignInError()` on retry and when the screen that showed the failure unmounts.
+- Treat auth return-path session-storage values in `src/auth/adminLoginStorage.ts` as one-shot navigation markers, not authentication or database state. Clear them all with `clearAuthReturnPaths()` after reading in the callback, on redirect failure, at the authenticated destination once MSAL is idle, and when abandoning the flow for Home. When a value must survive the clearing effect, read it during render in a `useState` initializer.
+- Sign-out must return to a public route rather than the protected route that would immediately start sign-in again. Entra only redirects to registered URIs and does not accept wildcards, so `postLogoutRedirectUri` is always `RoutePaths.Home`. Before `logoutRedirect`, `SignOutButton` stores the current profile's `publicUrlSegment` under `logoutReturnPublicUrlSegmentKey`, or `""` when there is none (for example on `/admin`). Home then forwards to that public profile with `<Navigate replace>`, or stays on Home for `""`. Both pass `signedOutLocationState` (`src/auth/signedOutState.ts`) so `SignedOutNotice` can confirm the sign-out; the notice then replaces the router state so a reload does not replay it.
 
 ## API base URL and types
 

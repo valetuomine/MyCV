@@ -1,8 +1,13 @@
 import {
+  AuthError,
+  BrowserAuthErrorCodes,
+  EventType,
   InteractionRequiredAuthError,
+  InteractionType,
   PublicClientApplication,
   type AccountInfo,
   type AuthenticationResult,
+  type EventError,
 } from "@azure/msal-browser"
 
 const clientId = import.meta.env.VITE_ENTRA_CLIENT_ID?.trim() ?? ""
@@ -22,6 +27,48 @@ export const msalInstance = new PublicClientApplication({
     redirectUri,
   },
 })
+
+// MSAL completes a redirect sign-in on the page that started it, and only
+// reports a failure (e.g. the user cancelled) through its event stream.
+let redirectSignInError: EventError = null
+const redirectSignInErrorListeners = new Set<() => void>()
+
+function setRedirectSignInError(error: EventError): void {
+  redirectSignInError = error
+  redirectSignInErrorListeners.forEach((listener) => listener())
+}
+
+msalInstance.addEventCallback((message) => {
+  if (
+    message.eventType === EventType.ACQUIRE_TOKEN_FAILURE &&
+    message.interactionType === InteractionType.Redirect
+  ) {
+    setRedirectSignInError(message.error)
+  }
+})
+
+export function subscribeRedirectSignInError(listener: () => void): () => void {
+  redirectSignInErrorListeners.add(listener)
+  return () => redirectSignInErrorListeners.delete(listener)
+}
+
+export function getRedirectSignInError(): EventError {
+  return redirectSignInError
+}
+
+export function clearRedirectSignInError(): void {
+  if (redirectSignInError) {
+    setRedirectSignInError(null)
+  }
+}
+
+export function isSignInCancelled(error: unknown): boolean {
+  return (
+    error instanceof AuthError &&
+    (error.errorCode === BrowserAuthErrorCodes.userCancelled ||
+      error.errorCode === "access_denied")
+  )
+}
 
 export async function acquireApiAuthenticationResult(
   account?: AccountInfo,
