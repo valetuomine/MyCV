@@ -1,0 +1,61 @@
+parameters:
+- name: pool
+  type: object
+
+jobs:
+- job: MarkWorkItemsInProgress
+  displayName: Move linked work items to In Progress
+  pool: ${{ parameters.pool }}
+  steps:
+  - checkout: none
+
+  # Moves the work items linked to this pull request to "In Progress" while the pull request
+  # is open: New User Stories and Tasks, and User Stories that are already "Waiting for
+  # Deployment" from an earlier pull request. After the merge, the main pipeline moves them
+  # forward again (templates/work-item-state-job.yml). Closed and Removed items are left as
+  # they are.
+  - bash: |
+      set -euo pipefail
+
+      api="${COLLECTION_URI}${TEAM_PROJECT}/_apis"
+      auth="Authorization: Bearer ${SYSTEM_ACCESSTOKEN}"
+
+      work_item_ids=$(curl -sS --fail-with-body -H "$auth" \
+        "$api/git/repositories/$REPOSITORY_ID/pullRequests/$PULL_REQUEST_ID/workitems?api-version=7.1" \
+        | jq -r '.value[].id')
+
+      if [ -z "$work_item_ids" ]; then
+        echo "Pull request $PULL_REQUEST_ID has no linked work items."
+        exit 0
+      fi
+
+      ids_csv=$(echo "$work_item_ids" | paste -sd, -)
+      items=$(curl -sS --fail-with-body -H "$auth" \
+        "$api/wit/workitems?ids=$ids_csv&fields=System.State,System.WorkItemType&api-version=7.1")
+
+      echo "$items" | jq -r '.value[] | "\(.id)\t\(.fields["System.WorkItemType"])\t\(.fields["System.State"])"' \
+        | while IFS=$'\t' read -r id type state; do
+            move=false
+            case "$type:$state" in
+              "User Story:New" | "User Story:Waiting for Deployment" | "Task:New")
+                move=true
+                ;;
+            esac
+
+            if [ "$move" = false ]; then
+              echo "#$id ($type) stays in state '$state'."
+              continue
+            fi
+
+            curl -sS --fail-with-body -X PATCH -H "$auth" -H "Content-Type: application/json-patch+json" \
+              "$api/wit/workitems/$id?api-version=7.1" \
+              -d '[{"op":"add","path":"/fields/System.State","value":"In Progress"}]' > /dev/null
+            echo "#$id ($type) moved from '$state' to 'In Progress'."
+          done
+    displayName: Move linked work items to In Progress
+    env:
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+      COLLECTION_URI: $(System.CollectionUri)
+      TEAM_PROJECT: $(System.TeamProject)
+      REPOSITORY_ID: $(Build.Repository.ID)
+      PULL_REQUEST_ID: $(System.PullRequest.PullRequestId)

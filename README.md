@@ -1,7 +1,5 @@
 # MyCV
 
-For Azure SQL, App Service, Static Web Apps, and Azure DevOps Release setup, see [the Azure deployment guide](docs/azure-deployment.md).
-
 ## Run the API and frontend locally
 
 The Vite development server proxies `/api` requests to the ASP.NET Core API, so the browser uses the frontend origin and does not need a client-side API key or a separate CORS configuration.

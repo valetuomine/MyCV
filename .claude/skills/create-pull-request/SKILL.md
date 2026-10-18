@@ -28,7 +28,7 @@ Every pull request is linked to a User Story, or to a Task when the work is one 
 - Otherwise search for an existing story that matches the change (WIQL on title, state not `Closed`). Reuse it if it clearly covers the change.
 - Otherwise create a new User Story with the `write-user-story` skill. In this workflow, skip that skill's draft-approval step: create the story directly, because the user reviews everything in the pull request. Base the description on the actual diff.
 - If the change clearly belongs to more than one story (as with User Stories 41 and 42), link all of them.
-- Move the work item to `In Progress` if it is still `New`.
+- Move the work item to `In Progress` if it is `New`, or if it is a User Story already in `Waiting for Deployment` from an earlier PR: new work on it is in progress again. Leave `Closed` items as they are. The PR pipeline (`templates/work-item-in-progress-job.yml`) applies the same rule to every PR, including PRs created by hand.
 
 If it is unclear whether the change is a new story, a Task under an existing story, or part of an existing story, ask the user once before creating anything.
 
@@ -179,7 +179,7 @@ This skill does not change work item states after the merge. The `main` pipeline
 - Linked Tasks move to `Closed`. Tasks have no `Waiting for Deployment` state.
 - Linked User Stories move to `Waiting for Deployment`, except when the story still has open child Tasks, or the PR has the `Jatkuu` label. So a Task PR may also link its parent story: the story moves only when its last Task is merged.
 
-Never move work items to `Waiting for Deployment` or `Closed` when the PR is created.
+Never move work items to `Waiting for Deployment` or `Closed` when the PR is created. While the PR is open, its PR pipeline keeps the linked items `In Progress` (see *Work Item*), and the `main` pipeline moves them forward again after the merge.
 
 If the user says that a merged PR's work items did not move, check the latest run of the `main` pipeline for the *Update work items* stage and report what it logged. Move the items by hand only if the user asks.
 

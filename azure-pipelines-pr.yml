@@ -15,8 +15,19 @@ parameters:
   - self-hosted
 
 stages:
+- stage: WorkItems
+  displayName: Update work items
+  dependsOn: []
+  condition: eq(variables['Build.Reason'], 'PullRequest')
+  jobs:
+  - template: templates/work-item-in-progress-job.yml
+    parameters:
+      pool:
+        vmImage: ubuntu-latest
+
 - stage: Build
   displayName: Build solution
+  dependsOn: []
   jobs:
   - ${{ if eq(parameters.agentPool, 'self-hosted') }}:
     - template: templates/dotnet-build-job.yml

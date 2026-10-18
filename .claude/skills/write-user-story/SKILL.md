@@ -50,8 +50,10 @@ When an improvement concerns an existing area that has no Feature under Epic #43
 | `System.Description` | See *Description*, HTML format |
 | `System.AreaPath` | `MyCV\Work Items` |
 | `System.IterationPath` | `MyCV\Backlog\Work Items` |
-| `System.AssignedTo` | `vale.tuominen@gmail.com` |
+| `System.AssignedTo` | Copy the `uniqueName` of the parent Feature's `System.AssignedTo` |
 | `System.Tags` | See *Tags* |
+
+Read the assignee from the parent Feature instead of writing an email address into this skill, because the repository is mirrored to a public GitHub repository. If the Feature has no assignee, ask the user who the story should be assigned to.
 
 Leave these out, since the backlog does not use them: Acceptance Criteria, Story Points, Priority. Leave the state at its default (`New`).
 
