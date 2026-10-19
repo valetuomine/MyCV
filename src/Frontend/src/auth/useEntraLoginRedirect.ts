@@ -13,7 +13,7 @@ import {
 } from "./entraAuth"
 import { SignInFailure } from "../types"
 
-const redirectHoldMs = 2000
+const redirectHoldMs = 3500
 const slowRedirectMs = 5000
 
 interface UseEntraLoginRedirectOptions {

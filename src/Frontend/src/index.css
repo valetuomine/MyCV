@@ -71,6 +71,8 @@
 
   --animate-cv-pulse: cv-pulse 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
   --animate-cv-sweep: cv-sweep 8s linear infinite;
+  --animate-cv-spin: cv-sweep 0.9s linear infinite;
+  --animate-cv-spin-slow: cv-sweep 2.4s linear infinite;
   /* Held invisible briefly so screens that resolve quickly never flash. */
   --animate-cv-fade-in-delayed: cv-fade-in 200ms ease-out 300ms both;
 
@@ -126,6 +128,20 @@
     transparent 0 70%,
     color-mix(in srgb, var(--cv-accent) 70%, transparent) 88%,
     transparent 96%
+  );
+}
+
+/* Comet tail cut to a ring, for the pending loader (rotated by animate-cv-spin). */
+@utility bg-cv-orbit {
+  background-image: conic-gradient(
+    from 0deg,
+    transparent 0 45%,
+    var(--cv-accent) 100%
+  );
+  mask-image: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 4px),
+    #000 calc(100% - 3.5px)
   );
 }
 

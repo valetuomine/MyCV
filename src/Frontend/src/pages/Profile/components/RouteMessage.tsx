@@ -25,18 +25,20 @@ export default function RouteMessage({
 }: RouteMessageProps): JSX.Element {
   const navigate = useNavigate()
   const dotColor = tone === Tone.Error ? "bg-cv-danger" : "bg-cv-accent"
+  // Pending screens are centred so the loader is the focal point.
+  const isPending = tone === Tone.Pending
 
   return (
     <main
-      aria-busy={tone === Tone.Pending ? true : undefined}
-      className="mx-auto flex min-h-dvh w-full max-w-6xl items-center"
+      aria-busy={isPending ? true : undefined}
+      className={`mx-auto flex min-h-dvh w-full max-w-6xl items-center ${isPending ? "justify-center" : ""}`}
     >
       <div
-        className={`grid max-w-xl justify-items-start gap-8 ${delayed ? "animate-cv-fade-in-delayed" : ""}`}
+        className={`grid max-w-xl gap-8 ${isPending ? "justify-items-center text-center" : "justify-items-start"} ${delayed ? "animate-cv-fade-in-delayed" : ""}`}
       >
         <p className="flex items-center gap-3 font-cv-mono text-xs tracking-widest text-cv-copy uppercase">
           <span aria-hidden="true" className="relative grid size-2">
-            {tone === Tone.Pending && (
+            {isPending && (
               <span
                 className={`absolute inset-0 animate-cv-pulse rounded-full ${dotColor} motion-reduce:hidden`}
               />
@@ -45,6 +47,20 @@ export default function RouteMessage({
           </span>
           MyCV
         </p>
+        {isPending && (
+          <span
+            aria-hidden="true"
+            className="relative grid size-24 place-items-center"
+          >
+            <span className="absolute -inset-10 bg-cv-glow opacity-20" />
+            <span className="absolute inset-0 rounded-full border-4 border-cv-field/40" />
+            <span className="absolute inset-0 animate-cv-spin motion-reduce:animate-cv-spin-slow">
+              <span className="absolute inset-0 rounded-full bg-cv-orbit" />
+              <span className="absolute top-0 left-1/2 size-2 -translate-x-1/2 rounded-full bg-cv-accent shadow-cv-accent" />
+            </span>
+            <span className="size-3.5 rounded-full bg-cv-accent" />
+          </span>
+        )}
         <div
           role={tone === Tone.Error ? "alert" : "status"}
           className="grid gap-4"
@@ -53,13 +69,19 @@ export default function RouteMessage({
             {children}
           </h1>
           {description && (
-            <p className="m-0 max-w-[52ch] text-lg leading-relaxed text-pretty text-cv-copy">
+            <p
+              className={`m-0 max-w-[52ch] text-lg leading-relaxed text-pretty text-cv-copy ${isPending ? "justify-self-center" : ""}`}
+            >
               {description}
             </p>
           )}
         </div>
         {actions ? (
-          <div className="flex flex-wrap gap-3">{actions}</div>
+          <div
+            className={`flex flex-wrap gap-3 ${isPending ? "justify-center" : ""}`}
+          >
+            {actions}
+          </div>
         ) : (
           (onRetry || showHomeButton) && (
             <div className="flex flex-wrap gap-3">
