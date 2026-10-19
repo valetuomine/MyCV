@@ -26,8 +26,9 @@ dist/
 # Personal MCP server configuration for Claude Code
 .mcp.json
 
-# Local-only deployment notes
+# Local-only deployment and admin setup notes
 docs/azure-deployment.md
+docs/entra-setup.md
 
 # OS/editor files
 .DS_Store
