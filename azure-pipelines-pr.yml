@@ -25,9 +25,21 @@ stages:
       pool:
         vmImage: ubuntu-latest
 
+- stage: Changes
+  displayName: Detect changes
+  dependsOn: []
+  jobs:
+  - template: templates/detect-changes-job.yml
+    parameters:
+      pool:
+        vmImage: ubuntu-latest
+
+# The build stages run only when the pull request changes files their checks cover
+# (templates/detect-changes-job.yml). A skipped stage does not fail the pull request.
 - stage: Build
   displayName: Build solution
-  dependsOn: []
+  dependsOn: Changes
+  condition: and(succeeded(), eq(dependencies.Changes.outputs['DetectChanges.paths.backend'], 'true'))
   jobs:
   - ${{ if eq(parameters.agentPool, 'self-hosted') }}:
     - template: templates/dotnet-build-job.yml
@@ -42,6 +54,8 @@ stages:
 
 - stage: FrontendBuild
   displayName: Build frontend
+  dependsOn: Changes
+  condition: and(succeeded(), eq(dependencies.Changes.outputs['DetectChanges.paths.frontend'], 'true'))
   jobs:
   - ${{ if eq(parameters.agentPool, 'self-hosted') }}:
     - template: templates/frontend-build-job.yml

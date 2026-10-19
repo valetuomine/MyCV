@@ -78,9 +78,9 @@ For example, `Sisään- ja uloskirjautumisen UI - parannukset` becomes `Sisaan_j
 
 ## Checks
 
-Run the same checks as the pull request pipeline for the areas the change touches. Run them from the repository root, before committing.
+Run the same checks as the pull request pipeline for the areas the change touches. Run them from the repository root, before committing. The PR and `main` pipelines use the same areas: their `Changes` stage (`templates/detect-changes-job.yml`) skips the .NET or frontend stage when the change does not touch that area. A change to `azure-pipelines.yml`, `azure-pipelines-pr.yml` or that template runs both.
 
-**Backend** (anything under `src/Backend`):
+**Backend** (anything under `src/Backend`, `src/MyCV.sln` or `templates/dotnet-build-job.yml`):
 
 ```powershell
 dotnet build src/MyCV.sln --configuration Release
@@ -94,7 +94,7 @@ dotnet ef migrations has-pending-model-changes --project src/Backend/CV.DataAcce
 
 If it reports pending changes, add the missing migration with `dotnet ef migrations add <Name>` and run the check again.
 
-**Frontend** (anything under `src/Frontend`):
+**Frontend** (anything under `src/Frontend` or `templates/frontend-build-job.yml`):
 
 ```powershell
 npm --prefix src/Frontend ci        # only when package.json or package-lock.json changed
@@ -190,7 +190,7 @@ Do not set auto-complete, do not complete the PR, and do not add reviewers. The 
 
 ## After The PR Is Merged
 
-This skill does not change work item states after the merge. The `main` pipeline does it in its *Update work items* stage (`templates/work-item-state-job.yml`), right after the merge commit builds:
+This skill does not change work item states after the merge. The `main` pipeline does it in its *Update work items* stage (`templates/work-item-state-job.yml`), right after the merge commit builds. A build stage skipped because the change does not touch its area counts as passed; a failed build stops the stage:
 
 - Linked Tasks move to `Closed`. Tasks have no `Waiting for Deployment` state.
 - Linked User Stories move to `Waiting for Deployment`, except when the story still has open child Tasks, or the PR has the `Jatkuu` label. So a Task PR may also link its parent story: the story moves only when its last Task is merged.

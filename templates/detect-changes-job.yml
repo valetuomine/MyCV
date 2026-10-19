@@ -1,0 +1,60 @@
+parameters:
+- name: pool
+  type: object
+
+jobs:
+- job: DetectChanges
+  displayName: Detect changed areas
+  pool: ${{ parameters.pool }}
+  steps:
+  # In a pull request build, HEAD is the merge commit of the pull request and its first parent
+  # is the target branch. In a main build, HEAD is the merge commit of a completed pull request
+  # and its first parent is the previous main. Either way, two commits of history are enough
+  # to list the files the change touches.
+  - checkout: self
+    fetchDepth: 2
+
+  # Sets the output variables "backend" and "frontend" to true when the change touches files
+  # that the .NET or frontend checks cover. Changes to the pipelines themselves, and runs that
+  # are neither a pull request build nor a push to main (a manual run, for example), run every
+  # check.
+  - bash: |
+      set -euo pipefail
+
+      backend=true
+      frontend=true
+
+      if { [ "$BUILD_REASON" = "PullRequest" ] || [ "$BUILD_REASON" = "IndividualCI" ]; } \
+        && git rev-parse -q --verify 'HEAD^1' > /dev/null; then
+        changed=$(git diff --name-only 'HEAD^1' HEAD)
+        echo "Changed files:"
+        echo "$changed" | sed 's/^/  /'
+
+        backend=false
+        frontend=false
+        while read -r file; do
+          case "$file" in
+            azure-pipelines.yml | azure-pipelines-pr.yml | templates/detect-changes-job.yml)
+              backend=true
+              frontend=true
+              ;;
+            src/Backend/* | src/MyCV.sln | templates/dotnet-build-job.yml)
+              backend=true
+              ;;
+            src/Frontend/* | templates/frontend-build-job.yml)
+              frontend=true
+              ;;
+          esac
+        done <<< "$changed"
+      else
+        echo "Build reason is $BUILD_REASON, so every check runs."
+      fi
+
+      echo "Backend checks: $backend"
+      echo "Frontend checks: $frontend"
+      echo "##vso[task.setvariable variable=backend;isOutput=true]$backend"
+      echo "##vso[task.setvariable variable=frontend;isOutput=true]$frontend"
+    name: paths
+    displayName: Detect changed areas
+    env:
+      BUILD_REASON: $(Build.Reason)

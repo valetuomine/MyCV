@@ -37,7 +37,7 @@ When the user corrects how a step was done, update the skill or this file so the
 
 ## Checks
 
-The PR pipeline runs these. Run the ones for the areas you changed before pushing:
+The PR and `main` pipelines run these, but only for the areas a change touches (`templates/detect-changes-job.yml`). Run the ones for the areas you changed before pushing:
 
 ```powershell
 dotnet build src/MyCV.sln --configuration Release

@@ -15,8 +15,21 @@ parameters:
   - self-hosted
 
 stages:
+- stage: Changes
+  displayName: Detect changes
+  jobs:
+  - template: templates/detect-changes-job.yml
+    parameters:
+      pool:
+        vmImage: ubuntu-latest
+
+# The build stages run only when the merged pull request changes files their checks cover
+# (templates/detect-changes-job.yml). The stages after them accept a skipped build, but not
+# a failed or canceled one.
 - stage: Build
   displayName: Build solution
+  dependsOn: Changes
+  condition: and(succeeded(), eq(dependencies.Changes.outputs['DetectChanges.paths.backend'], 'true'))
   jobs:
   - ${{ if eq(parameters.agentPool, 'self-hosted') }}:
     - template: templates/dotnet-build-job.yml
@@ -31,6 +44,8 @@ stages:
 
 - stage: FrontendBuild
   displayName: Build frontend
+  dependsOn: Changes
+  condition: and(succeeded(), eq(dependencies.Changes.outputs['DetectChanges.paths.frontend'], 'true'))
   jobs:
   - ${{ if eq(parameters.agentPool, 'self-hosted') }}:
     - template: templates/frontend-build-job.yml
@@ -46,8 +61,15 @@ stages:
 - stage: WorkItems
   displayName: Update work items
   dependsOn:
+  - Changes
   - Build
   - FrontendBuild
+  condition: |
+    and(
+      eq(dependencies.Changes.result, 'Succeeded'),
+      in(dependencies.Build.result, 'Succeeded', 'Skipped'),
+      in(dependencies.FrontendBuild.result, 'Succeeded', 'Skipped')
+    )
   jobs:
   - template: templates/work-item-state-job.yml
     parameters:
@@ -57,8 +79,15 @@ stages:
 - stage: GitHubSync
   displayName: Sync main to GitHub
   dependsOn:
+  - Changes
   - Build
   - FrontendBuild
+  condition: |
+    and(
+      eq(dependencies.Changes.result, 'Succeeded'),
+      in(dependencies.Build.result, 'Succeeded', 'Skipped'),
+      in(dependencies.FrontendBuild.result, 'Succeeded', 'Skipped')
+    )
   jobs:
   - job: PushToGitHub
     displayName: Push main to GitHub
