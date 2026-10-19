@@ -9,11 +9,19 @@ user-invocable: true
 
 Use this workflow to take changes in the working tree all the way to an open pull request in the `MyCV` repository (Azure DevOps organization `valetuominen`, project `MyCV`). The user's only manual step is to review and complete the pull request, so every other step happens here without asking for approval in between. Stop and ask only when something below says so.
 
+## Never Commit On `main`
+
+Every change reaches `main` through a pull request, however small: a one-line fix, a typo, a skill or README tweak. No commit is ever made on local `main`, not even one you plan to move to a branch later.
+
+- Run `git branch --show-current` right before **every** `git commit`, including follow-up commits to a pull request that is already open. The user may have completed the PR, switched branches or pulled `main` since your last step.
+- If it prints `main`, do not commit. Go through *Branch*: it creates a feature branch and the uncommitted changes carry over.
+- If it prints a feature branch, confirm that its pull request is still active before committing. If the PR was completed or abandoned, the new commits need a new branch and a new pull request: run the whole workflow again.
+
 ## Workflow
 
 1. **Inspect the changes.** Run `git status` and `git diff` (including untracked files) and understand what the change does. If there is nothing to commit, stop and tell the user.
 2. **Resolve the work item.** See *Work Item*.
-3. **Create the branch.** See *Branch*.
+3. **Check the current branch and create the feature branch.** If the current branch is wrong for this work, switch to `main` and pull from `origin` first. See *Branch*.
 4. **Run the checks.** See *Checks*. Fix anything that fails before continuing.
 5. **Commit** the changes as several focused commits. See *Commits*.
 6. **Push** the branch: `git push -u origin <branch>`. The `origin` remote pushes only to Azure DevOps; the pipeline copies `main` to GitHub after the merge, so feature branches never go to GitHub.
@@ -35,16 +43,21 @@ If it is unclear whether the change is a new story, a Task under an existing sto
 
 ## Branch
 
-Fetch first, then create the branch from the latest `main`. Uncommitted changes carry over:
+First check whether the current local branch fits the work. Keep it only if it is the feature branch for this work item **and** its pull request is still active (check with `repo_pull_request`). In every other case the branch is wrong for this work: you are on `main`, on another work item's branch, or on a branch whose pull request was already completed or abandoned. Then start over from an up-to-date `main` and continue the flow. Uncommitted changes carry over through both switches:
 
 ```powershell
 git fetch origin
-git switch -c <branch> origin/main
+git switch main
+git pull --ff-only origin main
+git switch -c <branch>
 ```
 
-If `git switch` refuses because the changes conflict with `origin/main`, stop and tell the user.
+Before leaving a wrong branch, run `git log --oneline origin/main..HEAD` and `git status -sb`. Commits there that were never pushed, or that are not part of a completed pull request, would be left behind. Stop and ask the user what to do with them.
 
-If the current branch is already the feature branch for this work item, keep using it.
+Stop and tell the user if:
+
+- `git switch` refuses because the uncommitted changes conflict with the other branch.
+- `git pull --ff-only` fails because local `main` has diverged from `origin/main`. Never commit on `main` to fix it.
 
 Branch names:
 
@@ -94,6 +107,8 @@ npm --prefix src/Frontend run build
 If a check fails, fix the cause and run it again. Never push code that fails a check, and never skip, disable or weaken a check to make it pass. If you cannot fix a failure, stop and report it with the error output.
 
 ## Commits
+
+Check the branch before each commit as described in *Never Commit On `main`*.
 
 Split the changes into several commits, one per logical step. A reviewer should be able to read the commits in order and follow the change. Typical order:
 

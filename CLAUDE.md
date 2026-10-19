@@ -8,14 +8,14 @@ Every change is tied to an Azure DevOps work item and reaches `main` through a p
 
 1. **Start from a work item.** When the user names one ("User Story 47", "Task 50"), read it first. Otherwise find a matching story, or create one with `/write-user-story`.
 2. **Do the work** on the working tree. Follow `/create-cv-skills` for backend APIs and their client integration, and `/setup-frontend` for the frontend shell and design.
-3. **Ship it with `/create-pull-request`.** It creates the branch, runs the pipeline checks, splits the work into commits, pushes, opens the PR linked to the work item, and posts a reviewer comment.
+3. **Ship it with `/create-pull-request`.** It checks that the current branch fits the work, switching to an up-to-date `main` if it does not, creates the branch, runs the pipeline checks, splits the work into commits, pushes, opens the PR linked to the work item, and posts a reviewer comment.
 4. **The user reviews and completes the PR.** While the PR is open, the PR pipeline keeps its linked work items `In Progress` (`templates/work-item-in-progress-job.yml`). After the merge, the `main` pipeline moves them forward (`templates/work-item-state-job.yml`).
 
 When the user corrects how a step was done, update the skill or this file so the correction lasts, and say which file changed.
 
 ## Never
 
-- Commit or push directly to `main`.
+- Commit or push directly to `main`, not even the smallest change. Check `git branch --show-current` before every commit, including follow-up commits to an open PR, because the PR may have been completed and `main` pulled in the meantime.
 - Complete, approve or set auto-complete on a pull request.
 - Move work items to `Waiting for Deployment` or `Closed` by hand. The pipeline does it after the merge.
 - Commit secrets or local settings: `.env.local`, `.mcp.json`, user secrets.
