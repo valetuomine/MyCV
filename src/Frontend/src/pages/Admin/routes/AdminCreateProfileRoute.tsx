@@ -1,7 +1,7 @@
 import { InteractionStatus } from "@azure/msal-browser"
 import { useMsal } from "@azure/msal-react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useEffect, useState, type JSX } from "react"
+import { useState, type JSX } from "react"
 import { FormProvider, useForm, useWatch } from "react-hook-form"
 import { useNavigate } from "react-router-dom"
 import { useCreateProfileMutation } from "../../../api/profileQueries"
@@ -21,7 +21,7 @@ import { toCreateProfileRequest } from "../../Profile/mappers/profileFormMapper"
 import { getProfileFormError } from "../../Profile/utils/profileFormUtils"
 
 export default function AdminCreateProfileRoute(): JSX.Element {
-  const { accounts, inProgress, instance } = useMsal()
+  const { accounts, inProgress } = useMsal()
   const navigate = useNavigate()
   const [submitError, setSubmitError] = useState<string>()
   const [createProfile, createState] = useCreateProfileMutation()
@@ -45,12 +45,6 @@ export default function AdminCreateProfileRoute(): JSX.Element {
   })
 
   const publicUrlSegmentError = form.formState.errors.publicUrlSegment?.message
-
-  useEffect(() => {
-    if (accounts[0] && inProgress === InteractionStatus.None) {
-      instance.setActiveAccount(accounts[0])
-    }
-  }, [accounts, inProgress, instance])
 
   const submit = handleSubmit(async (data) => {
     setSubmitError(undefined)

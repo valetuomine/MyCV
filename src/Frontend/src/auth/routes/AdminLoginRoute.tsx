@@ -1,7 +1,7 @@
 import { InteractionStatus } from "@azure/msal-browser"
 import { useMsal } from "@azure/msal-react"
-import { useEffect, type JSX } from "react"
-import { useNavigate, useParams } from "react-router-dom"
+import { type JSX } from "react"
+import { Navigate, useNavigate, useParams } from "react-router-dom"
 import { returnPublicUrlSegmentKey } from "../adminLoginStorage"
 import SignInMessage from "../SignInMessage"
 import useEntraLoginRedirect from "../useEntraLoginRedirect"
@@ -19,17 +19,15 @@ export default function AdminLoginRoute(): JSX.Element {
     storageValue: publicUrlSegment,
   })
 
-  useEffect(() => {
-    if (!publicUrlSegment || inProgress !== InteractionStatus.None) {
-      return
-    }
-
-    if (accounts[0]) {
-      navigate(RoutePaths.CandidateProfile(publicUrlSegment), {
-        replace: true,
-      })
-    }
-  }, [accounts, inProgress, navigate, publicUrlSegment])
+  if (
+    publicUrlSegment &&
+    inProgress === InteractionStatus.None &&
+    accounts[0]
+  ) {
+    return (
+      <Navigate to={RoutePaths.CandidateProfile(publicUrlSegment)} replace />
+    )
+  }
 
   return (
     <SignInMessage

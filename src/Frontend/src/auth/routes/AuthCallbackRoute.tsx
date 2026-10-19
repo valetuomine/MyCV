@@ -28,7 +28,7 @@ import { RoutePaths } from "../../routePaths"
 import { Tone } from "../../types"
 
 export default function AuthCallbackRoute(): JSX.Element {
-  const { accounts, inProgress, instance } = useMsal()
+  const { accounts, inProgress } = useMsal()
   const navigate = useNavigate()
   const hasNavigated = useRef(false)
   const redirectError = useSyncExternalStore(
@@ -49,9 +49,7 @@ export default function AuthCallbackRoute(): JSX.Element {
 
     clearAuthReturnPaths()
 
-    if (accounts[0]) {
-      instance.setActiveAccount(accounts[0])
-    } else if (redirectError) {
+    if (!accounts[0] && redirectError) {
       return
     }
 
@@ -66,7 +64,6 @@ export default function AuthCallbackRoute(): JSX.Element {
   }, [
     accounts,
     inProgress,
-    instance,
     isCreatingProfile,
     navigate,
     publicUrlSegment,

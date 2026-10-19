@@ -28,8 +28,6 @@ export const msalInstance = new PublicClientApplication({
   },
 })
 
-// MSAL completes a redirect sign-in on the page that started it, and only
-// reports a failure (e.g. the user cancelled) through its event stream.
 let redirectSignInError: EventError = null
 const redirectSignInErrorListeners = new Set<() => void>()
 
@@ -39,7 +37,11 @@ function setRedirectSignInError(error: EventError): void {
 }
 
 msalInstance.addEventCallback((message) => {
-  if (
+  if (message.eventType === EventType.LOGIN_SUCCESS && message.payload) {
+    msalInstance.setActiveAccount(
+      (message.payload as AuthenticationResult).account,
+    )
+  } else if (
     message.eventType === EventType.ACQUIRE_TOKEN_FAILURE &&
     message.interactionType === InteractionType.Redirect
   ) {
