@@ -50,6 +50,6 @@ Format changed C# with `dotnet format` and changed frontend files with Prettier.
 
 ## Tools
 
-- **Azure DevOps** is reached through the `azure-devops` MCP server (`.mcp.json`, local only). It signs in with a personal access token from the `PERSONAL_ACCESS_TOKEN` environment variable, because the browser sign-in does not accept the user's personal Microsoft account.
+- **Azure DevOps** is reached through the `azure-devops` MCP server (`.mcp.json`, local only). It signs in with a personal access token from the `AZURE_DEVOPS_MCP` user environment variable (base64 of `:<PAT>`), which `.mcp.json` passes to the server as `PERSONAL_ACCESS_TOKEN`, because the browser sign-in does not accept the user's personal Microsoft account.
 - **Git:** `origin` pushes only to Azure DevOps. The `main` pipeline mirrors `main` to GitHub after each merge, so feature branches never go to GitHub.
 - **Project skills** live in `.claude/skills/`. Each one is tracked through an exception in `.gitignore`. Add a new exception when you add a skill.
