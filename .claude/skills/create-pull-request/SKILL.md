@@ -3,6 +3,7 @@ name: create-pull-request
 description: 'Ship finished MyCV work as an Azure DevOps pull request end to end: create or reuse the work item, create the branch, split the changes into commits, run the pipeline checks, push, and open the PR linked to the work item. Use when the user asks to create a PR, ship, open a pull request, or "make this ready for review".'
 argument-hint: '[work item ID, or what the change is about]'
 user-invocable: true
+model: sonnet
 ---
 
 # Create A Pull Request
@@ -129,7 +130,7 @@ Commit message format, in English, with an imperative summary:
 | Task | `<id>: <summary>` | `37: Refactor profile queries and forms` |
 
 - Keep the summary line under about 72 characters. Add a body with short bullets when the commit needs more explanation.
-- End every message with the trailer `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
+- End every message with the trailer `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`, matching the `model` this skill runs on.
 - Stage files by name. Never use `git add -A` or `git add .`.
 - Never commit secrets or local settings: `.env.local`, `.mcp.json`, user secrets, credentials.
 - Leave changes that have nothing to do with this work item unstaged, and mention them in the report.
