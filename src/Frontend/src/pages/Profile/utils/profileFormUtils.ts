@@ -5,18 +5,23 @@ type GraphemeSegmenter = new (
 
 const nameSuffix = /^(jr|sr|ii|iii|iv)\.?$/i
 
-function firstGrapheme(word: string): string {
+// Splits text into user-perceived characters, so accented letters and emoji
+// stay whole.
+export function splitGraphemes(text: string): string[] {
   const Segmenter = (Intl as unknown as { Segmenter?: GraphemeSegmenter })
     .Segmenter
   if (Segmenter) {
-    for (const { segment } of new Segmenter(undefined, {
-      granularity: "grapheme",
-    }).segment(word)) {
-      return segment
-    }
+    return Array.from(
+      new Segmenter(undefined, { granularity: "grapheme" }).segment(text),
+      ({ segment }) => segment,
+    )
   }
 
-  return Array.from(word)[0] ?? ""
+  return Array.from(text)
+}
+
+function firstGrapheme(word: string): string {
+  return splitGraphemes(word)[0] ?? ""
 }
 
 export function getInitials(fullName?: string | null): string {
