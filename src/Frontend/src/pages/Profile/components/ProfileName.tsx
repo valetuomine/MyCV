@@ -19,7 +19,7 @@ interface Glyph {
   delay: number
 }
 
-// The heading's weight and family at 100px, so measured widths read as em.
+/** The heading's weight and family at 100px, so measured widths read as em. */
 const kerningFont = '600 100px "Geist Variable"'
 const revealDelay = 0.15
 const revealSpread = 0.6
@@ -27,7 +27,10 @@ const maxLetterStagger = 0.035
 const revealDuration = 0.9
 const sheenSpring = { stiffness: 100, damping: 20 }
 
-// Each letter rises from behind its word's clipped bottom edge.
+/**
+ * Each letter rises from behind its word's clipped bottom edge, after its own
+ * delay.
+ */
 const letterReveal: Variants = {
   hidden: { y: "110%" },
   visible: (delay: number) => ({
@@ -36,10 +39,13 @@ const letterReveal: Variants = {
   }),
 }
 
-// Groups the letters under the heading, so the page's entrance stagger counts
-// the name as one item rather than one per letter.
+/**
+ * Groups the letters under the heading, so the page's entrance stagger counts
+ * the name as one item rather than one per letter.
+ */
 const nameGroup: Variants = { hidden: {}, visible: {} }
 
+/** Fades the sheen in after the given delay. */
 const sheenReveal: Variants = {
   hidden: { opacity: 0 },
   visible: (delay: number) => ({
@@ -48,20 +54,38 @@ const sheenReveal: Variants = {
   }),
 }
 
-// Room for glyph ink outside the tight boxes: accents and descenders above and
-// below the line, and edges that the negative tracking pushes past each
-// letter's advance. Background-clipped text is only painted inside its own
-// box. Negative margins give the room back, so layout stays the same.
+/**
+ * Room for glyph ink outside the tight boxes: accents and descenders above and
+ * below the line, and edges that the negative tracking pushes past each
+ * letter's advance. Background-clipped text is only painted inside its own
+ * box. Negative margins give the room back, so layout stays the same.
+ */
 const bleed =
   "px-[0.1em] pt-[0.15em] pb-[0.08em] -mx-[0.1em] -mt-[0.15em] -mb-[0.08em]"
 
-// The end margin carries both the bleed and the restored kerning.
+/**
+ * Builds a letter's end margin, which carries both the bleed and the
+ * restored kerning.
+ *
+ * @param kerning - The letter's kerning against the next one, in em.
+ * @returns The inline style with the end margin.
+ */
 function letterMargin(kerning: number): { marginInlineEnd: string } {
   return { marginInlineEnd: `${kerning - 0.1}em` }
 }
 
-// One element per letter drops the font's kerning, so each letter gets its
-// pair adjustment back as an end margin.
+/**
+ * Measures each letter's kerning against the next one, in em. One element
+ * per letter drops the font's kerning, so each letter gets its pair
+ * adjustment back as an end margin. Returns null without a canvas context.
+ *
+ * The canvas uses the heading's tracking-tighter. Any letter spacing turns
+ * ligatures off, as in the heading itself, and it cancels out of each pair's
+ * difference.
+ *
+ * @param words - The name's words, each split into letters.
+ * @returns Each letter's kerning in em, 0 for a word's last letter, or null.
+ */
 function measureKerning(words: string[][]): number[][] | null {
   const context = document.createElement("canvas").getContext("2d")
   if (!context) {
@@ -69,9 +93,13 @@ function measureKerning(words: string[][]): number[][] | null {
   }
 
   context.font = kerningFont
-  // The heading's tracking-tighter. Any letter spacing turns ligatures off, as
-  // in the heading itself; it cancels out of each pair's difference.
   context.letterSpacing = "-5px"
+  /**
+   * Measures the rendered width of a text run.
+   *
+   * @param text - The text to measure.
+   * @returns The width in pixels.
+   */
   const width = (text: string): number => context.measureText(text).width
   return words.map((letters) =>
     letters.map((letter, index) => {
@@ -83,6 +111,14 @@ function measureKerning(words: string[][]): number[][] | null {
   )
 }
 
+/**
+ * Tells whether the font is ready to render the text, and loads it when it
+ * isn't yet.
+ *
+ * @param font - The CSS font shorthand to check.
+ * @param text - The text whose glyphs must be available.
+ * @returns True once the font is loaded.
+ */
 function useFontLoaded(font: string, text: string): boolean {
   const [loaded, setLoaded] = useState(() => document.fonts.check(font, text))
 
@@ -105,8 +141,15 @@ function useFontLoaded(font: string, text: string): boolean {
   return loaded
 }
 
-// The candidate's name, revealed letter by letter. With a mouse, an accent
-// sheen follows the pointer across it on the background spotlight's spring.
+/**
+ * The candidate's name, revealed letter by letter. With a mouse, an accent
+ * sheen follows the pointer across it on the background spotlight's spring.
+ * The sheen repeats the letters' layout, so it lands on each glyph.
+ *
+ * @param props - The component props.
+ * @param props.fullName - The candidate's name.
+ * @returns The name heading.
+ */
 export default function ProfileName({
   fullName,
 }: ProfileNameProps): JSX.Element {
@@ -117,8 +160,14 @@ export default function ProfileName({
   const pointerY = useMotionValue(-1000)
   const sheenX = useSpring(pointerX, sheenSpring)
   const sheenY = useSpring(pointerY, sheenSpring)
+  /** An accent glow centred on the spring-following pointer position. */
   const sheen = useMotionTemplate`radial-gradient(14rem circle at ${sheenX}px ${sheenY}px, color-mix(in srgb, var(--cv-accent) 85%, transparent), transparent)`
 
+  /**
+   * Splits the name into words of letters, each with its kerning and reveal
+   * delay. The stagger shrinks for long names, so the whole reveal fits in
+   * `revealSpread`, and the sheen appears once the last letter has risen.
+   */
   const { words, sheenDelay } = useMemo(() => {
     const letters = fullName.split(/\s+/).filter(Boolean).map(splitGraphemes)
     const kerning = fontLoaded ? measureKerning(letters) : null
@@ -147,6 +196,11 @@ export default function ProfileName({
       return
     }
 
+    /**
+     * Moves the sheen to a mouse pointer, relative to the heading.
+     *
+     * @param event - The pointer move anywhere on the page.
+     */
     const track = (event: PointerEvent): void => {
       const heading = headingRef.current
       if (event.pointerType !== "mouse" || !heading) {
@@ -190,7 +244,6 @@ export default function ProfileName({
           </Fragment>
         ))}
       </span>
-      {/* Same layout as the letters above, so the sheen lands on each glyph. */}
       <motion.span
         aria-hidden="true"
         custom={sheenDelay}

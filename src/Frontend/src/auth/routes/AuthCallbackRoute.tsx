@@ -27,6 +27,14 @@ import {
 import { RoutePaths } from "../../routePaths"
 import { Tone } from "../../types"
 
+/**
+ * The `/auth/callback` route that Microsoft redirects back to. Once MSAL has
+ * handled the response, it clears the return markers and sends the user on:
+ * to profile creation or the CV they came from when signed in, otherwise
+ * Home. A failed or cancelled sign-in shows a message with a retry instead.
+ *
+ * @returns The failure message, or the pending message while redirecting.
+ */
 export default function AuthCallbackRoute(): JSX.Element {
   const { accounts, inProgress } = useMsal()
   const navigate = useNavigate()
@@ -36,6 +44,7 @@ export default function AuthCallbackRoute(): JSX.Element {
     getRedirectSignInError,
   )
 
+  /** The return markers, read once before the effect clears them. */
   const [{ publicUrlSegment, returnAdminPath }] = useState(() => ({
     publicUrlSegment: sessionStorage.getItem(returnPublicUrlSegmentKey),
     returnAdminPath: sessionStorage.getItem(returnAdminPathKey),
@@ -53,6 +62,7 @@ export default function AuthCallbackRoute(): JSX.Element {
       return
     }
 
+    /** Where a signed-in user was headed, or Home. */
     const destination =
       accounts[0] && isCreatingProfile
         ? RoutePaths.AdminCreateProfile
@@ -74,11 +84,32 @@ export default function AuthCallbackRoute(): JSX.Element {
 
   if (redirectError && !accounts[0]) {
     const cancelled = isSignInCancelled(redirectError)
+    /** The sign-in route to retry from, or null when nothing was pending. */
     const retryPath = isCreatingProfile
       ? RoutePaths.AdminCreateProfile
       : publicUrlSegment
         ? RoutePaths.CandidateAdmin(publicUrlSegment)
         : null
+
+    /**
+     * Clears the error and starts sign-in again.
+     *
+     * @param path - The sign-in route to retry from.
+     */
+    const retrySignIn = (path: string): void => {
+      clearRedirectSignInError()
+      navigate(path, { replace: true })
+    }
+
+    /** Returns to the CV the user came from, or Home. */
+    const goBack = (): void => {
+      navigate(
+        publicUrlSegment
+          ? RoutePaths.CandidateProfile(publicUrlSegment)
+          : RoutePaths.Home,
+        { replace: true },
+      )
+    }
 
     return (
       <RouteMessage
@@ -93,27 +124,13 @@ export default function AuthCallbackRoute(): JSX.Element {
             {retryPath && (
               <button
                 type="button"
-                onClick={() => {
-                  clearRedirectSignInError()
-                  navigate(retryPath, { replace: true })
-                }}
+                onClick={() => retrySignIn(retryPath)}
                 className={primaryButton}
               >
                 Try again
               </button>
             )}
-            <button
-              type="button"
-              onClick={() =>
-                navigate(
-                  publicUrlSegment
-                    ? RoutePaths.CandidateProfile(publicUrlSegment)
-                    : RoutePaths.Home,
-                  { replace: true },
-                )
-              }
-              className={secondaryButton}
-            >
+            <button type="button" onClick={goBack} className={secondaryButton}>
               {publicUrlSegment ? "Back to CV" : "Open a CV"}
             </button>
           </>

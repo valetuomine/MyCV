@@ -3,6 +3,7 @@ import {
   useId,
   useRef,
   useState,
+  type ChangeEvent,
   type JSX,
   type SubmitEvent,
 } from "react"
@@ -15,7 +16,12 @@ import { signedOutLocationState } from "../../../../auth/signedOutState"
 import { primaryButton } from "../../../components/buttonStyles"
 import { RoutePaths } from "../../../../routePaths"
 
-// Accepts a bare public URL segment or a full CV link and returns the segment.
+/**
+ * Accepts a bare public URL segment or a full CV link and returns the segment.
+ *
+ * @param input - What the visitor typed.
+ * @returns The link's last path segment, or the input without slashes.
+ */
 function extractPublicUrlSegment(input: string): string {
   const value = input.trim()
   try {
@@ -26,6 +32,13 @@ function extractPublicUrlSegment(input: string): string {
   }
 }
 
+/**
+ * The home page, where a visitor opens a CV by its link or public address.
+ * It is also where the logout redirect lands: it returns to the CV the user
+ * signed out from, or stays here, and flags the sign-out for the notice.
+ *
+ * @returns A redirect to the CV after sign-out, otherwise the home page.
+ */
 export default function Home(): JSX.Element {
   const navigate = useNavigate()
   const inputId = useId()
@@ -33,7 +46,7 @@ export default function Home(): JSX.Element {
   const [value, setValue] = useState("")
   const [error, setError] = useState<string>()
 
-  // Set by SignOutButton: the profile to return to, or "" to stay on Home.
+  /** Set by `SignOutButton`: the CV to return to, or "" to stay on Home. */
   const [logoutReturnSegment] = useState(() =>
     sessionStorage.getItem(logoutReturnPublicUrlSegmentKey),
   )
@@ -60,6 +73,21 @@ export default function Home(): JSX.Element {
     )
   }
 
+  /**
+   * Updates the input and clears its error.
+   *
+   * @param event - The input's change.
+   */
+  const handleChange = (event: ChangeEvent<HTMLInputElement>): void => {
+    setValue(event.target.value)
+    setError(undefined)
+  }
+
+  /**
+   * Opens the CV the input points to, or shows an error when it is empty.
+   *
+   * @param event - The form's submit.
+   */
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>): void => {
     event.preventDefault()
     const publicUrlSegment = extractPublicUrlSegment(value)
@@ -101,10 +129,7 @@ export default function Home(): JSX.Element {
             <input
               id={inputId}
               value={value}
-              onChange={(event) => {
-                setValue(event.target.value)
-                setError(undefined)
-              }}
+              onChange={handleChange}
               autoComplete="off"
               spellCheck={false}
               aria-invalid={error ? true : undefined}

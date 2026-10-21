@@ -8,6 +8,14 @@ interface EditableProfileAccess {
   publicUrlSegment?: string
 }
 
+/**
+ * Tells whether the signed-in user may edit a profile, by fetching its admin
+ * view once MSAL is idle. Only hides or shows edit controls; the API enforces
+ * who may edit.
+ *
+ * @param profileId - The profile to check, once it is known.
+ * @returns Whether the user can edit, and the profile's public URL segment.
+ */
 export default function useCanEditProfile(
   profileId?: string,
 ): EditableProfileAccess {

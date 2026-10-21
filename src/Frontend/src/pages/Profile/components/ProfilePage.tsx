@@ -6,6 +6,13 @@ interface ProfilePageProps {
   values: Profile
 }
 
+/**
+ * The CV page. Names the browser tab after the candidate while it is open.
+ *
+ * @param props - The component props.
+ * @param props.values - The public profile to show.
+ * @returns The page's main landmark with the CV.
+ */
 export default function ProfilePage({ values }: ProfilePageProps): JSX.Element {
   useEffect(() => {
     document.title = values.fullName ? `${values.fullName} · CV` : "MyCV"

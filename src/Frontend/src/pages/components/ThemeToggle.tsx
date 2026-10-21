@@ -11,6 +11,12 @@ const revealEasing = "cubic-bezier(0.23, 1, 0.32, 1)"
 const iconClassName =
   "col-start-1 row-start-1 size-[1.125rem] transition-[rotate,scale,opacity] duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none"
 
+/**
+ * Switches between the light and dark themes. Keeps `data-theme` on `<html>`
+ * and the browser's `theme-color` in step with the active theme.
+ *
+ * @returns The theme toggle button.
+ */
 export default function ThemeToggle(): JSX.Element {
   const [theme, setTheme] = useAtom(themeAtom)
   const prefersReducedMotion = useReducedMotion()
@@ -26,6 +32,13 @@ export default function ThemeToggle(): JSX.Element {
       ?.setAttribute("content", background)
   }, [theme])
 
+  /**
+   * Switches the theme. Where view transitions are supported and motion
+   * isn't reduced, the new theme grows out of the button as a circle that
+   * ends up covering the farthest corner of the viewport.
+   *
+   * @param event - The click, whose button the circle grows from.
+   */
   const toggleTheme = (event: MouseEvent<HTMLButtonElement>): void => {
     const nextTheme = isDark ? Theme.Light : Theme.Dark
     const root = document.documentElement
@@ -38,8 +51,6 @@ export default function ThemeToggle(): JSX.Element {
       return
     }
 
-    // Grow the new theme out of the button as a circle that ends up covering
-    // the farthest corner of the viewport.
     const bounds = event.currentTarget.getBoundingClientRect()
     const x = bounds.left + bounds.width / 2
     const y = bounds.top + bounds.height / 2
@@ -74,17 +85,25 @@ export default function ThemeToggle(): JSX.Element {
     })
   }
 
+  /**
+   * Keeps quick repeated clicks, which count as double and triple clicks,
+   * from selecting nearby text.
+   *
+   * @param event - The mouse press on the button.
+   */
+  const preventMultiClickSelection = (
+    event: MouseEvent<HTMLButtonElement>,
+  ): void => {
+    if (event.detail > 1) {
+      event.preventDefault()
+    }
+  }
+
   return (
     <button
       type="button"
       onClick={toggleTheme}
-      // Quick repeated clicks count as double and triple clicks, which would
-      // otherwise select nearby text.
-      onMouseDown={(event) => {
-        if (event.detail > 1) {
-          event.preventDefault()
-        }
-      }}
+      onMouseDown={preventMultiClickSelection}
       aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
       className="grid size-11 place-items-center rounded-full border border-cv-line bg-cv-wash text-cv-copy transition-colors transition-transform duration-150 ease-out hover:border-cv-meta hover:bg-cv-overlay hover:text-cv-ink active:scale-95 motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cv-accent"
     >

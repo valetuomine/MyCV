@@ -3,10 +3,16 @@ type GraphemeSegmenter = new (
   options?: { granularity: "grapheme" },
 ) => { segment(input: string): Iterable<{ segment: string }> }
 
+/** Matches name suffixes such as Jr. and III, which initials skip. */
 const nameSuffix = /^(jr|sr|ii|iii|iv)\.?$/i
 
-// Splits text into user-perceived characters, so accented letters and emoji
-// stay whole.
+/**
+ * Splits text into user-perceived characters, so accented letters and emoji
+ * stay whole. Falls back to code points where `Intl.Segmenter` is missing.
+ *
+ * @param text - The text to split.
+ * @returns The text's characters in order.
+ */
 export function splitGraphemes(text: string): string[] {
   const Segmenter = (Intl as unknown as { Segmenter?: GraphemeSegmenter })
     .Segmenter
@@ -20,10 +26,23 @@ export function splitGraphemes(text: string): string[] {
   return Array.from(text)
 }
 
+/**
+ * Picks a word's first user-perceived character.
+ *
+ * @param word - The word.
+ * @returns The first character, or "" for an empty word.
+ */
 function firstGrapheme(word: string): string {
   return splitGraphemes(word)[0] ?? ""
 }
 
+/**
+ * Returns uppercase initials from the first and last names, skipping
+ * trailing suffixes such as Jr., or one initial for a single name.
+ *
+ * @param fullName - The candidate's full name.
+ * @returns Up to two uppercase initials, or "" without a name.
+ */
 export function getInitials(fullName?: string | null): string {
   const words = (fullName ?? "").split(/\s+/).filter(Boolean)
   while (words.length > 2 && nameSuffix.test(words[words.length - 1])) {
@@ -36,6 +55,13 @@ export function getInitials(fullName?: string | null): string {
   return picked.map(firstGrapheme).join("").toUpperCase()
 }
 
+/**
+ * Formats a profile date for display.
+ *
+ * @param value - An ISO date string from the API.
+ * @returns The date as, for example, "Oct 21, 2026", or undefined when it is
+ *   missing or invalid.
+ */
 export function formatProfileDate(value?: string | null): string | undefined {
   if (!value) {
     return undefined
@@ -47,6 +73,15 @@ export function formatProfileDate(value?: string | null): string | undefined {
     : new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(date)
 }
 
+/**
+ * Turns a failed profile request into a message that starts with the action.
+ * Prefers the API's problem detail, then explains validation and network
+ * failures, then falls back to the error's own message.
+ *
+ * @param error - The error from the request.
+ * @param action - What failed, such as "Profile update".
+ * @returns The message to show under the form.
+ */
 export function getProfileFormError(error: unknown, action: string): string {
   if (typeof error === "object" && error !== null) {
     if (

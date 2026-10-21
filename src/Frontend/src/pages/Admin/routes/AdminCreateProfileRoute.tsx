@@ -20,6 +20,13 @@ import {
 import { toCreateProfileRequest } from "../../Profile/mappers/profileFormMapper"
 import { getProfileFormError } from "../../Profile/utils/profileFormUtils"
 
+/**
+ * The `/admin` route for creating a profile. Signs the user in first, then
+ * shows the form with a preview of the CV link, and opens the new CV once it
+ * is created.
+ *
+ * @returns The sign-in screen until signed in, then the create-profile form.
+ */
 export default function AdminCreateProfileRoute(): JSX.Element {
   const { accounts, inProgress } = useMsal()
   const navigate = useNavigate()
@@ -46,6 +53,10 @@ export default function AdminCreateProfileRoute(): JSX.Element {
 
   const publicUrlSegmentError = form.formState.errors.publicUrlSegment?.message
 
+  /**
+   * Validates and creates the profile, then opens it at its public URL.
+   * Shows an error when creation fails or no public URL comes back.
+   */
   const submit = handleSubmit(async (data) => {
     setSubmitError(undefined)
 

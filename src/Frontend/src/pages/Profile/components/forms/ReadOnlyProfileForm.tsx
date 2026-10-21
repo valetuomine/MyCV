@@ -33,9 +33,17 @@ const item: Variants = {
   },
 }
 
+/**
+ * The profile summary, clamped to six lines with a Read more toggle when long.
+ *
+ * @param props - The component props.
+ * @param props.text - The summary.
+ * @returns The summary with its toggle.
+ */
 function ExpandableSummary({ text }: { text: string }): JSX.Element {
   const [expanded, setExpanded] = useState(false)
   const id = useId()
+  /** Summaries over 300 characters start clamped. */
   const isLong = text.length > 300
 
   return (
@@ -62,6 +70,18 @@ function ExpandableSummary({ text }: { text: string }): JSX.Element {
   )
 }
 
+/**
+ * The CV: name, title, location, summary, links and portrait, entering one
+ * after another. Coming back from editing, focus returns to the Edit profile
+ * button that started it.
+ *
+ * @param props - The component props.
+ * @param props.values - The public profile.
+ * @param props.onEdit - Enters edit mode; the Edit profile button shows only
+ *   when given.
+ * @param props.focusEdit - Whether to focus Edit profile, after editing.
+ * @returns The CV.
+ */
 export default function ReadOnlyProfileForm({
   values,
   onEdit,
@@ -69,10 +89,11 @@ export default function ReadOnlyProfileForm({
 }: ReadOnlyProfileFormProps): JSX.Element {
   const editButtonRef = useRef<HTMLButtonElement>(null)
   const publicUrl = `${window.location.origin}${window.location.pathname}`
+  /** When the profile last changed, falling back to when it was created. */
   const updatedAt = formatProfileDate(values.updatedAt ?? values.createdAt)
+  /** Whether there is a profile link or an edit action to show. */
   const hasActions = Boolean(values.gitHubUrl || values.linkedInUrl || onEdit)
 
-  // Coming back from editing, focus returns to the button that started it.
   useEffect(() => {
     if (focusEdit) {
       editButtonRef.current?.focus()

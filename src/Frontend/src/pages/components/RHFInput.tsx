@@ -32,6 +32,27 @@ interface RHFInputProps<TFieldValues extends FieldValues> extends Omit<
   isEditing: boolean
 }
 
+/**
+ * A React Hook Form field. While editing it renders a labelled input or
+ * textarea with its validation message and, for limited textareas, a
+ * character count. Otherwise it renders the value as text, or as a link when
+ * `link` is set. Other native input attributes are forwarded to the input.
+ *
+ * @param props - The component props.
+ * @param props.name - The form field's name.
+ * @param props.label - The field's label.
+ * @param props.type - The input type, which also decides the link's scheme.
+ * @param props.placeholder - The placeholder, built from the label by default.
+ * @param props.disabled - Whether the field is disabled.
+ * @param props.required - Whether the field is required, marked with `*`.
+ * @param props.link - Whether to show the value as a link when not editing.
+ * @param props.multiline - Whether to edit the value in a textarea.
+ * @param props.displayLabel - Text to show instead of the value.
+ * @param props.className - Classes for the read-only wrapper.
+ * @param props.linkClassName - Classes for the read-only link.
+ * @param props.isEditing - Whether to render the field or the value.
+ * @returns The labelled field, or the value as text or a link.
+ */
 export default function RHFInput<TFieldValues extends FieldValues>({
   name,
   label,
@@ -57,7 +78,9 @@ export default function RHFInput<TFieldValues extends FieldValues>({
   const value = String(useWatch({ control, name }) ?? "")
   const error = errors[name]?.message as string | undefined
   const errorId = `${inputId}-error`
+  /** Email and phone links open in the mail or phone app, not a new tab. */
   const isContactLink = type === InputType.Email || type === InputType.Tel
+  /** A `mailto:` or `tel:` link, or the URL with `https://` added if missing. */
   const href =
     type === InputType.Email
       ? `mailto:${value}`
@@ -72,6 +95,7 @@ export default function RHFInput<TFieldValues extends FieldValues>({
   if (isEditing) {
     const fieldClassName =
       "w-full min-w-0 rounded-lg border border-cv-field bg-cv-wash px-3.5 py-2.5 text-cv-ink transition-colors outline-none placeholder:text-cv-meta hover:border-cv-muted focus:border-cv-accent focus:ring-3 focus:ring-cv-accent/20 disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-cv-danger aria-invalid:ring-cv-danger/20"
+    /** The given placeholder, or one built from the label. */
     const fieldPlaceholder = placeholder ?? `Enter ${label.toLowerCase()}`
 
     return (

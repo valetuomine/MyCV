@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { LanguageCode } from "../../../types"
 
+/** One language's title, summary and location, with their length limits. */
 const profileTranslationSchema = z.object({
   languageCode: z.enum([LanguageCode.Finnish, LanguageCode.English]),
   title: z.string().max(100, "Title must be 100 characters or fewer"),
@@ -14,11 +15,17 @@ const profileTranslationSchema = z.object({
     .nullable(),
 })
 
+/** An optional profile link of at most 500 characters. */
 const urlSchema = z
   .string()
   .max(500, "Link must be 500 characters or fewer")
   .nullable()
 
+/**
+ * The profile form. Requires a full name and a Finnish translation with a
+ * title, allows each language only once, and requires a title for any
+ * translation that has content.
+ */
 export const profileSchema = z
   .object({
     fullName: z
@@ -81,6 +88,11 @@ export const profileSchema = z
     }
   })
 
+/**
+ * The create-profile form: the profile form plus the public URL segment,
+ * lowercased, made of letters and numbers separated by single hyphens, and
+ * not the reserved `admin`.
+ */
 export const createProfileSchema = profileSchema.safeExtend({
   publicUrlSegment: z
     .string()

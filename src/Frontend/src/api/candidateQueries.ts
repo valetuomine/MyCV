@@ -3,8 +3,10 @@ import { baseApi } from "./baseApi"
 
 type Candidate = components["schemas"]["CandidateDto"]
 
+/** Candidate endpoints. */
 export const candidateQueries = baseApi.injectEndpoints({
   endpoints: (builder) => ({
+    /** Looks up a candidate by its public URL segment. */
     getCandidate: builder.query<Candidate, string>({
       query: (publicUrlSegment) =>
         `/api/Candidate/${encodeURIComponent(publicUrlSegment)}`,

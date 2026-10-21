@@ -3,6 +3,12 @@ import { useLocation, useNavigate } from "react-router-dom"
 import Notice from "../pages/components/Notice"
 import { isSignedOutLocationState } from "./signedOutState"
 
+/**
+ * Confirms a sign-out on the first page after the logout redirect. Then drops
+ * the router state, so a reload or back navigation doesn't replay the notice.
+ *
+ * @returns The sign-out notice.
+ */
 export default function SignedOutNotice(): JSX.Element {
   const location = useLocation()
   const navigate = useNavigate()
@@ -14,7 +20,6 @@ export default function SignedOutNotice(): JSX.Element {
     setNoticeKey(location.key)
   }
 
-  // Drop the router state so a reload or back navigation doesn't replay the notice.
   useEffect(() => {
     if (hasSignedOutState) {
       navigate(`${location.pathname}${location.search}`, {

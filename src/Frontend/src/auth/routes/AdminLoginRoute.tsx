@@ -7,6 +7,12 @@ import SignInMessage from "../SignInMessage"
 import useEntraLoginRedirect from "../useEntraLoginRedirect"
 import { RoutePaths } from "../../routePaths"
 
+/**
+ * The `/:publicUrlSegment/admin` route. Signs the user in, then returns them
+ * to the CV, where the edit action appears if they may edit it.
+ *
+ * @returns A redirect to the CV once signed in, otherwise the sign-in screen.
+ */
 export default function AdminLoginRoute(): JSX.Element {
   const { publicUrlSegment = "" } = useParams()
   const { accounts, inProgress } = useMsal()

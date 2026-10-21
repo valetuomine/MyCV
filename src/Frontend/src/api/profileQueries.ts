@@ -11,8 +11,10 @@ interface UpdateProfileArgs {
   body: UpdateProfileRequest
 }
 
+/** Profile endpoints. */
 export const profileQueries = baseApi.injectEndpoints({
   endpoints: (builder) => ({
+    /** Fetches the public profile, in the requested language when given. */
     getProfile: builder.query<
       Profile,
       { profileId: string; languageCode?: string }
@@ -25,6 +27,10 @@ export const profileQueries = baseApi.injectEndpoints({
         { type: "Profile", id: profileId },
       ],
     }),
+    /**
+     * Fetches the profile with every translation for editing. Succeeds only
+     * for users allowed to edit it, so it also answers whether they can.
+     */
     getProfileAdmin: builder.query<ProfileAdmin, string>({
       query: (profileId) =>
         `/api/Profile/${encodeURIComponent(profileId)}/admin`,
@@ -32,6 +38,10 @@ export const profileQueries = baseApi.injectEndpoints({
         { type: "Profile", id: profileId },
       ],
     }),
+    /**
+     * Creates a profile and refetches the candidate at its new public URL
+     * segment.
+     */
     createProfile: builder.mutation<ProfileAdmin, CreateProfileRequest>({
       query: (body) => ({
         url: "/api/Profile",
@@ -43,6 +53,10 @@ export const profileQueries = baseApi.injectEndpoints({
           ? [{ type: "Candidate", id: result.publicUrlSegment }]
           : [],
     }),
+    /**
+     * Saves a profile. After a successful save, both the public and the admin
+     * profile queries refetch.
+     */
     updateProfile: builder.mutation<ProfileAdmin, UpdateProfileArgs>({
       query: ({ profileId, body }) => ({
         url: `/api/Profile/${encodeURIComponent(profileId)}`,

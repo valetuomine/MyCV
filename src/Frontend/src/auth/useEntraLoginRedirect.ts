@@ -13,7 +13,9 @@ import {
 } from "./entraAuth"
 import { SignInFailure } from "../types"
 
+/** How long the sign-in message shows before the first redirect starts. */
 const redirectHoldMs = 3500
+/** How long after the redirect starts before it counts as slow. */
 const slowRedirectMs = 5000
 
 interface UseEntraLoginRedirectOptions {
@@ -23,6 +25,22 @@ interface UseEntraLoginRedirectOptions {
   storageValue: string
 }
 
+/**
+ * Sends a signed-out user to Microsoft sign-in. Once MSAL is idle, it waits
+ * `redirectHoldMs` on the first attempt, stores where to return in session
+ * storage and starts the login redirect. Signed-in users and deployments
+ * without sign-in only get their stale return markers cleared.
+ *
+ * Reports a cancelled or failed sign-in, flags a redirect that hasn't left
+ * after `slowRedirectMs`, and clears the redirect error on unmount.
+ *
+ * @param props - The redirect options.
+ * @param props.enabled - Whether this route needs sign-in now.
+ * @param props.redirectPath - The path Microsoft returns the browser to.
+ * @param props.storageKey - The session-storage key for the return marker.
+ * @param props.storageValue - The return marker the callback route reads.
+ * @returns The sign-in failure, whether the redirect is slow, and a retry.
+ */
 export default function useEntraLoginRedirect({
   enabled,
   redirectPath,
@@ -45,6 +63,7 @@ export default function useEntraLoginRedirect({
   const hasAccount = Boolean(accounts[0])
 
   const failureError = redirectError ?? startError
+  /** Whether sign-in was cancelled or failed, or null while it hasn't. */
   const signInFailure: SignInFailure | null = failureError
     ? isSignInCancelled(failureError)
       ? SignInFailure.Cancelled
@@ -118,6 +137,7 @@ export default function useEntraLoginRedirect({
 
   useEffect(() => clearRedirectSignInError, [])
 
+  /** Clears the failure and starts a new attempt that redirects immediately. */
   const retrySignIn = () => {
     redirectStarted.current = false
     clearRedirectSignInError()

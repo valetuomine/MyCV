@@ -8,6 +8,13 @@ import ProfileSkeleton from "../ProfileSkeleton"
 import RouteMessage from "../RouteMessage"
 import { Tone } from "../../../../types"
 
+/**
+ * The public CV route. Looks up the candidate by its public URL segment, then
+ * loads and shows their profile, with a skeleton while loading and a message
+ * for a missing profile or a failed request.
+ *
+ * @returns The CV, its skeleton, or a message.
+ */
 export default function CandidateProfileRoute(): JSX.Element {
   const { publicUrlSegment } = useParams()
   const candidateQuery = useGetCandidateQuery(publicUrlSegment ?? "", {
@@ -57,6 +64,13 @@ export default function CandidateProfileRoute(): JSX.Element {
   return <ProfilePage values={profileQuery.data} />
 }
 
+/**
+ * Turns a failed request into a message, and tells whether retrying could
+ * help: not for a missing CV, but yes for network and server errors.
+ *
+ * @param error - The RTK Query error.
+ * @returns The message and whether to offer a retry.
+ */
 function describeError(error: unknown): {
   message: string
   retryable: boolean

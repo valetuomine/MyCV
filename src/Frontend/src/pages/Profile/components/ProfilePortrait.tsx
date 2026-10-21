@@ -14,19 +14,31 @@ interface ProfilePortraitProps {
 
 const maxTiltDeg = 6
 const tiltSpring = { stiffness: 150, damping: 18 }
-// Longer than any glyph outline at the monogram's 100-unit font size, so one
-// dash covers each outline before the gap reaches it.
+/**
+ * Longer than any glyph outline at the monogram's 100-unit font size, so one
+ * dash covers each outline before the gap reaches it.
+ */
 const initialsDash = 1000
 
-// Shows the profile photo when one exists, otherwise a monogram placeholder.
-// With a mouse, the card tilts toward the pointer and a soft glare follows it.
-// In the stacked layout it rises into place as it scrolls into view.
+/**
+ * Shows the profile photo when one exists, otherwise a monogram placeholder
+ * whose initials are traced in outline, then filled. With a mouse, the card
+ * tilts toward the pointer and a soft glare follows it. In the stacked layout
+ * it rises into place as it scrolls into view.
+ *
+ * @param props - The component props.
+ * @param props.fullName - The candidate's name, for the photo's alt text.
+ * @param props.initials - The monogram's initials.
+ * @param props.imageUrl - The profile photo, if there is one.
+ * @returns The portrait card.
+ */
 export default function ProfilePortrait({
   fullName,
   initials,
   imageUrl,
 }: ProfilePortraitProps): JSX.Element {
   const [failedUrl, setFailedUrl] = useState<string | null>(null)
+  /** Shows the photo unless there is none or this URL failed to load. */
   const showImage = Boolean(imageUrl) && failedUrl !== imageUrl
   const prefersReducedMotion = useReducedMotion()
   const rotateX = useSpring(0, tiltSpring)
@@ -34,7 +46,12 @@ export default function ProfilePortrait({
   const glareX = useMotionValue(0)
   const glareY = useMotionValue(0)
 
-  // Measured on the untransformed wrapper so the tilt never skews the bounds.
+  /**
+   * Tilts the card toward a mouse pointer and moves the glare under it.
+   * Measured on the untransformed wrapper, so the tilt never skews the bounds.
+   *
+   * @param event - The pointer move over the card.
+   */
   const tilt = (event: PointerEvent<HTMLDivElement>): void => {
     if (event.pointerType !== "mouse" || prefersReducedMotion) {
       return
@@ -49,6 +66,7 @@ export default function ProfilePortrait({
     glareY.set(offsetY)
   }
 
+  /** Springs the card back to level when the pointer leaves. */
   const resetTilt = (): void => {
     rotateX.set(0)
     rotateY.set(0)
@@ -83,7 +101,6 @@ export default function ProfilePortrait({
               aria-hidden="true"
               className="grid size-full place-items-center bg-linear-to-br from-cv-accent/20 via-transparent to-transparent"
             >
-              {/* The initials are traced in outline, then filled. */}
               <svg
                 viewBox="0 0 160 100"
                 className="h-[1em] w-[1.6em] overflow-visible font-cv-display text-[clamp(4.5rem,12vw,8rem)] font-semibold tracking-tighter text-cv-accent select-none"

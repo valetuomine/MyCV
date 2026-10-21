@@ -14,6 +14,21 @@ interface RouteMessageProps {
   delayed?: boolean
 }
 
+/**
+ * A full-page message for loading, empty and error states. Shows the given
+ * actions, or a retry and an Open a CV button. Errors are announced as
+ * alerts, everything else as status.
+ *
+ * @param props - The component props.
+ * @param props.children - The heading.
+ * @param props.description - Text under the heading.
+ * @param props.tone - Neutral, pending with a loader, or error.
+ * @param props.showHomeButton - Whether to offer Open a CV.
+ * @param props.onRetry - Shows Try again when given.
+ * @param props.actions - Buttons that replace the default ones.
+ * @param props.delayed - Whether to fade in late, so quick loads don't flash.
+ * @returns The full-page message.
+ */
 export default function RouteMessage({
   children,
   description,
@@ -24,8 +39,9 @@ export default function RouteMessage({
   delayed = false,
 }: RouteMessageProps): JSX.Element {
   const navigate = useNavigate()
+  /** Red for errors, accent otherwise. */
   const dotColor = tone === Tone.Error ? "bg-cv-danger" : "bg-cv-accent"
-  // Pending screens are centred so the loader is the focal point.
+  /** Pending screens are centred so the loader is the focal point. */
   const isPending = tone === Tone.Pending
 
   return (

@@ -33,10 +33,20 @@ const viewTransition: Transition = {
   ease: [0.23, 1, 0.32, 1],
 }
 
+/**
+ * The CV with its edit mode. Users who may edit get an Edit profile action
+ * that loads the full profile into the form, and a notice confirms each save.
+ * One view shows at a time: the outgoing view leaves before the next one
+ * enters, and returning to the CV replays its entrance.
+ *
+ * @param props - The component props.
+ * @param props.values - The public profile.
+ * @returns The CV or the edit form, with the saved notice.
+ */
 export default function ProfileForm({ values }: ProfileFormProps): JSX.Element {
   const { canEdit, publicUrlSegment } = useCanEditProfile(values.id)
   const [isEditing, setIsEditing] = useState(false)
-  // After leaving edit mode, focus goes back to the Edit profile button.
+  /** After leaving edit mode, focus goes back to the Edit profile button. */
   const [hasEdited, setHasEdited] = useState(false)
   const [savedNotice, setSavedNotice] = useState<string | null>(null)
   const dismissSavedNotice = useCallback(() => setSavedNotice(null), [])
@@ -46,6 +56,7 @@ export default function ProfileForm({ values }: ProfileFormProps): JSX.Element {
     isEditing && values.id ? values.id : skipToken,
   )
 
+  /** The admin profile's form values once loaded, else the public profile's. */
   const formValues = useMemo(
     () =>
       profileAdminQuery.data
@@ -61,6 +72,11 @@ export default function ProfileForm({ values }: ProfileFormProps): JSX.Element {
 
   const { handleSubmit, reset } = profileForm
 
+  /**
+   * Validates and saves the profile, then leaves edit mode and shows the
+   * saved notice. A new notice key restarts the notice when saves follow
+   * each other quickly.
+   */
   const saveProfile = handleSubmit(async (data) => {
     if (!values.id) {
       setSaveError("Profile cannot be updated because its ID is missing.")
@@ -76,13 +92,13 @@ export default function ProfileForm({ values }: ProfileFormProps): JSX.Element {
       }).unwrap()
       setIsEditing(false)
       setHasEdited(true)
-      // A new key restarts the notice when saves follow each other quickly.
       setSavedNotice((current) => String(Number(current ?? 0) + 1))
     } catch (error: unknown) {
       setSaveError(getProfileFormError(error, "Profile update"))
     }
   })
 
+  /** Discards the changes and leaves edit mode. */
   const cancelEditing = (): void => {
     reset(formValues)
     setSaveError(undefined)
@@ -90,11 +106,13 @@ export default function ProfileForm({ values }: ProfileFormProps): JSX.Element {
     setHasEdited(true)
   }
 
+  /** Enters edit mode, which starts loading the admin profile. */
   const startEditing = (): void => {
     setSaveError(undefined)
     setIsEditing(true)
   }
 
+  /** Why the edit form can't open: a missing ID or a failed admin load. */
   const isError = !values.id
     ? "Profile cannot be edited because its ID is missing."
     : profileAdminQuery.isError
@@ -104,8 +122,6 @@ export default function ProfileForm({ values }: ProfileFormProps): JSX.Element {
   return (
     <FormProvider {...profileForm}>
       <div className="grid w-full gap-8">
-        {/* One view at a time: the outgoing view leaves before the next one
-            enters, and returning to the CV replays its entrance. */}
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={isEditing ? "edit" : "view"}

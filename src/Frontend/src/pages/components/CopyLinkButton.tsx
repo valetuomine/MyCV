@@ -12,7 +12,16 @@ const copiedResetMs = 2000
 const swapLabel =
   "col-start-1 row-start-1 transition-[opacity,translate] duration-200 ease-out motion-reduce:transition-none"
 
-// Copies a link and swaps its label to a drawn check mark for a moment.
+/**
+ * Copies a link and swaps its label to a drawn check mark for
+ * `copiedResetMs`. Both labels share one grid cell, so the button keeps its
+ * width. Shows an error when the clipboard can't be written.
+ *
+ * @param props - The component props.
+ * @param props.url - The link to copy.
+ * @param props.label - The button's label before copying.
+ * @returns The copy button with its status and error messages.
+ */
 export default function CopyLinkButton({
   url,
   label,
@@ -32,6 +41,7 @@ export default function CopyLinkButton({
     return () => window.clearTimeout(timeout)
   }, [copyStatus])
 
+  /** Writes the link to the clipboard and records whether it worked. */
   const copyUrl = async () => {
     try {
       await navigator.clipboard.writeText(url)
@@ -48,7 +58,6 @@ export default function CopyLinkButton({
         onClick={() => void copyUrl()}
         className={secondaryButton}
       >
-        {/* Both labels share one grid cell, so the button keeps its width. */}
         <span className="grid">
           <span
             className={`${swapLabel} ${isCopied ? "-translate-y-2 opacity-0" : "opacity-100"}`}

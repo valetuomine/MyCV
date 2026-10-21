@@ -5,8 +5,12 @@ import type { ProfileSchema } from "../../schemas/profile-form-schema"
 const pill =
   "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium"
 
-// Shows the Finnish CV as it will look while the form is being filled in. It
-// repeats what the fields already say, so it is hidden from assistive tech.
+/**
+ * Shows the Finnish CV as it will look while the form is being filled in. It
+ * repeats what the fields already say, so it is hidden from assistive tech.
+ *
+ * @returns The preview card, shown on large screens.
+ */
 export default function ProfilePreview(): JSX.Element {
   const { control } = useFormContext<ProfileSchema>()
   const [fullName, title, location, summary, gitHubUrl, linkedInUrl] = useWatch(

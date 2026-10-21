@@ -34,6 +34,7 @@ When the user corrects how a step was done, update the skill or this file so the
 | PR titles | `User Story <id>: <work item title>` or `Task <id>: <work item title>` |
 | PR reviewer comments | Finnish |
 | Code, comments and docs in the repo | English |
+| Frontend code comments | JSDoc only (summary, `@param`, `@returns`), on every function and every `const` with logic; no `//` comments or commented-out code. Enforced by `eslint-plugin-jsdoc`. See *Frontend Conventions* in `/setup-frontend` |
 
 ## Checks
 

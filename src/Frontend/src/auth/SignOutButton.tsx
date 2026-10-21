@@ -9,6 +9,13 @@ import {
 import { RoutePaths } from "../routePaths"
 import { secondaryButton } from "../pages/components/buttonStyles"
 
+/**
+ * Shows the signed-in account and signs it out. Renders nothing while nobody
+ * is signed in. Remembers the CV being viewed, so Home can return to it after
+ * the logout redirect.
+ *
+ * @returns The account name with the sign-out button, or null.
+ */
 export default function SignOutButton(): JSX.Element | null {
   const { accounts, inProgress, instance } = useMsal()
   const [signOutError, setSignOutError] = useState(false)
@@ -16,6 +23,7 @@ export default function SignOutButton(): JSX.Element | null {
   const candidateAdminMatch = useMatch(RoutePaths.CandidateAdminPattern)
   const candidateProfileMatch = useMatch(RoutePaths.CandidateProfilePattern)
 
+  /** The CV on screen, or undefined on the create-profile page and Home. */
   const publicUrlSegment = createProfileMatch
     ? undefined
     : (candidateAdminMatch ?? candidateProfileMatch)?.params.publicUrlSegment
@@ -24,9 +32,15 @@ export default function SignOutButton(): JSX.Element | null {
     return null
   }
 
+  /** The active account, or the first signed-in one. */
   const account = instance.getActiveAccount() ?? accounts[0]
+  /** The account's display name, or its username when it has none. */
   const accountLabel = account.name || account.username
   const isBusy = inProgress !== InteractionStatus.None
+  /**
+   * Stores the CV to return to and starts the logout redirect. Shows an error
+   * if the redirect can't start.
+   */
   const handleSignOut = (): void => {
     setSignOutError(false)
     clearAuthReturnPaths()

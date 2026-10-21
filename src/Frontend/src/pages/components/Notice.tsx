@@ -9,9 +9,18 @@ interface NoticeProps {
 
 const visibleMs = 4000
 
-// A short confirmation pill at the bottom centre. The status region is always
-// rendered, so screen readers announce the message when it appears. Pass a
-// stable onDismiss, or the timer restarts on every render.
+/**
+ * A short confirmation pill at the bottom centre that dismisses itself after
+ * `visibleMs`. The status region is always rendered, so screen readers
+ * announce the message when it appears. Pass a stable `onDismiss`, or the
+ * timer restarts on every render.
+ *
+ * @param props - The component props.
+ * @param props.noticeKey - Shows the notice while set; a new key restarts it.
+ * @param props.onDismiss - Hides the notice when its time is up.
+ * @param props.children - The message.
+ * @returns The status region with the notice when shown.
+ */
 export default function Notice({
   noticeKey,
   onDismiss,

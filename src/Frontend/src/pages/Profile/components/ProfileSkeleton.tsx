@@ -2,6 +2,11 @@ import type { JSX } from "react"
 
 const bar = "rounded-full bg-cv-overlay motion-safe:animate-pulse"
 
+/**
+ * A placeholder in the CV's layout while the CV loads.
+ *
+ * @returns The busy main landmark with placeholder bars.
+ */
 export default function ProfileSkeleton(): JSX.Element {
   return (
     <main

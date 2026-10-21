@@ -16,6 +16,20 @@ interface SignInMessageProps {
   onBack: () => void
 }
 
+/**
+ * The sign-in route's screen: explains when sign-in isn't configured, offers
+ * a retry when it was cancelled or failed, and otherwise shows the pending
+ * message, with a reload option once the redirect is slow.
+ *
+ * @param props - The component props.
+ * @param props.pendingTitle - The heading while sign-in is on its way.
+ * @param props.signInFailure - Whether sign-in was cancelled or failed.
+ * @param props.isRedirectSlow - Whether the redirect is taking too long.
+ * @param props.onRetry - Starts sign-in again.
+ * @param props.backLabel - The label of the back button.
+ * @param props.onBack - Leaves the sign-in route.
+ * @returns The sign-in screen for the current state.
+ */
 export default function SignInMessage({
   pendingTitle,
   signInFailure,

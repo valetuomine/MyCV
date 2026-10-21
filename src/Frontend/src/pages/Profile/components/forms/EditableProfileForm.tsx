@@ -24,6 +24,24 @@ interface EditableProfileFormProps {
   publicUrlSegment?: string
 }
 
+/**
+ * The profile in edit mode: the fields, a live preview and the CV link, with
+ * Save and Cancel in a bar that stays in view at the bottom of the screen
+ * while the form scrolls.
+ *
+ * Entering edit mode moves focus to the heading, so keyboard and screen
+ * reader users start at the top of the form. With unsaved changes, the
+ * browser warns before the tab is closed or reloaded, and Cancel asks before
+ * discarding them.
+ *
+ * @param props - The component props.
+ * @param props.onCancel - Leaves edit mode without saving.
+ * @param props.onSubmit - Validates and saves the form.
+ * @param props.isSaving - Whether a save is in progress.
+ * @param props.saveError - The message from a failed save.
+ * @param props.publicUrlSegment - The CV's public URL segment, for its link.
+ * @returns The edit form.
+ */
 export default function EditableProfileForm({
   onCancel,
   onSubmit,
@@ -36,27 +54,36 @@ export default function EditableProfileForm({
   const keepEditingButtonRef = useRef<HTMLButtonElement>(null)
   const { isDirty } = useFormState<ProfileSchema>()
   const [confirmingDiscard, setConfirmingDiscard] = useState(false)
+  /** The CV's full public URL, once its segment is known. */
   const publicUrl = publicUrlSegment
     ? `${window.location.origin}/${publicUrlSegment}`
     : undefined
 
-  // Entering edit mode moves focus to the heading, so keyboard and screen
-  // reader users start at the top of the form.
   useEffect(() => {
     headingRef.current?.focus()
   }, [])
 
-  // Warn before the tab is closed or reloaded with unsaved changes.
   useEffect(() => {
     if (!isDirty) {
       return
     }
 
-    const warn = (event: BeforeUnloadEvent): void => event.preventDefault()
+    /**
+     * Asks the browser to confirm leaving the page.
+     *
+     * @param event - The page's unload.
+     */
+    const warn = (event: BeforeUnloadEvent): void => {
+      event.preventDefault()
+    }
     window.addEventListener("beforeunload", warn)
     return () => window.removeEventListener("beforeunload", warn)
   }, [isDirty])
 
+  /**
+   * Leaves edit mode when nothing changed. Otherwise asks to discard the
+   * changes and moves focus to Keep editing.
+   */
   const requestCancel = (): void => {
     if (!isDirty) {
       onCancel()
@@ -67,6 +94,7 @@ export default function EditableProfileForm({
     keepEditingButtonRef.current?.focus()
   }
 
+  /** Closes the discard question and returns focus to Cancel. */
   const keepEditing = (): void => {
     flushSync(() => setConfirmingDiscard(false))
     cancelButtonRef.current?.focus()
@@ -120,7 +148,6 @@ export default function EditableProfileForm({
             {saveError}
           </p>
         )}
-        {/* Stays in view at the bottom of the screen while the form scrolls. */}
         <div className="sticky bottom-[max(1rem,env(safe-area-inset-bottom))] z-20 flex min-h-17 flex-wrap items-center gap-3 rounded-3xl border border-cv-line bg-cv-surface/85 p-3 shadow-cv-panel backdrop-blur-md">
           {confirmingDiscard ? (
             <>

@@ -6,6 +6,14 @@ interface ProfileFieldsProps {
   isDisabled: boolean
 }
 
+/**
+ * The profile's form fields: basic details, the required Finnish translation
+ * and the optional English one.
+ *
+ * @param props - The component props.
+ * @param props.isDisabled - Whether the fields are disabled, such as while saving.
+ * @returns The fieldsets.
+ */
 export default function ProfileFields({
   isDisabled,
 }: ProfileFieldsProps): JSX.Element {

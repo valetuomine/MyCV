@@ -14,12 +14,22 @@ interface BackgroundProps {
   children: ReactNode
 }
 
+/**
+ * The page frame: a dotted background with glows and grain, the sign-out and
+ * theme controls, and the sign-out notice. With a mouse, a spotlight follows
+ * the pointer on a spring and lights up the dots beneath it.
+ *
+ * @param props - The component props.
+ * @param props.children - The page content.
+ * @returns The framed page.
+ */
 export default function Background({ children }: BackgroundProps): JSX.Element {
   const pointerX = useMotionValue(-1000)
   const pointerY = useMotionValue(-1000)
   const spotlightX = useSpring(pointerX, { stiffness: 100, damping: 20 })
   const spotlightY = useSpring(pointerY, { stiffness: 100, damping: 20 })
 
+  /** Shifts the lit dots against the spotlight, so they stay on the page grid. */
   const litDotsPosition = useTransform(
     [spotlightX, spotlightY],
     ([x, y]) => `calc(14rem - ${x}px) calc(14rem - ${y}px)`,
@@ -27,6 +37,11 @@ export default function Background({ children }: BackgroundProps): JSX.Element {
 
   const prefersReducedMotion = useReducedMotion()
 
+  /**
+   * Moves the spotlight to a mouse pointer, unless motion is reduced.
+   *
+   * @param event - The pointer move over the page.
+   */
   const trackPointer = (event: PointerEvent<HTMLElement>): void => {
     if (event.pointerType !== "mouse" || prefersReducedMotion) {
       return
