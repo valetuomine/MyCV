@@ -1,9 +1,7 @@
 import { useMsal } from "@azure/msal-react"
 import { useEffect, useRef } from "react"
-import { storeSignOutReturn } from "./adminLoginStorage"
-import { isEntraConfigured } from "./entraAuth"
+import { isEntraConfigured, signOutInApp } from "./entraAuth"
 import useSignOutReturnSegment from "./useSignOutReturnSegment"
-import { RoutePaths } from "../routePaths"
 import { SignOutReason } from "../types"
 
 /** How long the app may go unused before the user is signed out. */
@@ -21,10 +19,8 @@ const activityEvents = [
 ] as const
 
 /**
- * Signs the user out after `idleTimeoutMs` without activity. The sign-out
- * only clears MSAL's cache, so Microsoft's logout page never shows, and then
- * reloads Home, which returns to the CV on screen with the idle notice like
- * a manual sign-out does.
+ * Signs the user out after `idleTimeoutMs` without activity, in the app like
+ * the sign-out button, and with the idle notice.
  *
  * Time is measured from the last activity rather than with one long timer,
  * so a tab that was hidden or a device that slept is signed out as soon as
@@ -32,7 +28,7 @@ const activityEvents = [
  * the first activity.
  */
 export default function useIdleSignOut(): void {
-  const { accounts, instance } = useMsal()
+  const { accounts } = useMsal()
   const publicUrlSegment = useSignOutReturnSegment()
   const returnSegment = useRef(publicUrlSegment)
   const isSignedIn = accounts.length > 0
@@ -50,21 +46,16 @@ export default function useIdleSignOut(): void {
     let isSigningOut = false
 
     /**
-     * Clears the signed-in account and reloads Home with the idle sign-out
-     * markers. If the cache can't be cleared, the user stays signed in and
-     * the next check tries again.
+     * Signs out for being idle. If the sign-out fails, the user stays signed
+     * in and the next check tries again.
      */
     const signOut = async (): Promise<void> => {
       isSigningOut = true
       try {
-        await instance.clearCache()
+        await signOutInApp(returnSegment.current, SignOutReason.Idle)
       } catch {
         isSigningOut = false
-        return
       }
-
-      storeSignOutReturn(returnSegment.current, SignOutReason.Idle)
-      window.location.replace(RoutePaths.Home)
     }
 
     /**
@@ -112,5 +103,5 @@ export default function useIdleSignOut(): void {
       document.removeEventListener("visibilitychange", handleVisibilityChange)
       clearInterval(interval)
     }
-  }, [instance, isSignedIn])
+  }, [isSignedIn])
 }

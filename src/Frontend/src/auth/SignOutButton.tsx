@@ -1,21 +1,21 @@
 import { InteractionStatus } from "@azure/msal-browser"
 import { useMsal } from "@azure/msal-react"
 import { useState, type JSX } from "react"
-import { clearAuthReturnPaths, storeSignOutReturn } from "./adminLoginStorage"
+import { signOutInApp } from "./entraAuth"
 import useSignOutReturnSegment from "./useSignOutReturnSegment"
-import { RoutePaths } from "../routePaths"
 import { secondaryButton } from "../pages/components/buttonStyles"
 import { SignOutReason } from "../types"
 
 /**
- * Shows the signed-in account and signs it out. Renders nothing while nobody
- * is signed in. Remembers the CV being viewed, so Home can return to it after
- * the logout redirect.
+ * Shows the signed-in account and signs it out within the app, without
+ * Microsoft's logout page. Renders nothing while nobody is signed in.
+ * Remembers the CV being viewed, so Home can return to it after the sign-out.
  *
  * @returns The account name with the sign-out button, or null.
  */
 export default function SignOutButton(): JSX.Element | null {
   const { accounts, inProgress, instance } = useMsal()
+  const [isSigningOut, setIsSigningOut] = useState(false)
   const [signOutError, setSignOutError] = useState(false)
   const publicUrlSegment = useSignOutReturnSegment()
 
@@ -27,23 +27,15 @@ export default function SignOutButton(): JSX.Element | null {
   const account = instance.getActiveAccount() ?? accounts[0]
   /** The account's display name, or its username when it has none. */
   const accountLabel = account.name || account.username
-  const isBusy = inProgress !== InteractionStatus.None
-  /**
-   * Stores the CV to return to and starts the logout redirect. Shows an error
-   * if the redirect can't start.
-   */
+  const isBusy = isSigningOut || inProgress !== InteractionStatus.None
+  /** Signs out and returns to the CV on screen. Shows an error if it fails. */
   const handleSignOut = (): void => {
     setSignOutError(false)
-    storeSignOutReturn(publicUrlSegment, SignOutReason.User)
-    void instance
-      .logoutRedirect({
-        account,
-        postLogoutRedirectUri: `${window.location.origin}${RoutePaths.Home}`,
-      })
-      .catch(() => {
-        clearAuthReturnPaths()
-        setSignOutError(true)
-      })
+    setIsSigningOut(true)
+    signOutInApp(publicUrlSegment, SignOutReason.User).catch(() => {
+      setIsSigningOut(false)
+      setSignOutError(true)
+    })
   }
 
   return (
@@ -63,9 +55,7 @@ export default function SignOutButton(): JSX.Element | null {
           disabled={isBusy}
           aria-label="Sign out of Microsoft"
         >
-          {inProgress === InteractionStatus.Logout
-            ? "Signing out…"
-            : "Sign out"}
+          {isSigningOut ? "Signing out…" : "Sign out"}
         </button>
       </div>
       {signOutError && (

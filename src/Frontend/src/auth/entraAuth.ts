@@ -10,7 +10,12 @@ import {
   type EventError,
   type EventMessage,
 } from "@azure/msal-browser"
-import { clearSignInPromptRequired } from "./adminLoginStorage"
+import {
+  clearSignInPromptRequired,
+  storeSignOutReturn,
+} from "./adminLoginStorage"
+import { RoutePaths } from "../routePaths"
+import type { SignOutReason } from "../types"
 
 /** The Entra app registration's client ID, or "" when not configured. */
 const clientId = import.meta.env.VITE_ENTRA_CLIENT_ID?.trim() ?? ""
@@ -118,6 +123,26 @@ export function isSignInCancelled(error: unknown): boolean {
     (error.errorCode === BrowserAuthErrorCodes.userCancelled ||
       error.errorCode === "access_denied")
   )
+}
+
+/**
+ * Signs out within the app, without Microsoft's logout page: clears MSAL's
+ * accounts and tokens, then reloads Home, which returns to the CV and shows
+ * the sign-out notice. The reload also drops any open editor and cached admin
+ * data. The Microsoft session stays, so the next sign-in asks for credentials
+ * instead (see `storeSignOutReturn`).
+ *
+ * @param publicUrlSegment - The CV to return to, or undefined to stay on Home.
+ * @param reason - Whether the user signed out or was signed out when idle.
+ * @returns A promise that rejects, leaving the user signed in, when the cache can't be cleared.
+ */
+export async function signOutInApp(
+  publicUrlSegment: string | undefined,
+  reason: SignOutReason,
+): Promise<void> {
+  await msalInstance.clearCache()
+  storeSignOutReturn(publicUrlSegment, reason)
+  window.location.replace(RoutePaths.Home)
 }
 
 /**

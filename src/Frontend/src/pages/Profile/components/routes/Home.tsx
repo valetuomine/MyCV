@@ -35,7 +35,7 @@ function extractPublicUrlSegment(input: string): string {
 
 /**
  * The home page, where a visitor opens a CV by its link or public address.
- * It is also where the logout redirect lands: it returns to the CV the user
+ * It is also where a sign-out lands: it returns to the CV the user
  * signed out from, or stays here, and flags the sign-out for the notice.
  *
  * @returns A redirect to the CV after sign-out, otherwise the home page.
