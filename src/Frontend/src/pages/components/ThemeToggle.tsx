@@ -78,6 +78,13 @@ export default function ThemeToggle(): JSX.Element {
     <button
       type="button"
       onClick={toggleTheme}
+      // Quick repeated clicks count as double and triple clicks, which would
+      // otherwise select nearby text.
+      onMouseDown={(event) => {
+        if (event.detail > 1) {
+          event.preventDefault()
+        }
+      }}
       aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
       className="grid size-11 place-items-center rounded-full border border-cv-line bg-cv-wash text-cv-copy transition-colors transition-transform duration-150 ease-out hover:border-cv-meta hover:bg-cv-overlay hover:text-cv-ink active:scale-95 motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cv-accent"
     >

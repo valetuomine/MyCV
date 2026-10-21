@@ -10,6 +10,7 @@ import {
 } from "../../../components/buttonStyles"
 import type { ProfileSchema } from "../../schemas/profile-form-schema"
 import { formatProfileDate, getInitials } from "../../utils/profileFormUtils"
+import ProfileName from "../ProfileName"
 import ProfilePortrait from "../ProfilePortrait"
 
 interface ReadOnlyProfileFormProps {
@@ -28,15 +29,6 @@ const item: Variants = {
     opacity: 1,
     y: 0,
     transition: { type: "spring", stiffness: 100, damping: 20 },
-  },
-}
-
-// The name rises into view from behind the heading's clipped bottom edge.
-const nameReveal: Variants = {
-  hidden: { y: "110%" },
-  visible: {
-    y: "0%",
-    transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1] },
   },
 }
 
@@ -128,19 +120,7 @@ export default function ReadOnlyProfileForm({
             </span>
           )}
         </motion.p>
-        <h1
-          dir="auto"
-          className="mt-8 overflow-clip font-cv-display text-[clamp(3rem,8.5vw,7rem)] leading-[0.95] font-semibold tracking-tighter text-balance wrap-anywhere"
-        >
-          <motion.span variants={nameReveal} className="block">
-            <RHFInput<ProfileSchema>
-              name="fullName"
-              label="Full name"
-              isEditing={false}
-              className="block bg-linear-to-b from-cv-ink to-cv-muted bg-clip-text pt-[0.15em] pb-[0.08em] text-transparent print:bg-none print:text-cv-ink forced-colors:bg-none forced-colors:text-[CanvasText]"
-            />
-          </motion.span>
-        </h1>
+        <ProfileName fullName={values.fullName ?? ""} />
         {values.title && (
           <motion.p
             variants={item}
