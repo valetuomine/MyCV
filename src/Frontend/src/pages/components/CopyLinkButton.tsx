@@ -1,0 +1,91 @@
+import { useEffect, useState, type JSX } from "react"
+import { CopyStatus } from "../../types"
+import { secondaryButton } from "./buttonStyles"
+
+interface CopyLinkButtonProps {
+  url: string
+  label: string
+}
+
+const copiedResetMs = 2000
+
+const swapLabel =
+  "col-start-1 row-start-1 transition-[opacity,translate] duration-200 ease-out motion-reduce:transition-none"
+
+// Copies a link and swaps its label to a drawn check mark for a moment.
+export default function CopyLinkButton({
+  url,
+  label,
+}: CopyLinkButtonProps): JSX.Element {
+  const [copyStatus, setCopyStatus] = useState<CopyStatus>(CopyStatus.Idle)
+  const isCopied = copyStatus === CopyStatus.Copied
+
+  useEffect(() => {
+    if (copyStatus !== CopyStatus.Copied) {
+      return
+    }
+
+    const timeout = window.setTimeout(
+      () => setCopyStatus(CopyStatus.Idle),
+      copiedResetMs,
+    )
+    return () => window.clearTimeout(timeout)
+  }, [copyStatus])
+
+  const copyUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopyStatus(CopyStatus.Copied)
+    } catch {
+      setCopyStatus(CopyStatus.Error)
+    }
+  }
+
+  return (
+    <div className="grid justify-items-start gap-2">
+      <button
+        type="button"
+        onClick={() => void copyUrl()}
+        className={secondaryButton}
+      >
+        {/* Both labels share one grid cell, so the button keeps its width. */}
+        <span className="grid">
+          <span
+            className={`${swapLabel} ${isCopied ? "-translate-y-2 opacity-0" : "opacity-100"}`}
+          >
+            {label}
+          </span>
+          <span
+            aria-hidden="true"
+            className={`${swapLabel} inline-flex items-center justify-center gap-1.5 text-cv-accent ${isCopied ? "opacity-100" : "translate-y-2 opacity-0"}`}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              className="size-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.25"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path
+                d="m5 12.5 4.5 4.5L19 7.5"
+                pathLength={1}
+                className={`[stroke-dasharray:1] transition-[stroke-dashoffset] duration-300 ease-out motion-reduce:transition-none ${isCopied ? "[stroke-dashoffset:0] delay-100" : "[stroke-dashoffset:1]"}`}
+              />
+            </svg>
+            Copied
+          </span>
+        </span>
+      </button>
+      <span role="status" className="sr-only">
+        {isCopied ? "Link copied to clipboard." : ""}
+      </span>
+      {copyStatus === CopyStatus.Error && (
+        <p role="alert" className="m-0 max-w-52 text-sm text-cv-danger">
+          Could not copy the link. Copy it from the address shown instead.
+        </p>
+      )}
+    </div>
+  )
+}

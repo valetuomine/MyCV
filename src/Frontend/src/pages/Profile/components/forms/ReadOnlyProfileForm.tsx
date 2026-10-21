@@ -1,7 +1,7 @@
 import { m as motion, type Variants } from "framer-motion"
-import { useEffect, useId, useState, type JSX } from "react"
+import { useEffect, useId, useRef, useState, type JSX } from "react"
 import type { Profile } from "../../../../api/profileQueries"
-import { CopyStatus } from "../../../../types"
+import CopyLinkButton from "../../../components/CopyLinkButton"
 import RHFInput from "../../../components/RHFInput"
 import {
   externalLinkArrow,
@@ -16,6 +16,7 @@ import ProfilePortrait from "../ProfilePortrait"
 interface ReadOnlyProfileFormProps {
   values: Profile
   onEdit?: () => void
+  focusEdit?: boolean
 }
 
 const container: Variants = {
@@ -31,11 +32,6 @@ const item: Variants = {
     transition: { type: "spring", stiffness: 100, damping: 20 },
   },
 }
-
-const copiedResetMs = 2000
-
-const swapLabel =
-  "col-start-1 row-start-1 transition-[opacity,translate] duration-200 ease-out motion-reduce:transition-none"
 
 function ExpandableSummary({ text }: { text: string }): JSX.Element {
   const [expanded, setExpanded] = useState(false)
@@ -69,33 +65,19 @@ function ExpandableSummary({ text }: { text: string }): JSX.Element {
 export default function ReadOnlyProfileForm({
   values,
   onEdit,
+  focusEdit = false,
 }: ReadOnlyProfileFormProps): JSX.Element {
-  const [copyStatus, setCopyStatus] = useState<CopyStatus>(CopyStatus.Idle)
+  const editButtonRef = useRef<HTMLButtonElement>(null)
   const publicUrl = `${window.location.origin}${window.location.pathname}`
   const updatedAt = formatProfileDate(values.updatedAt ?? values.createdAt)
   const hasActions = Boolean(values.gitHubUrl || values.linkedInUrl || onEdit)
-  const isCopied = copyStatus === CopyStatus.Copied
 
+  // Coming back from editing, focus returns to the button that started it.
   useEffect(() => {
-    if (copyStatus !== CopyStatus.Copied) {
-      return
+    if (focusEdit) {
+      editButtonRef.current?.focus()
     }
-
-    const timeout = window.setTimeout(
-      () => setCopyStatus(CopyStatus.Idle),
-      copiedResetMs,
-    )
-    return () => window.clearTimeout(timeout)
-  }, [copyStatus])
-
-  const copyPublicUrl = async () => {
-    try {
-      await navigator.clipboard.writeText(publicUrl)
-      setCopyStatus(CopyStatus.Copied)
-    } catch {
-      setCopyStatus(CopyStatus.Error)
-    }
-  }
+  }, [focusEdit])
 
   return (
     <motion.div
@@ -161,52 +143,7 @@ export default function ReadOnlyProfileForm({
           variants={item}
           className="mt-10 flex flex-wrap items-start gap-3"
         >
-          <div className="grid justify-items-start gap-2">
-            <button
-              type="button"
-              onClick={() => void copyPublicUrl()}
-              className={secondaryButton}
-            >
-              {/* Both labels share one grid cell, so the button keeps its width. */}
-              <span className="grid">
-                <span
-                  className={`${swapLabel} ${isCopied ? "-translate-y-2 opacity-0" : "opacity-100"}`}
-                >
-                  Copy CV link
-                </span>
-                <span
-                  aria-hidden="true"
-                  className={`${swapLabel} inline-flex items-center justify-center gap-1.5 text-cv-accent ${isCopied ? "opacity-100" : "translate-y-2 opacity-0"}`}
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="size-4"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.25"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path
-                      d="m5 12.5 4.5 4.5L19 7.5"
-                      pathLength={1}
-                      className={`[stroke-dasharray:1] transition-[stroke-dashoffset] duration-300 ease-out motion-reduce:transition-none ${isCopied ? "[stroke-dashoffset:0] delay-100" : "[stroke-dashoffset:1]"}`}
-                    />
-                  </svg>
-                  Copied
-                </span>
-              </span>
-            </button>
-            <span role="status" className="sr-only">
-              {isCopied ? "CV link copied to clipboard." : ""}
-            </span>
-            {copyStatus === CopyStatus.Error && (
-              <p role="alert" className="m-0 max-w-52 text-sm text-cv-danger">
-                Could not copy the CV link. Copy the page address from your
-                browser.
-              </p>
-            )}
-          </div>
+          <CopyLinkButton url={publicUrl} label="Copy CV link" />
           {hasActions && (
             <>
               <RHFInput<ProfileSchema>
@@ -227,6 +164,7 @@ export default function ReadOnlyProfileForm({
               />
               {onEdit && (
                 <button
+                  ref={editButtonRef}
                   type="button"
                   onClick={onEdit}
                   className={`${secondaryButton} border-dashed`}

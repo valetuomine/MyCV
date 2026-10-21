@@ -180,6 +180,20 @@ Three radii: **pill** (full) for buttons and the theme toggle, **panel** (1.5rem
 - **Style:** 0.5rem radius, field-line border, faint wash fill, mono uppercase label above.
 - **Focus:** border becomes accent with a 3px accent ring at 20%.
 - **Error / Disabled:** danger border and ring, message below with `role="alert"`; disabled at 60% opacity.
+- **Placeholders:** realistic examples (`https://github.com/username`, `Helsinki, Suomi`), never "Enter …"; the label already says what goes in.
+
+### Edit View
+
+- Same two-column grid as the CV: the form on the left, a sticky **live preview** on the right from `lg` up. The preview is a portrait-style panel with the orbiting border highlight that shows the Finnish CV (name, title, location, summary, link pills) updating as the fields change. It repeats the form, so it is `aria-hidden`.
+- Header: accent-dot mono eyebrow "Editing" above the "Edit profile" title. The CV link is shown as the full address with a Copy link button, not as a disabled field.
+- Basic details: full name on its own row, GitHub and LinkedIn side by side from `sm` up.
+- **Action bar:** a floating panel (1.5rem radius, hairline border, 85% surface with backdrop blur, panel shadow) sticky 1rem above the bottom edge. Save is disabled until something changes; a mono status reads "No changes" or "Unsaved changes" with an accent dot. Cancel with unsaved changes swaps the bar to "Discard your unsaved changes?" with Keep editing (primary) and Discard; closing the tab with unsaved changes asks the browser to confirm.
+- **Focus:** entering edit mode focuses the title; leaving it (Save, Cancel or Discard) focuses the Edit profile button.
+- **Transition:** the outgoing view fades and lifts 1rem, then the incoming one rises 1.5rem and fades in, 250ms `cubic-bezier(0.23, 1, 0.32, 1)`, one at a time. Returning to the CV replays its entrance. A successful save shows a "Profile saved" notice.
+
+### Notice
+
+- Bottom-centre pill (hairline border, surface fill, accent dot) that fades and rises 8px in for 4 seconds, inside an always-present `role="status"` region. Used for "You've signed out" and "Profile saved".
 
 ### Name
 
