@@ -48,8 +48,11 @@ npm --prefix src/Frontend run build
 
 Format changed C# with `dotnet format` and changed frontend files with Prettier.
 
+Check every frontend UI change in a real browser with the `playwright` MCP server before pushing: desktop and mobile, both themes, the changed interactions, reduced motion and the console. The checklist is in `/create-pull-request`.
+
 ## Tools
 
 - **Azure DevOps** is reached through the `azure-devops` MCP server (`.mcp.json`, local only). It signs in with a personal access token from the `AZURE_DEVOPS_MCP` user environment variable (base64 of `:<PAT>`), which `.mcp.json` passes to the server as `PERSONAL_ACCESS_TOKEN`, because the browser sign-in does not accept the user's personal Microsoft account.
+- **Browser checks** use the `playwright` MCP server (`@playwright/mcp`, also in `.mcp.json`). It opens a visible Chrome window, so the user can sign in there for the admin views. Its screenshots and logs go to `.playwright-mcp/`, which is git-ignored.
 - **Git:** `origin` pushes only to Azure DevOps. The `main` pipeline mirrors `main` to GitHub after each merge, so feature branches never go to GitHub.
 - **Project skills** live in `.claude/skills/`. Each one is tracked through an exception in `.gitignore`. Add a new exception when you add a skill.

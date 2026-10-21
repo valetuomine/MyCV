@@ -150,3 +150,5 @@ Pop-Location
 ```
 
 The expected local URL is `http://localhost:3000/`.
+
+Check every UI change in the browser with the `playwright` MCP server before it is shipped: desktop and mobile, both themes, the changed interactions, reduced motion and the console. The full checklist is under *Checks* in the `create-pull-request` skill.
