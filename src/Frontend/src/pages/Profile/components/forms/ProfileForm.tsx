@@ -37,7 +37,7 @@ const viewTransition: Transition = {
  * The CV with its edit mode. Users who may edit get an Edit profile action
  * that loads the full profile into the form, and a notice confirms each save.
  * One view shows at a time: the outgoing view leaves before the next one
- * enters, and returning to the CV replays its entrance.
+ * enters. The CV plays its entrance on load and again when returning to it.
  *
  * @param props - The component props.
  * @param props.values - The public profile.
@@ -112,6 +112,13 @@ export default function ProfileForm({ values }: ProfileFormProps): JSX.Element {
     setIsEditing(true)
   }
 
+  /**
+   * The view's rise-in, skipped on first load so only the CV's own entrance
+   * plays. It is set here rather than as `initial={false}` on
+   * `AnimatePresence`, which would block every entrance inside the CV.
+   */
+  const viewEntrance = isEditing || hasEdited ? { opacity: 0, y: 24 } : false
+
   /** Why the edit form can't open: a missing ID or a failed admin load. */
   const isError = !values.id
     ? "Profile cannot be edited because its ID is missing."
@@ -122,10 +129,10 @@ export default function ProfileForm({ values }: ProfileFormProps): JSX.Element {
   return (
     <FormProvider {...profileForm}>
       <div className="grid w-full gap-8">
-        <AnimatePresence mode="wait" initial={false}>
+        <AnimatePresence mode="wait">
           <motion.div
             key={isEditing ? "edit" : "view"}
-            initial={{ opacity: 0, y: 24 }}
+            initial={viewEntrance}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
             transition={viewTransition}
