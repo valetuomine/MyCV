@@ -23,7 +23,7 @@ export default function ProfileSkeleton(): JSX.Element {
         </div>
         <div
           aria-hidden="true"
-          className="h-[clamp(20rem,68dvh,40rem)] w-full max-w-md rounded-3xl border border-cv-line bg-cv-surface lg:justify-self-end"
+          className="h-44 w-full max-w-md lg:h-[clamp(16rem,46dvh,26rem)] rounded-3xl border border-cv-line bg-cv-surface lg:justify-self-end"
         />
       </div>
     </main>

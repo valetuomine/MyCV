@@ -99,6 +99,28 @@
       transform: rotate(1turn);
     }
   }
+
+  @keyframes cv-scroll-rise {
+    from {
+      opacity: 0.4;
+      transform: perspective(60rem) translateY(3rem) rotateX(14deg) scale(0.96);
+    }
+  }
+}
+
+/*
+ * Scroll-driven: the element rises and tips upright while it enters the
+ * viewport, and is at rest once fully in view. Browsers without scroll
+ * timelines, and reduced motion, show it at rest.
+ */
+@utility animate-cv-scroll-rise {
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+      animation: cv-scroll-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 100%;
+    }
+  }
 }
 
 /* Dot matrix; bg-cv-dots-lit is the accent copy revealed under the pointer.

@@ -14,9 +14,13 @@ interface ProfilePortraitProps {
 
 const maxTiltDeg = 6
 const tiltSpring = { stiffness: 150, damping: 18 }
+// Longer than any glyph outline at the monogram's 100-unit font size, so one
+// dash covers each outline before the gap reaches it.
+const initialsDash = 1000
 
 // Shows the profile photo when one exists, otherwise a monogram placeholder.
 // With a mouse, the card tilts toward the pointer and a soft glare follows it.
+// In the stacked layout it rises into place as it scrolls into view.
 export default function ProfilePortrait({
   fullName,
   initials,
@@ -54,7 +58,7 @@ export default function ProfilePortrait({
     <div
       onPointerMove={tilt}
       onPointerLeave={resetTilt}
-      className="group w-full perspective-[1000px]"
+      className="group w-full perspective-[1000px] max-lg:animate-cv-scroll-rise"
     >
       <motion.div
         style={{ rotateX, rotateY }}
@@ -65,7 +69,7 @@ export default function ProfilePortrait({
           className="pointer-events-none absolute top-1/2 left-1/2 aspect-square w-[200%] -translate-1/2 bg-cv-sweep animate-cv-sweep motion-reduce:hidden print:hidden"
         />
         <div
-          className={`relative w-full overflow-hidden rounded-[calc(1.5rem-1px)] bg-cv-surface ${showImage ? "h-[clamp(20rem,68dvh,40rem)]" : "h-[clamp(16rem,46dvh,26rem)]"}`}
+          className={`relative w-full overflow-hidden rounded-[calc(1.5rem-1px)] bg-cv-surface ${showImage ? "h-[clamp(20rem,68dvh,40rem)]" : "h-44 lg:h-[clamp(16rem,46dvh,26rem)]"}`}
         >
           {showImage ? (
             <img
@@ -79,9 +83,39 @@ export default function ProfilePortrait({
               aria-hidden="true"
               className="grid size-full place-items-center bg-linear-to-br from-cv-accent/20 via-transparent to-transparent"
             >
-              <span className="font-cv-display text-[clamp(4.5rem,12vw,8rem)] leading-none font-semibold tracking-tighter text-cv-accent/80">
-                {initials}
-              </span>
+              {/* The initials are traced in outline, then filled. */}
+              <svg
+                viewBox="0 0 160 100"
+                className="h-[1em] w-[1.6em] overflow-visible font-cv-display text-[clamp(4.5rem,12vw,8rem)] font-semibold tracking-tighter text-cv-accent select-none"
+              >
+                <motion.text
+                  x="80"
+                  y="50"
+                  fontSize="100"
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fill="currentColor"
+                  stroke="currentColor"
+                  strokeWidth="1.25"
+                  strokeDasharray={initialsDash}
+                  initial={
+                    prefersReducedMotion
+                      ? false
+                      : { strokeDashoffset: initialsDash, fillOpacity: 0 }
+                  }
+                  animate={{ strokeDashoffset: 0, fillOpacity: 0.8 }}
+                  transition={{
+                    strokeDashoffset: {
+                      duration: 1.6,
+                      ease: [0.65, 0, 0.35, 1],
+                      delay: 0.5,
+                    },
+                    fillOpacity: { duration: 0.6, ease: "easeOut", delay: 1.6 },
+                  }}
+                >
+                  {initials}
+                </motion.text>
+              </svg>
             </div>
           )}
           <motion.div
