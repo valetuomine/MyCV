@@ -43,3 +43,10 @@ export const SignInFailure = {
 } as const
 
 export type SignInFailure = (typeof SignInFailure)[keyof typeof SignInFailure]
+
+export const SignOutReason = {
+  User: "user",
+  Idle: "idle",
+} as const
+
+export type SignOutReason = (typeof SignOutReason)[keyof typeof SignOutReason]

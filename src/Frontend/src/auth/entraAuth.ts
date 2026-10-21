@@ -10,6 +10,7 @@ import {
   type EventError,
   type EventMessage,
 } from "@azure/msal-browser"
+import { clearSignInPromptRequired } from "./adminLoginStorage"
 
 /** The Entra app registration's client ID, or "" when not configured. */
 const clientId = import.meta.env.VITE_ENTRA_CLIENT_ID?.trim() ?? ""
@@ -56,8 +57,9 @@ function setRedirectSignInError(error: EventError): void {
 }
 
 /**
- * Makes the signed-in account active after a successful login, and records
- * the error when a redirect sign-in fails.
+ * Makes the signed-in account active after a successful login and clears
+ * the credential prompt that a sign-out required. Records the error when a
+ * redirect sign-in fails.
  *
  * @param message - The MSAL event.
  */
@@ -66,6 +68,7 @@ function handleMsalEvent(message: EventMessage): void {
     msalInstance.setActiveAccount(
       (message.payload as AuthenticationResult).account,
     )
+    clearSignInPromptRequired()
   } else if (
     message.eventType === EventType.ACQUIRE_TOKEN_FAILURE &&
     message.interactionType === InteractionType.Redirect

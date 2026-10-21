@@ -1,13 +1,11 @@
 import { InteractionStatus } from "@azure/msal-browser"
 import { useMsal } from "@azure/msal-react"
 import { useState, type JSX } from "react"
-import { useMatch } from "react-router-dom"
-import {
-  clearAuthReturnPaths,
-  logoutReturnPublicUrlSegmentKey,
-} from "./adminLoginStorage"
+import { clearAuthReturnPaths, storeSignOutReturn } from "./adminLoginStorage"
+import useSignOutReturnSegment from "./useSignOutReturnSegment"
 import { RoutePaths } from "../routePaths"
 import { secondaryButton } from "../pages/components/buttonStyles"
+import { SignOutReason } from "../types"
 
 /**
  * Shows the signed-in account and signs it out. Renders nothing while nobody
@@ -19,14 +17,7 @@ import { secondaryButton } from "../pages/components/buttonStyles"
 export default function SignOutButton(): JSX.Element | null {
   const { accounts, inProgress, instance } = useMsal()
   const [signOutError, setSignOutError] = useState(false)
-  const createProfileMatch = useMatch(RoutePaths.AdminCreateProfile)
-  const candidateAdminMatch = useMatch(RoutePaths.CandidateAdminPattern)
-  const candidateProfileMatch = useMatch(RoutePaths.CandidateProfilePattern)
-
-  /** The CV on screen, or undefined on the create-profile page and Home. */
-  const publicUrlSegment = createProfileMatch
-    ? undefined
-    : (candidateAdminMatch ?? candidateProfileMatch)?.params.publicUrlSegment
+  const publicUrlSegment = useSignOutReturnSegment()
 
   if (accounts.length === 0) {
     return null
@@ -43,12 +34,7 @@ export default function SignOutButton(): JSX.Element | null {
    */
   const handleSignOut = (): void => {
     setSignOutError(false)
-    clearAuthReturnPaths()
-
-    sessionStorage.setItem(
-      logoutReturnPublicUrlSegmentKey,
-      publicUrlSegment ?? "",
-    )
+    storeSignOutReturn(publicUrlSegment, SignOutReason.User)
     void instance
       .logoutRedirect({
         account,

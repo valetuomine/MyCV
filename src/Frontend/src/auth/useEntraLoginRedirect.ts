@@ -1,7 +1,10 @@
-import { InteractionStatus } from "@azure/msal-browser"
+import { InteractionStatus, PromptValue } from "@azure/msal-browser"
 import { useMsal } from "@azure/msal-react"
 import { useEffect, useRef, useState, useSyncExternalStore } from "react"
-import { clearAuthReturnPaths } from "./adminLoginStorage"
+import {
+  clearAuthReturnPaths,
+  isSignInPromptRequired,
+} from "./adminLoginStorage"
 import {
   apiScope,
   clearRedirectSignInError,
@@ -28,7 +31,8 @@ interface UseEntraLoginRedirectOptions {
 /**
  * Sends a signed-out user to Microsoft sign-in. Once MSAL is idle, it waits
  * `redirectHoldMs` on the first attempt, stores where to return in session
- * storage and starts the login redirect. Signed-in users and deployments
+ * storage and starts the login redirect, which asks for credentials again
+ * after a sign-out. Signed-in users and deployments
  * without sign-in only get their stale return markers cleared.
  *
  * Reports a cancelled or failed sign-in, flags a redirect that hasn't left
@@ -95,6 +99,7 @@ export default function useEntraLoginRedirect({
             scopes: [apiScope],
             redirectUri,
             redirectStartPage: `${window.location.origin}${redirectPath}`,
+            prompt: isSignInPromptRequired() ? PromptValue.LOGIN : undefined,
           })
           .catch((error: unknown) => {
             redirectStarted.current = false

@@ -11,6 +11,7 @@ import { Navigate, useNavigate } from "react-router-dom"
 import {
   clearAuthReturnPaths,
   logoutReturnPublicUrlSegmentKey,
+  readSignOutReason,
 } from "../../../../auth/adminLoginStorage"
 import { signedOutLocationState } from "../../../../auth/signedOutState"
 import { primaryButton } from "../../../components/buttonStyles"
@@ -46,10 +47,16 @@ export default function Home(): JSX.Element {
   const [value, setValue] = useState("")
   const [error, setError] = useState<string>()
 
-  /** Set by `SignOutButton`: the CV to return to, or "" to stay on Home. */
-  const [logoutReturnSegment] = useState(() =>
-    sessionStorage.getItem(logoutReturnPublicUrlSegmentKey),
-  )
+  /**
+   * Set before a sign-out lands here: the CV to return to, or "" to stay on
+   * Home, and why the user was signed out.
+   */
+  const [{ logoutReturnSegment, signOutReason }] = useState(() => ({
+    logoutReturnSegment: sessionStorage.getItem(
+      logoutReturnPublicUrlSegmentKey,
+    ),
+    signOutReason: readSignOutReason(),
+  }))
   const hasHandledLogout = useRef(false)
 
   useEffect(() => {
@@ -58,17 +65,17 @@ export default function Home(): JSX.Element {
       hasHandledLogout.current = true
       navigate(RoutePaths.Home, {
         replace: true,
-        state: signedOutLocationState,
+        state: signedOutLocationState(signOutReason),
       })
     }
-  }, [logoutReturnSegment, navigate])
+  }, [logoutReturnSegment, navigate, signOutReason])
 
   if (logoutReturnSegment) {
     return (
       <Navigate
         to={RoutePaths.CandidateProfile(logoutReturnSegment)}
         replace
-        state={signedOutLocationState}
+        state={signedOutLocationState(signOutReason)}
       />
     )
   }

@@ -1,37 +1,44 @@
 import { useCallback, useEffect, useState, type JSX } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 import Notice from "../pages/components/Notice"
-import { isSignedOutLocationState } from "./signedOutState"
+import { getSignOutReason } from "./signedOutState"
+import { SignOutReason } from "../types"
 
 /**
- * Confirms a sign-out on the first page after the logout redirect. Then drops
- * the router state, so a reload or back navigation doesn't replay the notice.
+ * Confirms a sign-out on the first page after it, and says when the user was
+ * signed out for being idle. Then drops the router state, so a reload or back
+ * navigation doesn't replay the notice.
  *
  * @returns The sign-out notice.
  */
 export default function SignedOutNotice(): JSX.Element {
   const location = useLocation()
   const navigate = useNavigate()
-  const [noticeKey, setNoticeKey] = useState<string | null>(null)
-  const hasSignedOutState = isSignedOutLocationState(location.state)
-  const dismiss = useCallback(() => setNoticeKey(null), [])
+  const [notice, setNotice] = useState<{
+    key: string
+    reason: SignOutReason
+  } | null>(null)
+  const signOutReason = getSignOutReason(location.state)
+  const dismiss = useCallback(() => setNotice(null), [])
 
-  if (hasSignedOutState && noticeKey !== location.key) {
-    setNoticeKey(location.key)
+  if (signOutReason && notice?.key !== location.key) {
+    setNotice({ key: location.key, reason: signOutReason })
   }
 
   useEffect(() => {
-    if (hasSignedOutState) {
+    if (signOutReason) {
       navigate(`${location.pathname}${location.search}`, {
         replace: true,
         state: null,
       })
     }
-  }, [hasSignedOutState, location.pathname, location.search, navigate])
+  }, [location.pathname, location.search, navigate, signOutReason])
 
   return (
-    <Notice noticeKey={noticeKey} onDismiss={dismiss}>
-      You've signed out
+    <Notice noticeKey={notice?.key ?? null} onDismiss={dismiss}>
+      {notice?.reason === SignOutReason.Idle
+        ? "You were signed out after 5 minutes of inactivity"
+        : "You've signed out"}
     </Notice>
   )
 }
