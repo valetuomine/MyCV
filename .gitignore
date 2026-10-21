@@ -25,6 +25,8 @@ dist/
 !**/appsettings.*.example.json
 # Personal MCP server configuration for Claude Code
 .mcp.json
+# Screenshots, snapshots and logs from the Playwright MCP server
+.playwright-mcp/
 
 # Local-only deployment and admin setup notes
 docs/azure-deployment.md

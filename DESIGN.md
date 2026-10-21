@@ -90,7 +90,7 @@ components:
 
 The candidate's name is the exhibit and everything else is gallery wall. A zinc-neutral canvas, a single emerald accent and a very large, tightly tracked name carry the page. Chrome stays small: mono eyebrow labels, pill buttons and a thin-lined portrait panel. The system is dark-first in feel but ships equal light and dark themes switched by the visitor.
 
-Atmosphere comes from a faint grid, soft accent glows, film grain and a pointer-following spotlight, all low opacity and non-interactive. They add depth without competing with content. Motion is a short staggered rise-in, never a showpiece.
+Atmosphere comes from a faint grid, soft accent glows, film grain and a pointer-following spotlight, all low opacity and non-interactive. They add depth without competing with content. Motion is a short staggered rise-in, never a showpiece; the few signature moments (the name rising letter by letter and catching the spotlight, the initials being traced) all serve the name.
 
 **Key Characteristics:**
 
@@ -181,9 +181,18 @@ Three radii: **pill** (full) for buttons and the theme toggle, **panel** (1.5rem
 - **Focus:** border becomes accent with a 3px accent ring at 20%.
 - **Error / Disabled:** danger border and ring, message below with `role="alert"`; disabled at 60% opacity.
 
+### Name
+
+- Display type with an ink-to-muted fade, set one element per letter so each letter rises from behind its word's clipped bottom edge: 0.9s, `cubic-bezier(0.22, 1, 0.36, 1)`, letters spread over at most 0.6s. Screen readers get the whole name from a visually hidden copy.
+- Splitting the letters drops the font's kerning, so each letter carries its pair kerning back as an end margin, measured with canvas at the heading's weight and tracking. Every letter box bleeds 0.1em sideways and 0.15em / 0.08em vertically (taken back with negative margins), because background-clipped text only paints inside its own box.
+- **Sheen:** once the letters are in, an accent radial gradient clipped to the same letters follows a mouse pointer on the spotlight's spring (stiffness 100, damping 20), so the name catches the spotlight. Hidden for reduced motion, print and forced colours.
+
 ### Portrait Panel
 
-- 1.5rem radius, hairline border, surface fill, panel shadow, height clamp(20rem, 68dvh, 40rem). With no photo it shows oversized accent initials over a faint diagonal accent wash.
+- 1.5rem radius, hairline border, surface fill, panel shadow. With a photo it is clamp(20rem, 68dvh, 40rem) tall. With no photo it shows the initials over a faint diagonal accent wash, at clamp(16rem, 46dvh, 26rem) from `lg` up and a compact 11rem below `lg`.
+- **Initials:** traced once in a 1.25px accent outline (1.6s, `cubic-bezier(0.65, 0, 0.35, 1)`, after 0.5s), then filled to 80% accent. Shown filled straight away for reduced motion.
+- **Hover (mouse):** tilts up to 6° toward the pointer with a soft glare; an accent highlight orbits the border.
+- **Scroll (stacked layout, below `lg`):** a CSS scroll-driven animation (`animation-timeline: view()`) rises the panel from 3rem lower, tipped back 14°, at 40% opacity, and settles it by the time it is fully in view. A panel already in view on load is at rest. Browsers without scroll timelines, and reduced motion, show it at rest.
 
 ### Theme Toggle
 
@@ -191,7 +200,7 @@ Three radii: **pill** (full) for buttons and the theme toggle, **panel** (1.5rem
 
 ### Background
 
-- Fixed non-interactive layer: two static radial-gradient glows (no blur filter), a 4rem grid masked to the upper centre, a spring-following accent spotlight moved by transform (mouse pointers only, disabled for reduced motion) and 6% grain.
+- Fixed non-interactive layer: two static radial-gradient glows (no blur filter), a 4rem grid masked to the upper centre, a spring-following accent spotlight moved by transform (mouse pointers only, disabled for reduced motion) that also lights the dots and the name (see Name), and 6% grain.
 
 ### Section Transitions (reserved; not in the UI while the CV has one section)
 
