@@ -3,6 +3,7 @@ name: write-user-story
 description: 'Draft and create MyCV User Stories (and optional child Tasks) in Azure DevOps, written in the same style as the existing backlog. Use when asked to write, add, or create a User Story or Task for the MyCV project.'
 argument-hint: '[what the story is about]'
 user-invocable: true
+model: sonnet
 ---
 
 # Write A User Story
