@@ -3,23 +3,25 @@ import { useMsal } from "@azure/msal-react"
 import { useState, type JSX } from "react"
 import { signOutInApp } from "./entraAuth"
 import useSignOutReturnSegment from "./useSignOutReturnSegment"
+import useSigningOutReason from "./useSigningOutReason"
 import { secondaryButton } from "../pages/components/buttonStyles"
 import { SignOutReason } from "../types"
 
 /**
  * Shows the signed-in account and signs it out within the app, without
- * Microsoft's logout page. Renders nothing while nobody is signed in.
+ * Microsoft's logout page. Renders nothing while nobody is signed in or a
+ * sign-out is under way, when the sign-out screen takes over the page.
  * Remembers the CV being viewed, so Home can return to it after the sign-out.
  *
  * @returns The account name with the sign-out button, or null.
  */
 export default function SignOutButton(): JSX.Element | null {
   const { accounts, inProgress, instance } = useMsal()
-  const [isSigningOut, setIsSigningOut] = useState(false)
+  const signingOutReason = useSigningOutReason()
   const [signOutError, setSignOutError] = useState(false)
   const publicUrlSegment = useSignOutReturnSegment()
 
-  if (accounts.length === 0) {
+  if (accounts.length === 0 || signingOutReason) {
     return null
   }
 
@@ -27,13 +29,11 @@ export default function SignOutButton(): JSX.Element | null {
   const account = instance.getActiveAccount() ?? accounts[0]
   /** The account's display name, or its username when it has none. */
   const accountLabel = account.name || account.username
-  const isBusy = isSigningOut || inProgress !== InteractionStatus.None
+  const isBusy = inProgress !== InteractionStatus.None
   /** Signs out and returns to the CV on screen. Shows an error if it fails. */
   const handleSignOut = (): void => {
     setSignOutError(false)
-    setIsSigningOut(true)
     signOutInApp(publicUrlSegment, SignOutReason.User).catch(() => {
-      setIsSigningOut(false)
       setSignOutError(true)
     })
   }
@@ -55,7 +55,7 @@ export default function SignOutButton(): JSX.Element | null {
           disabled={isBusy}
           aria-label="Sign out of Microsoft"
         >
-          {isSigningOut ? "Signing out…" : "Sign out"}
+          Sign out
         </button>
       </div>
       {signOutError && (

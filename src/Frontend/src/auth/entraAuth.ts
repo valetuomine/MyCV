@@ -125,12 +125,51 @@ export function isSignInCancelled(error: unknown): boolean {
   )
 }
 
+/** How long the sign-out message shows before the page reloads, like the sign-in hold. */
+const signOutHoldMs = 3500
+/** Why the user is being signed out while an in-app sign-out is under way, or null. */
+let signingOutReason: SignOutReason | null = null
+/** Components subscribed to `signingOutReason` through `useSyncExternalStore`. */
+const signingOutListeners = new Set<() => void>()
+
+/**
+ * Stores the reason of the sign-out under way and notifies every subscriber.
+ *
+ * @param reason - Why the user is being signed out, or null when not signing out.
+ */
+function setSigningOutReason(reason: SignOutReason | null): void {
+  signingOutReason = reason
+  signingOutListeners.forEach((listener) => listener())
+}
+
+/**
+ * Subscribes to the start and failure of an in-app sign-out.
+ *
+ * @param listener - Called whenever a sign-out starts or fails.
+ * @returns A function that unsubscribes the listener.
+ */
+export function subscribeSigningOut(listener: () => void): () => void {
+  signingOutListeners.add(listener)
+  return () => signingOutListeners.delete(listener)
+}
+
+/**
+ * Reads the sign-out under way for `useSyncExternalStore`.
+ *
+ * @returns Why the user is being signed out, or null when not signing out.
+ */
+export function getSigningOutReason(): SignOutReason | null {
+  return signingOutReason
+}
+
 /**
  * Signs out within the app, without Microsoft's logout page: clears MSAL's
- * accounts and tokens, then reloads Home, which returns to the CV and shows
- * the sign-out notice. The reload also drops any open editor and cached admin
- * data. The Microsoft session stays, so the next sign-in asks for credentials
- * instead (see `storeSignOutReturn`).
+ * accounts and tokens, then after `signOutHoldMs` reloads Home, which returns
+ * to the CV and shows the sign-out notice. The reload also drops any open
+ * editor and cached admin data. The Microsoft session stays, so the next
+ * sign-in asks for credentials instead (see `storeSignOutReturn`).
+ * Subscribers see the sign-out as under way until the reload, or until it
+ * fails.
  *
  * @param publicUrlSegment - The CV to return to, or undefined to stay on Home.
  * @param reason - Whether the user signed out or was signed out when idle.
@@ -140,8 +179,15 @@ export async function signOutInApp(
   publicUrlSegment: string | undefined,
   reason: SignOutReason,
 ): Promise<void> {
-  await msalInstance.clearCache()
+  setSigningOutReason(reason)
+  try {
+    await msalInstance.clearCache()
+  } catch (error) {
+    setSigningOutReason(null)
+    throw error
+  }
   storeSignOutReturn(publicUrlSegment, reason)
+  await new Promise((resolve) => setTimeout(resolve, signOutHoldMs))
   window.location.replace(RoutePaths.Home)
 }
 

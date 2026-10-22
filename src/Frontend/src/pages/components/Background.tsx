@@ -8,7 +8,9 @@ import {
 import type { JSX, PointerEvent, ReactNode } from "react"
 import SignedOutNotice from "../../auth/SignedOutNotice"
 import SignOutButton from "../../auth/SignOutButton"
+import SignOutMessage from "../../auth/SignOutMessage"
 import useIdleSignOut from "../../auth/useIdleSignOut"
+import useSigningOutReason from "../../auth/useSigningOutReason"
 import ThemeToggle from "./ThemeToggle"
 
 interface BackgroundProps {
@@ -18,8 +20,9 @@ interface BackgroundProps {
 /**
  * The page frame: a dotted background with glows and grain, the sign-out and
  * theme controls, and the sign-out notice. It also signs an idle user out on
- * every page. With a mouse, a spotlight follows the pointer on a spring and
- * lights up the dots beneath it.
+ * every page, and shows the sign-out screen instead of the page while a
+ * sign-out is under way. With a mouse, a spotlight follows the pointer on a
+ * spring and lights up the dots beneath it.
  *
  * @param props - The component props.
  * @param props.children - The page content.
@@ -27,6 +30,7 @@ interface BackgroundProps {
  */
 export default function Background({ children }: BackgroundProps): JSX.Element {
   useIdleSignOut()
+  const signingOutReason = useSigningOutReason()
 
   const pointerX = useMotionValue(-1000)
   const pointerY = useMotionValue(-1000)
@@ -87,7 +91,11 @@ export default function Background({ children }: BackgroundProps): JSX.Element {
           <SignOutButton />
           <ThemeToggle />
         </div>
-        {children}
+        {signingOutReason ? (
+          <SignOutMessage reason={signingOutReason} />
+        ) : (
+          children
+        )}
       </div>
       <SignedOutNotice />
     </div>
