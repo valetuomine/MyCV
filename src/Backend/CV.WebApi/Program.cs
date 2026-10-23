@@ -1,6 +1,8 @@
 using CV.DataAccess;
 using CV.Logic.Services;
+using CV.LogicInterface.Authentication;
 using CV.LogicInterface.ServiceInterfaces;
+using CV.WebApi.Authentication;
 using CV.WebApi.Middleware;
 using CV.WebApi.Swagger.Examples;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -40,9 +42,17 @@ if (!builder.Environment.IsDevelopment()
         "AzureAd:TenantId and AzureAd:ApiClientId must be configured outside Development.");
 }
 
-builder.Services
+var googleSection = builder.Configuration.GetSection(GoogleAuthenticationOptions.SectionName);
+var googleClientId = googleSection.Get<GoogleAuthenticationOptions>()?.ClientId;
+var isGoogleConfigured = !string.IsNullOrWhiteSpace(googleClientId);
+builder.Services.Configure<GoogleAuthenticationOptions>(googleSection);
+
+// "Bearer" only forwards to Entra or Google by the token's issuer; the chosen scheme validates it.
+var authentication = builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+    .AddPolicyScheme(JwtBearerDefaults.AuthenticationScheme, "Entra or Google", options =>
+        options.ForwardDefaultSelector = context => BearerSchemes.Select(context, isGoogleConfigured))
+    .AddJwtBearer(BearerSchemes.Entra, options =>
     {
         options.MapInboundClaims = false;
         var authorityTenant = string.IsNullOrWhiteSpace(tenantId) ? "organizations" : tenantId;
@@ -53,6 +63,22 @@ builder.Services
             RoleClaimType = "roles"
         };
     });
+
+if (isGoogleConfigured)
+{
+    authentication.AddJwtBearer(BearerSchemes.Google, options =>
+    {
+        options.MapInboundClaims = false;
+        options.Authority = GoogleAuthenticationOptions.Issuer;
+        options.Audience = googleClientId;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidIssuers = GoogleAuthenticationOptions.ValidIssuers,
+            // Google never issues this claim, so IsInRole("CvAdmin") is always false for Google tokens.
+            RoleClaimType = "mycv_no_google_roles"
+        };
+    });
+}
 
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy("CvAdmin", policy =>
@@ -79,6 +105,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerExamplesFromAssemblyOf<CreateProfileRequestExample>();
 builder.Services.AddSwaggerGen(options => options.ExampleFilters());
 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUser, CurrentUserAccessor>();
 builder.Services.AddTransient<IProfileService, ProfileService>();
 builder.Services.AddTransient<ICandidateService, CandidateService>();
 

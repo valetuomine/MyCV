@@ -1,3 +1,4 @@
+using CV.LogicInterface.Authentication;
 using CV.LogicInterface.Dto.Candidate;
 
 namespace CV.LogicInterface.ServiceInterfaces
@@ -21,10 +22,12 @@ namespace CV.LogicInterface.ServiceInterfaces
         /// Deletes a candidate and its related rows.
         /// </summary>
         /// <param name="candidateId">The identifier of the candidate to delete.</param>
+        /// <param name="actor">The caller's sign-in identity, or null when the token carries none.</param>
+        /// <param name="canManageAny">Whether the caller has the <c>CvAdmin</c> role.</param>
         /// <param name="cancellationToken">The token used to cancel the operation.</param>
         Task DeleteCandidate(
             Guid candidateId,
-            string? actorObjectId,
+            ExternalIdentity? actor,
             bool canManageAny,
             CancellationToken cancellationToken = default);
     }

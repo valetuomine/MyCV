@@ -1,5 +1,6 @@
 using CV.LogicInterface.Dto.Candidate;
 using CV.LogicInterface.ServiceInterfaces;
+using CV.WebApi.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RouteAttribute = Microsoft.AspNetCore.Mvc.RouteAttribute;
@@ -8,9 +9,10 @@ namespace CV.WebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class CandidateController(ICandidateService candidateService) : ControllerBase
+    public class CandidateController(ICandidateService candidateService, ICurrentUser currentUser) : ControllerBase
     {
         private readonly ICandidateService _candidateService = candidateService;
+        private readonly ICurrentUser _currentUser = currentUser;
 
         [HttpGet("{publicUrlSegment}")]
         public async Task<ActionResult<CandidateDto>> GetCandidate(
@@ -29,8 +31,8 @@ namespace CV.WebApi.Controllers
         {
             await _candidateService.DeleteCandidate(
                 candidateId,
-                User.FindFirst("oid")?.Value,
-                User.IsInRole("CvAdmin"),
+                _currentUser.Identity,
+                _currentUser.IsCvAdmin,
                 cancellationToken);
             return NoContent();
         }

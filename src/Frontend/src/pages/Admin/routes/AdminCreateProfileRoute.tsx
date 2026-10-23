@@ -1,14 +1,12 @@
-import { InteractionStatus } from "@azure/msal-browser"
-import { useMsal } from "@azure/msal-react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useState, type JSX } from "react"
 import { FormProvider, useForm, useWatch } from "react-hook-form"
 import { useNavigate } from "react-router-dom"
 import { useCreateProfileMutation } from "../../../api/profileQueries"
-import { isEntraConfigured } from "../../../auth/entraAuth"
 import { returnAdminPathKey } from "../../../auth/adminLoginStorage"
+import { isSignInConfigured, useAuthSession } from "../../../auth/authSession"
 import SignInMessage from "../../../auth/SignInMessage"
-import useEntraLoginRedirect from "../../../auth/useEntraLoginRedirect"
+import useLoginRedirect from "../../../auth/useLoginRedirect"
 import { RoutePaths } from "../../../routePaths"
 import { primaryButton, secondaryButton } from "../../components/buttonStyles"
 import ProfileFields from "../../Profile/components/forms/ProfileFields"
@@ -21,18 +19,18 @@ import { toCreateProfileRequest } from "../../Profile/mappers/profileFormMapper"
 import { getProfileFormError } from "../../Profile/utils/profileFormUtils"
 
 /**
- * The `/admin` route for creating a profile. Signs the user in first, then
- * shows the form with a preview of the CV link, and opens the new CV once it
+ * The `/admin` route for creating a profile. Lets the user choose a sign-in
+ * method and signs them in first, then shows the form with a preview of the CV link, and opens the new CV once it
  * is created.
  *
  * @returns The sign-in screen until signed in, then the create-profile form.
  */
 export default function AdminCreateProfileRoute(): JSX.Element {
-  const { accounts, inProgress } = useMsal()
+  const { isSignedIn, isBusy } = useAuthSession()
   const navigate = useNavigate()
   const [submitError, setSubmitError] = useState<string>()
   const [createProfile, createState] = useCreateProfileMutation()
-  const { signInFailure, isRedirectSlow, retrySignIn } = useEntraLoginRedirect({
+  const loginRedirect = useLoginRedirect({
     enabled: true,
     redirectPath: RoutePaths.AdminCreateProfile,
     storageKey: returnAdminPathKey,
@@ -77,17 +75,13 @@ export default function AdminCreateProfileRoute(): JSX.Element {
     }
   })
 
-  if (
-    !isEntraConfigured ||
-    !accounts[0] ||
-    inProgress !== InteractionStatus.None
-  ) {
+  if (!isSignInConfigured || !isSignedIn || isBusy) {
     return (
       <SignInMessage
+        {...loginRedirect}
+        title="Sign in to create your CV"
+        description="Choose how you sign in. You'll use the same method to edit your CV later."
         pendingTitle="Signing in to create a profile"
-        signInFailure={signInFailure}
-        isRedirectSlow={isRedirectSlow}
-        onRetry={retrySignIn}
         backLabel="Open a CV"
         onBack={() => navigate(RoutePaths.Home)}
       />

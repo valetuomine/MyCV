@@ -14,7 +14,9 @@ namespace CV.WebApi.Middleware
             var (statusCode, detail) = exception switch
             {
                 BadRequestException => (StatusCodes.Status400BadRequest, exception.Message),
+                ForbiddenException => (StatusCodes.Status403Forbidden, exception.Message),
                 NotFoundException => (StatusCodes.Status404NotFound, exception.Message),
+                ConflictException => (StatusCodes.Status409Conflict, exception.Message),
                 _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred")
             };
 

@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react"
-import { getSigningOutReason, subscribeSigningOut } from "./entraAuth"
+import { getSigningOutReason, subscribeSigningOut } from "./authSession"
 import type { SignOutReason } from "../types"
 
 /**

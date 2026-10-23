@@ -1,6 +1,5 @@
-import { useMsal } from "@azure/msal-react"
 import { useEffect, useRef } from "react"
-import { isEntraConfigured, signOutInApp } from "./entraAuth"
+import { signOutInApp, useAuthSession } from "./authSession"
 import useSignOutReturnSegment from "./useSignOutReturnSegment"
 import { SignOutReason } from "../types"
 
@@ -28,17 +27,16 @@ const activityEvents = [
  * the first activity.
  */
 export default function useIdleSignOut(): void {
-  const { accounts } = useMsal()
+  const { isSignedIn } = useAuthSession()
   const publicUrlSegment = useSignOutReturnSegment()
   const returnSegment = useRef(publicUrlSegment)
-  const isSignedIn = accounts.length > 0
 
   useEffect(() => {
     returnSegment.current = publicUrlSegment
   }, [publicUrlSegment])
 
   useEffect(() => {
-    if (!isSignedIn || !isEntraConfigured) {
+    if (!isSignedIn) {
       return
     }
 

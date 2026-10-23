@@ -24,6 +24,12 @@
   --cv-overlay: rgb(9 9 11 / 0.05);
   --cv-dot: rgb(9 9 11 / 0.14);
   --cv-shadow-panel: 0 2rem 4rem -2rem rgb(24 24 27 / 0.18);
+  --cv-google-surface: #ffffff;
+  --cv-google-line: #747775;
+  --cv-google-ink: #1f1f1f;
+  --cv-microsoft-surface: #ffffff;
+  --cv-microsoft-line: #8c8c8c;
+  --cv-microsoft-ink: #5e5e5e;
 }
 
 :root[data-theme="dark"] {
@@ -43,6 +49,12 @@
   --cv-overlay: rgb(255 255 255 / 0.06);
   --cv-dot: rgb(255 255 255 / 0.11);
   --cv-shadow-panel: 0 2rem 4rem -2rem rgb(0 0 0 / 0.8);
+  --cv-google-surface: #131314;
+  --cv-google-line: #8e918f;
+  --cv-google-ink: #e3e3e3;
+  --cv-microsoft-surface: #2f2f2f;
+  --cv-microsoft-line: #2f2f2f;
+  --cv-microsoft-ink: #ffffff;
 }
 
 @theme inline {
@@ -59,6 +71,12 @@
   --color-cv-danger: var(--cv-danger);
   --color-cv-wash: var(--cv-wash);
   --color-cv-overlay: var(--cv-overlay);
+  --color-cv-google-surface: var(--cv-google-surface);
+  --color-cv-google-line: var(--cv-google-line);
+  --color-cv-google-ink: var(--cv-google-ink);
+  --color-cv-microsoft-surface: var(--cv-microsoft-surface);
+  --color-cv-microsoft-line: var(--cv-microsoft-line);
+  --color-cv-microsoft-ink: var(--cv-microsoft-ink);
   --shadow-cv-panel: var(--cv-shadow-panel);
   --shadow-cv-accent: 0 0.5rem 2rem -0.75rem
     color-mix(in srgb, var(--cv-accent) 55%, transparent);

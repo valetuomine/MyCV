@@ -1,17 +1,23 @@
 using CV.Common.Exceptions;
 using CV.DataAccess;
 using CV.DataAccess.Entity;
+using CV.Logic.Extensions;
 using CV.Logic.Mappers;
+using CV.LogicInterface.Authentication;
 using CV.LogicInterface.Dto.Profile;
 using CV.LogicInterface.ServiceInterfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using System.Text.RegularExpressions;
 
 namespace CV.Logic.Services
 {
-    public partial class ProfileService(CvContext dataContext) : BaseService(dataContext), IProfileService
+    public partial class ProfileService(
+        CvContext dataContext,
+        IOptions<GoogleAuthenticationOptions> googleOptions) : BaseService(dataContext), IProfileService
     {
         private readonly CvContext _dataContext = dataContext;
+        private readonly GoogleAuthenticationOptions _googleOptions = googleOptions.Value;
         private static readonly HashSet<string> SupportedLanguageCodes = ["fi", "en"];
 
         [GeneratedRegex("^[a-z0-9]+(?:-[a-z0-9]+)*$", RegexOptions.None, matchTimeoutMilliseconds: 100)]
@@ -19,15 +25,11 @@ namespace CV.Logic.Services
 
         public async Task<ProfileAdminDto> CreateProfile(
             CreateProfileRequest request,
-            string ownerObjectId,
+            ExternalIdentity owner,
             bool canManageAny,
             CancellationToken cancellationToken = default)
         {
             ValidateRequest(request.FullName, request.Translations);
-            if (string.IsNullOrWhiteSpace(ownerObjectId))
-            {
-                throw new BadRequestException("The authenticated Entra object ID is required.");
-            }
 
             var dbProfile = request.MapRequestToEntity();
             Candidate? dbCandidate = null;
@@ -53,6 +55,13 @@ namespace CV.Logic.Services
             }
             else
             {
+                if (await _dataContext.CandidateLogin.ForIdentity(owner).AnyAsync(cancellationToken))
+                {
+                    throw new ConflictException("This sign-in already has a CV.");
+                }
+
+                EnsureCanSignUp(owner);
+
                 var publicUrlSegment = NormalizeAndValidatePublicUrlSegment(request.PublicUrlSegment);
                 if (await _dataContext.Candidate.AnyAsync(
                     candidate => candidate.PublicUrlSegment == publicUrlSegment,
@@ -62,7 +71,8 @@ namespace CV.Logic.Services
                         $"A public CV with URL segment '{publicUrlSegment}' already exists.");
                 }
 
-                dbCandidate = dbProfile.MapProfileIdToCandidate(publicUrlSegment, ownerObjectId);
+                dbCandidate = dbProfile.MapProfileIdToCandidate(publicUrlSegment);
+                dbCandidate.Logins.Add(owner.MapIdentityToLogin());
             }
 
             await _dataContext.Profile.AddAsync(dbProfile, cancellationToken);
@@ -97,7 +107,7 @@ namespace CV.Logic.Services
 
         public async Task<ProfileAdminDto> GetProfileAdmin(
             Guid profileId,
-            string? actorObjectId,
+            ExternalIdentity? actor,
             bool canManageAny,
             CancellationToken cancellationToken = default)
         {
@@ -106,7 +116,17 @@ namespace CV.Logic.Services
                 throw new BadRequestException($"Invalid profile ID: {profileId}");
             }
 
-            await EnsureCanManageProfile(profileId, actorObjectId, canManageAny, cancellationToken);
+            await EnsureCanManageProfile(profileId, actor, canManageAny, cancellationToken);
+
+            if (actor is not null)
+            {
+                await _dataContext.CandidateLogin
+                    .ForIdentity(actor)
+                    .Where(login => login.Candidate.ProfileId == profileId)
+                    .ExecuteUpdateAsync(
+                        setters => setters.SetProperty(login => login.LastSignInAt, DateTime.UtcNow),
+                        cancellationToken);
+            }
 
             var dbProfile = await _dataContext.Profile
                 .Include(profile => profile.Translations)
@@ -129,7 +149,7 @@ namespace CV.Logic.Services
 
         public async Task DeleteProfile(
             Guid profileId,
-            string? actorObjectId,
+            ExternalIdentity? actor,
             bool canManageAny,
             CancellationToken cancellationToken = default)
         {
@@ -138,7 +158,7 @@ namespace CV.Logic.Services
                 throw new BadRequestException($"Invalid profile ID: {profileId}");
             }
 
-            await EnsureCanManageProfile(profileId, actorObjectId, canManageAny, cancellationToken);
+            await EnsureCanManageProfile(profileId, actor, canManageAny, cancellationToken);
 
             var dbProfile = await _dataContext.Profile
                 .FirstOrDefaultAsync(profile => profile.Id == profileId, cancellationToken)
@@ -156,7 +176,7 @@ namespace CV.Logic.Services
         public async Task<ProfileAdminDto> UpdateProfile(
             Guid profileId,
             UpdateProfileRequest request,
-            string? actorObjectId,
+            ExternalIdentity? actor,
             bool canManageAny,
             CancellationToken cancellationToken = default)
         {
@@ -165,7 +185,7 @@ namespace CV.Logic.Services
                 throw new BadRequestException($"Invalid profile ID: {profileId}");
             }
 
-            await EnsureCanManageProfile(profileId, actorObjectId, canManageAny, cancellationToken);
+            await EnsureCanManageProfile(profileId, actor, canManageAny, cancellationToken);
 
             ValidateRequest(request.FullName, request.Translations);
 
@@ -265,9 +285,28 @@ namespace CV.Logic.Services
             return normalizedPublicUrlSegment;
         }
 
+        private void EnsureCanSignUp(ExternalIdentity identity)
+        {
+            if (identity.Provider != LoginProvider.Google)
+            {
+                return;
+            }
+
+            var email = identity.Email?.Trim();
+            var isInvited = identity.EmailVerified
+                && !string.IsNullOrEmpty(email)
+                && _googleOptions.AllowedSignUpEmails.Any(allowedEmail =>
+                    string.Equals(allowedEmail?.Trim(), email, StringComparison.OrdinalIgnoreCase));
+
+            if (!isInvited)
+            {
+                throw new ForbiddenException("This Google account is not allowed to create a CV.");
+            }
+        }
+
         private async Task EnsureCanManageProfile(
             Guid profileId,
-            string? actorObjectId,
+            ExternalIdentity? actor,
             bool canManageAny,
             CancellationToken cancellationToken)
         {
@@ -276,11 +315,10 @@ namespace CV.Logic.Services
                 return;
             }
 
-            var isOwner = !string.IsNullOrWhiteSpace(actorObjectId)
-                && await _dataContext.Candidate.AnyAsync(
-                    candidate => candidate.ProfileId == profileId
-                        && candidate.OwnerEntraObjectId == actorObjectId,
-                    cancellationToken);
+            var isOwner = actor is not null
+                && await _dataContext.CandidateLogin
+                    .ForIdentity(actor)
+                    .AnyAsync(login => login.Candidate.ProfileId == profileId, cancellationToken);
 
             if (!isOwner)
             {

@@ -3,6 +3,7 @@ using CV.LogicInterface.ServiceInterfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Filters;
+using CV.WebApi.Authentication;
 using CV.WebApi.Swagger.Examples;
 using RouteAttribute = Microsoft.AspNetCore.Mvc.RouteAttribute;
 
@@ -10,9 +11,10 @@ namespace CV.WebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ProfileController(IProfileService profileService) : ControllerBase
+    public class ProfileController(IProfileService profileService, ICurrentUser currentUser) : ControllerBase
     {
         private readonly IProfileService _profileService = profileService;
+        private readonly ICurrentUser _currentUser = currentUser;
 
         [HttpPost]
         [Authorize]
@@ -21,16 +23,15 @@ namespace CV.WebApi.Controllers
             CreateProfileRequest request,
             CancellationToken cancellationToken)
         {
-            var ownerObjectId = User.FindFirst("oid")?.Value;
-            if (string.IsNullOrWhiteSpace(ownerObjectId))
+            if (_currentUser.Identity is not { } owner)
             {
                 return Unauthorized();
             }
 
             var result = await _profileService.CreateProfile(
                 request,
-                ownerObjectId,
-                User.IsInRole("CvAdmin"),
+                owner,
+                _currentUser.IsCvAdmin,
                 cancellationToken);
 
             return CreatedAtAction(nameof(GetProfile), new { profileId = result.Id }, result);
@@ -52,8 +53,8 @@ namespace CV.WebApi.Controllers
         {
             var result = await _profileService.GetProfileAdmin(
                 profileId,
-                User.FindFirst("oid")?.Value,
-                User.IsInRole("CvAdmin"),
+                _currentUser.Identity,
+                _currentUser.IsCvAdmin,
                 cancellationToken);
             return Ok(result);
         }
@@ -64,8 +65,8 @@ namespace CV.WebApi.Controllers
         {
             await _profileService.DeleteProfile(
                 profileId,
-                User.FindFirst("oid")?.Value,
-                User.IsInRole("CvAdmin"),
+                _currentUser.Identity,
+                _currentUser.IsCvAdmin,
                 cancellationToken);
             return NoContent();
         }
@@ -81,8 +82,8 @@ namespace CV.WebApi.Controllers
             var result = await _profileService.UpdateProfile(
                 profileId,
                 request,
-                User.FindFirst("oid")?.Value,
-                User.IsInRole("CvAdmin"),
+                _currentUser.Identity,
+                _currentUser.IsCvAdmin,
                 cancellationToken);
             return Ok(result);
         }

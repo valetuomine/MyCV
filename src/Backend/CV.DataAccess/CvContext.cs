@@ -9,6 +9,7 @@ namespace CV.DataAccess
         public DbSet<Profile> Profile { get; set; } = null!;
         public DbSet<ProfileTranslation> ProfileTranslation { get; set; } = null!;
         public DbSet<Candidate> Candidate { get; set; } = null!;
+        public DbSet<CandidateLogin> CandidateLogin { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -16,6 +17,7 @@ namespace CV.DataAccess
             modelBuilder.ApplyConfiguration(new ProfileConfiguration());
             modelBuilder.ApplyConfiguration(new ProfileTranslationConfiguration());
             modelBuilder.ApplyConfiguration(new CandidateConfiguration());
+            modelBuilder.ApplyConfiguration(new CandidateLoginConfiguration());
 
             // Alternative: automatically apply all IEntityTypeConfiguration implementations
             // from this assembly as the number of entity configurations grows.

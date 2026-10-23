@@ -28,6 +28,10 @@ const CandidateProfileRoute = lazy(loadCandidateProfileRoute)
 const AdminLoginRoute = lazy(() => import("../auth/routes/AdminLoginRoute"))
 /** The sign-in callback route, loaded on demand. */
 const AuthCallbackRoute = lazy(() => import("../auth/routes/AuthCallbackRoute"))
+/** The Google sign-in callback route, loaded on demand. */
+const GoogleAuthCallbackRoute = lazy(
+  () => import("../auth/routes/GoogleAuthCallbackRoute"),
+)
 /** The create-profile route, loaded on demand. */
 const AdminCreateProfileRoute = lazy(
   () => import("./Admin/routes/AdminCreateProfileRoute"),
@@ -61,6 +65,14 @@ export default function App(): JSX.Element {
               element={
                 <Suspense fallback={signInRouteFallback}>
                   <AuthCallbackRoute />
+                </Suspense>
+              }
+            />
+            <Route
+              path={RoutePaths.GoogleAuthCallback}
+              element={
+                <Suspense fallback={signInRouteFallback}>
+                  <GoogleAuthCallbackRoute />
                 </Suspense>
               }
             />

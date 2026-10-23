@@ -75,8 +75,10 @@ export function formatProfileDate(value?: string | null): string | undefined {
 
 /**
  * Turns a failed profile request into a message that starts with the action.
- * Prefers the API's problem detail, then explains validation and network
- * failures, then falls back to the error's own message.
+ * Explains the creation refusals first (403 for a Google account that isn't
+ * invited, 409 for a sign-in that already has a CV), then prefers the API's
+ * problem detail, then explains validation and network failures, then falls
+ * back to the error's own message.
  *
  * @param error - The error from the request.
  * @param action - What failed, such as "Profile update".
@@ -84,6 +86,14 @@ export function formatProfileDate(value?: string | null): string | undefined {
  */
 export function getProfileFormError(error: unknown, action: string): string {
   if (typeof error === "object" && error !== null) {
+    if ("status" in error && error.status === 403) {
+      return "This Google account can't create a CV. Sign in with Microsoft, or ask for an invite."
+    }
+
+    if ("status" in error && error.status === 409) {
+      return "You already have a CV with this sign-in."
+    }
+
     if (
       "data" in error &&
       typeof error.data === "object" &&

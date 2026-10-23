@@ -1,6 +1,8 @@
 using CV.Common.Exceptions;
 using CV.DataAccess;
+using CV.Logic.Extensions;
 using CV.Logic.Mappers;
+using CV.LogicInterface.Authentication;
 using CV.LogicInterface.Dto.Candidate;
 using CV.LogicInterface.ServiceInterfaces;
 using Microsoft.EntityFrameworkCore;
@@ -34,7 +36,7 @@ namespace CV.Logic.Services
 
         public async Task DeleteCandidate(
             Guid candidateId,
-            string? actorObjectId,
+            ExternalIdentity? actor,
             bool canManageAny,
             CancellationToken cancellationToken = default)
         {
@@ -47,8 +49,10 @@ namespace CV.Logic.Services
                 .FirstOrDefaultAsync(candidate => candidate.Id == candidateId, cancellationToken)
                 ?? throw new NotFoundException($"Candidate not found with Id: {candidateId}");
 
-            if (!canManageAny && (string.IsNullOrWhiteSpace(actorObjectId)
-                || dbCandidate.OwnerEntraObjectId != actorObjectId))
+            if (!canManageAny && (actor is null
+                || !await _dataContext.CandidateLogin
+                    .ForIdentity(actor)
+                    .AnyAsync(login => login.CandidateId == candidateId, cancellationToken)))
             {
                 throw new NotFoundException($"Candidate not found with Id: {candidateId}");
             }

@@ -1,4 +1,4 @@
-import { SignOutReason } from "../types"
+import { SignInMethod, SignOutReason } from "../types"
 
 /** Session-storage key for the CV to manage after the sign-in redirect. */
 export const returnPublicUrlSegmentKey = "mycv-admin-return-public-url-segment"
@@ -17,6 +17,8 @@ export const signOutReasonKey = "mycv-sign-out-reason"
  * credentials again in any tab, even while the Microsoft session is alive.
  */
 export const signInPromptRequiredKey = "mycv-sign-in-prompt-required"
+/** Local-storage key for the method of the last successful sign-in, for the "Last used" badge. */
+export const lastSignInMethodKey = "mycv-last-sign-in-method"
 
 /** Removes every sign-in and sign-out return marker from session storage. */
 export function clearAuthReturnPaths(): void {
@@ -71,4 +73,34 @@ export function readSignOutReason(): SignOutReason {
   return sessionStorage.getItem(signOutReasonKey) === SignOutReason.Idle
     ? SignOutReason.Idle
     : SignOutReason.User
+}
+
+/**
+ * Remembers the method of a successful sign-in. Storage can be unavailable,
+ * for example in a private window, and the badge then just doesn't show.
+ *
+ * @param method - The method the user signed in with.
+ */
+export function storeLastSignInMethod(method: SignInMethod): void {
+  try {
+    localStorage.setItem(lastSignInMethodKey, method)
+  } catch {
+    return
+  }
+}
+
+/**
+ * Reads the method of the last successful sign-in.
+ *
+ * @returns The stored method, or null when none is stored or storage is unavailable.
+ */
+export function readLastSignInMethod(): SignInMethod | null {
+  try {
+    const method = localStorage.getItem(lastSignInMethodKey)
+    return Object.values<string | null>(SignInMethod).includes(method)
+      ? (method as SignInMethod)
+      : null
+  } catch {
+    return null
+  }
 }

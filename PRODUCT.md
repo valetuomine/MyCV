@@ -8,7 +8,7 @@ web
 
 ## Users
 
-Anyone who opens a candidate's public CV page (general public portfolio audience, confirmed). Typical visitors are likely recruiters and collaborators, but this was not narrowed down. The admin who edits a profile is a secondary, currently unauthenticated, audience.
+Anyone who opens a candidate's public CV page (general public portfolio audience, confirmed). Typical visitors are likely recruiters and collaborators, but this was not narrowed down. The owner who edits their profile is a secondary audience and signs in with Microsoft or Google; Google sign-up is invite-only.
 
 ## Product Purpose
 
@@ -23,7 +23,7 @@ Undecided. Not yet defined how this differs from LinkedIn or a PDF CV; the owner
 - Public page loads a Candidate by ID, then that Candidate's Profile (name, title, location, summary, GitHub URL, LinkedIn URL, created/updated dates).
 - Candidate is a hub that references related data (Profile now; work history and others later).
 - Profile content has translations; Finnish (`fi`) is required, with a title.
-- An "Edit profile" mode exists in the UI; create/update/delete endpoints are unauthenticated and authentication is deferred.
+- An "Edit profile" mode exists in the UI. Creating, editing and deleting require sign-in with Microsoft (Entra) or Google, and only the CV's owner or a `CvAdmin` (Microsoft only) may change it.
 - Section-by-section CV navigation exists for the public candidate view.
 
 ## Capabilities and Constraints
@@ -32,7 +32,18 @@ Undecided. Not yet defined how this differs from LinkedIn or a PDF CV; the owner
 - Light and dark themes switchable by the user.
 - Candidate ID appears in public URLs and is not a secret.
 - Deployed to Azure Static Web Apps and App Service via Azure DevOps.
-- Undecided: authentication, additional CV sections, language switching UX, multi-candidate onboarding.
+- Undecided: additional CV sections, language switching UX, multi-candidate onboarding beyond the Google invite list.
+
+## Personal Data
+
+What MyCV stores about people, beyond the public CV content itself:
+
+- **Sign-in identities** (`CandidateLogin`): for each sign-in method linked to a CV, the provider (`entra` or `google`), the provider's tenant or issuer, and the user ID (Entra `oid`, Google `sub`). They are pseudonymous identifiers that tie a CV to an account, not credentials. They are never shown in the UI or returned by the API.
+- **Last sign-in time** (`LastSignInAt`): updated when the owner opens their CV's admin view.
+- **Google sign-up list** (`Authentication:Google:AllowedSignUpEmails`): invited email addresses, kept in app settings, not in the database or the repository. A Google sign-in's email address is only compared against this list and is not stored.
+- **In the browser:** sign-in tokens stay in session storage for the tab (MSAL's cache and the Google ID token), and local storage holds only the theme, the last sign-in method and a post-sign-out flag.
+
+Deleting a CV deletes its sign-in identities. Any public privacy notice must cover these items.
 
 ## Brand Commitments
 

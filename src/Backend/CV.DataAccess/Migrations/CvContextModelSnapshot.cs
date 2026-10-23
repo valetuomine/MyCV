@@ -17,7 +17,7 @@ namespace CV.DataAccess.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.11")
+                .HasAnnotation("ProductVersion", "10.0.13")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -32,10 +32,6 @@ namespace CV.DataAccess.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("OwnerEntraObjectId")
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
-
                     b.Property<Guid?>("ProfileId")
                         .HasColumnType("uniqueidentifier");
 
@@ -49,8 +45,6 @@ namespace CV.DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OwnerEntraObjectId");
-
                     b.HasIndex("ProfileId")
                         .IsUnique()
                         .HasFilter("[ProfileId] IS NOT NULL");
@@ -59,6 +53,50 @@ namespace CV.DataAccess.Migrations
                         .IsUnique();
 
                     b.ToTable("Candidate", (string)null);
+                });
+
+            modelBuilder.Entity("CV.DataAccess.Entity.CandidateLogin", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("ID");
+
+                    b.Property<Guid>("CandidateId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("LastSignInAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("ProviderTenantId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("ProviderUserId")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CandidateId");
+
+                    b.HasIndex("Provider", "ProviderTenantId", "ProviderUserId")
+                        .IsUnique();
+
+                    b.ToTable("CandidateLogin", (string)null);
                 });
 
             modelBuilder.Entity("CV.DataAccess.Entity.Profile", b =>
@@ -144,6 +182,17 @@ namespace CV.DataAccess.Migrations
                     b.Navigation("Profile");
                 });
 
+            modelBuilder.Entity("CV.DataAccess.Entity.CandidateLogin", b =>
+                {
+                    b.HasOne("CV.DataAccess.Entity.Candidate", "Candidate")
+                        .WithMany("Logins")
+                        .HasForeignKey("CandidateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Candidate");
+                });
+
             modelBuilder.Entity("CV.DataAccess.Entity.ProfileTranslation", b =>
                 {
                     b.HasOne("CV.DataAccess.Entity.Profile", "Profile")
@@ -153,6 +202,11 @@ namespace CV.DataAccess.Migrations
                         .IsRequired();
 
                     b.Navigation("Profile");
+                });
+
+            modelBuilder.Entity("CV.DataAccess.Entity.Candidate", b =>
+                {
+                    b.Navigation("Logins");
                 });
 
             modelBuilder.Entity("CV.DataAccess.Entity.Profile", b =>

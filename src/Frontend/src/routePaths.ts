@@ -6,6 +6,7 @@ export const RoutePaths = {
   Home: "/",
   AdminCreateProfile: "/admin",
   AuthCallback: "/auth/callback",
+  GoogleAuthCallback: "/auth/callback/google",
   CandidateAdminPattern: "/:publicUrlSegment/admin",
   CandidateProfilePattern: "/:publicUrlSegment",
   /**

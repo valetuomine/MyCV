@@ -143,13 +143,11 @@ namespace CV.Logic.Mappers
         /// <returns>A candidate entity with the profile ID set.</returns>
         public static Candidate MapProfileIdToCandidate(
             this Profile dbProfile,
-            string publicUrlSegment,
-            string ownerEntraObjectId)
+            string publicUrlSegment)
         {
             return new Candidate
             {
                 PublicUrlSegment = publicUrlSegment,
-                OwnerEntraObjectId = ownerEntraObjectId,
                 ProfileId = dbProfile.Id
             };
         }

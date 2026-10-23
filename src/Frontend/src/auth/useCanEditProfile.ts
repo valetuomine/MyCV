@@ -1,7 +1,6 @@
-import { InteractionStatus } from "@azure/msal-browser"
-import { useMsal } from "@azure/msal-react"
 import { skipToken } from "@reduxjs/toolkit/query"
 import { useGetProfileAdminQuery } from "../api/profileQueries"
+import { useAuthSession } from "./authSession"
 
 interface EditableProfileAccess {
   canEdit: boolean
@@ -10,7 +9,7 @@ interface EditableProfileAccess {
 
 /**
  * Tells whether the signed-in user may edit a profile, by fetching its admin
- * view once MSAL is idle. Only hides or shows edit controls; the API enforces
+ * view once someone is signed in and MSAL is idle. Only hides or shows edit controls; the API enforces
  * who may edit.
  *
  * @param profileId - The profile to check, once it is known.
@@ -19,10 +18,8 @@ interface EditableProfileAccess {
 export default function useCanEditProfile(
   profileId?: string,
 ): EditableProfileAccess {
-  const { accounts, inProgress } = useMsal()
-  const canCheckAccess = Boolean(
-    accounts[0] && profileId && inProgress === InteractionStatus.None,
-  )
+  const { isSignedIn, isBusy } = useAuthSession()
+  const canCheckAccess = Boolean(isSignedIn && profileId && !isBusy)
   const profileQuery = useGetProfileAdminQuery(
     canCheckAccess && profileId ? profileId : skipToken,
   )

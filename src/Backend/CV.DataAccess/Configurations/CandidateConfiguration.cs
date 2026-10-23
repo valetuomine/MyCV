@@ -20,13 +20,8 @@ namespace CV.DataAccess.Configurations
                 .HasMaxLength(100)
                 .IsRequired();
 
-            builder.Property(candidate => candidate.OwnerEntraObjectId)
-                .HasMaxLength(128);
-
             builder.HasIndex(candidate => candidate.PublicUrlSegment)
                 .IsUnique();
-
-            builder.HasIndex(candidate => candidate.OwnerEntraObjectId);
 
             builder.HasIndex(candidate => candidate.ProfileId)
                 .IsUnique();

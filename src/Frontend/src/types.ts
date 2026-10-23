@@ -50,3 +50,10 @@ export const SignOutReason = {
 } as const
 
 export type SignOutReason = (typeof SignOutReason)[keyof typeof SignOutReason]
+
+export const SignInMethod = {
+  Microsoft: "microsoft",
+  Google: "google",
+} as const
+
+export type SignInMethod = (typeof SignInMethod)[keyof typeof SignInMethod]
