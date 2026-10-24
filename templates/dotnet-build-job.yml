@@ -18,7 +18,7 @@ jobs:
   - script: dotnet build src/MyCV.sln --configuration Release
     displayName: Build solution
 
-  - script: dotnet tool install --global dotnet-ef --version 10.0.11
+  - script: dotnet tool install --global dotnet-ef --version 10.0.13
     displayName: Install EF Core CLI
 
   - script: dotnet ef migrations has-pending-model-changes --project src/Backend/CV.DataAccess/CV.DataAccess.csproj --startup-project src/Backend/CV.WebApi/CV.WebApi.csproj
