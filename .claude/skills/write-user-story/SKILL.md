@@ -15,9 +15,10 @@ Use this workflow to add a User Story to the `MyCV` project in Azure DevOps orga
 1. **Understand the change.** If the request is vague, ask one short question. Otherwise draft right away.
 2. **Pick the parent Feature.** Every User Story has a Feature as its parent. Use the table below, and confirm the Feature still exists with a WIQL query if unsure.
 3. **Check for duplicates.** Query existing User Stories for a similar title before drafting a new one. If one exists, suggest updating it or adding a Task under it instead.
-4. **Show the draft** to the user in the format under *Draft preview*. Do not create anything before the user approves it. Exception: when the `create-pull-request` skill calls this skill, create the story directly, because the user reviews it as part of the pull request.
-5. **Create** the story with `wit_work_item_write` (`action: create`), then link it to the parent Feature with `wit_work_item_link_write` (`type: parent`). Create any child Tasks with `wit_work_item_write` (`action: add_child`).
-6. **Report** the new ID and its link: `https://dev.azure.com/valetuominen/MyCV/_workitems/edit/<id>`.
+4. **Study the code the story touches.** Read the relevant files, components, endpoints and skills, so that the *Toteutusohje* names real paths and builds on how the code works today. See *Implementation Prompt*.
+5. **Show the draft** to the user in the format under *Draft preview*. Do not create anything before the user approves it. Exception: when the `create-pull-request` skill calls this skill, create the story directly, because the user reviews it as part of the pull request.
+6. **Create** the story with `wit_work_item_write` (`action: create`), then link it to the parent Feature with `wit_work_item_link_write` (`type: parent`). Create any child Tasks with `wit_work_item_write` (`action: add_child`).
+7. **Report** the new ID and its link: `https://dev.azure.com/valetuominen/MyCV/_workitems/edit/<id>`.
 
 ## Parent Features
 
@@ -100,8 +101,9 @@ Every User Story gets a description. Write it in Finnish, in this structure:
 1. **Opening paragraph.** One or two sentences on *what* changes and *why*, in the passive present tense (`Parannetaan...`, `Toteutetaan...`, `Päivitetään...`, `Luodaan...`, `Muutetaan...`). Give the reason with `jotta...` or `...vuoksi`.
 2. **`Muutokset:` list.** The concrete changes, one per bullet. Each bullet is a full sentence that a reader understands without opening the code: describe what the user or developer sees or gets, not file or class names. Aim for 3 to 7 bullets.
 3. **`Lisäksi` line (optional).** One sentence for side work that lands in the same PR but is not part of the story's main purpose.
+4. **`Toteutusohje` section.** A prompt for an AI agent that implements the story. See *Implementation Prompt*.
 
-Leave out acceptance criteria, implementation steps and test plans.
+Keep implementation steps and done criteria out of the first three parts. They belong in the `Toteutusohje`, so the top of the description stays readable for a person.
 
 When the story is written after the work is done, base the description on the actual changes: read the linked PR's commits and diff rather than guessing from the title. When it is written before the work, describe the planned changes, and update the description afterwards if the work ended up different.
 
@@ -132,6 +134,63 @@ For a small or ongoing story, the opening paragraph and a shorter list are enoug
 </ul></div>
 ```
 
+## Implementation Prompt
+
+The description ends with a `Toteutusohje` section: a prompt for an AI agent. The test is that the user can open a new chat, write only `Toteuta User Story <id>`, and the agent understands the goal, the approach and when the work is done, from the story alone. The agent has `CLAUDE.md`, the repository and the project skills, but none of the conversation in which the story was written.
+
+Write it in Finnish, in these parts:
+
+| Part | Content |
+|---|---|
+| `Tavoite` | What the finished work achieves and why, as the user or developer experiences it. One short paragraph. |
+| `Lähtötilanne` | How the code works today where the change lands: the real files, components, hooks, endpoints, entities and settings involved, with paths. Name the patterns the change should follow and the skill to use (`/create-cv-skills`, `/setup-frontend`). |
+| `Toteutus` | The approach as numbered steps, in the order the work should go. Record every decision already made with the user and the alternatives that were ruled out, with the reason, so the agent does not reopen them. Describe the behaviour and structure, not line-by-line code, and leave the rest to the agent's judgment. |
+| `Rajaukset` | What is out of scope or must not change, such as related features, other stories' work, or existing behaviour that has to stay. |
+| `Valmis, kun` | Observable done criteria: what the user sees or can do, edge cases and error states that work, and the checks and browser views from `/create-pull-request` that apply to this change. End with "Toimita muutos `/create-pull-request`-skillillä." |
+| `Avoimet kysymykset` | Optional. Questions the agent must ask the user before starting, because the answer changes the work. Leave the part out when there are none. |
+
+Rules:
+
+- **Self-contained.** No references to the chat ("kuten sovittiin"), to plans in git-ignored files, or to anything else the next agent cannot read. Copy the needed content into the prompt.
+- **Verified.** Every path, name and endpoint in it exists in the code today, or is clearly marked as new (`luodaan uusi ...`). Read the code before writing; never guess a path from memory.
+- **No repeats of `CLAUDE.md`.** Leave out the general workflow, branch and commit rules and the full checklist. Mention only what is specific to this story.
+- **Safe to share.** No secrets, email addresses, or real tenant and client IDs. Name a setting by its key, never by its value.
+- **Sized to the work.** A small upgrade needs a few lines per part; a new feature can need a few hundred words. Every sentence should change what the agent does.
+
+Format it as HTML after the rest of the description, separated with a rule. Use `<b>` labels for the parts, lists for steps and criteria, and `<code>` for paths and names:
+
+```html
+<div><br></div>
+<hr>
+<div><b>Toteutusohje</b></div>
+<div><br></div>
+<div><b>Tavoite</b></div>
+<div>Käyttäjä tietää koko kirjautumisen ajan, mitä tapahtuu, ja osaa toimia, jos kirjautuminen ei onnistu. Nyt kirjautumisen alkaessa ja epäonnistuessa näkymä jää tyhjäksi.</div>
+<div><br></div>
+<div><b>Lähtötilanne</b></div>
+<div><ul>
+<li>Microsoft-kirjautuminen alkaa <code>src/Frontend/src/auth/entraAuth.ts</code>-moduulista, ja paluu käsitellään komponentissa <code>src/Frontend/src/auth/SignInCallback.tsx</code>.</li>
+<li>Kirjautumisen tilaviestit ovat komponentissa <code>src/Frontend/src/auth/SignInMessage.tsx</code>. Noudata sen rakennetta ja <code>/setup-frontend</code>-skillin ohjeita.</li>
+</ul></div>
+<div><b>Toteutus</b></div>
+<div><ol>
+<li>Näytä kirjautumisen alkaessa viesti siirtymisestä Microsoftin kirjautumiseen. Jos uudelleenohjaus kestää yli 5 sekuntia, neuvo lataamaan sivu uudelleen.</li>
+<li>Erota peruttu ja epäonnistunut kirjautuminen omiksi viesteikseen, ja anna molemmista linkki takaisin CV:hen. Virheen teknisiä tietoja ei näytetä käyttäjälle, vaan ne kirjataan konsoliin.</li>
+</ol></div>
+<div><b>Rajaukset</b></div>
+<div><ul>
+<li>Kirjautumisen tekninen toteutus ja backendin autentikaatio eivät muutu.</li>
+</ul></div>
+<div><b>Valmis, kun</b></div>
+<div><ul>
+<li>Aloitettu, peruttu ja epäonnistunut kirjautuminen näyttävät oikean viestin työpöydällä ja mobiilissa, molemmissa teemoissa.</li>
+<li>Lint ja build menevät läpi, eikä selaimen konsolissa ole uusia virheitä.</li>
+<li>Toimita muutos <code>/create-pull-request</code>-skillillä.</li>
+</ul></div>
+```
+
+When the story is created after the work is done (as `create-pull-request` does), write the `Toteutusohje` from the diff: it then describes how the work was done, so a follow-up chat can continue from it.
+
 ## Child Tasks (optional)
 
 Add Tasks only when the story splits into clearly separate pieces of work, such as one per endpoint or one per table.
@@ -147,6 +206,8 @@ Add Tasks only when the story splits into clearly separate pieces of work, such 
 <pre><code>GET /api/Profile/{profileId}</code></pre>
 ```
 
+A Task that is worked on in its own chat and pull request gets its own `Toteutusohje`, written the same way but limited to the Task. It names the parent story for the bigger picture instead of repeating it.
+
 Use the same area path, iteration path and assignee as the story. Tag each Task with the tags from *Tags* that match the Task's own work, which is usually a subset of the story's tags (for example `Backend` for an endpoint Task under a `Backend; Database` story).
 
 ## Draft Preview
@@ -159,10 +220,12 @@ Parent:     #<feature id> <feature title>
 Tags:       <tags, or "(ei tageja)">
 Description:
   <plain-text rendering of the description, or "(tyhjä)">
+Toteutusohje:
+  <plain-text rendering of the Toteutusohje, part by part>
 Tasks:
   - <task title>   (or "ei tehtäviä")
 ```
 
 ## After Creation
 
-Branches and pull requests reference the story as `User Story <id>: <title>`, for example `User Story 46: Sisään- ja uloskirjautumisen UI - parannukset`. Give the user that line so they can use it for the branch and PR.
+Branches and pull requests reference the story as `User Story <id>: <title>`, for example `User Story 46: Sisään- ja uloskirjautumisen UI - parannukset`. Give the user that line so they can use it for the branch and PR, and tell them they can start the work in a new chat with `Toteuta User Story <id>`.

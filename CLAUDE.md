@@ -6,7 +6,7 @@ A personal CV site: an ASP.NET Core REST API (`src/Backend`) and a React, TypeSc
 
 Every change is tied to an Azure DevOps work item and reaches `main` through a pull request that the user approves and completes.
 
-1. **Start from a work item.** When the user names one ("User Story 47", "Task 50"), read it first. Otherwise find a matching story, or create one with `/write-user-story`.
+1. **Start from a work item.** When the user names one ("User Story 47", "Task 50"), read it first. The `Toteutusohje` section at the end of its description is the brief for the work: follow it, and ask its `Avoimet kysymykset` before starting. Otherwise find a matching story, or create one with `/write-user-story`.
 2. **Do the work** on the working tree. Follow `/create-cv-skills` for backend APIs and their client integration, and `/setup-frontend` for the frontend shell and design.
 3. **Ship it with `/create-pull-request`.** It checks that the current branch fits the work, switching to an up-to-date `main` if it does not, creates the branch, runs the pipeline checks, splits the work into commits, pushes, opens the PR linked to the work item, and posts a reviewer comment.
 4. **The user reviews and completes the PR.** While the PR is open, the PR pipeline keeps its linked work items `In Progress` (`templates/work-item-in-progress-job.yml`). After the merge, the `main` pipeline moves them forward (`templates/work-item-state-job.yml`).
