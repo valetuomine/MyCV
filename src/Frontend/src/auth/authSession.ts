@@ -1,7 +1,11 @@
 import { InteractionStatus, PromptValue } from "@azure/msal-browser"
 import { useMsal } from "@azure/msal-react"
 import { useSyncExternalStore } from "react"
-import { isSignInPromptRequired, storeSignOutReturn } from "./adminLoginStorage"
+import {
+  clearLinkSignInMarker,
+  isSignInPromptRequired,
+  storeSignOutReturn,
+} from "./adminLoginStorage"
 import {
   acquireApiAuthenticationResult,
   apiScope,
@@ -107,6 +111,8 @@ export function useAuthSession(): AuthSession {
  * provider's session so only one is ever active. After a sign-out,
  * Microsoft asks for credentials again with `prompt=login`. Google has no
  * such prompt and ignores `max_age=0`, so it shows the account chooser.
+ * Linking never uses this, because it must keep the current session; a
+ * leftover linking marker is dropped so the callback treats this as a sign-in.
  *
  * @param method - The sign-in method.
  * @param redirectPath - The sign-in route that Microsoft completes the redirect on.
@@ -117,6 +123,7 @@ export async function startSignInRedirect(
   redirectPath: string,
 ): Promise<void> {
   const isPromptRequired = isSignInPromptRequired()
+  clearLinkSignInMarker()
 
   if (method === SignInMethod.Google) {
     await msalInstance.clearCache()

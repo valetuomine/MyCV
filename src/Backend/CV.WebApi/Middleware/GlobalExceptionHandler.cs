@@ -27,13 +27,18 @@ namespace CV.WebApi.Middleware
 
             httpContext.Response.StatusCode = statusCode;
 
-            await httpContext.Response.WriteAsJsonAsync(
-                new ProblemDetails
-                {
-                    Status = statusCode,
-                    Detail = detail
-                },
-                cancellationToken);
+            var problemDetails = new ProblemDetails
+            {
+                Status = statusCode,
+                Detail = detail
+            };
+
+            if (exception is ConflictException { Code: { } code })
+            {
+                problemDetails.Extensions["code"] = code;
+            }
+
+            await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
 
             return true;
         }

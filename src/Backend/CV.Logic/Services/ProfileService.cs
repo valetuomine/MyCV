@@ -85,6 +85,7 @@ namespace CV.Logic.Services
             var result = dbProfile.MapEntityToAdminDto();
             result.CandidateId = dbCandidate.Id;
             result.PublicUrlSegment = dbCandidate.PublicUrlSegment;
+            result.IsOwner = await IsOwner(dbProfile.Id, owner, cancellationToken);
             return result;
         }
 
@@ -116,7 +117,7 @@ namespace CV.Logic.Services
                 throw new BadRequestException($"Invalid profile ID: {profileId}");
             }
 
-            await EnsureCanManageProfile(profileId, actor, canManageAny, cancellationToken);
+            var isOwner = await EnsureCanManageProfile(profileId, actor, canManageAny, cancellationToken);
 
             if (actor is not null)
             {
@@ -143,6 +144,7 @@ namespace CV.Logic.Services
 
             result.CandidateId = candidate?.Id;
             result.PublicUrlSegment = candidate?.PublicUrlSegment;
+            result.IsOwner = isOwner;
 
             return result;
         }
@@ -185,7 +187,7 @@ namespace CV.Logic.Services
                 throw new BadRequestException($"Invalid profile ID: {profileId}");
             }
 
-            await EnsureCanManageProfile(profileId, actor, canManageAny, cancellationToken);
+            var isOwner = await EnsureCanManageProfile(profileId, actor, canManageAny, cancellationToken);
 
             ValidateRequest(request.FullName, request.Translations);
 
@@ -205,6 +207,7 @@ namespace CV.Logic.Services
                 .FirstOrDefaultAsync(cancellationToken);
             result.CandidateId = candidate?.Id;
             result.PublicUrlSegment = candidate?.PublicUrlSegment;
+            result.IsOwner = isOwner;
 
             return result;
         }
@@ -304,26 +307,31 @@ namespace CV.Logic.Services
             }
         }
 
-        private async Task EnsureCanManageProfile(
+        /// <summary>
+        /// Lets the profile's owner, or any caller with <c>CvAdmin</c>, manage the profile.
+        /// </summary>
+        /// <returns>Whether the caller owns the profile, as opposed to managing it only as <c>CvAdmin</c>.</returns>
+        private async Task<bool> EnsureCanManageProfile(
             Guid profileId,
             ExternalIdentity? actor,
             bool canManageAny,
             CancellationToken cancellationToken)
         {
-            if (canManageAny)
-            {
-                return;
-            }
-
-            var isOwner = actor is not null
-                && await _dataContext.CandidateLogin
-                    .ForIdentity(actor)
-                    .AnyAsync(login => login.Candidate.ProfileId == profileId, cancellationToken);
-
-            if (!isOwner)
+            var isOwner = await IsOwner(profileId, actor, cancellationToken);
+            if (!isOwner && !canManageAny)
             {
                 throw new NotFoundException($"Profile not found with Id: {profileId}");
             }
+
+            return isOwner;
+        }
+
+        private async Task<bool> IsOwner(Guid profileId, ExternalIdentity? actor, CancellationToken cancellationToken)
+        {
+            return actor is not null
+                && await _dataContext.CandidateLogin
+                    .ForIdentity(actor)
+                    .AnyAsync(login => login.Candidate.ProfileId == profileId, cancellationToken);
         }
     }
 }

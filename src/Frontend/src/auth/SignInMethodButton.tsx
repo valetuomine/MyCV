@@ -22,23 +22,33 @@ const methodStyles: Record<SignInMethod, { logo: string; className: string }> =
 
 interface SignInMethodButtonProps {
   method: SignInMethod
-  isLastUsed: boolean
+  isLastUsed?: boolean
+  label?: string
+  disabled?: boolean
+  describedBy?: string
   onSelect: (method: SignInMethod) => void
 }
 
 /**
- * A "Sign in with …" button in the provider's brand colours with its logo,
+ * A "Sign in with …" button, or another label such as "Add Google", in
+ * the provider's brand colours with its logo,
  * and a "Last used" badge on the method of the last successful sign-in.
  *
  * @param props - The component props.
  * @param props.method - The sign-in method the button starts.
  * @param props.isLastUsed - Whether to show the "Last used" badge.
+ * @param props.label - The button text, "Sign in with …" by default.
+ * @param props.disabled - Whether the button is disabled.
+ * @param props.describedBy - The ID of an element that explains the button, such as why it is disabled.
  * @param props.onSelect - Starts sign-in with the method.
  * @returns The sign-in button.
  */
 export default function SignInMethodButton({
   method,
-  isLastUsed,
+  isLastUsed = false,
+  label,
+  disabled = false,
+  describedBy,
   onSelect,
 }: SignInMethodButtonProps): JSX.Element {
   const badgeId = useId()
@@ -49,11 +59,16 @@ export default function SignInMethodButton({
       <button
         type="button"
         onClick={() => onSelect(method)}
-        aria-describedby={isLastUsed ? badgeId : undefined}
+        disabled={disabled}
+        aria-describedby={
+          [isLastUsed ? badgeId : null, describedBy]
+            .filter(Boolean)
+            .join(" ") || undefined
+        }
         className={`${buttonBase} w-full border hover:shadow-cv-panel ${className}`}
       >
         <img src={logo} alt="" aria-hidden="true" className="size-5" />
-        Sign in with {signInMethodNames[method]}
+        {label ?? `Sign in with ${signInMethodNames[method]}`}
       </button>
       {isLastUsed && (
         <span

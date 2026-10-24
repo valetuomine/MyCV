@@ -32,6 +32,7 @@ interface PendingGoogleRequest {
   nonce: string
   returnPath: string | null
   silent: boolean
+  link?: boolean
 }
 
 /** The signed-in Google session. */
@@ -54,18 +55,24 @@ interface GoogleIdTokenClaims {
   email?: string
 }
 
-/** What the Google callback found. */
+/**
+ * What the Google callback found. `isLink` marks a sign-in that adds a
+ * method to the CV; its ID token is in `linkToken`, kept in memory only.
+ */
 export interface GoogleSignInResult {
   failure: SignInFailure | null
   isSignInRequired: boolean
   returnPath: string | null
   silent: boolean
+  isLink: boolean
+  linkToken: string | null
 }
 
 interface StartGoogleSignInOptions {
   prompt?: "none" | "select_account"
   loginHint?: string
   returnPath?: string | null
+  link?: boolean
 }
 
 /**
@@ -152,17 +159,21 @@ export function getGoogleIdToken(): string | null {
  * @param options.prompt - `none` for a silent renewal, `select_account` to let the user choose.
  * @param options.loginHint - The account to sign in, such as the previous token's `sub`.
  * @param options.returnPath - Where a silent renewal returns to.
+ * @param options.link - Whether the sign-in adds a method to the CV, so its
+ *   token must not replace the session.
  */
 export function startGoogleSignIn({
   prompt,
   loginHint,
   returnPath = null,
+  link = false,
 }: StartGoogleSignInOptions = {}): void {
   const request: PendingGoogleRequest = {
     state: crypto.randomUUID(),
     nonce: crypto.randomUUID(),
     returnPath,
     silent: prompt === "none",
+    link,
   }
   sessionStorage.setItem(pendingRequestKey, JSON.stringify(request))
 
@@ -207,7 +218,9 @@ function decodeTokenClaims(token: string): GoogleIdTokenClaims | null {
  * session when the ID token is for MyCV, unexpired and carries the request's
  * nonce. A silent renewal that fails, usually with `login_required`, clears
  * the session and asks for sign-in, so an expired token can't start the same
- * renewal again and again.
+ * renewal again and again. A sign-in that adds a method to the CV returns
+ * its ID token as the link token and leaves the session, the "Last used"
+ * method and the post-sign-out prompt as they were.
  *
  * @param response - The parameters from the callback URL's fragment, or null without one.
  * @returns What the callback found.
@@ -222,6 +235,8 @@ function readGoogleResponse(
     isSignInRequired: false,
     returnPath: request?.returnPath ?? null,
     silent: request?.silent ?? false,
+    isLink: request?.link ?? false,
+    linkToken: null,
   }
 
   if (!response || !request || response.get("state") !== request.state) {
@@ -261,6 +276,10 @@ function readGoogleResponse(
     }
 
     return result
+  }
+
+  if (request.link) {
+    return { ...result, failure: null, linkToken: idToken }
   }
 
   setGoogleSession({

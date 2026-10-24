@@ -40,6 +40,7 @@ What MyCV stores about people, beyond the public CV content itself:
 
 - **Sign-in identities** (`CandidateLogin`): for each sign-in method linked to a CV, the provider (`entra` or `google`), the provider's tenant or issuer, and the user ID (Entra `oid`, Google `sub`). They are pseudonymous identifiers that tie a CV to an account, not credentials. They are never shown in the UI or returned by the API.
 - **Last sign-in time** (`LastSignInAt`): updated when the owner opens their CV's admin view.
+- **Linking sign-in methods:** the owner adds a method only by signing in with both the current method and the new one, never by matching email addresses. The new method's token is checked by the API and not stored; adding saves one more sign-in identity, and removing one deletes it. While the redirect is under way, session storage holds a "linking in progress" marker with the CV and the methods involved, but no tokens. The admin view shows the session's own email address from the browser, not from the database.
 - **Google sign-up list** (`Authentication:Google:AllowedSignUpEmails`): invited email addresses, kept in app settings, not in the database or the repository. A Google sign-in's email address is only compared against this list and is not stored.
 - **In the browser:** sign-in tokens stay in session storage for the tab (MSAL's cache and the Google ID token), and local storage holds only the theme, the last sign-in method and a post-sign-out flag.
 

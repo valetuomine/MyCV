@@ -57,3 +57,15 @@ export const SignInMethod = {
 } as const
 
 export type SignInMethod = (typeof SignInMethod)[keyof typeof SignInMethod]
+
+export const LinkOutcome = {
+  Linked: "linked",
+  AlreadyLinked: "already-linked",
+  LinkedElsewhere: "linked-elsewhere",
+  SameAccount: "same-account",
+  Cancelled: "cancelled",
+  Failed: "failed",
+  SessionExpired: "session-expired",
+} as const
+
+export type LinkOutcome = (typeof LinkOutcome)[keyof typeof LinkOutcome]

@@ -78,6 +78,120 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/logins": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["LoginDto"][];
+                        "application/json": components["schemas"]["LoginDto"][];
+                        "text/json": components["schemas"]["LoginDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    /**
+                     * @example {
+                     *       "linkToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6Ii4uLiJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20ifQ.signature"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["LinkLoginRequest"];
+                    /**
+                     * @example {
+                     *       "linkToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6Ii4uLiJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20ifQ.signature"
+                     *     }
+                     */
+                    "text/json": components["schemas"]["LinkLoginRequest"];
+                    /**
+                     * @example {
+                     *       "linkToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6Ii4uLiJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20ifQ.signature"
+                     *     }
+                     */
+                    "application/*+json": components["schemas"]["LinkLoginRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["LoginDto"];
+                        "application/json": components["schemas"]["LoginDto"];
+                        "text/json": components["schemas"]["LoginDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/logins/{loginId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    loginId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Profile": {
         parameters: {
             query?: never;
@@ -402,6 +516,19 @@ export interface components {
             linkedInUrl?: string | null;
             gitHubUrl?: string | null;
         };
+        LinkLoginRequest: {
+            linkToken?: string | null;
+        };
+        LoginDto: {
+            /** Format: uuid */
+            id?: string;
+            provider?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            lastSignInAt?: string | null;
+            isCurrent?: boolean;
+        };
         ProfileAdminDto: {
             /** Format: uuid */
             id?: string;
@@ -413,6 +540,7 @@ export interface components {
             /** Format: uuid */
             candidateId?: string | null;
             publicUrlSegment?: string | null;
+            isOwner?: boolean;
             linkedInUrl?: string | null;
             gitHubUrl?: string | null;
             translations?: components["schemas"]["ProfileTranslationDto"][] | null;

@@ -19,13 +19,53 @@ export const signOutReasonKey = "mycv-sign-out-reason"
 export const signInPromptRequiredKey = "mycv-sign-in-prompt-required"
 /** Local-storage key for the method of the last successful sign-in, for the "Last used" badge. */
 export const lastSignInMethodKey = "mycv-last-sign-in-method"
+/** Session-storage key for the sign-in method being added while its redirect is under way. */
+export const linkSignInKey = "mycv-link-sign-in"
 
-/** Removes every sign-in and sign-out return marker from session storage. */
+/** What is being linked, stored before the redirect to the new method. It holds no tokens. */
+export interface LinkSignInMarker {
+  id: string
+  method: SignInMethod
+  publicUrlSegment: string
+  sessionMethod: SignInMethod
+  msalAccountId: string | null
+}
+
+/** Removes every sign-in, sign-out and linking marker from session storage. */
 export function clearAuthReturnPaths(): void {
   sessionStorage.removeItem(returnPublicUrlSegmentKey)
   sessionStorage.removeItem(returnAdminPathKey)
   sessionStorage.removeItem(logoutReturnPublicUrlSegmentKey)
   sessionStorage.removeItem(signOutReasonKey)
+  sessionStorage.removeItem(linkSignInKey)
+}
+
+/**
+ * Stores the linking marker that the callback routes check first.
+ *
+ * @param marker - What is being linked and where to return.
+ */
+export function storeLinkSignInMarker(marker: LinkSignInMarker): void {
+  sessionStorage.setItem(linkSignInKey, JSON.stringify(marker))
+}
+
+/**
+ * Reads the linking marker.
+ *
+ * @returns The marker, or null when no linking is under way or it can't be read.
+ */
+export function readLinkSignInMarker(): LinkSignInMarker | null {
+  try {
+    const value = sessionStorage.getItem(linkSignInKey)
+    return value ? (JSON.parse(value) as LinkSignInMarker) : null
+  } catch {
+    return null
+  }
+}
+
+/** Removes the linking marker. */
+export function clearLinkSignInMarker(): void {
+  sessionStorage.removeItem(linkSignInKey)
 }
 
 /**

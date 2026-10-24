@@ -107,8 +107,10 @@ builder.Services.AddSwaggerGen(options => options.ExampleFilters());
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, CurrentUserAccessor>();
+builder.Services.AddSingleton<ILinkTokenValidator, LinkTokenValidator>();
 builder.Services.AddTransient<IProfileService, ProfileService>();
 builder.Services.AddTransient<ICandidateService, CandidateService>();
+builder.Services.AddTransient<ILoginService, LoginService>();
 
 var app = builder.Build();
 

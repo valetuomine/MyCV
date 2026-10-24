@@ -36,6 +36,12 @@ namespace CV.LogicInterface.Dto.Profile
         public string? PublicUrlSegment { get; set; }
 
         /// <summary>
+        /// Gets or sets whether the caller signs in to this profile's candidate, so its sign-in methods
+        /// are theirs to manage. False for a <c>CvAdmin</c> managing someone else's profile.
+        /// </summary>
+        public bool IsOwner { get; set; }
+
+        /// <summary>
         /// Gets or sets the candidate's LinkedIn profile URL, shared across languages.
         /// </summary>
         public string? LinkedInUrl { get; set; }

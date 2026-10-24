@@ -7,13 +7,19 @@ const apiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim() ?? ""
 /**
  * The RTK Query API that the feature query files inject their endpoints into.
  * Every request carries the signed-in user's bearer token, the Entra access
- * token or the Google ID token, when one can be acquired silently.
+ * token or the Google ID token, when one can be acquired silently. A request
+ * that sets its own `Authorization`, such as linking a sign-in method, keeps
+ * it and starts no token renewal.
  */
 export const baseApi = createApi({
   reducerPath: "cvApi",
   baseQuery: fetchBaseQuery({
     baseUrl: apiBaseUrl,
     prepareHeaders: async (headers) => {
+      if (headers.has("Authorization")) {
+        return headers
+      }
+
       const token = await acquireApiToken()
       if (token) {
         headers.set("Authorization", `Bearer ${token}`)
@@ -21,6 +27,6 @@ export const baseApi = createApi({
       return headers
     },
   }),
-  tagTypes: ["Candidate", "Profile"],
+  tagTypes: ["Candidate", "Profile", "Login"],
   endpoints: () => ({}),
 })

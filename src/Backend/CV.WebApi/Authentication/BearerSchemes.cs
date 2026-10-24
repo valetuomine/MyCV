@@ -43,7 +43,23 @@ namespace CV.WebApi.Authentication
                 return Entra;
             }
 
-            var token = authorization[BearerPrefix.Length..].Trim();
+            return SelectForToken(authorization[BearerPrefix.Length..].Trim(), isGoogleConfigured);
+        }
+
+        /// <summary>
+        /// Picks the scheme from a token's issuer. The token is read without validation,
+        /// only to choose the scheme whose rules then validate it.
+        /// </summary>
+        /// <param name="token">The raw JWT.</param>
+        /// <param name="isGoogleConfigured">Whether the Google scheme is registered.</param>
+        /// <returns><see cref="Google"/> for a Google-issued token, otherwise <see cref="Entra"/>.</returns>
+        public static string SelectForToken(string token, bool isGoogleConfigured)
+        {
+            if (!isGoogleConfigured)
+            {
+                return Entra;
+            }
+
             var handler = new JsonWebTokenHandler();
             if (!handler.CanReadToken(token))
             {

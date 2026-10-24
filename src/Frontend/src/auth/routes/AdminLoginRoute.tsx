@@ -39,7 +39,7 @@ export default function AdminLoginRoute(): JSX.Element {
           Sign in to manage <code>{publicUrlSegment}</code>
         </>
       }
-      description="Use the method you created your CV with."
+      description="Use the method you created your CV with, or one you've added since."
       pendingTitle={
         <>
           Signing in to manage <code>{publicUrlSegment}</code>

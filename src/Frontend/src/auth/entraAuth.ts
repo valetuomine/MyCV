@@ -12,6 +12,7 @@ import {
 } from "@azure/msal-browser"
 import {
   clearSignInPromptRequired,
+  readLinkSignInMarker,
   storeLastSignInMethod,
 } from "./adminLoginStorage"
 import { SignInMethod } from "../types"
@@ -61,17 +62,39 @@ function setRedirectSignInError(error: EventError): void {
 }
 
 /**
+ * The result of a redirect sign-in that adds a Microsoft account to the
+ * signed-in user's CV, recognised by the linking marker's ID in `state`, or
+ * null. Kept in memory only.
+ */
+let linkRedirectResult: AuthenticationResult | null = null
+
+/**
  * Makes the signed-in account active after a successful login, remembers
  * Microsoft as the last sign-in method and clears the credential prompt that
- * a sign-out required. Records the error when a redirect sign-in fails.
+ * a sign-out required. A redirect that adds a sign-in method is kept apart
+ * instead, so the account being added never becomes the session. Records
+ * the error when a redirect sign-in fails.
  *
- * @param message - The MSAL event.
+ * @param message - The MSAL event. `LOGIN_SUCCESS` carries the account, and
+ *   the redirect's `ACQUIRE_TOKEN_SUCCESS`, which comes first, the full result.
  */
 function handleMsalEvent(message: EventMessage): void {
-  if (message.eventType === EventType.LOGIN_SUCCESS && message.payload) {
-    msalInstance.setActiveAccount(
-      (message.payload as AuthenticationResult).account,
-    )
+  if (
+    message.eventType === EventType.ACQUIRE_TOKEN_SUCCESS &&
+    message.interactionType === InteractionType.Redirect &&
+    message.payload
+  ) {
+    const result = message.payload as AuthenticationResult
+    const linkMarker = readLinkSignInMarker()
+    if (linkMarker && result.state === linkMarker.id) {
+      linkRedirectResult = result
+    }
+  } else if (
+    message.eventType === EventType.LOGIN_SUCCESS &&
+    message.payload &&
+    !linkRedirectResult
+  ) {
+    msalInstance.setActiveAccount(message.payload as AccountInfo)
     storeLastSignInMethod(SignInMethod.Microsoft)
     clearSignInPromptRequired()
   } else if (
@@ -83,6 +106,16 @@ function handleMsalEvent(message: EventMessage): void {
 }
 
 msalInstance.addEventCallback(handleMsalEvent)
+
+/**
+ * Returns the result of the redirect that added a Microsoft account, once
+ * MSAL has handled it on the callback route.
+ *
+ * @returns The new account's authentication result, or null.
+ */
+export function getLinkRedirectResult(): AuthenticationResult | null {
+  return linkRedirectResult
+}
 
 /**
  * Subscribes to changes of the redirect sign-in error.

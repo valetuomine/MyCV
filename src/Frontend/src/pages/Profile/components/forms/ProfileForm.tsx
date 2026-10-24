@@ -1,8 +1,10 @@
 import { skipToken } from "@reduxjs/toolkit/query"
 import { AnimatePresence, m as motion, type Transition } from "framer-motion"
-import { useCallback, useMemo, useState, type JSX } from "react"
+import { useCallback, useEffect, useMemo, useState, type JSX } from "react"
 import { FormProvider, useForm } from "react-hook-form"
+import { useLocation, useNavigate } from "react-router-dom"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { getLinkSignInResult } from "../../../../auth/signInLocationState"
 import useCanEditProfile from "../../../../auth/useCanEditProfile"
 import {
   useGetProfileAdminQuery,
@@ -23,6 +25,7 @@ import EditableProfileForm from "./EditableProfileForm"
 import ProfileFormStatus from "./ProfileFormStatus"
 import Notice from "../../../components/Notice"
 import ReadOnlyProfileForm from "./ReadOnlyProfileForm"
+import SignInMethodsSection from "../SignInMethods/SignInMethodsSection"
 
 interface ProfileFormProps {
   values: Profile
@@ -38,6 +41,10 @@ const viewTransition: Transition = {
  * that loads the full profile into the form, and a notice confirms each save.
  * One view shows at a time: the outgoing view leaves before the next one
  * enters. The CV plays its entrance on load and again when returning to it.
+ * The edit view also lists the CV's sign-in methods, for its owner only:
+ * a `CvAdmin` editing someone else's CV doesn't manage their sign-in. Returning from adding
+ * one, the CV opens in the edit view with the outcome, and the router state
+ * that carried it is dropped so a reload doesn't show it again.
  *
  * @param props - The component props.
  * @param props.values - The public profile.
@@ -45,7 +52,13 @@ const viewTransition: Transition = {
  */
 export default function ProfileForm({ values }: ProfileFormProps): JSX.Element {
   const { canEdit, publicUrlSegment } = useCanEditProfile(values.id)
-  const [isEditing, setIsEditing] = useState(false)
+  const location = useLocation()
+  const navigate = useNavigate()
+  /** How adding a sign-in method ended, when the CV opened on the way back from it. */
+  const [linkResult, setLinkResult] = useState(() =>
+    getLinkSignInResult(location.state),
+  )
+  const [isEditing, setIsEditing] = useState(linkResult !== null)
   /** After leaving edit mode, focus goes back to the Edit profile button. */
   const [hasEdited, setHasEdited] = useState(false)
   const [savedNotice, setSavedNotice] = useState<string | null>(null)
@@ -72,6 +85,12 @@ export default function ProfileForm({ values }: ProfileFormProps): JSX.Element {
 
   const { handleSubmit, reset } = profileForm
 
+  useEffect(() => {
+    if (getLinkSignInResult(location.state)) {
+      navigate(location.pathname, { replace: true, state: null })
+    }
+  }, [location.pathname, location.state, navigate])
+
   /**
    * Validates and saves the profile, then leaves edit mode and shows the
    * saved notice. A new notice key restarts the notice when saves follow
@@ -92,6 +111,7 @@ export default function ProfileForm({ values }: ProfileFormProps): JSX.Element {
       }).unwrap()
       setIsEditing(false)
       setHasEdited(true)
+      setLinkResult(null)
       setSavedNotice((current) => String(Number(current ?? 0) + 1))
     } catch (error: unknown) {
       setSaveError(getProfileFormError(error, "Profile update"))
@@ -104,6 +124,7 @@ export default function ProfileForm({ values }: ProfileFormProps): JSX.Element {
     setSaveError(undefined)
     setIsEditing(false)
     setHasEdited(true)
+    setLinkResult(null)
   }
 
   /** Enters edit mode, which starts loading the admin profile. */
@@ -139,13 +160,25 @@ export default function ProfileForm({ values }: ProfileFormProps): JSX.Element {
           >
             {isEditing ? (
               profileAdminQuery.data ? (
-                <EditableProfileForm
-                  onCancel={cancelEditing}
-                  onSubmit={saveProfile}
-                  isSaving={updateProfileState.isLoading}
-                  saveError={saveError}
-                  publicUrlSegment={publicUrlSegment}
-                />
+                <div className="grid gap-20">
+                  <EditableProfileForm
+                    onCancel={cancelEditing}
+                    onSubmit={saveProfile}
+                    isSaving={updateProfileState.isLoading}
+                    saveError={saveError}
+                    publicUrlSegment={publicUrlSegment}
+                  />
+                  {profileAdminQuery.data.isOwner && (
+                    <SignInMethodsSection
+                      publicUrlSegment={
+                        publicUrlSegment ??
+                        profileAdminQuery.data.publicUrlSegment ??
+                        undefined
+                      }
+                      linkResult={linkResult}
+                    />
+                  )}
+                </div>
               ) : (
                 <ProfileFormStatus
                   error={isError}
