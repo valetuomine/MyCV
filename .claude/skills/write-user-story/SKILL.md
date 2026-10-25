@@ -15,9 +15,9 @@ Use this workflow to add a User Story to the `MyCV` project in Azure DevOps orga
 1. **Understand the change.** If the request is vague, ask one short question. Otherwise draft right away.
 2. **Pick the parent Feature.** Every User Story has a Feature as its parent. Use the table below, and confirm the Feature still exists with a WIQL query if unsure.
 3. **Check for duplicates.** Query existing User Stories for a similar title before drafting a new one. If one exists, suggest updating it or adding a Task under it instead.
-4. **Study the code the story touches.** Read the relevant files, components, endpoints and skills, so that the *Toteutusohje* names real paths and builds on how the code works today. See *Implementation Prompt*.
+4. **Study the code the story touches.** Read the relevant files, components, endpoints and skills, so that the *Toteutusohje* names real paths and builds on how the code works today. See *Implementation Prompt*. Then choose the skills for the work; see *Choosing Skills*.
 5. **Show the draft** to the user in the format under *Draft preview*. Do not create anything before the user approves it. Exception: when the `create-pull-request` skill calls this skill, create the story directly, because the user reviews it as part of the pull request.
-6. **Create** the story with `wit_work_item_write` (`action: create`), then link it to the parent Feature with `wit_work_item_link_write` (`type: parent`). Create any child Tasks with `wit_work_item_write` (`action: add_child`).
+6. **Create** the story with `wit_work_item_write` (`action: create`), then link it to the parent Feature with `wit_work_item_link_write` (`type: parent`). Create any child Tasks with `wit_work_item_write` (`action: add_child`). Then install any new skill the draft named; see *Choosing Skills*.
 7. **Report** the new ID and its link: `https://dev.azure.com/valetuominen/MyCV/_workitems/edit/<id>`, and end with the kickoff prompt. See *Kickoff Prompt*.
 
 ## Parent Features
@@ -143,7 +143,7 @@ Write it in Finnish, in these parts:
 | Part | Content |
 |---|---|
 | `Tavoite` | What the finished work achieves and why, as the user or developer experiences it. One short paragraph. |
-| `Lähtötilanne` | How the code works today where the change lands: the real files, components, hooks, endpoints, entities and settings involved, with paths. Name the patterns the change should follow and the skill to use (`/create-cv-skills`, `/setup-frontend`). |
+| `Lähtötilanne` | How the code works today where the change lands: the real files, components, hooks, endpoints, entities and settings involved, with paths. Name the patterns the change should follow and the skills to use, chosen as in *Choosing Skills*, with what each one is for. |
 | `Toteutus` | The approach as numbered steps, in the order the work should go. Record every decision already made with the user and the alternatives that were ruled out, with the reason, so the agent does not reopen them. Describe the behaviour and structure, not line-by-line code, and leave the rest to the agent's judgment. |
 | `Rajaukset` | What is out of scope or must not change, such as related features, other stories' work, or existing behaviour that has to stay. |
 | `Valmis, kun` | Observable done criteria: what the user sees or can do, edge cases and error states that work, and the checks and browser views from `/create-pull-request` that apply to this change. End with "Toimita muutos `/create-pull-request`-skillillä." |
@@ -191,6 +191,16 @@ Format it as HTML after the rest of the description, separated with a rule. Use 
 
 When the story is created after the work is done (as `create-pull-request` does), write the `Toteutusohje` from the diff: it then describes how the work was done, so a follow-up chat can continue from it.
 
+## Choosing Skills
+
+Pick the skills the next agent needs to reach the story's goal, and name them in `Lähtötilanne` with what each one is for. Search what is installed before looking for anything new.
+
+1. **Name the goal's domains.** List what the work needs know-how for, such as React component APIs, animation, accessibility, EF Core migrations or pipeline YAML.
+2. **Search the installed skills first.** Check the skill list of this session (project `.claude/skills/`, user `~/.claude/skills/` and `~/.agents/skills/`, plugins) and both `skills-lock.json` files (root and `src/Frontend`). Read the `SKILL.md` of each candidate, not only its description. The project skills (`/create-cv-skills`, `/setup-frontend`) come first for the parts they cover; add a general skill only where it adds something they don't.
+3. **Look for a new skill only for a domain no installed skill covers.** Search with `npx skills find <keywords>` and the [skills.sh](https://skills.sh/) leaderboard; if the command is blocked, search skills.sh with WebFetch. Vet each candidate as the `find-skills` skill says: 1K+ installs, a known source such as `vercel-labs` or `anthropics`, and read its `SKILL.md` before naming it. List each new skill in the draft with its source and install count, so the user's approval of the draft covers installing it.
+4. **Install it once the draft is approved.** From the repository root run `npx skills add <owner/repo> --skill <name> --agent claude-code -y`, check that the root `skills-lock.json` lists it, and read its `SKILL.md`. If the command is blocked, give the user the command to run and wait. The install leaves `skills-lock.json` changed but uncommitted; the change is committed in this story's pull request. So the `Toteutus` names the skill as already installed ("lue se ennen rajapinnan suunnittelua" when it shapes the approach), `Valmis, kun` gets "`skills-lock.json` sisältää `<name>`-skillin", and the story gets the `Skills` tag. When `create-pull-request` calls this skill, the work is already done: install nothing, and make a skill that the remaining work needs the first `Toteutus` step instead.
+5. **Keep it short.** Usually one to three skills. Every named skill is loaded into the next chat, so leave out any that would not change the work. If nothing fits and nothing worth installing turns up, name none and say so in the draft.
+
 ## Child Tasks (optional)
 
 Add Tasks only when the story splits into clearly separate pieces of work, such as one per endpoint or one per table.
@@ -218,6 +228,7 @@ Show the draft to the user like this before creating anything:
 User Story: <title>
 Parent:     #<feature id> <feature title>
 Tags:       <tags, or "(ei tageja)">
+Skills:     <installed skills to use; new ones as "<name> (asennetaan: <owner/repo>, <installs> asennusta)", or "(ei skillejä)">
 Description:
   <plain-text rendering of the description, or "(tyhjä)">
 Toteutusohje:

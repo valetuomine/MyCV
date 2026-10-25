@@ -43,6 +43,7 @@ Every pull request is linked to a User Story, or to a Task when the work is one 
   - If the item has no `Toteutusohje`, add one based on the diff and this chat.
   - If the work departed from it, such as a different approach, a renamed file, or a decision the user made during the work, update the affected parts and record the decision with its reason.
   - For a follow-up PR on a story that continues (`Jatkuu`), add or update a `Tilanne` part right after `Tavoite`: what is done and in which PR, and what remains. The next chat starts from what remains.
+- Name skills in a `Toteutusohje` you write or update, and in the follow-up prompts, as *Choosing Skills* in `write-user-story` says: installed skills first. Never install a skill during this workflow; a skill that the remaining work needs but no installed skill covers becomes the first step of what remains, with its install command.
 
 If it is unclear whether the change is a new story, a Task under an existing story, or part of an existing story, ask the user once before creating anything.
 
@@ -147,6 +148,7 @@ Commit message format, in English, with an imperative summary:
 - Stage files by name. Never use `git add -A` or `git add .`.
 - Never commit secrets or local settings: `.env.local`, `.mcp.json`, user secrets, credentials.
 - Leave changes that have nothing to do with this work item unstaged, and mention them in the report.
+- `write-user-story` installs a story's new skill when the story is created, leaving `skills-lock.json` uncommitted. Commit that change in the story's pull request, first, as `US-<id>: Add the <name> skill`. If `git diff skills-lock.json` adds a skill that another work item names instead, leave it unstaged.
 
 ## Pull Request
 
@@ -244,7 +246,7 @@ Ship the fixes with /create-pull-request: it pushes to the same branch and pull 
   Continue User Story <id>: <title>.
   Wait until pull request <PR id> is completed, then start from an up-to-date main.
   Read the work item in Azure DevOps. Start from what remains in the Tilanne part of its Toteutusohje, and follow the rest of the Toteutusohje.
-  Skills: <the skills its Lähtötilanne names>
+  Skills: <the skills for what remains, chosen as in Choosing Skills of write-user-story>
   When every Valmis, kun criterion holds, ship the change with /create-pull-request.
   ```
 
