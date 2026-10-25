@@ -26,8 +26,8 @@ Every change reaches `main` through a pull request, however small: a one-line fi
 4. **Run the checks.** See *Checks*. Fix anything that fails before continuing.
 5. **Commit** the changes as several focused commits. See *Commits*.
 6. **Push** the branch: `git push -u origin <branch>`. The `origin` remote pushes only to Azure DevOps; the pipeline copies `main` to GitHub after the merge, so feature branches never go to GitHub.
-7. **Open the pull request** and post the reviewer comment. See *Pull Request*.
-8. **Report** the PR link, the work item link, the commit list and the check results to the user.
+7. **Open the pull request** and post the reviewer comment. See *Pull Request*. If the branch already has an active pull request, as when fixing review comments, the push updates it: skip creating a new one.
+8. **Report** the PR link, the work item link, the commit list and the check results to the user, and end with the follow-up prompts. See *Report* and *Follow-up Prompts*.
 
 ## Work Item
 
@@ -222,3 +222,32 @@ End with:
 - The branch name and the list of commits
 - The check results
 - Any changes left uncommitted because they were unrelated
+- The follow-up prompts, last
+
+## Follow-up Prompts
+
+End the report with prompts that the user copies into a new chat to continue the work. Write them in English, each in its own fenced `text` code block with a one-line Finnish heading above it that says when to use it. Like the kickoff prompt of the `write-user-story` skill, they point to the work item and the pull request instead of repeating them.
+
+**Review fixes**, always. The user pastes it after reviewing the PR:
+
+```text
+Address the review comments on pull request <PR id> (User Story <id>: <title>).
+Read its active comment threads, fix each one on branch <branch>, and reply to each thread with what changed.
+Ship the fixes with /create-pull-request: it pushes to the same branch and pull request.
+```
+
+**Next work item**, when work remains on the story after this PR:
+
+- If the PR has the `Jatkuu` label, continue the story:
+
+  ```text
+  Continue User Story <id>: <title>.
+  Wait until pull request <PR id> is completed, then start from an up-to-date main.
+  Read the work item in Azure DevOps. Start from what remains in the Tilanne part of its Toteutusohje, and follow the rest of the Toteutusohje.
+  Skills: <the skills its Lähtötilanne names>
+  When every Valmis, kun criterion holds, ship the change with /create-pull-request.
+  ```
+
+- If the story has open child Tasks that this PR does not link, give the kickoff prompt of the next one, in the Task form from *Kickoff Prompt* in `write-user-story`, with the `Wait until pull request <PR id> is completed` line added when it builds on this PR.
+
+Leave out the `Skills:` line when the `Toteutusohje` names no skill.

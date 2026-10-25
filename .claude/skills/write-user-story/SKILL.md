@@ -18,7 +18,7 @@ Use this workflow to add a User Story to the `MyCV` project in Azure DevOps orga
 4. **Study the code the story touches.** Read the relevant files, components, endpoints and skills, so that the *Toteutusohje* names real paths and builds on how the code works today. See *Implementation Prompt*.
 5. **Show the draft** to the user in the format under *Draft preview*. Do not create anything before the user approves it. Exception: when the `create-pull-request` skill calls this skill, create the story directly, because the user reviews it as part of the pull request.
 6. **Create** the story with `wit_work_item_write` (`action: create`), then link it to the parent Feature with `wit_work_item_link_write` (`type: parent`). Create any child Tasks with `wit_work_item_write` (`action: add_child`).
-7. **Report** the new ID and its link: `https://dev.azure.com/valetuominen/MyCV/_workitems/edit/<id>`.
+7. **Report** the new ID and its link: `https://dev.azure.com/valetuominen/MyCV/_workitems/edit/<id>`, and end with the kickoff prompt. See *Kickoff Prompt*.
 
 ## Parent Features
 
@@ -136,7 +136,7 @@ For a small or ongoing story, the opening paragraph and a shorter list are enoug
 
 ## Implementation Prompt
 
-The description ends with a `Toteutusohje` section: a prompt for an AI agent. The test is that the user can open a new chat, write only `Toteuta User Story <id>`, and the agent understands the goal, the approach and when the work is done, from the story alone. The agent has `CLAUDE.md`, the repository and the project skills, but none of the conversation in which the story was written.
+The description ends with a `Toteutusohje` section: a prompt for an AI agent. The test is that the user can open a new chat, paste only the kickoff prompt (see *Kickoff Prompt*), and the agent understands the goal, the approach and when the work is done, from the story alone. The agent has `CLAUDE.md`, the repository and the project skills, but none of the conversation in which the story was written.
 
 Write it in Finnish, in these parts:
 
@@ -228,4 +228,23 @@ Tasks:
 
 ## After Creation
 
-Branches and pull requests reference the story as `User Story <id>: <title>`, for example `User Story 46: Sisään- ja uloskirjautumisen UI - parannukset`. Give the user that line so they can use it for the branch and PR, and tell them they can start the work in a new chat with `Toteuta User Story <id>`.
+Branches and pull requests reference the story as `User Story <id>: <title>`, for example `User Story 46: Sisään- ja uloskirjautumisen UI - parannukset`. Give the user that line, then the kickoff prompt.
+
+## Kickoff Prompt
+
+End the report with a prompt that the user copies into a new chat to start the work. Write it in English, in its own fenced `text` code block so it copies cleanly, one block per work item that is worked on in its own chat: the story, or each Task that has its own `Toteutusohje`.
+
+The prompt points to the work item instead of repeating the `Toteutusohje`, so the instructions live in one place. It adds only what lets the new chat start right away:
+
+```text
+Implement User Story <id>: <title>.
+Read the work item in Azure DevOps and follow the Toteutusohje at the end of its description. Ask its Avoimet kysymykset before you start.
+Branch: feat/US-<id>_<Title_slug>
+Skills: <the skills its Lähtötilanne names>
+When every Valmis, kun criterion holds, ship the change with /create-pull-request.
+```
+
+- Build the branch name with the slug rules in *Branch* of the `create-pull-request` skill.
+- For a Task, start with `Implement Task <id>: <title> (part of User Story <parent id>: <parent title>).` and use the Task branch pattern `feat/<id>_<Title_slug>`.
+- Leave out the `Skills:` line when the `Toteutusohje` names no skill, and the `Avoimet kysymykset` sentence when it has none.
+- Skip the kickoff prompt when the story was created for work that is already done, as when `create-pull-request` calls this skill. That skill gives its own follow-up prompts.
