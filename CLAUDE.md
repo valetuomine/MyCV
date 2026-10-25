@@ -11,6 +11,8 @@ Every change is tied to an Azure DevOps work item and reaches `main` through a p
 3. **Ship it with `/create-pull-request`.** It checks that the current branch fits the work, switching to an up-to-date `main` if it does not, creates the branch, runs the pipeline checks, splits the work into commits, pushes, opens the PR linked to the work item, and posts a reviewer comment.
 4. **The user reviews and completes the PR.** While the PR is open, the PR pipeline keeps its linked work items `In Progress` (`templates/work-item-in-progress-job.yml`). After the merge, the `main` pipeline moves them forward (`templates/work-item-state-job.yml`).
 
+When a story turns out to be investigation only, with nothing worth merging, skip the PR. Once the user agrees, discard the code, add the findings and the decision to the end of the work item's description, and move it to `Removed`.
+
 When the user corrects how a step was done, update the skill or this file so the correction lasts, and say which file changed.
 
 ## Never
