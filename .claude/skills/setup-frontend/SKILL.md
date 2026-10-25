@@ -29,31 +29,8 @@ Use this workflow when recreating the MyCV frontend inside `src/Frontend`.
 - Build complex page sections through small composable components. A layout component such as `Background` or `HeaderRow` should accept `children`, while focused components such as `Navigation` or `ContentSection` should receive the data they render.
 - Use `type JSX` and `type ReactNode` imports from `react` when needed, and keep component files free of unused React imports.
 - Document code with JSDoc summaries (`/** ... */`) only. Do not write `//` or `/* */` comments, JSX `{/* */}` comments, or commented-out code; delete dead code instead. The only exceptions are tool directives such as `/// <reference types="..." />`, and generated files such as `src/generated/openapi.ts`.
-  - Give every function a JSDoc summary: components, hooks, helpers, and event handlers or callbacks declared inside them.
-  - Give every `const` (or `let`) a JSDoc summary when its value has logic: a conditional or fallback, a computation, a regex or parser, a function value, a hook with a callback (`useMemo`, `useTransform`, `handleSubmit`), or a schema with rules. Plain literals, destructuring and single comparisons need none, unless the reason for the value isn't obvious.
-  - Write the summary in English, starting with what the code does (`Shows`, `Builds`, `Tells whether`) and then why, when the why isn't obvious.
-  - Below the summary and one blank line, document every parameter with `@param name - description` and every returned value with `@returns description`. Leave out types, because TypeScript declares them. For destructured component props, document the root as `@param props - The component props.` and each prop as `@param props.<name> - ...`. Functions that return nothing need no `@returns`.
-
-    ```ts
-    /**
-     * Builds the public path of a candidate's CV.
-     *
-     * @param publicUrlSegment - The CV's public URL segment.
-     * @returns The encoded `/:publicUrlSegment` path.
-     */
-    ```
-  - `eslint-plugin-jsdoc` enforces these rules in `npm run lint` (see `eslint.config.js`): JSDoc on every function declaration and every function assigned to a variable, `@param` and `@returns` tags, `//` comments placed where JSDoc belongs, and the tag format. It can't tell which non-function `const` values have logic, so that part still depends on review.
-  - Effects and JSX can't carry JSDoc, so describe what an effect does or why the markup is built that way in the enclosing component's summary. When an inline JSX handler has a branch or more than one statement, move it into a named `const` with its own summary.
-- Treat `useEffect` as the last resort, used only to synchronize with something outside React: browser APIs (`document.title`, `<html>` attributes, timers), MSAL, or router state that has to change after render. Before writing one, reach for the simpler tool:
-  - Derive values during render. `useMemo` is fine when a value is costly or must keep its identity, such as mapped form values passed to React Hook Form's `values`.
-  - Run logic caused by a user action in that action's event handler.
-  - Render `<Navigate replace>` when the destination follows from current state, instead of calling `navigate()` from an effect.
-  - Read one-shot values, such as session-storage markers, in a `useState` initializer.
-  - Fetch with RTK Query, never from an effect.
-  - Reset a component's state for a different entity with a `key`.
-  - Set app-wide state, such as the MSAL active account, once in its module (`src/auth/entraAuth.ts`) rather than from each route.
-
-  Keep the effect when the alternative would be harder to follow, for example a timer that must be cancelled on unmount. Do not add refs or extra handlers only to avoid one. Every effect that subscribes or starts something returns its cleanup. Never silence a `react-hooks` lint rule to keep an effect.
+  The tag format, which values need a summary, and examples are in [references/jsdoc.md](references/jsdoc.md). Read it before documenting code.
+- Treat `useEffect` as the last resort, used only to synchronize with something outside React. Before writing one, read [references/effects.md](references/effects.md) for the simpler tool to reach for.
 - Follow `vercel-react-best-practices` for React performance, but skip its Next.js and server rules: this is a Vite single-page app. Where it differs from these conventions, these conventions win.
 - Follow `vercel-composition-patterns` when designing a reusable component's API: explicit variants instead of boolean modes, `children` instead of render props, and `ref` as a plain prop (React 19, no `forwardRef`). Where it differs from these conventions, these conventions win.
 - Put shared application types in `src/types.ts`, then import them where needed. For finite string values used both at runtime and as prop types, export a `const` object with `as const` and derive the corresponding type from its values (for example, `export const InputType = { Email: "email" } as const` and `export type InputType = (typeof InputType)[keyof typeof InputType]`). This supports named values without TypeScript enums, which are incompatible with `erasableSyntaxOnly`. Keep component-only props interfaces local to their component.
@@ -61,59 +38,14 @@ Use this workflow when recreating the MyCV frontend inside `src/Frontend`.
 - Prefer Tailwind's standard scale when it matches the intended value (for example, use `max-w-7xl` for `80rem`). Use arbitrary values only when the standard scale does not express the design cleanly.
 - Add custom CSS only when Tailwind cannot express the behavior clearly, such as complex animations, pseudo-elements, WebGL or canvas surfaces, or reusable behavior that would make JSX difficult to read.
 - Keep custom CSS scoped to its owning component or an intentional shared global concern. Do not add a custom CSS class when an equivalent, readable Tailwind composition is available.
-- Create a Zod schema whenever creating a form. Keep the schema next to the form when it is local to that form, or in the form's feature folder when it is shared.
-- Infer form input types from the Zod schema where practical so validation and TypeScript types stay aligned.
-- Build forms with React Hook Form (`react-hook-form`) and `@hookform/resolvers/zod`. Wrap RHF-backed sections in `FormProvider` and make reusable inputs read state with `useFormContext`/`useWatch`, using typed field names.
-- Keep profile content in its normal story layout for viewing. When `useCanEditProfile(profileId)` from `src/auth/useCanEditProfile.ts` returns `canEdit`, show one form-level Edit action; edit all fields together in a conventional form with Save and Cancel actions, not per-field edit buttons. Use React Hook Form and the Zod resolver to validate the full form before leaving edit mode, reset changes on Cancel, and render each validation message beneath its field with `aria-describedby`. Forward applicable native input attributes while keeping React Hook Form-controlled props internal. Save persists through `useUpdateProfileMutation`. `canEdit` only hides or shows controls; the API enforces who may edit.
-- Install npm packages from the directory containing the package's `package.json`. For this repository, frontend packages must be installed from `src/Frontend`, not the repository root:
-
-```powershell
-Push-Location src/Frontend
-npm install <package-name>
-Pop-Location
-```
-
-Use the installed Node version before running the setup commands:
-
-```powershell
-nvm use 24.21.0
-node --version
-```
-
-## Create The App
-
-From the repository root:
-
-```powershell
-Remove-Item src/Frontend/.gitkeep -ErrorAction SilentlyContinue
-Push-Location src/Frontend
-npx create-vite@6.5.0 . --template react-ts
-npm install
-npm install tailwindcss @tailwindcss/vite
-npm install -D @types/node
-Pop-Location
-```
-
-Configure the Vite alias `@` to resolve to `src`, add `@/*` to `tsconfig.app.json`, and import Tailwind in `src/index.css`:
-
-```css
-@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap");
-@import "tailwindcss";
-```
-
-Define the theme variables, font tokens, and the `bg-cv-grid`/`bg-cv-grain` utilities in `src/index.css` as described in the design system below.
+- Build every form with a Zod schema and React Hook Form, and the profile edit mode in one form with Save and Cancel. Read [references/forms.md](references/forms.md) before creating or changing a form.
+- Install npm packages from `src/Frontend`, on Node `24.21.0`. The commands are in [references/create-app.md](references/create-app.md).
 
 ## Design System
 
 The look is a modern, editorial developer CV: left-aligned asymmetric layouts, large tight Geist display type, one emerald accent, and quiet surfaces. It was designed with the taste-skill set (`design-taste-frontend`, `redesign-existing-projects`) installed in the git-ignored `src/Frontend/.agents/skills` and `.claude/skills` folders and recorded in `src/Frontend/skills-lock.json`; read those skills for deeper guidance before redesigning.
 
-### Theming (light and dark)
-
-- Raw palette variables (`--cv-background`, `--cv-surface`, `--cv-line`, `--cv-ink`, `--cv-copy`, `--cv-muted`, `--cv-meta`, `--cv-accent`, `--cv-accent-strong`, `--cv-accent-ink`, `--cv-danger`, `--cv-wash`, `--cv-overlay`, `--cv-grid-line`, `--cv-shadow-panel`) live in two blocks in `src/index.css`: `:root, :root[data-theme="light"]` and `:root[data-theme="dark"]`. Retuning or adding a theme edits only those blocks.
-- `@theme inline` maps them to Tailwind utilities (`bg-cv-background`, `text-cv-ink`, `border-cv-line`, `bg-cv-overlay`, `shadow-cv-panel`). Components use only these semantic utilities.
-- Light theme uses a darker emerald accent for contrast; dark theme uses a mint accent. `--cv-accent-strong` is the primary button's hover fill (deeper in light, brighter in dark). `--cv-accent-ink` is the text colour on accent fills.
-- `ThemeToggle` (rendered by `Background`, top-right) stores the choice in `themeAtom` (`src/state/themeAtoms.ts`, Jotai `atomWithStorage`, key `cv-theme`, default from `prefers-color-scheme`) and sets `data-theme` on `<html>`. An inline script in `index.html` applies the theme before first paint to avoid a flash; keep its storage key in sync with `themeStorageKey`.
-- The `Theme` const object lives in `src/types.ts`.
+Theme variables, `ThemeToggle` and the first-paint script are in [references/theming.md](references/theming.md). Read it before changing a colour, a theme or the toggle.
 
 ### Visual rules
 
@@ -121,8 +53,7 @@ The look is a modern, editorial developer CV: left-aligned asymmetric layouts, l
 - Typography: Geist for display and body, Geist Mono for small uppercase labels and metadata. Display text uses negative tracking (`tracking-tighter`), tight leading, `text-balance`; body copy stays within about 52–65ch with `text-pretty`. No serif fonts.
 - Layout: left-aligned and asymmetric (text column plus portrait column), `max-w-7xl` container, `min-h-dvh` instead of `100vh`, generous whitespace. Avoid centered heroes and three-equal-card rows.
 - Surfaces: use borders (`border-cv-line`), `divide-y`, or spacing instead of heavy cards; shadows come from `shadow-cv-panel`/`shadow-cv-accent` and are tinted, never plain black. One radius scale: full pills for buttons and toggles, `rounded-3xl` for large framed media, `rounded-lg` for inputs.
-- Every button and button-styled link is `src/pages/components/Button.tsx`; never write button classes by hand. `variant` takes `ButtonVariant` from `src/types.ts` (`Primary`, `Secondary` (default), `Danger`, `Icon` with an `aria-label`, `Text` for inline actions such as Read more, and `Brand`, whose colours come from `className`, as in `SignInMethodButton`, and whose hover is a faint `::after` layer of its own text colour), and `size` takes `ButtonSize` (`Medium` 44 px, or `Small`, which looks 36 px but keeps a 44 px touch target). It renders a `<button>` (`type="button"` by default), a React Router link with `to`, or an external link with `href` (new tab, `↗` arrow, "opens in a new tab" for screen readers). `className` is for layout only (`w-full`, `w-fit`, margins), because there is no class merging. Every usable variant changes visibly on hover (a new variant must too; a shadow alone doesn't show on these backgrounds), and only unavailable or loading buttons stay still. Hover, `active` press (`scale-[0.97]`, icons `0.92`), the `focus-visible` ring and the 200 ms ease-out transitions are shared, and reduced motion keeps only the colour changes.
-- Button states: `disabled` takes a button out of the tab order; `aria-disabled` keeps it focusable, for a button that becomes unavailable in the user's hands (the redirect Cancel) or whose reason is given with `aria-describedby` (Remove, adding a sign-in method). `loading` with `loadingText` (for example `loadingText="Saving…"`) sets `aria-busy`, blocks the click without moving focus, and swaps the label for a spinner and that text in the same grid cell, so the width doesn't jump. Pass refs straight to `Button` for focus management.
+- Every button and button-styled link is `src/pages/components/Button.tsx`; never write button classes by hand. Its variants, sizes, states and hover rules are in [references/buttons.md](references/buttons.md). Read it before adding or changing a button.
 - Do not duplicate information: the role appears once (hero subtitle). Location (with pin icon) and the last-updated date appear in the left hero text.
 
 ### Motion
@@ -132,42 +63,12 @@ The look is a modern, editorial developer CV: left-aligned asymmetric layouts, l
 - Keep infinite loops to small status details (pulse dot, hint arrow, skeleton pulse).
 - Give screens that usually resolve in well under a second (auth redirects, callbacks) `animate-cv-fade-in-delayed` from `src/index.css`. It holds them invisible for 300ms before fading in, so fast paths never flash. `RouteMessage` applies it with `delayed`.
 
-### States
+## More References
 
-- Loading, error, empty, not-found, and auth screens render through `RouteMessage`; never show bare unstyled text. `tone` takes the `Tone` const from `src/types.ts`: `Tone.Neutral`, `Tone.Pending` (the dot pulses with `animate-cv-pulse`, hidden under reduced motion; sets `aria-busy`), or `Tone.Error` (danger dot, `role="alert"`). Pass `onRetry`/`showHomeButton` for the default Try again and Open a CV buttons, or `actions` to replace them. Put identifiers such as a public URL segment in `<code>` inside the heading; `RouteMessage` styles it as a chip.
-- Every message screen needs a way forward: a failure offers Try again plus a way back (Back to CV or Open a CV); never leave the user on a dead end.
-- All sign-in states render through `src/auth/SignInMessage.tsx`: not configured, the method choice ("Sign in with Microsoft" and "Sign in with Google" buttons in each provider's brand colours, a one-line hint, and a "Last used" badge on the last successful method), popup (on devices with a mouse or trackpad the choice opens the provider in a 500 × 640 popup right in the click: "Continue in the Microsoft window" with a focused Cancel, shown without `delayed`), cancelled popup or redirect (the choice again, at once, with a "Sign-in was cancelled." status line and focus back on the method that was tried), cancelled at the provider (neutral tone), failed (error tone, naming the provider, with Use another way when both methods are set up), pending redirect (names what is being signed in to, for example "Signing in to manage `segment`", and the provider the user is sent to), and slow. Touch devices (`(hover: none) and (pointer: coarse)`) and blocked popups use the redirect. The pending redirect holds for 3.5 seconds with a focused Cancel that stops it before it leaves (then `aria-disabled`) and Back, in one row of 44 px buttons, so nothing moves when Cancel comes or goes. Coming back from the provider with Back (restored from the back/forward cache, or reloaded on a `back_forward` navigation) shows the choice as cancelled and never starts anything on its own. After 5 seconds without a redirect, the pending screen offers Reload page rather than calling MSAL again, because a second login call while one is in flight fails with `interaction_in_progress`.
-- Sign-in popups (`src/auth/signInPopup.ts`) never run the app: `main.tsx` reads the `mycv-popup.` state on the callback routes before the app loads and hands the response to the opening tab (`relayPopupCallback.ts`), which alone stores the session. Microsoft's sign-in page enforces `Cross-Origin-Opener-Policy`, which cuts the popup off from the tab, so the app can't detect that window closing or always close it; Cancel therefore also records the attempt in local storage, and a cancelled popup closes itself without signing in. Adding a sign-in method (`linkSignIn.ts`, `SignInMethodsSection`) uses the same popup with a linking state (`mycv-popup.link.`), keeps the session and "Last used", and shows its waiting message with Cancel and its outcome in place; touch devices and blocked popups add it with a redirect. Google's silent renewal stays a redirect. Every sign-in request asks for the app's language (`signInLanguage.ts`: Google `hl`, Microsoft `ui_locales` and `mkt`), and the blank page MSAL opens first takes the app's background, so the Microsoft popup doesn't flash white in the dark theme.
-- `Background` renders `SignOutButton` and `ThemeToggle` top-right. When signed in with either method, `SignOutButton` shows the account name (email in the `title`) beside Sign out, hidden below `sm`. While a sign-out is under way (`useSigningOutReason()` is set), `Background` replaces the page with `src/auth/SignOutMessage.tsx`, a pending "Signing out" screen matching the sign-in one, which says when the user is signed out for being idle, and `SignOutButton` hides. It shows without `delayed`, because it answers a click, and stays up for the sign-out hold until the reload. `Background` also renders `SignedOutNotice`, a bottom-centred pill that confirms a sign-out for 4 seconds inside an always-present `role="status"` region.
-- Placeholder content uses skeleton bars (`motion-safe:animate-pulse`), not spinners.
-- Form errors render inline under the field with `role="alert"` and `aria-describedby`, using `text-cv-danger`.
-- The profile photo slot is `ProfilePortrait`: it shows the image when an `imageUrl` exists, otherwise a monogram. The API has no photo field yet.
+| File | Read when |
+|---|---|
+| [references/states.md](references/states.md) | Loading, error, empty and not-found screens, sign-in and sign-out states, skeletons, form errors, the profile photo |
+| [references/layout.md](references/layout.md) | Changing the CV background, the slides or their navigation |
+| [references/create-app.md](references/create-app.md) | Recreating the app, installing packages, or running the build and the local preview |
 
-## CV Background and Layout
-
-`src/pages/components/Background.tsx` owns the page background and content layer. Keep the background decorative and behind the content, with `aria-hidden="true"` and `pointer-events-none`. It layers soft accent glows, a masked grid (`bg-cv-grid`), a grain overlay (`bg-cv-grain`, both custom `@utility` classes in `src/index.css`), and a mouse-following spotlight driven by Framer Motion values. Keep page content in a higher stacking context than the background. Use a single `<main>` landmark per page (`Background` renders a `div`).
-
-The candidate CV shows the API-backed Profile (left text column plus the portrait on the right) followed by a "More to come" slide; it does not use a clickable navigation bar. Mouse-wheel input and ArrowDown/ArrowUp move between slides. Keep the selected index in Jotai through `useCandidateSectionNavigation`, clamp it to the available slide count, and pass its direction to `CandidateSectionTransition` so each slide animates in from the appropriate edge. `SectionNavigationHint` provides the visible slide count, progress, and navigation instructions. Keep these CV-specific components under `src/pages/Profile/components/CandidateCv/`.
-
-## Verification
-
-Run from the repository root:
-
-```powershell
-Push-Location src/Frontend
-npm run build
-npm run lint
-Pop-Location
-```
-
-Start the local preview with:
-
-```powershell
-Push-Location src/Frontend
-npm run dev -- --host 0.0.0.0 --port 3000
-Pop-Location
-```
-
-The expected local URL is `http://localhost:3000/`.
-
-Check every UI change in the browser with the `playwright` MCP server before it is shipped: desktop and mobile, both themes, the changed interactions, reduced motion and the console. The full checklist is under *Checks* in the `create-pull-request` skill.
+Check every UI change in the browser with the `playwright` MCP server before it is shipped: desktop and mobile, both themes, the changed interactions, reduced motion and the console. The full checklist is in `references/checks.md` of the `create-pull-request` skill.

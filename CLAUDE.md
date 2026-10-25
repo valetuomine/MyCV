@@ -36,7 +36,7 @@ When the user corrects how a step was done, update the skill or this file so the
 | PR titles | `User Story <id>: <work item title>` or `Task <id>: <work item title>` |
 | PR reviewer comments | Finnish |
 | Code, comments and docs in the repo | English |
-| Frontend code comments | JSDoc only (summary, `@param`, `@returns`), on every function and every `const` with logic; no `//` comments or commented-out code. Enforced by `eslint-plugin-jsdoc`. See *Frontend Conventions* in `/setup-frontend` |
+| Frontend code comments | JSDoc only (summary, `@param`, `@returns`), on every function and every `const` with logic; no `//` comments or commented-out code. Enforced by `eslint-plugin-jsdoc`. See `references/jsdoc.md` in `/setup-frontend` |
 
 ## Checks
 
@@ -51,7 +51,7 @@ npm --prefix src/Frontend run build
 
 Format changed C# with `dotnet format` and changed frontend files with Prettier.
 
-Check every frontend UI change in a real browser with the `playwright` MCP server before pushing: desktop and mobile, both themes, the changed interactions, reduced motion and the console. The checklist is in `/create-pull-request`.
+Check every frontend UI change in a real browser with the `playwright` MCP server before pushing: desktop and mobile, both themes, the changed interactions, reduced motion and the console. The checklist is in `references/checks.md` of `/create-pull-request`.
 
 ## Tools
 

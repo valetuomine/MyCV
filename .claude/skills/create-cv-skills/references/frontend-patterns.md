@@ -28,7 +28,7 @@
 
 - Use `VITE_API_BASE_URL` as public build-time configuration for the deployed API origin. It is not a secret. Leave it empty locally to use the Vite `/api` development proxy.
 - Never place API keys, tokens, passwords, or other credentials in `VITE_*` variables.
-- Derive API response types from `src/generated/openapi.ts`. After changing API DTOs or routes, regenerate OpenAPI types from the running Development API using the frontend's `generate-types` script; do not hand-edit the generated file.
+- Derive API response types from `src/generated/openapi.ts`. After changing API DTOs or routes, regenerate OpenAPI types from the running Development API using the frontend's `generate-types` script; do not hand-edit the generated file. `.claude/settings.json` blocks reading it to save tokens: its schema names are the backend DTO and request class names under `src/Backend/CV.LogicInterface/Dto/` (for example `components["schemas"]["ProfileDto"]`), so read the class there instead.
 - Add frontend dependencies only when absent; reuse the existing React Router, Redux Toolkit/RTK Query, Jotai, and React Redux packages.
 
 ## Form component conventions
