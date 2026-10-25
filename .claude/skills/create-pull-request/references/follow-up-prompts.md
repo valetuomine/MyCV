@@ -1,6 +1,6 @@
 # Follow-up Prompts
 
-Part of the `create-pull-request` skill. Read it in step 8 of the workflow, before writing the report.
+Part of the `create-pull-request` skill. Read it in step 9 of the workflow, before writing the report.
 
 End the report with prompts that the user copies into a new chat to continue the work. Write them in English, each in its own fenced `text` code block with a one-line Finnish heading above it that says when to use it. Like the kickoff prompt of the `write-user-story` skill, they point to the work item and the pull request instead of repeating them.
 

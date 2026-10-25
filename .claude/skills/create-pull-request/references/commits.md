@@ -1,6 +1,6 @@
 # Commits
 
-Part of the `create-pull-request` skill. Read it in step 5 of the workflow.
+Part of the `create-pull-request` skill. Read it in step 6 of the workflow.
 
 Check the branch before each commit as described in *Never Commit On `main`* in `SKILL.md`.
 

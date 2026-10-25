@@ -1,6 +1,6 @@
 # Pull Request
 
-Part of the `create-pull-request` skill. Read it in step 7 of the workflow, unless the branch already has an active pull request.
+Part of the `create-pull-request` skill. Read it in step 8 of the workflow, unless the branch already has an active pull request.
 
 Create the PR with `repo_pull_request_write` (`action: create`):
 
@@ -48,8 +48,11 @@ Right after creating the PR, post the additional information as a PR comment wit
 ## Tarkistukset
 - <Each check that was run and its result, for example "dotnet build: OK", "npm run lint: OK".>
 
+## Koodikatselmointi
+- <The findings of the code review (`code-review.md`) by category, each marked "korjattu" or "jätetty ennalleen". Write "Ei havaintoja." when there were none.>
+
 ## Huomioitavaa
-- <Anything the reviewer must know or do: new migrations, new configuration values or environment variables, manual setup steps, known limitations. Leave the section out when there is nothing.>
+- <Anything the reviewer must know or do: new migrations, new configuration values or environment variables, manual setup steps, known limitations, a Must fix finding of the code review that the user chose to leave. Leave the section out when there is nothing.>
 
 ## Korjausten aloituskomento
 Kopioi tämä komento uuteen chattiin, kun olet kommentoinut pull requestin:
