@@ -58,6 +58,16 @@ export const SignInMethod = {
 
 export type SignInMethod = (typeof SignInMethod)[keyof typeof SignInMethod]
 
+export const SignInPopupOutcome = {
+  SignedIn: "signed-in",
+  Cancelled: "cancelled",
+  Failed: "failed",
+  Blocked: "blocked",
+} as const
+
+export type SignInPopupOutcome =
+  (typeof SignInPopupOutcome)[keyof typeof SignInPopupOutcome]
+
 export const LinkOutcome = {
   Linked: "linked",
   AlreadyLinked: "already-linked",

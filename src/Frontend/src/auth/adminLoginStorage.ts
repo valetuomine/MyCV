@@ -21,6 +21,14 @@ export const signInPromptRequiredKey = "mycv-sign-in-prompt-required"
 export const lastSignInMethodKey = "mycv-last-sign-in-method"
 /** Session-storage key for the sign-in method being added while its redirect is under way. */
 export const linkSignInKey = "mycv-link-sign-in"
+/**
+ * Local-storage key for the sign-in popups cancelled in the app. Local
+ * storage, because a popup still shares it after Microsoft's sign-in page
+ * has cut the popup off from the tab that opened it.
+ */
+const cancelledSignInPopupsKey = "mycv-cancelled-sign-in-popups"
+/** How many cancelled popup attempts are remembered. */
+const cancelledSignInPopupLimit = 10
 
 /** What is being linked, stored before the redirect to the new method. It holds no tokens. */
 export interface LinkSignInMarker {
@@ -66,6 +74,58 @@ export function readLinkSignInMarker(): LinkSignInMarker | null {
 /** Removes the linking marker. */
 export function clearLinkSignInMarker(): void {
   sessionStorage.removeItem(linkSignInKey)
+}
+
+/**
+ * Reads the IDs of the sign-in popups cancelled in the app.
+ *
+ * @returns The IDs, newest first, or none when storage is unavailable.
+ */
+function readCancelledSignInPopups(): string[] {
+  try {
+    const ids: unknown = JSON.parse(
+      localStorage.getItem(cancelledSignInPopupsKey) ?? "[]",
+    )
+    return Array.isArray(ids)
+      ? ids.filter((id): id is string => typeof id === "string")
+      : []
+  } catch {
+    return []
+  }
+}
+
+/**
+ * Remembers a sign-in popup cancelled in the app, so its window closes
+ * without signing in if the user finishes there anyway. Storage can be
+ * unavailable, for example in a private window, and the marker then just
+ * isn't kept.
+ *
+ * @param attemptId - The popup attempt's ID.
+ */
+export function markSignInPopupCancelled(attemptId: string): void {
+  try {
+    localStorage.setItem(
+      cancelledSignInPopupsKey,
+      JSON.stringify(
+        [attemptId, ...readCancelledSignInPopups()].slice(
+          0,
+          cancelledSignInPopupLimit,
+        ),
+      ),
+    )
+  } catch {
+    return
+  }
+}
+
+/**
+ * Tells whether a sign-in popup was cancelled in the app.
+ *
+ * @param attemptId - The popup attempt's ID.
+ * @returns True when the attempt was cancelled.
+ */
+export function isSignInPopupCancelled(attemptId: string): boolean {
+  return readCancelledSignInPopups().includes(attemptId)
 }
 
 /**

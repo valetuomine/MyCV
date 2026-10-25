@@ -21,6 +21,10 @@ import {
   startGoogleSignIn,
   subscribeGoogleSession,
 } from "./googleAuth"
+import {
+  hasAbandonedSignInPopup,
+  subscribeAbandonedSignInPopup,
+} from "./signInPopup"
 import { RoutePaths } from "../routePaths"
 import { SignInMethod, type SignOutReason } from "../types"
 
@@ -64,6 +68,8 @@ interface AuthSession {
 /**
  * Combines the MSAL account and the Google session into one sign-in state.
  * Only one is active at a time, because starting a sign-in clears the other.
+ * MSAL stays busy with a Microsoft popup that was cancelled until the next
+ * popup or its timeout ends it, which doesn't count as busy here.
  *
  * @returns Whether someone is signed in, with which method and account, and whether MSAL is busy.
  */
@@ -73,7 +79,11 @@ export function useAuthSession(): AuthSession {
     subscribeGoogleSession,
     getGoogleSession,
   )
-  const isBusy = inProgress !== InteractionStatus.None
+  const hasAbandonedPopup = useSyncExternalStore(
+    subscribeAbandonedSignInPopup,
+    hasAbandonedSignInPopup,
+  )
+  const isBusy = inProgress !== InteractionStatus.None && !hasAbandonedPopup
   /** The active Microsoft account, or the first signed-in one. */
   const msalAccount = accounts[0]
     ? (instance.getActiveAccount() ?? accounts[0])

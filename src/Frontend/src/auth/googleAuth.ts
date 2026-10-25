@@ -75,6 +75,19 @@ interface StartGoogleSignInOptions {
   link?: boolean
 }
 
+/** What a Google response holds once checked against its request. */
+interface CheckedGoogleResponse {
+  matchesRequest: boolean
+  failure: SignInFailure | null
+  session: GoogleSession | null
+}
+
+/** A Google sign-in in a popup, whose request stays in the opening tab's memory. */
+export interface GooglePopupSignIn {
+  url: string
+  complete: (fragment: string) => SignInFailure | null
+}
+
 /**
  * Parses a JSON value from session storage.
  *
@@ -151,6 +164,37 @@ export function getGoogleIdToken(): string | null {
 }
 
 /**
+ * Builds the Google authorization URL for an ID token.
+ *
+ * @param request - The request whose `state` and `nonce` the response must carry.
+ * @param prompt - `none` for a silent renewal, `select_account` to let the user choose.
+ * @param loginHint - The account to sign in, such as the previous token's `sub`.
+ * @returns The authorization URL.
+ */
+function buildAuthorizationUrl(
+  request: PendingGoogleRequest,
+  prompt?: StartGoogleSignInOptions["prompt"],
+  loginHint?: string,
+): string {
+  const parameters = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: googleRedirectUri,
+    response_type: "id_token",
+    scope: "openid email profile",
+    nonce: request.nonce,
+    state: request.state,
+  })
+  if (prompt) {
+    parameters.set("prompt", prompt)
+  }
+  if (loginHint) {
+    parameters.set("login_hint", loginHint)
+  }
+
+  return `${authorizationEndpoint}?${parameters}`
+}
+
+/**
  * Sends the browser to Google sign-in for an ID token. Stores `state`, the
  * `nonce` and where to return in session storage, so the callback can check
  * the response belongs to this request.
@@ -176,23 +220,7 @@ export function startGoogleSignIn({
     link,
   }
   sessionStorage.setItem(pendingRequestKey, JSON.stringify(request))
-
-  const parameters = new URLSearchParams({
-    client_id: clientId,
-    redirect_uri: googleRedirectUri,
-    response_type: "id_token",
-    scope: "openid email profile",
-    nonce: request.nonce,
-    state: request.state,
-  })
-  if (prompt) {
-    parameters.set("prompt", prompt)
-  }
-  if (loginHint) {
-    parameters.set("login_hint", loginHint)
-  }
-
-  window.location.assign(`${authorizationEndpoint}?${parameters}`)
+  window.location.assign(buildAuthorizationUrl(request, prompt, loginHint))
 }
 
 /**
@@ -214,13 +242,128 @@ function decodeTokenClaims(token: string): GoogleIdTokenClaims | null {
 }
 
 /**
- * Checks Google's response against the stored request and stores the
- * session when the ID token is for MyCV, unexpired and carries the request's
- * nonce. A silent renewal that fails, usually with `login_required`, clears
- * the session and asks for sign-in, so an expired token can't start the same
- * renewal again and again. A sign-in that adds a method to the CV returns
- * its ID token as the link token and leaves the session, the "Last used"
- * method and the post-sign-out prompt as they were.
+ * Checks Google's response against its request: the `state` first, then an
+ * error, then whether the ID token is for MyCV, unexpired and carries the
+ * request's nonce. Shared by the redirect and the popup, so both accept
+ * exactly the same responses.
+ *
+ * @param response - The parameters from the callback URL's fragment, or null without one.
+ * @param request - The request the response must belong to, or null without one.
+ * @returns Whether the response belongs to the request, why it failed, or
+ *   the session its valid ID token makes.
+ */
+function checkGoogleResponse(
+  response: URLSearchParams | null,
+  request: PendingGoogleRequest | null,
+): CheckedGoogleResponse {
+  if (!response || !request || response.get("state") !== request.state) {
+    return {
+      matchesRequest: false,
+      failure: SignInFailure.Failed,
+      session: null,
+    }
+  }
+
+  const error = response.get("error")
+  if (error) {
+    return {
+      matchesRequest: true,
+      failure:
+        error === "access_denied"
+          ? SignInFailure.Cancelled
+          : SignInFailure.Failed,
+      session: null,
+    }
+  }
+
+  const idToken = response.get("id_token")
+  const claims = idToken ? decodeTokenClaims(idToken) : null
+  if (
+    !idToken ||
+    !claims?.sub ||
+    !claims.exp ||
+    claims.nonce !== request.nonce ||
+    claims.aud !== clientId ||
+    !validIssuers.includes(claims.iss ?? "") ||
+    claims.exp * 1000 <= Date.now()
+  ) {
+    return {
+      matchesRequest: true,
+      failure: SignInFailure.Failed,
+      session: null,
+    }
+  }
+
+  return {
+    matchesRequest: true,
+    failure: null,
+    session: {
+      idToken,
+      sub: claims.sub,
+      exp: claims.exp,
+      name: claims.name,
+      email: claims.email,
+    },
+  }
+}
+
+/**
+ * Stores a signed-in Google session, remembers Google as the last sign-in
+ * method and clears the credential prompt that a sign-out required.
+ *
+ * @param session - The session from a checked response.
+ */
+function storeSignedInSession(session: GoogleSession): void {
+  setGoogleSession(session)
+  storeLastSignInMethod(SignInMethod.Google)
+  clearSignInPromptRequired()
+}
+
+/**
+ * Prepares a Google sign-in in a popup. Its request stays in this tab's
+ * memory, never in session storage, which the popup gets a copy of. Only
+ * this tab completes it, so the popup never stores a session.
+ *
+ * @param state - The popup's `state`, which marks its response as a popup's.
+ * @param prompt - `select_account` to let the user choose, as after a sign-out.
+ * @returns The URL to open in the popup, and the function that checks the
+ *   popup's fragment and stores the session, returning why it failed or null.
+ */
+export function createGooglePopupSignIn(
+  state: string,
+  prompt?: "select_account",
+): GooglePopupSignIn {
+  const request: PendingGoogleRequest = {
+    state,
+    nonce: crypto.randomUUID(),
+    returnPath: null,
+    silent: false,
+  }
+
+  return {
+    url: buildAuthorizationUrl(request, prompt),
+    complete: (fragment) => {
+      const { failure, session } = checkGoogleResponse(
+        new URLSearchParams(fragment),
+        request,
+      )
+      if (!session) {
+        return failure ?? SignInFailure.Failed
+      }
+
+      storeSignedInSession(session)
+      return null
+    },
+  }
+}
+
+/**
+ * Checks Google's redirect response against the stored request and stores
+ * the session when it is valid. A silent renewal that fails, usually with
+ * `login_required`, clears the session and asks for sign-in, so an expired
+ * token can't start the same renewal again and again. A sign-in that adds a
+ * method to the CV returns its ID token as the link token and leaves the
+ * session, the "Last used" method and the post-sign-out prompt as they were.
  *
  * @param response - The parameters from the callback URL's fragment, or null without one.
  * @returns What the callback found.
@@ -238,59 +381,29 @@ function readGoogleResponse(
     isLink: request?.link ?? false,
     linkToken: null,
   }
+  const { matchesRequest, failure, session } = checkGoogleResponse(
+    response,
+    request,
+  )
 
-  if (!response || !request || response.get("state") !== request.state) {
+  if (!request || !matchesRequest) {
     return result
   }
 
-  const error = response.get("error")
-  if (error && request.silent) {
-    clearGoogleSession()
-    return { ...result, failure: null, isSignInRequired: true }
-  }
-
-  if (error) {
-    return {
-      ...result,
-      failure:
-        error === "access_denied"
-          ? SignInFailure.Cancelled
-          : SignInFailure.Failed,
-    }
-  }
-
-  const idToken = response.get("id_token")
-  const claims = idToken ? decodeTokenClaims(idToken) : null
-  if (
-    !idToken ||
-    !claims?.sub ||
-    !claims.exp ||
-    claims.nonce !== request.nonce ||
-    claims.aud !== clientId ||
-    !validIssuers.includes(claims.iss ?? "") ||
-    claims.exp * 1000 <= Date.now()
-  ) {
+  if (!session) {
     if (request.silent) {
       clearGoogleSession()
       return { ...result, failure: null, isSignInRequired: true }
     }
 
-    return result
+    return { ...result, failure }
   }
 
   if (request.link) {
-    return { ...result, failure: null, linkToken: idToken }
+    return { ...result, failure: null, linkToken: session.idToken }
   }
 
-  setGoogleSession({
-    idToken,
-    sub: claims.sub,
-    exp: claims.exp,
-    name: claims.name,
-    email: claims.email,
-  })
-  storeLastSignInMethod(SignInMethod.Google)
-  clearSignInPromptRequired()
+  storeSignedInSession(session)
   return { ...result, failure: null }
 }
 

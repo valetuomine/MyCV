@@ -26,6 +26,7 @@ interface SignInMethodButtonProps {
   label?: string
   disabled?: boolean
   describedBy?: string
+  autoFocus?: boolean
   onSelect: (method: SignInMethod) => void
 }
 
@@ -40,6 +41,7 @@ interface SignInMethodButtonProps {
  * @param props.label - The button text, "Sign in with …" by default.
  * @param props.disabled - Whether the button is disabled.
  * @param props.describedBy - The ID of an element that explains the button, such as why it is disabled.
+ * @param props.autoFocus - Whether the button takes focus when it appears, such as after a cancelled sign-in.
  * @param props.onSelect - Starts sign-in with the method.
  * @returns The sign-in button.
  */
@@ -49,6 +51,7 @@ export default function SignInMethodButton({
   label,
   disabled = false,
   describedBy,
+  autoFocus = false,
   onSelect,
 }: SignInMethodButtonProps): JSX.Element {
   const badgeId = useId()
@@ -60,6 +63,7 @@ export default function SignInMethodButton({
         type="button"
         onClick={() => onSelect(method)}
         disabled={disabled}
+        autoFocus={autoFocus}
         aria-describedby={
           [isLastUsed ? badgeId : null, describedBy]
             .filter(Boolean)

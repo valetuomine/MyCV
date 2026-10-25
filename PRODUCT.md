@@ -42,7 +42,7 @@ What MyCV stores about people, beyond the public CV content itself:
 - **Last sign-in time** (`LastSignInAt`): updated when the owner opens their CV's admin view.
 - **Linking sign-in methods:** the owner adds a method only by signing in with both the current method and the new one, never by matching email addresses. The new method's token is checked by the API and not stored; adding saves one more sign-in identity, and removing one deletes it. While the redirect is under way, session storage holds a "linking in progress" marker with the CV and the methods involved, but no tokens. The admin view shows the session's own email address from the browser, not from the database.
 - **Google sign-up list** (`Authentication:Google:AllowedSignUpEmails`): invited email addresses, kept in app settings, not in the database or the repository. A Google sign-in's email address is only compared against this list and is not stored.
-- **In the browser:** sign-in tokens stay in session storage for the tab (MSAL's cache and the Google ID token), and local storage holds only the theme, the last sign-in method and a post-sign-out flag.
+- **In the browser:** sign-in tokens stay in session storage for the tab (MSAL's cache and the Google ID token), and local storage holds only the theme, the last sign-in method, a post-sign-out flag and the random IDs of the last few sign-in popups cancelled in the app, so a cancelled popup can't sign in later. A sign-in popup never stores anything: it hands the provider's response to the tab that opened it and closes.
 
 Deleting a CV deletes its sign-in identities. Any public privacy notice must cover these items.
 

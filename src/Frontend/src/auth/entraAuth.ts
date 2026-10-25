@@ -30,6 +30,12 @@ export const isEntraConfigured = Boolean(clientId && tenantId && apiScope)
 export const redirectUri = `${window.location.origin}/auth/callback`
 /** Set while a token redirect is starting, so parallel requests start only one. */
 let isTokenRedirectInProgress = false
+/**
+ * How long a sign-in popup waits for its response before it counts as
+ * cancelled. MSAL's default of 60 seconds cuts off a normal sign-in with a
+ * password and a second factor.
+ */
+export const signInPopupTimeoutMs = 10 * 60 * 1000
 
 /**
  * The app's MSAL client. Without configuration it falls back to a placeholder
@@ -44,6 +50,7 @@ export const msalInstance = new PublicClientApplication({
       : "https://login.microsoftonline.com/organizations",
     redirectUri,
   },
+  system: { popupBridgeTimeout: signInPopupTimeoutMs },
 })
 
 /** The error from the last failed redirect sign-in, or null. */

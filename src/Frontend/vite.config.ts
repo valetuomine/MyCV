@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url"
  * stays cached until that library is upgraded.
  *
  * MSAL is the largest chunk and every visitor downloads it, because
- * MsalProvider wraps the whole app in main.tsx. If the first load has to
+ * MsalProvider wraps the whole app in startApp.tsx. If the first load has to
  * shrink further, load MSAL only on the admin and sign-in routes.
  *
  * `@standard-schema/utils` sits in the redux chunk because RTK Query depends
@@ -57,11 +57,17 @@ function manualChunks(id: string): string | undefined {
 
 /**
  * Vite configuration. The dev server proxies `/api` to the local backend.
+ * MSAL's redirect bridge is pre-bundled, because only sign-in popups import
+ * it, and finding it on the first popup made the dev server re-optimise its
+ * dependencies and reload the tab in the middle of the sign-in.
  *
  * @see https://vite.dev/config/
  */
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  optimizeDeps: {
+    include: ["@azure/msal-browser/redirect-bridge"],
+  },
   server: {
     port: 3000,
     open: true,
