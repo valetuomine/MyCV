@@ -1,6 +1,6 @@
 # Kickoff Prompt
 
-Part of the `write-user-story` skill. Read it when ending the report with the kickoff prompt.
+Part of the `write-user-story` skill. Read it in step 7, when posting the kickoff prompt, and when ending the report with it.
 
 End the report with a prompt that the user copies into a new chat to start the work. Write it in English, in its own fenced `text` code block so it copies cleanly, one block per work item that is worked on in its own chat: the story, or each Task that has its own `Toteutusohje`.
 

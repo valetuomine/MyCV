@@ -18,7 +18,9 @@ Use this workflow to add a User Story to the `MyCV` project in Azure DevOps orga
 4. **Study the code the story touches.** Read the relevant files, components, endpoints and skills, so that the *Toteutusohje* names real paths and builds on how the code works today. See [references/implementation-prompt.md](references/implementation-prompt.md). Then choose the skills for the work; see [references/choosing-skills.md](references/choosing-skills.md).
 5. **Show the draft** to the user in the format under *Draft preview*. Do not create anything before the user approves it. Exception: when the `create-pull-request` skill calls this skill, create the story directly, because the user reviews it as part of the pull request.
 6. **Create** the story with `wit_work_item_write` (`action: create`), then link it to the parent Feature with `wit_work_item_link_write` (`type: parent`). Create any child Tasks with `wit_work_item_write` (`action: add_child`). Then install any new skill the draft named; see [references/choosing-skills.md](references/choosing-skills.md).
-7. **Report** the new ID and its link: `https://dev.azure.com/valetuominen/MyCV/_workitems/edit/<id>`, and end with the kickoff prompt, which is also posted to the work item's discussion. See [references/kickoff-prompt.md](references/kickoff-prompt.md).
+7. **Post the kickoff prompt** to the work item's discussion. See [references/kickoff-prompt.md](references/kickoff-prompt.md).
+8. **Set the state** as described under *State*.
+9. **Report** the new ID and its link: `https://dev.azure.com/valetuominen/MyCV/_workitems/edit/<id>`, the state it was set to, and end with the kickoff prompt.
 
 ## Parent Features
 
@@ -57,7 +59,20 @@ When an improvement concerns an existing area that has no Feature under Epic #43
 
 Read the assignee from the parent Feature instead of writing an email address into this skill, because the repository is mirrored to a public GitHub repository. If the Feature has no assignee, ask the user who the story should be assigned to.
 
-Leave these out, since the backlog does not use them: Acceptance Criteria, Story Points, Priority. Leave the state at its default (`New`).
+Leave these out, since the backlog does not use them: Acceptance Criteria, Story Points, Priority. Create the story in its default state (`New`) and set the state afterwards, see *State*.
+
+## State
+
+A User Story moves `New` → `Ready for Development` → `In Progress` → `Waiting for Deployment` → `Closed`. This skill sets only the first step; `create-pull-request` and the pipelines set the rest.
+
+When `create-pull-request` called this skill, skip this step: that skill moves the story to `In Progress`. Otherwise, once the story is complete (parent link, child Tasks and the kickoff prompt comment), update `System.State` with `wit_work_item_write` (`action: update`):
+
+| Story | State |
+|---|---|
+| Its `Toteutusohje` is complete and has no `Avoimet kysymykset` | `Ready for Development`: the next chat can start from the kickoff prompt right away |
+| It has `Avoimet kysymykset`, or the user said it still needs refining | Leave it `New`, and say in the report what keeps it there |
+
+Whenever you update the description of a `New` story so that its `Avoimet kysymykset` are answered and its `Toteutusohje` is complete, move it to `Ready for Development` in the same update. Tasks keep their default state, whether they are child Tasks or not.
 
 ## Tags
 
