@@ -2,7 +2,7 @@ import { useState, type JSX } from "react"
 import { signInMethodNames, signOutInApp, useAuthSession } from "./authSession"
 import useSignOutReturnSegment from "./useSignOutReturnSegment"
 import useSigningOutReason from "./useSigningOutReason"
-import { secondaryButton } from "../pages/components/buttonStyles"
+import Button from "../pages/components/Button"
 import { SignOutReason } from "../types"
 
 /**
@@ -41,15 +41,13 @@ export default function SignOutButton(): JSX.Element | null {
           <span className="sr-only">Signed in as </span>
           {account.name}
         </p>
-        <button
-          type="button"
-          className={secondaryButton}
+        <Button
           onClick={handleSignOut}
           disabled={isBusy}
           aria-label={`Sign out of ${signInMethodNames[method]}`}
         >
           Sign out
-        </button>
+        </Button>
       </div>
       {signOutError && (
         <span role="alert" className="text-sm text-cv-danger">

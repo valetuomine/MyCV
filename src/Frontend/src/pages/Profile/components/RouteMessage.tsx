@@ -1,8 +1,7 @@
 import type { JSX, ReactNode } from "react"
-import { useNavigate } from "react-router-dom"
-import { primaryButton, secondaryButton } from "../../components/buttonStyles"
+import Button from "../../components/Button"
 import { RoutePaths } from "../../../routePaths"
-import { Tone } from "../../../types"
+import { ButtonVariant, Tone } from "../../../types"
 
 interface RouteMessageProps {
   children: ReactNode
@@ -38,7 +37,6 @@ export default function RouteMessage({
   actions,
   delayed = false,
 }: RouteMessageProps): JSX.Element {
-  const navigate = useNavigate()
   /** Red for errors, accent otherwise. */
   const dotColor = tone === Tone.Error ? "bg-cv-danger" : "bg-cv-accent"
   /** Pending screens are centred so the loader is the focal point. */
@@ -102,22 +100,12 @@ export default function RouteMessage({
           (onRetry || showHomeButton) && (
             <div className="flex flex-wrap gap-3">
               {onRetry && (
-                <button
-                  type="button"
-                  onClick={onRetry}
-                  className={primaryButton}
-                >
+                <Button variant={ButtonVariant.Primary} onClick={onRetry}>
                   Try again
-                </button>
+                </Button>
               )}
               {showHomeButton && (
-                <button
-                  type="button"
-                  onClick={() => navigate(RoutePaths.Home)}
-                  className={secondaryButton}
-                >
-                  Open a CV
-                </button>
+                <Button to={RoutePaths.Home}>Open a CV</Button>
               )}
             </div>
           )

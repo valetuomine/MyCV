@@ -3,8 +3,8 @@ import type { Login } from "../../../../api/loginQueries"
 import googleLogo from "../../../../assets/google-g-logo.svg"
 import microsoftLogo from "../../../../assets/microsoft-logo.svg"
 import { signInMethodNames } from "../../../../auth/authSession"
-import { SignInMethod } from "../../../../types"
-import { buttonBase, secondaryButton } from "../../../components/buttonStyles"
+import { ButtonSize, ButtonVariant, SignInMethod } from "../../../../types"
+import Button from "../../../components/Button"
 import { formatProfileDate } from "../../utils/profileFormUtils"
 
 /** Each method's logo. */
@@ -29,8 +29,9 @@ interface SignInMethodRowProps {
  * One linked sign-in method: the provider's logo and name, when it was
  * added and last used, and Remove. The method of this session is marked and
  * shows the session's email, read from the browser; the API stores no email.
- * Remove asks for confirmation in place, and is disabled, with the reason
- * beside it, for the session's method and the last one. Focus moves to
+ * Remove asks for confirmation in place, and is unavailable, with the reason
+ * beside it, for the session's method and the last one. It stays focusable
+ * (`aria-disabled`), so keyboard and screen reader users reach the reason. Focus moves to
  * Keep when the confirmation opens, and back to Remove when it closes.
  *
  * @param props - The component props.
@@ -106,23 +107,23 @@ export default function SignInMethodRow({
       {isConfirming ? (
         <div className="flex flex-wrap items-center gap-2 max-sm:ml-9">
           <span className="text-sm text-cv-ink">Remove {name}?</span>
-          <button
-            type="button"
+          <Button
+            variant={ButtonVariant.Danger}
+            size={ButtonSize.Small}
             onClick={onConfirmRemove}
-            disabled={isRemoving}
-            className={`${buttonBase} border border-cv-danger text-cv-danger hover:bg-cv-overlay`}
+            loading={isRemoving}
+            loadingText="Removing…"
           >
-            {isRemoving ? "Removing…" : "Remove"}
-          </button>
-          <button
+            Remove
+          </Button>
+          <Button
             ref={keepButtonRef}
-            type="button"
+            size={ButtonSize.Small}
             onClick={onKeep}
             disabled={isRemoving}
-            className={secondaryButton}
           >
             Keep
-          </button>
+          </Button>
         </div>
       ) : (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 max-sm:ml-9">
@@ -131,17 +132,16 @@ export default function SignInMethodRow({
               {removeBlockedReason}
             </span>
           )}
-          <button
+          <Button
             ref={removeButtonRef}
-            type="button"
+            size={ButtonSize.Small}
             onClick={onRequestRemove}
-            disabled={removeBlockedReason !== null}
+            aria-disabled={removeBlockedReason !== null || undefined}
             aria-describedby={removeBlockedReason ? reasonId : undefined}
             aria-label={`Remove ${name}`}
-            className={secondaryButton}
           >
             Remove
-          </button>
+          </Button>
         </div>
       )}
     </li>

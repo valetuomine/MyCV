@@ -6,6 +6,7 @@ import {
   type Path,
 } from "react-hook-form"
 import { InputType } from "../../types"
+import { toExternalUrl } from "../Profile/utils/profileFormUtils"
 
 interface RHFInputProps<TFieldValues extends FieldValues> extends Omit<
   InputHTMLAttributes<HTMLInputElement>,
@@ -86,9 +87,7 @@ export default function RHFInput<TFieldValues extends FieldValues>({
       ? `mailto:${value}`
       : type === InputType.Tel
         ? `tel:${value}`
-        : /^https?:\/\//i.test(value)
-          ? value
-          : `https://${value}`
+        : toExternalUrl(value)
   const displayValue = displayLabel ?? value
   const { ref: inputRef, ...inputProps } = register(name)
 

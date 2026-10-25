@@ -1,15 +1,14 @@
 import { m as motion, type Variants } from "framer-motion"
 import { useEffect, useId, useRef, useState, type JSX } from "react"
 import type { Profile } from "../../../../api/profileQueries"
+import { ButtonVariant } from "../../../../types"
+import Button from "../../../components/Button"
 import CopyLinkButton from "../../../components/CopyLinkButton"
-import RHFInput from "../../../components/RHFInput"
 import {
-  externalLinkArrow,
-  primaryButton,
-  secondaryButton,
-} from "../../../components/buttonStyles"
-import type { ProfileSchema } from "../../schemas/profile-form-schema"
-import { formatProfileDate, getInitials } from "../../utils/profileFormUtils"
+  formatProfileDate,
+  getInitials,
+  toExternalUrl,
+} from "../../utils/profileFormUtils"
 import ProfileName from "../ProfileName"
 import ProfilePortrait from "../ProfilePortrait"
 
@@ -56,15 +55,15 @@ function ExpandableSummary({ text }: { text: string }): JSX.Element {
         {text}
       </p>
       {isLong && (
-        <button
-          type="button"
+        <Button
+          variant={ButtonVariant.Text}
           aria-expanded={expanded}
           aria-controls={id}
           onClick={() => setExpanded((current) => !current)}
-          className="mt-1 min-h-11 text-sm font-medium text-cv-accent underline decoration-cv-accent/50 underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cv-accent"
+          className="mt-1"
         >
           {expanded ? "Show less" : "Read more"}
-        </button>
+        </Button>
       )}
     </div>
   )
@@ -167,31 +166,27 @@ export default function ReadOnlyProfileForm({
           <CopyLinkButton url={publicUrl} label="Copy CV link" />
           {hasActions && (
             <>
-              <RHFInput<ProfileSchema>
-                name="gitHubUrl"
-                label="GitHub"
-                isEditing={false}
-                link
-                displayLabel="GitHub"
-                linkClassName={`${primaryButton} ${externalLinkArrow}`}
-              />
-              <RHFInput<ProfileSchema>
-                name="linkedInUrl"
-                label="LinkedIn"
-                isEditing={false}
-                link
-                displayLabel="LinkedIn"
-                linkClassName={`${secondaryButton} ${externalLinkArrow}`}
-              />
+              {values.gitHubUrl && (
+                <Button
+                  variant={ButtonVariant.Primary}
+                  href={toExternalUrl(values.gitHubUrl)}
+                >
+                  GitHub
+                </Button>
+              )}
+              {values.linkedInUrl && (
+                <Button href={toExternalUrl(values.linkedInUrl)}>
+                  LinkedIn
+                </Button>
+              )}
               {onEdit && (
-                <button
+                <Button
                   ref={editButtonRef}
-                  type="button"
                   onClick={onEdit}
-                  className={`${secondaryButton} border-dashed`}
+                  className="border-dashed"
                 >
                   Edit profile
-                </button>
+                </Button>
               )}
             </>
           )}

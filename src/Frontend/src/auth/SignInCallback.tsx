@@ -8,12 +8,9 @@ import {
 import { signInMethodNames } from "./authSession"
 import { retrySignInLocationState } from "./signInLocationState"
 import RouteMessage from "../pages/Profile/components/RouteMessage"
-import {
-  primaryButton,
-  secondaryButton,
-} from "../pages/components/buttonStyles"
+import Button from "../pages/components/Button"
 import { RoutePaths } from "../routePaths"
-import { SignInFailure, Tone, type SignInMethod } from "../types"
+import { ButtonVariant, SignInFailure, Tone, type SignInMethod } from "../types"
 
 interface SignInCallbackProps {
   method: SignInMethod
@@ -134,17 +131,16 @@ export default function SignInCallback({
         actions={
           <>
             {retryPath && (
-              <button
-                type="button"
+              <Button
+                variant={ButtonVariant.Primary}
                 onClick={() => retrySignIn(retryPath)}
-                className={primaryButton}
               >
                 Try again
-              </button>
+              </Button>
             )}
-            <button type="button" onClick={goBack} className={secondaryButton}>
+            <Button onClick={goBack}>
               {publicUrlSegment ? "Back to CV" : "Open a CV"}
-            </button>
+            </Button>
           </>
         }
       >

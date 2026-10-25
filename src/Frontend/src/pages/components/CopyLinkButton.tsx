@@ -1,6 +1,6 @@
 import { useEffect, useState, type JSX } from "react"
 import { CopyStatus } from "../../types"
-import { secondaryButton } from "./buttonStyles"
+import Button from "./Button"
 
 interface CopyLinkButtonProps {
   url: string
@@ -53,11 +53,7 @@ export default function CopyLinkButton({
 
   return (
     <div className="grid justify-items-start gap-2">
-      <button
-        type="button"
-        onClick={() => void copyUrl()}
-        className={secondaryButton}
-      >
+      <Button onClick={() => void copyUrl()}>
         <span className="grid">
           <span
             className={`${swapLabel} ${isCopied ? "-translate-y-2 opacity-0" : "opacity-100"}`}
@@ -86,7 +82,7 @@ export default function CopyLinkButton({
             Copied
           </span>
         </span>
-      </button>
+      </Button>
       <span role="status" className="sr-only">
         {isCopied ? "Link copied to clipboard." : ""}
       </span>

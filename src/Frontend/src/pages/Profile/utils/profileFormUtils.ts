@@ -56,6 +56,17 @@ export function getInitials(fullName?: string | null): string {
 }
 
 /**
+ * Makes a profile link absolute, so a value saved without a scheme, such as
+ * `github.com/user`, doesn't open as a path inside the app.
+ *
+ * @param value - The link as saved.
+ * @returns The link, with `https://` added when it has no `http(s)://`.
+ */
+export function toExternalUrl(value: string): string {
+  return /^https?:\/\//i.test(value) ? value : `https://${value}`
+}
+
+/**
  * Formats a profile date for display.
  *
  * @param value - An ISO date string from the API.

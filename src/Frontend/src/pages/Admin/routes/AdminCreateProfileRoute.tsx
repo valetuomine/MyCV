@@ -8,7 +8,8 @@ import { isSignInConfigured, useAuthSession } from "../../../auth/authSession"
 import SignInMessage from "../../../auth/SignInMessage"
 import useLoginRedirect from "../../../auth/useLoginRedirect"
 import { RoutePaths } from "../../../routePaths"
-import { primaryButton, secondaryButton } from "../../components/buttonStyles"
+import { ButtonVariant } from "../../../types"
+import Button from "../../components/Button"
 import ProfileFields from "../../Profile/components/forms/ProfileFields"
 import {
   createProfileSchema,
@@ -151,21 +152,20 @@ export default function AdminCreateProfileRoute(): JSX.Element {
             </p>
           )}
           <div className="flex flex-wrap gap-3">
-            <button
+            <Button
               type="submit"
-              disabled={createState.isLoading}
-              className={primaryButton}
+              variant={ButtonVariant.Primary}
+              loading={createState.isLoading}
+              loadingText="Creating…"
             >
-              {createState.isLoading ? "Creating…" : "Create profile"}
-            </button>
-            <button
-              type="button"
+              Create profile
+            </Button>
+            <Button
               onClick={() => navigate(RoutePaths.Home)}
               disabled={createState.isLoading}
-              className={secondaryButton}
             >
               Cancel
-            </button>
+            </Button>
           </div>
         </form>
       </FormProvider>

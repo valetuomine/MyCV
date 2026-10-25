@@ -1,5 +1,5 @@
 import type { JSX } from "react"
-import { secondaryButton } from "../../../components/buttonStyles"
+import Button from "../../../components/Button"
 
 interface ProfileFormStatusProps {
   error?: string
@@ -30,13 +30,9 @@ export default function ProfileFormStatus({
       >
         {error ?? "Loading profile details…"}
       </p>
-      <button
-        type="button"
-        onClick={onCancel}
-        className={`${secondaryButton} w-fit`}
-      >
+      <Button onClick={onCancel} className="w-fit">
         Cancel
-      </button>
+      </Button>
     </div>
   )
 }

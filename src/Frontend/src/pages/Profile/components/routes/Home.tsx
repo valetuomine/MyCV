@@ -14,8 +14,9 @@ import {
   readSignOutReason,
 } from "../../../../auth/adminLoginStorage"
 import { signedOutLocationState } from "../../../../auth/signedOutState"
-import { primaryButton } from "../../../components/buttonStyles"
+import Button from "../../../components/Button"
 import { RoutePaths } from "../../../../routePaths"
+import { ButtonVariant } from "../../../../types"
 
 /**
  * Accepts a bare public URL segment or a full CV link and returns the segment.
@@ -143,9 +144,9 @@ export default function Home(): JSX.Element {
               aria-describedby={error ? errorId : undefined}
               className="min-h-11 min-w-0 flex-1 rounded-lg border border-cv-field bg-cv-wash px-3.5 py-2.5 text-cv-ink transition-colors outline-none placeholder:text-cv-meta hover:border-cv-muted focus:border-cv-accent focus:ring-3 focus:ring-cv-accent/20 aria-invalid:border-cv-danger aria-invalid:ring-cv-danger/20"
             />
-            <button type="submit" className={primaryButton}>
+            <Button type="submit" variant={ButtonVariant.Primary}>
               Open CV
-            </button>
+            </Button>
           </div>
           {error && (
             <span id={errorId} role="alert" className="text-sm text-cv-danger">

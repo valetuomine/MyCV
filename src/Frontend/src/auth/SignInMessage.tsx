@@ -1,9 +1,6 @@
 import { useId, useState, type JSX, type ReactNode } from "react"
 import RouteMessage from "../pages/Profile/components/RouteMessage"
-import {
-  primaryButton,
-  secondaryButton,
-} from "../pages/components/buttonStyles"
+import Button from "../pages/components/Button"
 import { readLastSignInMethod } from "./adminLoginStorage"
 import {
   hasSignInChoice,
@@ -12,7 +9,7 @@ import {
   signInMethodNames,
 } from "./authSession"
 import SignInMethodButton from "./SignInMethodButton"
-import { SignInFailure, SignInMethod, Tone } from "../types"
+import { ButtonVariant, SignInFailure, SignInMethod, Tone } from "../types"
 
 interface SignInMessageProps {
   title: ReactNode
@@ -99,14 +96,9 @@ export default function SignInMessage({
   const [lastUsedMethod] = useState(readLastSignInMethod)
   const cancelledNoteId = useId()
   const backButton = (
-    <button
-      key="back"
-      type="button"
-      onClick={onBack}
-      className={secondaryButton}
-    >
+    <Button key="back" onClick={onBack}>
       {backLabel}
-    </button>
+    </Button>
   )
 
   if (!isSignInConfigured) {
@@ -138,21 +130,11 @@ export default function SignInMessage({
         }
         actions={
           <>
-            <button
-              type="button"
-              onClick={retrySignIn}
-              className={primaryButton}
-            >
+            <Button variant={ButtonVariant.Primary} onClick={retrySignIn}>
               Try again
-            </button>
+            </Button>
             {hasSignInChoice && (
-              <button
-                type="button"
-                onClick={chooseAnotherMethod}
-                className={secondaryButton}
-              >
-                Use another way
-              </button>
+              <Button onClick={chooseAnotherMethod}>Use another way</Button>
             )}
             {backButton}
           </>
@@ -171,15 +153,9 @@ export default function SignInMessage({
         tone={Tone.Pending}
         description={`Sign in in the window that opened. This page carries on once you're done.${isMicrosoft ? " Closed the window? Choose Cancel." : ""}`}
         actions={
-          <button
-            key="cancel"
-            type="button"
-            onClick={cancelSignIn}
-            autoFocus
-            className={secondaryButton}
-          >
+          <Button key="cancel" onClick={cancelSignIn} autoFocus>
             Cancel
-          </button>
+          </Button>
         }
         showHomeButton={false}
       >
@@ -203,26 +179,23 @@ export default function SignInMessage({
         actions={
           <>
             {isRedirectSlow ? (
-              <button
+              <Button
                 key="reload"
-                type="button"
+                variant={ButtonVariant.Primary}
                 onClick={() => window.location.reload()}
-                className={primaryButton}
               >
                 Reload page
-              </button>
+              </Button>
             ) : (
               pendingMethod && (
-                <button
+                <Button
                   key="cancel-redirect"
-                  type="button"
                   onClick={cancelSignIn}
                   aria-disabled={isRedirectLeaving || undefined}
                   autoFocus
-                  className={`${secondaryButton} aria-disabled:cursor-not-allowed aria-disabled:opacity-60`}
                 >
                   Cancel
-                </button>
+                </Button>
               )
             )}
             {backButton}

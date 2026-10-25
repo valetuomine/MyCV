@@ -7,11 +7,9 @@ import {
 } from "react"
 import { flushSync } from "react-dom"
 import { useFormState } from "react-hook-form"
+import { ButtonVariant } from "../../../../types"
+import Button from "../../../components/Button"
 import CopyLinkButton from "../../../components/CopyLinkButton"
-import {
-  primaryButton,
-  secondaryButton,
-} from "../../../components/buttonStyles"
 import type { ProfileSchema } from "../../schemas/profile-form-schema"
 import ProfileFields from "./ProfileFields"
 import ProfilePreview from "./ProfilePreview"
@@ -154,40 +152,33 @@ export default function EditableProfileForm({
               <p className="m-0 mr-auto px-2 text-sm text-cv-ink">
                 Discard your unsaved changes?
               </p>
-              <button
+              <Button
                 ref={keepEditingButtonRef}
-                type="button"
+                variant={ButtonVariant.Primary}
                 onClick={keepEditing}
-                className={primaryButton}
               >
                 Keep editing
-              </button>
-              <button
-                type="button"
-                onClick={onCancel}
-                className={secondaryButton}
-              >
-                Discard
-              </button>
+              </Button>
+              <Button onClick={onCancel}>Discard</Button>
             </>
           ) : (
             <>
-              <button
+              <Button
                 type="submit"
-                disabled={isSaving || !isDirty}
-                className={primaryButton}
+                variant={ButtonVariant.Primary}
+                loading={isSaving}
+                loadingText="Saving…"
+                disabled={!isDirty}
               >
-                {isSaving ? "Saving…" : "Save"}
-              </button>
-              <button
+                Save
+              </Button>
+              <Button
                 ref={cancelButtonRef}
-                type="button"
                 onClick={requestCancel}
                 disabled={isSaving}
-                className={secondaryButton}
               >
                 Cancel
-              </button>
+              </Button>
               <p
                 role="status"
                 className="m-0 ml-auto flex items-center gap-2 px-2 font-cv-mono text-xs tracking-wide text-cv-muted uppercase"

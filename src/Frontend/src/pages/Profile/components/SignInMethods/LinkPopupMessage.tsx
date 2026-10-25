@@ -1,7 +1,7 @@
 import type { JSX } from "react"
 import { signInMethodNames } from "../../../../auth/authSession"
 import { SignInMethod } from "../../../../types"
-import { secondaryButton } from "../../../components/buttonStyles"
+import Button from "../../../components/Button"
 
 interface LinkPopupMessageProps {
   method: SignInMethod
@@ -44,14 +44,9 @@ export default function LinkPopupMessage({
             " Closed the window? Choose Cancel."}
         </p>
       </div>
-      <button
-        type="button"
-        onClick={onCancel}
-        autoFocus
-        className={secondaryButton}
-      >
+      <Button onClick={onCancel} autoFocus>
         Cancel
-      </button>
+      </Button>
     </div>
   )
 }

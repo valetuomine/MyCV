@@ -25,7 +25,7 @@ import {
   prefersSignInPopup,
 } from "../../../../auth/signInPopup"
 import { LinkOutcome, SignInFailure, SignInMethod } from "../../../../types"
-import { secondaryButton } from "../../../components/buttonStyles"
+import Button from "../../../components/Button"
 import LinkPopupMessage from "./LinkPopupMessage"
 import type { ProfileSchema } from "../../schemas/profile-form-schema"
 import SignInMethodRow from "./SignInMethodRow"
@@ -371,13 +371,7 @@ export default function SignInMethodsSection({
           <p role="alert" className="m-0 text-sm text-cv-danger">
             Your sign-in methods couldn't be loaded.
           </p>
-          <button
-            type="button"
-            onClick={() => void loginsQuery.refetch()}
-            className={secondaryButton}
-          >
-            Try again
-          </button>
+          <Button onClick={() => void loginsQuery.refetch()}>Try again</Button>
         </div>
       ) : (
         <ul className="m-0 list-none divide-y divide-cv-line border-y border-cv-line p-0">

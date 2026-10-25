@@ -3,7 +3,8 @@ import { useAtom } from "jotai"
 import { useEffect, type JSX, type MouseEvent } from "react"
 import { flushSync } from "react-dom"
 import { themeAtom } from "../../state/themeAtoms"
-import { Theme } from "../../types"
+import { ButtonVariant, Theme } from "../../types"
+import Button from "./Button"
 
 const revealDurationMs = 520
 const revealEasing = "cubic-bezier(0.23, 1, 0.32, 1)"
@@ -100,12 +101,11 @@ export default function ThemeToggle(): JSX.Element {
   }
 
   return (
-    <button
-      type="button"
+    <Button
+      variant={ButtonVariant.Icon}
       onClick={toggleTheme}
       onMouseDown={preventMultiClickSelection}
       aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
-      className="grid size-11 place-items-center rounded-full border border-cv-line bg-cv-wash text-cv-copy transition-colors transition-transform duration-150 ease-out hover:border-cv-meta hover:bg-cv-overlay hover:text-cv-ink active:scale-95 motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cv-accent"
     >
       <svg
         aria-hidden="true"
@@ -132,6 +132,6 @@ export default function ThemeToggle(): JSX.Element {
       >
         <path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z" />
       </svg>
-    </button>
+    </Button>
   )
 }

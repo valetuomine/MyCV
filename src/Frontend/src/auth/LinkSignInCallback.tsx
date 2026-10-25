@@ -10,9 +10,10 @@ import { completeLinkSignIn } from "./linkSignIn"
 import { linkSignInLocationState } from "./signInLocationState"
 import { useLinkLoginMutation } from "../api/loginQueries"
 import RouteMessage from "../pages/Profile/components/RouteMessage"
-import { primaryButton } from "../pages/components/buttonStyles"
+import Button from "../pages/components/Button"
 import { RoutePaths } from "../routePaths"
 import {
+  ButtonVariant,
   LinkOutcome,
   Tone,
   type SignInFailure,
@@ -117,9 +118,9 @@ export default function LinkSignInCallback({
       <RouteMessage
         description={`Your session ended while you were away, so ${methodName} wasn't added. Sign in again, then add it from your CV.`}
         actions={
-          <button type="button" onClick={backToCv} className={primaryButton}>
+          <Button variant={ButtonVariant.Primary} onClick={backToCv}>
             Back to CV
-          </button>
+          </Button>
         }
       >
         Sign in again to add {methodName}

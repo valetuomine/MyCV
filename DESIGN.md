@@ -3,8 +3,10 @@ name: MyCV
 description: A quiet, dark-first CV page where the candidate's name is the artwork and one emerald accent does all the signalling.
 colors:
   accent: "#047857"
+  accent-strong: "#065f46"
   accent-ink: "#ffffff"
   accent-dark: "#4fd1a5"
+  accent-strong-dark: "#7ee2bf"
   accent-ink-dark: "#04130d"
   paper: "#fafafa"
   surface: "#ffffff"
@@ -15,6 +17,7 @@ colors:
   muted: "#5f5f68"
   meta: "#6e6e77"
   danger: "#dc2626"
+  wash: "rgb(9 9 11 / 0.025)"
   midnight: "#09090b"
   surface-dark: "#111113"
   line-dark: "#26262b"
@@ -24,6 +27,7 @@ colors:
   muted-dark: "#9e9ea6"
   meta-dark: "#85858e"
   danger-dark: "#f87171"
+  wash-dark: "rgb(255 255 255 / 0.03)"
 typography:
   display:
     fontFamily: "Geist Variable, ui-sans-serif, system-ui, sans-serif"
@@ -66,9 +70,9 @@ components:
     rounded: "{rounded.pill}"
     padding: "0.625rem 1.25rem"
   button-primary-hover:
-    backgroundColor: "{colors.ink}"
+    backgroundColor: "{colors.accent-strong}"
   button-secondary:
-    backgroundColor: "transparent"
+    backgroundColor: "{colors.wash}"
     textColor: "{colors.ink}"
     rounded: "{rounded.pill}"
     padding: "0.625rem 1.25rem"
@@ -108,6 +112,7 @@ A restrained zinc palette with one emerald accent. Components use only the seman
 
 - **Deep Emerald** (#047857, light theme): accent for the primary button, job title line and focus outlines.
 - **Mint Signal** (#4fd1a5, dark theme): the same role on dark; its ink colour is **Near-Black Green** (#04130d).
+- **Accent Strong** (#065f46 / dark #7ee2bf): the primary button's hover fill, and the text button's hover colour; deeper than the accent in light, brighter in dark.
 
 ### Neutral
 
@@ -155,7 +160,7 @@ Flat by default. Surfaces are separated by hairline borders and tonal difference
 
 ### Shadow Vocabulary
 
-- **Panel** (`0 2rem 4rem -2rem rgb(24 24 27 / 0.18)`, dark `rgb(0 0 0 / 0.8)`): the portrait panel only.
+- **Panel** (`0 2rem 4rem -2rem rgb(24 24 27 / 0.18)`, dark `rgb(0 0 0 / 0.8)`): the portrait panel at rest, and secondary and brand buttons on hover.
 - **Accent glow** (`0 0.5rem 2rem -0.75rem` accent at 55%): appears only on primary button hover.
 
 ### Named Rules
@@ -170,10 +175,19 @@ Three radii: **pill** (full) for buttons and the theme toggle, **panel** (1.5rem
 
 ### Buttons
 
-- **Shape:** pill (9999px), padding 0.625rem 1.25rem, 0.875rem medium text.
-- **Primary:** accent fill with accent ink text; hover turns fill to ink and adds the accent glow.
-- **Secondary:** transparent with hairline border; hover darkens border and adds a faint overlay. "Edit profile" uses the same style with a dashed border.
-- **Press / Focus:** `translate-y-px scale-[0.98]` on active; 2px accent outline, 2px offset on focus-visible; 150ms ease-out. External links add a "↗" that nudges up and right on hover.
+Every button and button-styled link is the shared `Button` component (`src/Frontend/src/pages/components/Button.tsx`); no component writes its own button styles.
+
+- **Shape:** pill (9999px), padding 0.625rem 1.25rem, 0.875rem medium text, at least 44px tall. The small size looks 36px tall but keeps a 44px touch target.
+- **Primary:** accent fill with accent ink text; hover deepens the fill to Accent Strong and adds the accent glow.
+- **Secondary** (the default)**:** faint wash with a hairline border; hover darkens the border, adds an overlay and the panel shadow. "Edit profile" uses the same style with a dashed border.
+- **Danger:** danger text and a half-strength danger border; hover makes the border full strength and adds a 10% danger tint. Used to confirm a removal.
+- **Icon:** a 44px circle with the secondary look, for the theme toggle; it needs an `aria-label`.
+- **Text:** an underlined accent label without a fill, such as Read more; hover turns the label and underline to Accent Strong.
+- **Brand:** the Microsoft and Google sign-in buttons in each provider's own colours; hover lays a faint 8% layer of the button's own text colour over it, which shows on any brand colour in both themes.
+- **Hover rule:** every usable button changes visibly on hover; a shadow alone doesn't count. Unavailable and loading buttons don't react.
+- **Press / Focus:** `scale-[0.97]` on active (icons 0.92); 2px accent outline, 2px offset on focus-visible; 200ms ease-out. Reduced motion keeps the colour changes and drops the press scale. External links add a "↗" that nudges up and right on hover.
+- **Loading:** a small spinner and the loading label ("Saving…") replace the label in place, so the button keeps its width; it keeps focus and ignores clicks.
+- **Unavailable:** 60% opacity and a not-allowed cursor. A button whose reason is shown beside it, or that becomes unavailable while focused, stays focusable (`aria-disabled`).
 
 ### Inputs / Fields
 

@@ -37,6 +37,24 @@ export const Tone = {
 
 export type Tone = (typeof Tone)[keyof typeof Tone]
 
+export const ButtonVariant = {
+  Primary: "primary",
+  Secondary: "secondary",
+  Danger: "danger",
+  Icon: "icon",
+  Text: "text",
+  Brand: "brand",
+} as const
+
+export type ButtonVariant = (typeof ButtonVariant)[keyof typeof ButtonVariant]
+
+export const ButtonSize = {
+  Small: "small",
+  Medium: "medium",
+} as const
+
+export type ButtonSize = (typeof ButtonSize)[keyof typeof ButtonSize]
+
 export const SignInFailure = {
   Cancelled: "cancelled",
   Failed: "failed",

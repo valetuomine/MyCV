@@ -1,9 +1,9 @@
 import { useId, type JSX } from "react"
 import googleLogo from "../assets/google-g-logo.svg"
 import microsoftLogo from "../assets/microsoft-logo.svg"
-import { buttonBase } from "../pages/components/buttonStyles"
+import Button from "../pages/components/Button"
 import { signInMethodNames } from "./authSession"
-import { SignInMethod } from "../types"
+import { ButtonVariant, SignInMethod } from "../types"
 
 /** Each method's logo and brand colours, from Google's and Microsoft's sign-in button guidelines. */
 const methodStyles: Record<SignInMethod, { logo: string; className: string }> =
@@ -32,14 +32,15 @@ interface SignInMethodButtonProps {
 
 /**
  * A "Sign in with …" button, or another label such as "Add Google", in
- * the provider's brand colours with its logo,
+ * the provider's brand colours with its logo, built on the brand `Button`,
  * and a "Last used" badge on the method of the last successful sign-in.
  *
  * @param props - The component props.
  * @param props.method - The sign-in method the button starts.
  * @param props.isLastUsed - Whether to show the "Last used" badge.
  * @param props.label - The button text, "Sign in with …" by default.
- * @param props.disabled - Whether the button is disabled.
+ * @param props.disabled - Whether the button is unavailable. It stays
+ *   focusable (`aria-disabled`), so `describedBy` can explain why.
  * @param props.describedBy - The ID of an element that explains the button, such as why it is disabled.
  * @param props.autoFocus - Whether the button takes focus when it appears, such as after a cancelled sign-in.
  * @param props.onSelect - Starts sign-in with the method.
@@ -59,21 +60,21 @@ export default function SignInMethodButton({
 
   return (
     <div className="relative">
-      <button
-        type="button"
+      <Button
+        variant={ButtonVariant.Brand}
         onClick={() => onSelect(method)}
-        disabled={disabled}
+        aria-disabled={disabled || undefined}
         autoFocus={autoFocus}
         aria-describedby={
           [isLastUsed ? badgeId : null, describedBy]
             .filter(Boolean)
             .join(" ") || undefined
         }
-        className={`${buttonBase} w-full border hover:shadow-cv-panel ${className}`}
+        className={`w-full ${className}`}
       >
         <img src={logo} alt="" aria-hidden="true" className="size-5" />
         {label ?? `Sign in with ${signInMethodNames[method]}`}
-      </button>
+      </Button>
       {isLastUsed && (
         <span
           id={badgeId}

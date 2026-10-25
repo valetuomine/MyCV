@@ -110,7 +110,7 @@ npm --prefix src/Frontend run build
 **Frontend UI** (any change to what the user sees: components, styles, layout, motion or text): check it in a real browser with the `playwright` MCP server before committing. Lint and build do not show how a change looks or behaves. Start the API and `npm --prefix src/Frontend run dev` if they are not running, open each affected view at `http://localhost:3000/<cv-address>`, and confirm:
 
 - It looks right on desktop (1440×900) and mobile (390×844), in both the light and the dark theme, with no horizontal scroll.
-- The changed interactions work: clicks, typing, keyboard focus and animations.
+- The changed interactions work: clicks, typing, keyboard focus and animations. Every usable button changes visibly on hover, in both themes (a shadow alone doesn't show).
 - With reduced motion (`browser_emulate_media`), the content still shows and the motion is off.
 - The browser console has no new errors or warnings.
 
