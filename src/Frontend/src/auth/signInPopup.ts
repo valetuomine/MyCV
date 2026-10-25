@@ -3,6 +3,7 @@ import {
   BrowserAuthErrorCodes,
   EventType,
   PromptValue,
+  type AccountInfo,
   type EventMessage,
   type PopupEvent,
 } from "@azure/msal-browser"
@@ -19,6 +20,7 @@ import {
   signInPopupTimeoutMs,
 } from "./entraAuth"
 import { clearGoogleSession, createGooglePopupSignIn } from "./googleAuth"
+import { microsoftSignInParameters } from "./signInLanguage"
 import { createPopupState, googlePopupChannelName } from "./signInPopupState"
 import { SignInFailure, SignInMethod, SignInPopupOutcome } from "../types"
 
@@ -31,11 +33,22 @@ const touchDeviceQuery = "(hover: none) and (pointer: coarse)"
 /** The Google popup's window name, so a new attempt reuses a window left open. */
 const googlePopupName = "mycv-google-sign-in"
 
+/**
+ * How a sign-in popup ended. A popup that adds a sign-in method also hands
+ * back the new method's token, and for Microsoft the account it signed in.
+ */
+export interface SignInPopupResult {
+  outcome: SignInPopupOutcome
+  linkToken: string | null
+  linkedAccount: AccountInfo | null
+}
+
 /** A sign-in popup that hasn't reported its outcome yet. */
 interface SignInPopupAttempt {
   id: string
+  isLink: boolean
   popup: Window | null
-  resolve: (outcome: SignInPopupOutcome) => void
+  resolve: (result: SignInPopupResult) => void
 }
 
 /** The attempt the sign-in screen is waiting for, or null. */
@@ -81,23 +94,26 @@ export function hasAbandonedSignInPopup(): boolean {
 }
 
 /**
- * Reports an attempt's outcome, once, if the sign-in screen still waits
- * for it. A later result of an attempt that was cancelled or replaced is
- * dropped.
+ * Reports an attempt's outcome, once, if the screen still waits for it. A
+ * later result of an attempt that was cancelled or replaced is dropped.
  *
  * @param attempt - The attempt.
  * @param outcome - How it ended.
+ * @param linkToken - The added method's token, when a linking popup succeeded.
+ * @param linkedAccount - The Microsoft account a linking popup signed in.
  */
 function settleAttempt(
   attempt: SignInPopupAttempt,
   outcome: SignInPopupOutcome,
+  linkToken: string | null = null,
+  linkedAccount: AccountInfo | null = null,
 ): void {
   if (currentAttempt !== attempt) {
     return
   }
 
   currentAttempt = null
-  attempt.resolve(outcome)
+  attempt.resolve({ outcome, linkToken, linkedAccount })
   notifyAbandonedPopupListeners()
 }
 
@@ -117,6 +133,59 @@ function handleMsalEvent(message: EventMessage): void {
 }
 
 msalInstance.addEventCallback(handleMsalEvent)
+
+/**
+ * Opens a window like `window.open`, and paints the blank page that MSAL
+ * opens first with the app's background and colour scheme, so the Microsoft
+ * popup doesn't flash white in the dark theme before Microsoft's page loads.
+ * The blank page shares this tab's origin until MSAL navigates it, which is
+ * also how MSAL sets its title.
+ *
+ * @param url - The URL to open.
+ * @param target - The window's name.
+ * @param features - The window's size and position.
+ * @returns The window, or null when the browser blocked it.
+ */
+function openThemedPopup(
+  url?: string | URL,
+  target?: string,
+  features?: string,
+): Window | null {
+  const popup = window.open(url, target, features)
+  if (!popup || url !== "about:blank") {
+    return popup
+  }
+
+  try {
+    const theme = getComputedStyle(document.documentElement)
+    const { style } = popup.document.documentElement
+    style.colorScheme = theme.colorScheme
+    style.background = theme.getPropertyValue("--cv-background")
+  } catch {
+    return popup
+  }
+
+  return popup
+}
+
+/**
+ * Stands in for this window as the Microsoft popup's parent, through MSAL's
+ * `popupWindowParent` request option. MSAL reads the window's position and
+ * size from it and opens the popup with its `open`, the only part replaced,
+ * by `openThemedPopup`. MSAL's `navigatePopups: false` would skip the blank
+ * page instead, but it opens the window only once the request is prepared,
+ * which browsers can block as no longer part of the click.
+ */
+const themedPopupParent = new Proxy(window, {
+  get(target, property) {
+    if (property === "open") {
+      return openThemedPopup
+    }
+
+    const value: unknown = Reflect.get(target, property)
+    return typeof value === "function" ? value.bind(target) : value
+  },
+})
 
 /**
  * Tells whether sign-in should open a popup. Phones and tablets used by
@@ -178,35 +247,48 @@ function outcomeForMsalError(error: unknown): SignInPopupOutcome {
 
 /**
  * Starts the Microsoft popup. MSAL opens the window synchronously, so this
- * must run in the click. `LOGIN_SUCCESS` in `entraAuth.ts` makes the account
- * active and remembers the method. The Google session is cleared first, so
- * only one session is ever active.
+ * must run in the click. For a sign-in, `LOGIN_SUCCESS` in `entraAuth.ts`
+ * makes the account active and remembers the method, and the Google session
+ * is cleared first, so only one session is ever active. A popup that adds a
+ * method keeps the session, and its linking state makes `entraAuth.ts`
+ * leave its account inactive; the account and its access token are handed
+ * back instead.
  *
  * @param attempt - The attempt.
- * @param isPromptRequired - Whether a sign-out requires the credentials again.
+ * @param prompt - The prompt to send, if any.
  */
 function startMicrosoftPopup(
   attempt: SignInPopupAttempt,
-  isPromptRequired: boolean,
+  prompt: string | undefined,
 ): void {
   const { width, height, top, left } = popupGeometry()
-  clearGoogleSession()
+  if (!attempt.isLink) {
+    clearGoogleSession()
+  }
   pendingMicrosoftAttempts.add(attempt.id)
   msalInstance
     .loginPopup({
       scopes: [apiScope],
       redirectUri,
-      prompt: isPromptRequired ? PromptValue.LOGIN : undefined,
-      state: createPopupState(attempt.id),
+      prompt,
+      state: createPopupState(attempt.id, attempt.isLink),
       correlationId: attempt.id,
+      extraQueryParameters: microsoftSignInParameters(),
       popupWindowAttributes: {
         popupSize: { width, height },
         popupPosition: { top, left },
       },
+      popupWindowParent: themedPopupParent,
       overrideInteractionInProgress: true,
     })
     .then(
-      () => settleAttempt(attempt, SignInPopupOutcome.SignedIn),
+      (result) =>
+        settleAttempt(
+          attempt,
+          SignInPopupOutcome.SignedIn,
+          attempt.isLink ? result.accessToken : null,
+          attempt.isLink ? result.account : null,
+        ),
       (error: unknown) => settleAttempt(attempt, outcomeForMsalError(error)),
     )
     .finally(() => {
@@ -217,24 +299,26 @@ function startMicrosoftPopup(
 
 /**
  * Starts the Google popup and waits for its fragment, which this tab checks
- * and stores. MSAL's session is cleared only once the window is open, so
+ * and stores, or hands back as the link token when the popup adds a method.
+ * For a sign-in, MSAL's session is cleared only once the window is open, so
  * nothing is awaited before `window.open`. A closed window counts as a
  * cancel, but the channel stays open until the next attempt, so a false
  * "closed" (if Google's sign-in page ever enforces its opener policy) still
- * signs the user in when the response arrives. After `signInPopupTimeoutMs`
- * the window is closed and the attempt cancelled.
+ * completes the attempt when the response arrives. After
+ * `signInPopupTimeoutMs` the window is closed and the attempt cancelled.
  *
  * @param attempt - The attempt.
- * @param isPromptRequired - Whether a sign-out requires choosing the account again.
+ * @param isAccountChoiceRequired - Whether to show Google's account chooser.
  */
 function startGooglePopup(
   attempt: SignInPopupAttempt,
-  isPromptRequired: boolean,
+  isAccountChoiceRequired: boolean,
 ): void {
   const { width, height, top, left } = popupGeometry()
   const signIn = createGooglePopupSignIn(
-    createPopupState(attempt.id),
-    isPromptRequired ? "select_account" : undefined,
+    createPopupState(attempt.id, attempt.isLink),
+    isAccountChoiceRequired ? "select_account" : undefined,
+    attempt.isLink,
   )
   const popup = window.open(
     signIn.url,
@@ -247,7 +331,9 @@ function startGooglePopup(
   }
 
   attempt.popup = popup
-  void msalInstance.clearCache()
+  if (!attempt.isLink) {
+    void msalInstance.clearCache()
+  }
   const channel = new BroadcastChannel(googlePopupChannelName(attempt.id))
   const closedPoll = window.setInterval(() => {
     if (popup.closed) {
@@ -274,7 +360,7 @@ function startGooglePopup(
   stopGooglePopup = stop
   channel.onmessage = (event: MessageEvent<string>) => {
     stop()
-    const failure = signIn.complete(event.data)
+    const { failure, linkToken } = signIn.complete(event.data)
     settleAttempt(
       attempt,
       failure === null
@@ -282,6 +368,7 @@ function startGooglePopup(
         : failure === SignInFailure.Cancelled
           ? SignInPopupOutcome.Cancelled
           : SignInPopupOutcome.Failed,
+      linkToken,
     )
   }
 }
@@ -306,29 +393,27 @@ export function cancelSignInPopup(): void {
 }
 
 /**
- * Opens the chosen provider's sign-in in a popup. It must be called in the
- * click handler, with nothing awaited before it, or the browser blocks the
- * window. Like `startSignInRedirect`, it clears the other provider's session
- * and a leftover linking marker, and after a sign-out it asks for the
- * credentials or the account again. Linking never uses this. An attempt
- * still under way is cancelled first.
+ * Starts a popup attempt with the chosen provider, after cancelling an
+ * attempt still under way. A popup that adds a method always lets the user
+ * choose the account; a sign-in asks for the credentials or the account
+ * again only after a sign-out.
  *
  * @param method - The sign-in method.
- * @returns A promise of the attempt's outcome: signed in, cancelled (in the
- *   app, by closing Google's window or by the timeout), failed, or blocked.
- *   A result that arrives after the attempt ended is dropped.
+ * @param isLink - Whether the popup adds a sign-in method to the CV.
+ * @returns A promise of how the attempt ended.
  */
-export function openSignInPopup(
+function startPopupAttempt(
   method: SignInMethod,
-): Promise<SignInPopupOutcome> {
+  isLink: boolean,
+): Promise<SignInPopupResult> {
   cancelSignInPopup()
   stopGooglePopup?.()
-  const isPromptRequired = isSignInPromptRequired()
-  clearLinkSignInMarker()
+  const isPromptRequired = isLink || isSignInPromptRequired()
 
   return new Promise((resolve) => {
     const attempt: SignInPopupAttempt = {
       id: crypto.randomUUID(),
+      isLink,
       popup: null,
       resolve,
     }
@@ -338,7 +423,51 @@ export function openSignInPopup(
     if (method === SignInMethod.Google) {
       startGooglePopup(attempt, isPromptRequired)
     } else {
-      startMicrosoftPopup(attempt, isPromptRequired)
+      startMicrosoftPopup(
+        attempt,
+        isLink
+          ? PromptValue.SELECT_ACCOUNT
+          : isPromptRequired
+            ? PromptValue.LOGIN
+            : undefined,
+      )
     }
   })
+}
+
+/**
+ * Opens the chosen provider's sign-in in a popup. It must be called in the
+ * click handler, with nothing awaited before it, or the browser blocks the
+ * window. Like `startSignInRedirect`, it clears the other provider's session
+ * and a leftover linking marker, and after a sign-out it asks for the
+ * credentials or the account again. An attempt still under way is
+ * cancelled first.
+ *
+ * @param method - The sign-in method.
+ * @returns A promise of the attempt's outcome: signed in, cancelled (in the
+ *   app, by closing Google's window or by the timeout), failed, or blocked.
+ *   A result that arrives after the attempt ended is dropped.
+ */
+export function openSignInPopup(
+  method: SignInMethod,
+): Promise<SignInPopupOutcome> {
+  clearLinkSignInMarker()
+  return startPopupAttempt(method, false).then(({ outcome }) => outcome)
+}
+
+/**
+ * Opens the sign-in of a method being added to the CV in a popup, in the
+ * click handler like `openSignInPopup`, with the same Cancel, timeout and
+ * cancelled-window handling. It keeps the current session: it clears
+ * neither provider's session, and leaves the "Last used" method and the
+ * post-sign-out prompt alone.
+ *
+ * @param method - The method being added.
+ * @returns A promise of the outcome, with the new method's token and, for
+ *   Microsoft, its account when the sign-in succeeded.
+ */
+export function openLinkSignInPopup(
+  method: SignInMethod,
+): Promise<SignInPopupResult> {
+  return startPopupAttempt(method, true)
 }

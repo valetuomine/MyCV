@@ -25,6 +25,7 @@ import {
   hasAbandonedSignInPopup,
   subscribeAbandonedSignInPopup,
 } from "./signInPopup"
+import { microsoftSignInParameters } from "./signInLanguage"
 import { RoutePaths } from "../routePaths"
 import { SignInMethod, type SignOutReason } from "../types"
 
@@ -68,8 +69,11 @@ interface AuthSession {
 /**
  * Combines the MSAL account and the Google session into one sign-in state.
  * Only one is active at a time, because starting a sign-in clears the other.
- * MSAL stays busy with a Microsoft popup that was cancelled until the next
- * popup or its timeout ends it, which doesn't count as busy here.
+ * The one exception is a Microsoft account being added to a Google
+ * session's CV: it is never made active, and the Google session wins until
+ * linking removes the account. MSAL stays busy with a Microsoft popup that
+ * was cancelled until the next popup or its timeout ends it, which doesn't
+ * count as busy here.
  *
  * @returns Whether someone is signed in, with which method and account, and whether MSAL is busy.
  */
@@ -84,9 +88,9 @@ export function useAuthSession(): AuthSession {
     hasAbandonedSignInPopup,
   )
   const isBusy = inProgress !== InteractionStatus.None && !hasAbandonedPopup
-  /** The active Microsoft account, or the first signed-in one. */
+  /** The active Microsoft account, or the first signed-in one when there is no Google session. */
   const msalAccount = accounts[0]
-    ? (instance.getActiveAccount() ?? accounts[0])
+    ? (instance.getActiveAccount() ?? (googleSession ? null : accounts[0]))
     : null
 
   if (msalAccount) {
@@ -149,6 +153,7 @@ export async function startSignInRedirect(
     redirectUri,
     redirectStartPage: `${window.location.origin}${redirectPath}`,
     prompt: isPromptRequired ? PromptValue.LOGIN : undefined,
+    extraQueryParameters: microsoftSignInParameters(),
   })
 }
 
@@ -157,14 +162,16 @@ let isGoogleRenewalInProgress = false
 
 /**
  * Gets the bearer token for the API: the Entra access token, or the Google
- * ID token. When the Google token has expired, it starts one silent
- * redirect to Google that returns to the current page.
+ * ID token. A Google session counts while no Microsoft account is active,
+ * so a Microsoft account being added to its CV is never used. When the
+ * Google token has expired, it starts one silent redirect to Google that
+ * returns to the current page.
  *
  * @returns The token, or null when nobody is signed in or a renewal is needed.
  */
 export async function acquireApiToken(): Promise<string | null> {
   const googleSession = getGoogleSession()
-  if (googleSession && msalInstance.getAllAccounts().length === 0) {
+  if (googleSession && !msalInstance.getActiveAccount()) {
     const idToken = getGoogleIdToken()
     if (!idToken && !isGoogleRenewalInProgress) {
       isGoogleRenewalInProgress = true

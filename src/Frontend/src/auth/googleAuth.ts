@@ -2,6 +2,7 @@ import {
   clearSignInPromptRequired,
   storeLastSignInMethod,
 } from "./adminLoginStorage"
+import { signInLanguage } from "./signInLanguage"
 import { RoutePaths } from "../routePaths"
 import { SignInFailure, SignInMethod } from "../types"
 
@@ -82,10 +83,16 @@ interface CheckedGoogleResponse {
   session: GoogleSession | null
 }
 
+/** How a Google popup's response ended: why it failed, and a linking popup's ID token. */
+export interface GooglePopupResult {
+  failure: SignInFailure | null
+  linkToken: string | null
+}
+
 /** A Google sign-in in a popup, whose request stays in the opening tab's memory. */
 export interface GooglePopupSignIn {
   url: string
-  complete: (fragment: string) => SignInFailure | null
+  complete: (fragment: string) => GooglePopupResult
 }
 
 /**
@@ -164,7 +171,8 @@ export function getGoogleIdToken(): string | null {
 }
 
 /**
- * Builds the Google authorization URL for an ID token.
+ * Builds the Google authorization URL for an ID token. `hl` asks for the
+ * app's language, so the page doesn't follow the browser's.
  *
  * @param request - The request whose `state` and `nonce` the response must carry.
  * @param prompt - `none` for a silent renewal, `select_account` to let the user choose.
@@ -183,6 +191,7 @@ function buildAuthorizationUrl(
     scope: "openid email profile",
     nonce: request.nonce,
     state: request.state,
+    hl: signInLanguage(),
   })
   if (prompt) {
     parameters.set("prompt", prompt)
@@ -221,6 +230,14 @@ export function startGoogleSignIn({
   }
   sessionStorage.setItem(pendingRequestKey, JSON.stringify(request))
   window.location.assign(buildAuthorizationUrl(request, prompt, loginHint))
+}
+
+/**
+ * Drops the request stored before a redirect to Google, when the user came
+ * back without a response, for example with the browser's Back button.
+ */
+export function clearGoogleSignInRequest(): void {
+  sessionStorage.removeItem(pendingRequestKey)
 }
 
 /**
@@ -322,22 +339,28 @@ function storeSignedInSession(session: GoogleSession): void {
 /**
  * Prepares a Google sign-in in a popup. Its request stays in this tab's
  * memory, never in session storage, which the popup gets a copy of. Only
- * this tab completes it, so the popup never stores a session.
+ * this tab completes it, so the popup never stores a session. A popup that
+ * adds a method to the CV is checked the same way, but its ID token is
+ * handed back as the link token and never becomes the session, and the
+ * "Last used" method and the post-sign-out prompt stay as they were.
  *
  * @param state - The popup's `state`, which marks its response as a popup's.
  * @param prompt - `select_account` to let the user choose, as after a sign-out.
+ * @param link - Whether the popup adds a method to the CV.
  * @returns The URL to open in the popup, and the function that checks the
- *   popup's fragment and stores the session, returning why it failed or null.
+ *   popup's fragment and stores the session or returns the link token.
  */
 export function createGooglePopupSignIn(
   state: string,
   prompt?: "select_account",
+  link = false,
 ): GooglePopupSignIn {
   const request: PendingGoogleRequest = {
     state,
     nonce: crypto.randomUUID(),
     returnPath: null,
     silent: false,
+    link,
   }
 
   return {
@@ -348,11 +371,15 @@ export function createGooglePopupSignIn(
         request,
       )
       if (!session) {
-        return failure ?? SignInFailure.Failed
+        return { failure: failure ?? SignInFailure.Failed, linkToken: null }
+      }
+
+      if (link) {
+        return { failure: null, linkToken: session.idToken }
       }
 
       storeSignedInSession(session)
-      return null
+      return { failure: null, linkToken: null }
     },
   }
 }

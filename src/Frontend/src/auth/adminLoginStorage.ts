@@ -22,6 +22,12 @@ export const lastSignInMethodKey = "mycv-last-sign-in-method"
 /** Session-storage key for the sign-in method being added while its redirect is under way. */
 export const linkSignInKey = "mycv-link-sign-in"
 /**
+ * Session-storage key for the method whose sign-in redirect has left the
+ * sign-in route, so coming back with the browser's Back button shows that
+ * method as cancelled instead of starting anything.
+ */
+export const signInRedirectMethodKey = "mycv-sign-in-redirect-method"
+/**
  * Local-storage key for the sign-in popups cancelled in the app. Local
  * storage, because a popup still shares it after Microsoft's sign-in page
  * has cut the popup off from the tab that opened it.
@@ -46,6 +52,29 @@ export function clearAuthReturnPaths(): void {
   sessionStorage.removeItem(logoutReturnPublicUrlSegmentKey)
   sessionStorage.removeItem(signOutReasonKey)
   sessionStorage.removeItem(linkSignInKey)
+  sessionStorage.removeItem(signInRedirectMethodKey)
+}
+
+/**
+ * Remembers the method whose sign-in redirect is leaving the sign-in route.
+ *
+ * @param method - The sign-in method.
+ */
+export function storeSignInRedirectMethod(method: SignInMethod): void {
+  sessionStorage.setItem(signInRedirectMethodKey, method)
+}
+
+/**
+ * Reads the method whose sign-in redirect left the sign-in route and hasn't
+ * come back through a callback route, which clears it.
+ *
+ * @returns The method, or null when no redirect has left.
+ */
+export function readSignInRedirectMethod(): SignInMethod | null {
+  const method = sessionStorage.getItem(signInRedirectMethodKey)
+  return Object.values<string | null>(SignInMethod).includes(method)
+    ? (method as SignInMethod)
+    : null
 }
 
 /**

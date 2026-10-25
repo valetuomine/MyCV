@@ -11,10 +11,14 @@ import {
   type EventMessage,
 } from "@azure/msal-browser"
 import {
+  clearLinkSignInMarker,
   clearSignInPromptRequired,
   readLinkSignInMarker,
   storeLastSignInMethod,
 } from "./adminLoginStorage"
+import { microsoftSignInParameters } from "./signInLanguage"
+import { isLinkPopupState } from "./signInPopupState"
+import { RoutePaths } from "../routePaths"
 import { SignInMethod } from "../types"
 
 /** The Entra app registration's client ID, or "" when not configured. */
@@ -74,32 +78,73 @@ function setRedirectSignInError(error: EventError): void {
  * null. Kept in memory only.
  */
 let linkRedirectResult: AuthenticationResult | null = null
+/**
+ * The correlation IDs of popups that added a Microsoft account to the CV,
+ * recognised by their linking state, so their `LOGIN_SUCCESS` is skipped.
+ */
+const linkPopupCorrelationIds = new Set<string>()
+
+/**
+ * A linking marker left by a redirect the user never finished, for example
+ * by coming back with the browser's Back button. Only the callback routes
+ * read the marker, so any other page load drops it, and a later Microsoft
+ * callback, such as a token renewal, isn't taken for linking.
+ */
+if (
+  window.location.pathname !== RoutePaths.AuthCallback &&
+  window.location.pathname !== RoutePaths.GoogleAuthCallback
+) {
+  clearLinkSignInMarker()
+}
+
+/**
+ * Tells whether a `LOGIN_SUCCESS` belongs to a sign-in that adds a method to
+ * the CV: the redirect kept in `linkRedirectResult`, or a linking popup,
+ * which is forgotten once its login is seen.
+ *
+ * @param correlationId - The event's correlation ID.
+ * @returns True when the account must not become the session's.
+ */
+function isLinkLogin(correlationId: string): boolean {
+  if (linkPopupCorrelationIds.delete(correlationId)) {
+    return true
+  }
+
+  return linkRedirectResult !== null
+}
 
 /**
  * Makes the signed-in account active after a successful login, remembers
  * Microsoft as the last sign-in method and clears the credential prompt that
- * a sign-out required. A redirect that adds a sign-in method is kept apart
- * instead, so the account being added never becomes the session. Records
- * the error when a redirect sign-in fails.
+ * a sign-out required. A redirect or popup that adds a sign-in method is
+ * kept apart instead, so the account being added never becomes the session:
+ * the redirect by the linking marker's ID in `state`, the popup by its
+ * linking state. Records the error when a redirect sign-in fails.
  *
  * @param message - The MSAL event. `LOGIN_SUCCESS` carries the account, and
- *   the redirect's `ACQUIRE_TOKEN_SUCCESS`, which comes first, the full result.
+ *   `ACQUIRE_TOKEN_SUCCESS`, which comes first, the full result.
  */
 function handleMsalEvent(message: EventMessage): void {
   if (
     message.eventType === EventType.ACQUIRE_TOKEN_SUCCESS &&
-    message.interactionType === InteractionType.Redirect &&
     message.payload
   ) {
     const result = message.payload as AuthenticationResult
-    const linkMarker = readLinkSignInMarker()
-    if (linkMarker && result.state === linkMarker.id) {
-      linkRedirectResult = result
+    if (message.interactionType === InteractionType.Redirect) {
+      const linkMarker = readLinkSignInMarker()
+      if (linkMarker && result.state === linkMarker.id) {
+        linkRedirectResult = result
+      }
+    } else if (
+      message.interactionType === InteractionType.Popup &&
+      isLinkPopupState(result.state)
+    ) {
+      linkPopupCorrelationIds.add(message.correlationId)
     }
   } else if (
     message.eventType === EventType.LOGIN_SUCCESS &&
     message.payload &&
-    !linkRedirectResult
+    !isLinkLogin(message.correlationId)
   ) {
     msalInstance.setActiveAccount(message.payload as AccountInfo)
     storeLastSignInMethod(SignInMethod.Microsoft)
@@ -209,6 +254,7 @@ export async function acquireApiAuthenticationResult(
           scopes: [apiScope],
           redirectUri,
           redirectStartPage: window.location.href,
+          extraQueryParameters: microsoftSignInParameters(),
         })
         .catch(() => {
           isTokenRedirectInProgress = false

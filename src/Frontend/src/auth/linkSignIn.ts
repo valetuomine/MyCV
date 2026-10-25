@@ -6,8 +6,15 @@ import {
 } from "./adminLoginStorage"
 import { apiScope, msalInstance, redirectUri } from "./entraAuth"
 import { getGoogleIdToken, startGoogleSignIn } from "./googleAuth"
+import { microsoftSignInParameters } from "./signInLanguage"
+import { openLinkSignInPopup, prefersSignInPopup } from "./signInPopup"
 import type { LinkLoginResponse } from "../api/loginQueries"
-import { LinkOutcome, SignInFailure, SignInMethod } from "../types"
+import {
+  LinkOutcome,
+  SignInFailure,
+  SignInMethod,
+  SignInPopupOutcome,
+} from "../types"
 
 /** The API's ProblemDetails `code` values for a refused link. */
 const conflictOutcomes: Record<string, LinkOutcome> = {
@@ -15,25 +22,83 @@ const conflictOutcomes: Record<string, LinkOutcome> = {
   "login-is-current": LinkOutcome.SameAccount,
 }
 
+/** What a linking popup brings back, ready for `completeLinkSignIn`. */
+export interface LinkSignInPopupResult {
+  marker: LinkSignInMarker
+  linkToken: string | null
+  linkedAccount: AccountInfo | null
+  failure: SignInFailure | null
+}
+
+interface StartLinkSignInOptions {
+  method: SignInMethod
+  publicUrlSegment: string
+  sessionMethod: SignInMethod
+  onRedirect: () => void
+}
+
 /**
  * Sends the browser to sign in with the method being added, keeping the
  * current session. It never uses `startSignInRedirect`, which clears the
- * other provider's session. Microsoft returns to `/auth/callback` itself
+ * other provider's session. The marker is stored first, because the
+ * callback routes read it. Microsoft returns to `/auth/callback` itself
  * (`redirectStartPage` is the redirect URI), and the marker's ID travels as
- * `state` so the callback can tell the response apart from a sign-in. Google
- * gets a link-mode request, so its token is kept apart from the session.
+ * `state` so the callback can tell the response apart from a sign-in.
+ * Google gets a link-mode request, so its token is kept apart from the
+ * session.
  *
- * @param method - The method to add.
- * @param publicUrlSegment - The CV to return to.
- * @param sessionMethod - The method the user is signed in with now.
+ * @param marker - What is being linked and where to return.
  * @returns A promise that rejects, with the marker cleared, when the redirect can't start.
  */
-export async function startLinkSignIn(
-  method: SignInMethod,
-  publicUrlSegment: string,
-  sessionMethod: SignInMethod,
+async function startLinkSignInRedirect(
+  marker: LinkSignInMarker,
 ): Promise<void> {
-  /** The Microsoft account of the session, restored as the active one on return. */
+  storeLinkSignInMarker(marker)
+
+  try {
+    if (marker.method === SignInMethod.Google) {
+      startGoogleSignIn({ prompt: "select_account", link: true })
+      return
+    }
+
+    await msalInstance.loginRedirect({
+      scopes: [apiScope],
+      redirectUri,
+      redirectStartPage: redirectUri,
+      prompt: PromptValue.SELECT_ACCOUNT,
+      state: marker.id,
+      extraQueryParameters: microsoftSignInParameters(),
+    })
+  } catch (error) {
+    clearLinkSignInMarker()
+    throw error
+  }
+}
+
+/**
+ * Starts signing in with the method being added, keeping the current
+ * session. On devices with a mouse or trackpad it opens the popup right in
+ * the click, so it must be called in the click handler with nothing awaited
+ * before it, and hands back what the popup brought for `completeLinkSignIn`;
+ * the marker then stays in memory. On touch devices, and when the browser
+ * blocks the popup, it redirects instead, as `startLinkSignInRedirect`
+ * describes.
+ *
+ * @param options - The linking options.
+ * @param options.method - The method to add.
+ * @param options.publicUrlSegment - The CV to return to.
+ * @param options.sessionMethod - The method the user is signed in with now.
+ * @param options.onRedirect - Called when the redirect is about to start.
+ * @returns A promise of the popup's result, or of null once the redirect has
+ *   started. It rejects, with the marker cleared, when the redirect can't start.
+ */
+export async function startLinkSignIn({
+  method,
+  publicUrlSegment,
+  sessionMethod,
+  onRedirect,
+}: StartLinkSignInOptions): Promise<LinkSignInPopupResult | null> {
+  /** The Microsoft account of the session, restored as the active one afterwards. */
   const msalAccount =
     sessionMethod === SignInMethod.Microsoft
       ? (msalInstance.getActiveAccount() ?? msalInstance.getAllAccounts()[0])
@@ -45,25 +110,28 @@ export async function startLinkSignIn(
     sessionMethod,
     msalAccountId: msalAccount?.homeAccountId ?? null,
   }
-  storeLinkSignInMarker(marker)
 
-  try {
-    if (method === SignInMethod.Google) {
-      startGoogleSignIn({ prompt: "select_account", link: true })
-      return
+  if (prefersSignInPopup()) {
+    const { outcome, linkToken, linkedAccount } =
+      await openLinkSignInPopup(method)
+    if (outcome !== SignInPopupOutcome.Blocked) {
+      return {
+        marker,
+        linkToken,
+        linkedAccount,
+        failure:
+          outcome === SignInPopupOutcome.SignedIn
+            ? null
+            : outcome === SignInPopupOutcome.Cancelled
+              ? SignInFailure.Cancelled
+              : SignInFailure.Failed,
+      }
     }
-
-    await msalInstance.loginRedirect({
-      scopes: [apiScope],
-      redirectUri,
-      redirectStartPage: redirectUri,
-      prompt: PromptValue.SELECT_ACCOUNT,
-      state: marker.id,
-    })
-  } catch (error) {
-    clearLinkSignInMarker()
-    throw error
   }
+
+  onRedirect()
+  await startLinkSignInRedirect(marker)
+  return null
 }
 
 /**
@@ -167,12 +235,12 @@ interface CompleteLinkSignInOptions {
 
 /**
  * Finishes adding a sign-in method once the new method's token is in hand,
- * however it was obtained (today a redirect, later possibly a popup). It
+ * from the redirect's callback or the popup. It
  * first restores the session, so the new account never stays signed in,
  * then sends the new token with the session's token. Never throws.
  *
  * @param options - The linking state.
- * @param options.marker - The linking marker stored before leaving.
+ * @param options.marker - The linking marker, stored before a redirect or kept in memory for a popup.
  * @param options.linkToken - The new method's token, or null when sign-in didn't complete.
  * @param options.linkedAccount - The Microsoft account signed in for linking, if any.
  * @param options.failure - Whether the new method's sign-in was cancelled or failed.

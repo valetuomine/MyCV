@@ -4,17 +4,29 @@ import {
   signInMethodForProvider,
   useDeleteLoginMutation,
   useGetLoginsQuery,
+  useLinkLoginMutation,
 } from "../../../../api/loginQueries"
+import { clearLinkSignInMarker } from "../../../../auth/adminLoginStorage"
 import {
   isSignInMethodConfigured,
   signInMethodNames,
   useAuthSession,
 } from "../../../../auth/authSession"
-import { startLinkSignIn } from "../../../../auth/linkSignIn"
+import { isSignInCancelled } from "../../../../auth/entraAuth"
+import {
+  completeLinkSignIn,
+  startLinkSignIn,
+  type LinkSignInPopupResult,
+} from "../../../../auth/linkSignIn"
 import SignInMethodButton from "../../../../auth/SignInMethodButton"
 import type { LinkSignInResult } from "../../../../auth/signInLocationState"
-import { LinkOutcome, SignInMethod } from "../../../../types"
+import {
+  cancelSignInPopup,
+  prefersSignInPopup,
+} from "../../../../auth/signInPopup"
+import { LinkOutcome, SignInFailure, SignInMethod } from "../../../../types"
 import { secondaryButton } from "../../../components/buttonStyles"
+import LinkPopupMessage from "./LinkPopupMessage"
 import type { ProfileSchema } from "../../schemas/profile-form-schema"
 import SignInMethodRow from "./SignInMethodRow"
 
@@ -27,6 +39,15 @@ interface SignInMethodsSectionProps {
 interface SectionMessage {
   text: string
   isError: boolean
+}
+
+/**
+ * How far adding a method has got: its popup is open, its new login is
+ * being saved, or the browser is leaving for its redirect.
+ */
+interface LinkProgress {
+  method: SignInMethod
+  step: "popup" | "saving" | "redirect"
 }
 
 /**
@@ -87,11 +108,21 @@ function problemDetail(error: unknown): string | null {
 /**
  * The CV admin view's sign-in methods: the methods linked to the CV, with
  * Remove, and buttons that add Microsoft or Google by signing in with them
- * while the current session stays. Adding leaves the page, so it waits
- * until the profile has no unsaved changes. Returning from adding one, the
- * section takes focus, which also scrolls it into view, and shows how it
- * ended. Coming back with the browser's Back button instead, the add
- * buttons work again.
+ * while the current session stays. On devices with a mouse or trackpad, the
+ * provider opens in a popup right in the click, and the add buttons give
+ * way to `LinkPopupMessage`, whose Cancel takes focus; leaving the view
+ * cancels the popup. The outcome then shows here without a reload: after
+ * Cancel, closing Google's window or the timeout, focus returns to the
+ * method's add button, described by the message, otherwise to the heading.
+ * On touch devices, and when the browser blocks the popup, adding leaves for
+ * a redirect instead. Adding can leave the page, so it waits until the
+ * profile has no unsaved changes. Returning from a redirect, the section
+ * takes focus, which also scrolls it into view, and shows how it ended.
+ * Coming back from a redirect with the browser's Back button instead shows
+ * the method as cancelled, like a cancelled popup, and drops the stale
+ * linking marker; MSAL's own `user_cancelled` rejection of that redirect
+ * is then no error. An add button is keyed by whether its method was just
+ * cancelled, so it mounts again and its `autoFocus` applies.
  *
  * @param props - The component props.
  * @param props.publicUrlSegment - The CV to return to after adding a method.
@@ -104,13 +135,16 @@ export default function SignInMethodsSection({
 }: SignInMethodsSectionProps): JSX.Element {
   const headingId = useId()
   const addHintId = useId()
+  const messageId = useId()
   const headingRef = useRef<HTMLHeadingElement>(null)
   const session = useAuthSession()
   const { isDirty } = useFormState<ProfileSchema>()
   const loginsQuery = useGetLoginsQuery()
   const [deleteLogin, deleteLoginState] = useDeleteLoginMutation()
+  const [linkLogin] = useLinkLoginMutation()
   const [confirmingId, setConfirmingId] = useState<string | null>(null)
-  const [startingMethod, setStartingMethod] = useState<SignInMethod | null>(
+  const [linkProgress, setLinkProgress] = useState<LinkProgress | null>(null)
+  const [cancelledMethod, setCancelledMethod] = useState<SignInMethod | null>(
     null,
   )
   const [message, setMessage] = useState<SectionMessage | null>(() =>
@@ -126,13 +160,16 @@ export default function SignInMethodsSection({
   const addBlockedReason = isDirty
     ? "Save or cancel your profile changes before adding a sign-in method."
     : null
-  /** Whether adding is blocked now: by unsaved changes, a redirect starting, or a session or CV not yet known. */
+  /** Whether adding is blocked now: by unsaved changes, adding under way, or a session or CV not yet known. */
   const isAddDisabled =
     addBlockedReason !== null ||
-    startingMethod !== null ||
+    linkProgress !== null ||
     session.isBusy ||
     !session.method ||
     !publicUrlSegment
+  /** The method whose redirect is leaving the page, or null. */
+  const redirectingMethod =
+    linkProgress?.step === "redirect" ? linkProgress.method : null
 
   useEffect(() => {
     if (linkResult) {
@@ -141,23 +178,77 @@ export default function SignInMethodsSection({
   }, [linkResult])
 
   useEffect(() => {
+    if (!redirectingMethod) {
+      return
+    }
+
     /**
-     * Re-enables the add buttons when the browser restores this page from
-     * its back/forward cache, for example after Back on the provider's page.
+     * Shows the redirect as cancelled, re-enables the add buttons and drops
+     * the linking marker when the browser restores this page from its
+     * back/forward cache, after Back on the provider's page.
      *
      * @param event - The page's show event.
      */
-    const resetOnRestore = (event: PageTransitionEvent): void => {
+    const cancelOnRestore = (event: PageTransitionEvent): void => {
       if (event.persisted) {
-        setStartingMethod(null)
+        clearLinkSignInMarker()
+        setLinkProgress(null)
+        setMessage(
+          describeLinkResult({
+            method: redirectingMethod,
+            outcome: LinkOutcome.Cancelled,
+          }),
+        )
+        setCancelledMethod(redirectingMethod)
       }
     }
-    window.addEventListener("pageshow", resetOnRestore)
-    return () => window.removeEventListener("pageshow", resetOnRestore)
-  }, [])
+    window.addEventListener("pageshow", cancelOnRestore)
+    return () => window.removeEventListener("pageshow", cancelOnRestore)
+  }, [redirectingMethod])
+
+  useEffect(() => cancelSignInPopup, [])
 
   /**
-   * Leaves for the chosen method's sign-in, which returns to this CV.
+   * Completes a linking popup's result and shows how it ended, in place.
+   * A cancelled popup skips the saving step, so its add button mounts again
+   * enabled and takes focus.
+   *
+   * @param method - The method being added.
+   * @param popupResult - What the popup brought back.
+   */
+  const finishPopup = async (
+    method: SignInMethod,
+    popupResult: LinkSignInPopupResult,
+  ): Promise<void> => {
+    const isCancelled = popupResult.failure === SignInFailure.Cancelled
+    if (!isCancelled) {
+      setLinkProgress({ method, step: "saving" })
+    }
+
+    const outcome = await completeLinkSignIn({
+      ...popupResult,
+      submit: (linkToken, sessionToken) =>
+        linkLogin({ linkToken, sessionToken }).unwrap(),
+    })
+    const { text, isError } = describeLinkResult({ method, outcome })
+    setLinkProgress(null)
+    setMessage({
+      text:
+        isCancelled && method === SignInMethod.Microsoft
+          ? `${text} If the Microsoft window is still open, you can close it.`
+          : text,
+      isError,
+    })
+    if (isCancelled) {
+      setCancelledMethod(method)
+    } else {
+      headingRef.current?.focus()
+    }
+  }
+
+  /**
+   * Starts adding the chosen method in the click: the popup, whose result
+   * shows here, or the redirect that returns to this CV.
    *
    * @param method - The method to add.
    */
@@ -167,14 +258,31 @@ export default function SignInMethodsSection({
     }
 
     setMessage(null)
-    setStartingMethod(method)
-    startLinkSignIn(method, publicUrlSegment, session.method).catch(() => {
-      setStartingMethod(null)
-      setMessage({
-        text: `${signInMethodNames[method]} sign-in couldn't be opened. Try again.`,
-        isError: true,
-      })
+    setCancelledMethod(null)
+    setLinkProgress({
+      method,
+      step: prefersSignInPopup() ? "popup" : "redirect",
     })
+    startLinkSignIn({
+      method,
+      publicUrlSegment,
+      sessionMethod: session.method,
+      onRedirect: () => setLinkProgress({ method, step: "redirect" }),
+    }).then(
+      (popupResult) =>
+        popupResult ? finishPopup(method, popupResult) : undefined,
+      (error: unknown) => {
+        if (isSignInCancelled(error)) {
+          return
+        }
+
+        setLinkProgress(null)
+        setMessage({
+          text: `${signInMethodNames[method]} sign-in couldn't be opened. Try again.`,
+          isError: true,
+        })
+      },
+    )
   }
 
   /**
@@ -237,6 +345,7 @@ export default function SignInMethodsSection({
       </div>
       {message && (
         <p
+          id={messageId}
           role={message.isError ? "alert" : "status"}
           className={`m-0 flex items-start gap-3 rounded-lg border px-4 py-3 text-sm ${message.isError ? "border-cv-danger text-cv-danger" : "border-cv-line text-cv-ink"}`}
         >
@@ -295,30 +404,47 @@ export default function SignInMethodsSection({
           })}
         </ul>
       )}
-      {addableMethods.length > 0 && (
-        <div className="grid gap-3">
-          <div className="flex flex-wrap gap-3">
-            {addableMethods.map((method) => (
-              <SignInMethodButton
-                key={method}
-                method={method}
-                label={
-                  startingMethod === method
-                    ? `Opening ${signInMethodNames[method]}…`
-                    : `Add ${signInMethodNames[method]}`
-                }
-                disabled={isAddDisabled}
-                describedBy={addBlockedReason ? addHintId : undefined}
-                onSelect={addMethod}
-              />
-            ))}
+      {linkProgress?.step === "popup" ? (
+        <LinkPopupMessage
+          method={linkProgress.method}
+          onCancel={cancelSignInPopup}
+        />
+      ) : (
+        addableMethods.length > 0 && (
+          <div className="grid gap-3">
+            <div className="flex flex-wrap gap-3">
+              {addableMethods.map((method) => (
+                <SignInMethodButton
+                  key={`${method}-${method === cancelledMethod}`}
+                  method={method}
+                  label={
+                    linkProgress?.method === method
+                      ? linkProgress.step === "saving"
+                        ? `Adding ${signInMethodNames[method]}…`
+                        : `Opening ${signInMethodNames[method]}…`
+                      : `Add ${signInMethodNames[method]}`
+                  }
+                  disabled={isAddDisabled}
+                  autoFocus={method === cancelledMethod}
+                  describedBy={
+                    [
+                      addBlockedReason ? addHintId : null,
+                      method === cancelledMethod && message ? messageId : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" ") || undefined
+                  }
+                  onSelect={addMethod}
+                />
+              ))}
+            </div>
+            {addBlockedReason && (
+              <p id={addHintId} className="m-0 text-sm text-cv-muted">
+                {addBlockedReason}
+              </p>
+            )}
           </div>
-          {addBlockedReason && (
-            <p id={addHintId} className="m-0 text-sm text-cv-muted">
-              {addBlockedReason}
-            </p>
-          )}
-        </div>
+        )
       )}
     </section>
   )
