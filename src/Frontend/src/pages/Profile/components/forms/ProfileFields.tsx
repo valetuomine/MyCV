@@ -1,5 +1,6 @@
 import type { JSX } from "react"
 import RHFInput from "../../../components/RHFInput"
+import RHFTextarea from "../../../components/RHFTextarea"
 import type { ProfileSchema } from "../../schemas/profile-form-schema"
 
 interface ProfileFieldsProps {
@@ -28,7 +29,6 @@ export default function ProfileFields({
           <RHFInput<ProfileSchema>
             name="fullName"
             label="Full name"
-            isEditing
             required
             maxLength={100}
             autoComplete="name"
@@ -38,7 +38,6 @@ export default function ProfileFields({
         <RHFInput<ProfileSchema>
           name="gitHubUrl"
           label="GitHub"
-          isEditing
           type="url"
           maxLength={500}
           autoComplete="url"
@@ -47,7 +46,6 @@ export default function ProfileFields({
         <RHFInput<ProfileSchema>
           name="linkedInUrl"
           label="LinkedIn"
-          isEditing
           type="url"
           maxLength={500}
           autoComplete="url"
@@ -68,23 +66,19 @@ export default function ProfileFields({
           name="translations.0.title"
           label="Professional title (Finnish)"
           placeholder="Ohjelmistokehittäjä"
-          isEditing
           required
           maxLength={100}
         />
-        <RHFInput<ProfileSchema>
+        <RHFTextarea<ProfileSchema>
           name="translations.0.summary"
           label="Summary (Finnish)"
           placeholder="Lyhyt esittely sinusta ja osaamisestasi"
-          isEditing
-          multiline
           maxLength={2500}
         />
         <RHFInput<ProfileSchema>
           name="translations.0.location"
           label="Location (Finnish)"
           placeholder="Helsinki, Suomi"
-          isEditing
           maxLength={100}
         />
       </fieldset>
@@ -102,22 +96,18 @@ export default function ProfileFields({
           name="translations.1.title"
           label="Professional title (English)"
           placeholder="Software developer"
-          isEditing
           maxLength={100}
         />
-        <RHFInput<ProfileSchema>
+        <RHFTextarea<ProfileSchema>
           name="translations.1.summary"
           label="Summary (English)"
           placeholder="A short introduction to you and your skills"
-          isEditing
-          multiline
           maxLength={2500}
         />
         <RHFInput<ProfileSchema>
           name="translations.1.location"
           label="Location (English)"
           placeholder="Helsinki, Finland"
-          isEditing
           maxLength={100}
         />
       </fieldset>

@@ -1,0 +1,166 @@
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  type JSX,
+  type TextareaHTMLAttributes,
+} from "react"
+import {
+  useFormContext,
+  useWatch,
+  type FieldValues,
+  type Path,
+} from "react-hook-form"
+import { fieldClassName } from "./fieldClassName"
+import FormField from "./FormField"
+import useFormField from "./useFormField"
+
+interface RHFTextareaProps<TFieldValues extends FieldValues> extends Omit<
+  TextareaHTMLAttributes<HTMLTextAreaElement>,
+  | "aria-describedby"
+  | "aria-invalid"
+  | "className"
+  | "defaultValue"
+  | "id"
+  | "name"
+  | "onBlur"
+  | "onChange"
+  | "value"
+> {
+  name: Path<TFieldValues>
+  label: string
+}
+
+/** Tells whether the browser can size a textarea to its content in CSS. */
+const supportsFieldSizing = CSS.supports("field-sizing", "content")
+
+/**
+ * Sets a textarea's height to fit its text, for browsers without
+ * `field-sizing`. The height is first reset so the textarea also shrinks,
+ * and its `rows` and CSS `max-height` still bound the result.
+ *
+ * @param textarea - The textarea to size.
+ */
+function fitToContent(textarea: HTMLTextAreaElement): void {
+  textarea.style.height = "auto"
+  textarea.style.height = `${textarea.scrollHeight + textarea.offsetHeight - textarea.clientHeight}px`
+}
+
+/**
+ * A labelled React Hook Form textarea with its validation message and, when
+ * `maxLength` is set, a character count that screen readers read as part of
+ * the field's description and that turns red in the last tenth of the limit.
+ * The textarea grows with its text, through CSS `field-sizing` or, where that
+ * isn't supported, a layout effect that fits it to every new value,
+ * including the initial one and a form reset, and a resize observer that
+ * fits it again when its width changes the line wrapping. Past about the
+ * viewport's height it scrolls inside. Other native textarea attributes are
+ * forwarded to the textarea.
+ *
+ * @param props - The component props.
+ * @param props.name - The form field's name.
+ * @param props.label - The field's label.
+ * @param props.placeholder - The placeholder, built from the label by default.
+ * @param props.rows - The fewest lines the textarea shows.
+ * @param props.maxLength - The character limit, which also shows the count.
+ * @param props.required - Whether the field is required, marked with `*`.
+ * @returns The labelled textarea.
+ */
+export default function RHFTextarea<TFieldValues extends FieldValues>({
+  name,
+  label,
+  placeholder,
+  rows = 4,
+  maxLength,
+  required,
+  ...textareaAttributes
+}: RHFTextareaProps<TFieldValues>): JSX.Element {
+  const { id, errorId, error, registration } = useFormField(name)
+  const { control } = useFormContext<TFieldValues>()
+  const value = String(useWatch({ control, name }) ?? "")
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null)
+  const { ref: registerRef, ...textareaProps } = registration
+  const countId = `${id}-count`
+  /** The given placeholder, or one built from the label. */
+  const fieldPlaceholder = placeholder ?? `Enter ${label.toLowerCase()}`
+  /** Whether the text is in the last tenth of the limit. */
+  const isNearLimit = maxLength !== undefined && value.length >= maxLength * 0.9
+  /** The error and the count, which together describe the field. */
+  const describedBy =
+    [error && errorId, maxLength !== undefined && countId]
+      .filter(Boolean)
+      .join(" ") || undefined
+  /**
+   * Keeps at least `rows` lines visible, because `field-sizing` ignores
+   * `rows`: the lines plus the `py-2.5` padding and the 1px borders.
+   */
+  const minHeight = `calc(${rows}lh + 1.25rem + 2px)`
+
+  /**
+   * Hands the textarea to React Hook Form, which focuses it on an error, and
+   * keeps it for sizing.
+   *
+   * @param element - The textarea, or `null` when it unmounts.
+   */
+  const setTextareaRef = (element: HTMLTextAreaElement | null): void => {
+    registerRef(element)
+    textareaRef.current = element
+  }
+
+  useLayoutEffect(() => {
+    if (!supportsFieldSizing && textareaRef.current) {
+      fitToContent(textareaRef.current)
+    }
+  }, [value])
+
+  useEffect(() => {
+    const textarea = textareaRef.current
+    if (supportsFieldSizing || !textarea) {
+      return
+    }
+
+    let width = textarea.offsetWidth
+    const observer = new ResizeObserver(() => {
+      if (textarea.offsetWidth !== width) {
+        width = textarea.offsetWidth
+        fitToContent(textarea)
+      }
+    })
+    observer.observe(textarea)
+    return () => observer.disconnect()
+  }, [])
+
+  return (
+    <FormField
+      id={id}
+      label={label}
+      required={required}
+      error={error}
+      errorId={errorId}
+    >
+      <textarea
+        {...textareaAttributes}
+        {...textareaProps}
+        ref={setTextareaRef}
+        id={id}
+        rows={rows}
+        placeholder={fieldPlaceholder}
+        maxLength={maxLength}
+        required={required}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={describedBy}
+        style={{ minHeight }}
+        className={`${fieldClassName} field-sizing-content max-h-[70dvh] resize-none`}
+      />
+      {maxLength !== undefined && (
+        <span
+          id={countId}
+          className={`justify-self-end font-cv-mono text-xs tabular-nums transition-colors ${isNearLimit ? "text-cv-danger" : "text-cv-muted"}`}
+        >
+          {value.length} / {maxLength}
+          <span className="sr-only"> characters</span>
+        </span>
+      )}
+    </FormField>
+  )
+}
