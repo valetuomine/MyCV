@@ -1,4 +1,5 @@
 import { useState, type JSX } from "react"
+import { useTranslation } from "react-i18next"
 import { signInMethodNames, signOutInApp, useAuthSession } from "./authSession"
 import useSignOutReturnSegment from "./useSignOutReturnSegment"
 import useSigningOutReason from "./useSigningOutReason"
@@ -14,6 +15,7 @@ import { SignOutReason } from "../types"
  * @returns The account name with the sign-out button, or null.
  */
 export default function SignOutButton(): JSX.Element | null {
+  const { t } = useTranslation()
   const { account, isBusy, method } = useAuthSession()
   const signingOutReason = useSigningOutReason()
   const [signOutError, setSignOutError] = useState(false)
@@ -38,20 +40,22 @@ export default function SignOutButton(): JSX.Element | null {
           className="m-0 hidden max-w-56 truncate text-right text-sm text-cv-muted sm:block"
           title={account.username}
         >
-          <span className="sr-only">Signed in as </span>
+          <span className="sr-only">{t("signOut.signedInAs")}</span>
           {account.name}
         </p>
         <Button
           onClick={handleSignOut}
           disabled={isBusy}
-          aria-label={`Sign out of ${signInMethodNames[method]}`}
+          aria-label={t("signOut.label", {
+            provider: signInMethodNames[method],
+          })}
         >
-          Sign out
+          {t("signOut.button")}
         </Button>
       </div>
       {signOutError && (
         <span role="alert" className="text-sm text-cv-danger">
-          Could not sign out. Try again.
+          {t("signOut.failed")}
         </span>
       )}
     </div>

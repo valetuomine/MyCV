@@ -1,6 +1,7 @@
 import { InteractionStatus, PromptValue } from "@azure/msal-browser"
 import { useMsal } from "@azure/msal-react"
 import { useSyncExternalStore } from "react"
+import { useTranslation } from "react-i18next"
 import {
   clearLinkSignInMarker,
   isSignInPromptRequired,
@@ -78,6 +79,7 @@ interface AuthSession {
  * @returns Whether someone is signed in, with which method and account, and whether MSAL is busy.
  */
 export function useAuthSession(): AuthSession {
+  const { t } = useTranslation()
   const { accounts, inProgress, instance } = useMsal()
   const googleSession = useSyncExternalStore(
     subscribeGoogleSession,
@@ -111,7 +113,10 @@ export function useAuthSession(): AuthSession {
       isBusy,
       method: SignInMethod.Google,
       account: {
-        name: googleSession.name || googleSession.email || "Google account",
+        name:
+          googleSession.name ||
+          googleSession.email ||
+          t("signIn.googleAccount"),
         username: googleSession.email ?? "",
       },
     }

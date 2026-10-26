@@ -7,6 +7,7 @@ import {
   type JSX,
   type SubmitEvent,
 } from "react"
+import { useTranslation } from "react-i18next"
 import { Navigate, useNavigate } from "react-router-dom"
 import {
   clearAuthReturnPaths,
@@ -42,11 +43,12 @@ function extractPublicUrlSegment(input: string): string {
  * @returns A redirect to the CV after sign-out, otherwise the home page.
  */
 export default function Home(): JSX.Element {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const inputId = useId()
   const errorId = `${inputId}-error`
   const [value, setValue] = useState("")
-  const [error, setError] = useState<string>()
+  const [isEmpty, setIsEmpty] = useState(false)
 
   /**
    * Set before a sign-out lands here: the CV to return to, or "" to stay on
@@ -88,7 +90,7 @@ export default function Home(): JSX.Element {
    */
   const handleChange = (event: ChangeEvent<HTMLInputElement>): void => {
     setValue(event.target.value)
-    setError(undefined)
+    setIsEmpty(false)
   }
 
   /**
@@ -100,7 +102,7 @@ export default function Home(): JSX.Element {
     event.preventDefault()
     const publicUrlSegment = extractPublicUrlSegment(value)
     if (!publicUrlSegment) {
-      setError("Enter a CV link or public address.")
+      setIsEmpty(true)
       return
     }
 
@@ -119,11 +121,10 @@ export default function Home(): JSX.Element {
         </p>
         <div className="grid gap-4">
           <h1 className="m-0 font-cv-display text-4xl leading-tight font-semibold tracking-tight text-balance sm:text-5xl">
-            Open a CV
+            {t("home.heading")}
           </h1>
           <p className="m-0 max-w-[52ch] text-lg leading-relaxed text-pretty text-cv-copy">
-            Every CV has its own link. Paste a CV link or public address to view
-            it.
+            {t("home.intro")}
           </p>
         </div>
         <form noValidate onSubmit={handleSubmit} className="grid w-full gap-2">
@@ -131,7 +132,7 @@ export default function Home(): JSX.Element {
             htmlFor={inputId}
             className="font-cv-mono text-xs tracking-wide text-cv-muted uppercase"
           >
-            CV link or address
+            {t("home.inputLabel")}
           </label>
           <div className="flex flex-wrap gap-3">
             <input
@@ -140,17 +141,17 @@ export default function Home(): JSX.Element {
               onChange={handleChange}
               autoComplete="off"
               spellCheck={false}
-              aria-invalid={error ? true : undefined}
-              aria-describedby={error ? errorId : undefined}
+              aria-invalid={isEmpty ? true : undefined}
+              aria-describedby={isEmpty ? errorId : undefined}
               className="min-h-11 min-w-0 flex-1 rounded-lg border border-cv-field bg-cv-wash px-3.5 py-2.5 text-cv-ink transition-colors outline-none placeholder:text-cv-meta hover:border-cv-muted focus:border-cv-accent focus:ring-3 focus:ring-cv-accent/20 aria-invalid:border-cv-danger aria-invalid:ring-cv-danger/20"
             />
             <Button type="submit" variant={ButtonVariant.Primary}>
-              Open CV
+              {t("home.submit")}
             </Button>
           </div>
-          {error && (
+          {isEmpty && (
             <span id={errorId} role="alert" className="text-sm text-cv-danger">
-              {error}
+              {t("home.emptyError")}
             </span>
           )}
         </form>

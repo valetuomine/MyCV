@@ -7,6 +7,7 @@ import type {
   ReactNode,
   Ref,
 } from "react"
+import { useTranslation } from "react-i18next"
 import { Link, type LinkProps } from "react-router-dom"
 import { ButtonSize, ButtonVariant } from "../../types"
 
@@ -45,7 +46,7 @@ interface ExternalLinkButtonProps
 type ButtonProps =
   NativeButtonProps | RouterLinkButtonProps | ExternalLinkButtonProps
 
-type ButtonShape = "pill" | "icon" | "text"
+type ButtonShape = "pill" | "icon" | "text" | "segment"
 
 /** Which shape, and so which size classes, each variant takes. */
 const variantShapes: Record<ButtonVariant, ButtonShape> = {
@@ -55,6 +56,7 @@ const variantShapes: Record<ButtonVariant, ButtonShape> = {
   [ButtonVariant.Brand]: "pill",
   [ButtonVariant.Icon]: "icon",
   [ButtonVariant.Text]: "text",
+  [ButtonVariant.Segment]: "segment",
 }
 
 /**
@@ -63,6 +65,8 @@ const variantShapes: Record<ButtonVariant, ButtonShape> = {
  * hover. Brand leaves its colours to the caller, such as the sign-in
  * providers' own, so its hover is a faint layer of its own text colour
  * (`::after`, `bg-current`), which shows on any brand colours in both themes.
+ * Segment is one option of a choice inside a pill track, such as the
+ * language: `aria-pressed` marks the chosen one with the accent fill.
  */
 const variantClasses: Record<
   ButtonVariant,
@@ -98,7 +102,19 @@ const variantClasses: Record<
     interactive:
       "hover:text-cv-accent-strong hover:decoration-cv-accent-strong active:scale-[0.97]",
   },
+  [ButtonVariant.Segment]: {
+    rest: "rounded-full text-cv-copy aria-pressed:bg-cv-accent aria-pressed:text-cv-accent-ink",
+    interactive:
+      "hover:bg-cv-overlay hover:text-cv-ink aria-pressed:hover:bg-cv-accent-strong aria-pressed:hover:text-cv-accent-ink active:scale-[0.97]",
+  },
 }
+
+/**
+ * A segment's size, the same at every `ButtonSize`: 36 px inside its 44 px
+ * track, reaching the track's edges with an invisible `::before`.
+ */
+const segmentSize =
+  "h-9 px-2 text-xs before:absolute before:inset-x-0 before:-inset-y-1"
 
 /**
  * Each size per shape. Small buttons look smaller but keep a 44 px touch
@@ -109,23 +125,28 @@ const sizeClasses: Record<ButtonSize, Record<ButtonShape, string>> = {
     pill: "min-h-11 px-5 py-2.5 text-sm",
     icon: "size-11",
     text: "min-h-11 min-w-11 text-sm",
+    segment: segmentSize,
   },
   [ButtonSize.Small]: {
     pill: "min-h-9 px-4 py-1.5 text-sm before:absolute before:inset-x-0 before:-inset-y-1",
     icon: "size-9 before:absolute before:-inset-1",
     text: "min-h-11 min-w-11 text-xs",
+    segment: segmentSize,
   },
 }
 
 /**
  * How each shape lays out its content. Icons stack theirs in one cell. Text
  * buttons pad their sides for the focus ring and pull back by the same
- * amount, so the label still lines up with the text around it.
+ * amount, so the label still lines up with the text around it. Segments set
+ * their label as a mono code beside an icon.
  */
 const shapeClasses: Record<ButtonShape, string> = {
   pill: "inline-flex items-center justify-center gap-2 text-center",
   icon: "inline-grid place-items-center",
   text: "-mx-1.5 inline-flex items-center gap-2 px-1.5",
+  segment:
+    "inline-flex items-center justify-center gap-1.5 font-cv-mono tracking-wide",
 }
 
 const baseClassName =
@@ -196,13 +217,15 @@ function isAriaDisabled(value: AriaAttributes["aria-disabled"]): boolean {
  * and that text. Both labels share one grid cell, so the width doesn't jump.
  *
  * @param props - The component props.
- * @param props.variant - The look: primary, secondary, danger, icon, text, or brand, whose colours come from `className`.
+ * @param props.variant - The look: primary, secondary, danger, icon, text, segment, or brand, whose colours come from `className`.
  * @param props.size - Medium (44 px) or small, which keeps a 44 px touch target.
  * @param props.className - Extra classes, such as `w-full`; they must not fight the variant's own.
  * @param props.children - The label; icon buttons also need an `aria-label`.
  * @returns The button or link.
  */
 export default function Button(props: ButtonProps): JSX.Element {
+  const { t } = useTranslation()
+
   if ("to" in props) {
     const {
       variant = ButtonVariant.Secondary,
@@ -285,7 +308,7 @@ export default function Button(props: ButtonProps): JSX.Element {
         )}`}
       >
         {children}
-        <span className="sr-only"> (opens in a new tab)</span>
+        <span className="sr-only">{t("common.opensInNewTab")}</span>
         <span
           aria-hidden="true"
           className="inline-block transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-0"

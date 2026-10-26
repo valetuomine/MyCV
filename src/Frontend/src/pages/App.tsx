@@ -1,5 +1,6 @@
 import { lazy, Suspense, type JSX } from "react"
 import { LazyMotion, MotionConfig, domAnimation } from "framer-motion"
+import { useTranslation } from "react-i18next"
 import { Route, Routes } from "react-router-dom"
 import Background from "./components/Background"
 import Home from "./Profile/components/routes/Home"
@@ -41,11 +42,22 @@ if (window.location.pathname !== RoutePaths.Home) {
   void loadCandidateProfileRoute()
 }
 
-const signInRouteFallback = (
-  <RouteMessage tone={Tone.Pending} delayed showHomeButton={false}>
-    Loading
-  </RouteMessage>
-)
+/**
+ * The pending screen while a sign-in or admin route's chunk loads.
+ *
+ * @returns The delayed loading message.
+ */
+function SignInRouteFallback(): JSX.Element {
+  const { t } = useTranslation()
+
+  return (
+    <RouteMessage tone={Tone.Pending} delayed showHomeButton={false}>
+      {t("common.loading")}
+    </RouteMessage>
+  )
+}
+
+const signInRouteFallback = <SignInRouteFallback />
 
 /**
  * The app's routes inside the shared background, with motion that follows

@@ -1,4 +1,5 @@
 import { type JSX } from "react"
+import { Trans, useTranslation } from "react-i18next"
 import { Navigate, useNavigate, useParams } from "react-router-dom"
 import { returnPublicUrlSegmentKey } from "../adminLoginStorage"
 import { useAuthSession } from "../authSession"
@@ -14,6 +15,7 @@ import { RoutePaths } from "../../routePaths"
  * @returns A redirect to the CV once signed in, otherwise the sign-in screen.
  */
 export default function AdminLoginRoute(): JSX.Element {
+  const { t } = useTranslation()
   const { publicUrlSegment = "" } = useParams()
   const { isSignedIn, isBusy } = useAuthSession()
   const navigate = useNavigate()
@@ -35,17 +37,21 @@ export default function AdminLoginRoute(): JSX.Element {
     <SignInMessage
       {...loginRedirect}
       title={
-        <>
-          Sign in to manage <code>{publicUrlSegment}</code>
-        </>
+        <Trans
+          i18nKey="signIn.manageTitle"
+          values={{ cv: publicUrlSegment }}
+          components={{ code: <code /> }}
+        />
       }
-      description="Use the method you created your CV with, or one you've added since."
+      description={t("signIn.manageDescription")}
       pendingTitle={
-        <>
-          Signing in to manage <code>{publicUrlSegment}</code>
-        </>
+        <Trans
+          i18nKey="signIn.managePending"
+          values={{ cv: publicUrlSegment }}
+          components={{ code: <code /> }}
+        />
       }
-      backLabel="Back to CV"
+      backLabel={t("common.backToCv")}
       onBack={() =>
         navigate(RoutePaths.CandidateProfile(publicUrlSegment), {
           replace: true,

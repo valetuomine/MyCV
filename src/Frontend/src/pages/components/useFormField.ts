@@ -1,4 +1,5 @@
 import { useId } from "react"
+import { useTranslation } from "react-i18next"
 import {
   useFormContext,
   useFormState,
@@ -7,6 +8,7 @@ import {
   type Path,
   type UseFormRegisterReturn,
 } from "react-hook-form"
+import { translateValidationMessage } from "../../i18n/validationMessage"
 import type { FieldFrameProps } from "./FormField"
 
 interface FormFieldState<TFieldValues extends FieldValues> {
@@ -22,7 +24,8 @@ interface FormFieldState<TFieldValues extends FieldValues> {
  * Registers a field with the surrounding form and reads its validation
  * message, its current text and the form's submit count. The message is
  * looked up by the field's full path, so nested names such as
- * `translations.0.title` find theirs.
+ * `translations.0.title` find theirs, and translated into the active
+ * language.
  *
  * @param name - The form field's name.
  * @param maxLength - The field's character limit, which adds the character
@@ -35,10 +38,12 @@ export default function useFormField<TFieldValues extends FieldValues>(
   maxLength?: number,
 ): FormFieldState<TFieldValues> {
   const id = useId()
+  const { t } = useTranslation()
   const { control, register, getFieldState } = useFormContext<TFieldValues>()
   const formState = useFormState({ control, name })
   const value = String(useWatch({ control, name }) ?? "")
   const { error } = getFieldState(name, formState)
+  const message = translateValidationMessage(t, error?.message)
   const errorId = `${id}-error`
   const countId = `${id}-count`
   /** The error and the count, which together describe the field. */
@@ -49,12 +54,12 @@ export default function useFormField<TFieldValues extends FieldValues>(
 
   return {
     id,
-    error: error?.message,
+    error: message,
     describedBy,
     value,
     frameProps: {
       id,
-      error: error?.message,
+      error: message,
       errorId,
       maxLength,
       length: value.length,

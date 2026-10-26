@@ -1,4 +1,5 @@
 import { useEffect, useState, type JSX } from "react"
+import { useTranslation } from "react-i18next"
 import { CopyStatus } from "../../types"
 import Button from "./Button"
 
@@ -26,6 +27,7 @@ export default function CopyLinkButton({
   url,
   label,
 }: CopyLinkButtonProps): JSX.Element {
+  const { t } = useTranslation()
   const [copyStatus, setCopyStatus] = useState<CopyStatus>(CopyStatus.Idle)
   const isCopied = copyStatus === CopyStatus.Copied
 
@@ -79,16 +81,16 @@ export default function CopyLinkButton({
                 className={`[stroke-dasharray:1] transition-[stroke-dashoffset] duration-300 ease-out motion-reduce:transition-none ${isCopied ? "[stroke-dashoffset:0] delay-100" : "[stroke-dashoffset:1]"}`}
               />
             </svg>
-            Copied
+            {t("copyLink.copied")}
           </span>
         </span>
       </Button>
       <span role="status" className="sr-only">
-        {isCopied ? "Link copied to clipboard." : ""}
+        {isCopied ? t("copyLink.copiedStatus") : ""}
       </span>
       {copyStatus === CopyStatus.Error && (
         <p role="alert" className="m-0 max-w-52 text-sm text-cv-danger">
-          Could not copy the link. Copy it from the address shown instead.
+          {t("copyLink.failed")}
         </p>
       )}
     </div>

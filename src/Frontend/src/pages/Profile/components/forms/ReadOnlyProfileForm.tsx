@@ -1,5 +1,6 @@
 import { m as motion, type Variants } from "framer-motion"
 import { useEffect, useId, useRef, useState, type JSX } from "react"
+import { useTranslation } from "react-i18next"
 import type { Profile } from "../../../../api/profileQueries"
 import { ButtonVariant } from "../../../../types"
 import Button from "../../../components/Button"
@@ -40,6 +41,7 @@ const item: Variants = {
  * @returns The summary with its toggle.
  */
 function ExpandableSummary({ text }: { text: string }): JSX.Element {
+  const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
   const id = useId()
   /** Summaries over 300 characters start clamped. */
@@ -62,7 +64,7 @@ function ExpandableSummary({ text }: { text: string }): JSX.Element {
           onClick={() => setExpanded((current) => !current)}
           className="mt-1"
         >
-          {expanded ? "Show less" : "Read more"}
+          {expanded ? t("cv.showLess") : t("cv.readMore")}
         </Button>
       )}
     </div>
@@ -86,10 +88,14 @@ export default function ReadOnlyProfileForm({
   onEdit,
   focusEdit = false,
 }: ReadOnlyProfileFormProps): JSX.Element {
+  const { t, i18n } = useTranslation()
   const editButtonRef = useRef<HTMLButtonElement>(null)
   const publicUrl = `${window.location.origin}${window.location.pathname}`
   /** When the profile last changed, falling back to when it was created. */
-  const updatedAt = formatProfileDate(values.updatedAt ?? values.createdAt)
+  const updatedAt = formatProfileDate(
+    values.updatedAt ?? values.createdAt,
+    i18n.language,
+  )
   /** Whether there is a profile link or an edit action to show. */
   const hasActions = Boolean(values.gitHubUrl || values.linkedInUrl || onEdit)
 
@@ -115,10 +121,10 @@ export default function ReadOnlyProfileForm({
             <span className="absolute inset-0 animate-cv-pulse rounded-full bg-cv-accent motion-reduce:hidden print:hidden" />
             <span className="relative size-2 rounded-full bg-cv-accent" />
           </span>
-          Curriculum vitae
+          {t("cv.eyebrow")}
           {updatedAt && (
             <span className="text-cv-meta normal-case tracking-normal">
-              Updated {updatedAt}
+              {t("cv.updated", { date: updatedAt })}
             </span>
           )}
         </motion.p>
@@ -163,7 +169,7 @@ export default function ReadOnlyProfileForm({
           variants={item}
           className="mt-10 flex flex-wrap items-start gap-3"
         >
-          <CopyLinkButton url={publicUrl} label="Copy CV link" />
+          <CopyLinkButton url={publicUrl} label={t("cv.copyLink")} />
           {hasActions && (
             <>
               {values.gitHubUrl && (
@@ -185,7 +191,7 @@ export default function ReadOnlyProfileForm({
                   onClick={onEdit}
                   className="border-dashed"
                 >
-                  Edit profile
+                  {t("cv.editProfile")}
                 </Button>
               )}
             </>

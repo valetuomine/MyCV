@@ -1,4 +1,5 @@
 import type { JSX } from "react"
+import { useTranslation } from "react-i18next"
 import RouteMessage from "../RouteMessage"
 
 /**
@@ -7,9 +8,11 @@ import RouteMessage from "../RouteMessage"
  * @returns The page-not-found message.
  */
 export default function UnknownRoute(): JSX.Element {
+  const { t } = useTranslation()
+
   return (
-    <RouteMessage description="The link may be mistyped or the CV may have moved. Check the address, or open a CV with its public link.">
-      We couldn't find that page.
+    <RouteMessage description={t("notFound.description")}>
+      {t("notFound.heading")}
     </RouteMessage>
   )
 }

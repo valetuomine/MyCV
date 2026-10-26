@@ -1,3 +1,5 @@
+import type { TFunction } from "i18next"
+
 type GraphemeSegmenter = new (
   locales?: string,
   options?: { granularity: "grapheme" },
@@ -67,13 +69,17 @@ export function toExternalUrl(value: string): string {
 }
 
 /**
- * Formats a profile date for display.
+ * Formats a profile date for display in the given language.
  *
  * @param value - An ISO date string from the API.
- * @returns The date as, for example, "Oct 21, 2026", or undefined when it is
- *   missing or invalid.
+ * @param language - The language to format the date in.
+ * @returns The date as, for example, "Oct 21, 2026" in English or
+ *   "21.10.2026" in Finnish, or undefined when it is missing or invalid.
  */
-export function formatProfileDate(value?: string | null): string | undefined {
+export function formatProfileDate(
+  value: string | null | undefined,
+  language: string,
+): string | undefined {
   if (!value) {
     return undefined
   }
@@ -81,28 +87,35 @@ export function formatProfileDate(value?: string | null): string | undefined {
   const date = new Date(value)
   return Number.isNaN(date.getTime())
     ? undefined
-    : new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(date)
+    : new Intl.DateTimeFormat(language, { dateStyle: "medium" }).format(date)
 }
 
 /**
  * Turns a failed profile request into a message that starts with the action.
  * Explains the creation refusals first (403 for a Google account that isn't
  * invited, 409 for a sign-in that already has a CV), then prefers the API's
- * problem detail, then explains validation and network failures, then falls
- * back to the error's own message.
+ * problem detail, which stays in the API's language, then explains
+ * validation and network failures. Any other failure, such as one raised in
+ * the browser, gets the general message, because its own text is English
+ * only.
  *
  * @param error - The error from the request.
- * @param action - What failed, such as "Profile update".
+ * @param action - What failed, such as "Profile update", in the active language.
+ * @param t - The translation function.
  * @returns The message to show under the form.
  */
-export function getProfileFormError(error: unknown, action: string): string {
+export function getProfileFormError(
+  error: unknown,
+  action: string,
+  t: TFunction,
+): string {
   if (typeof error === "object" && error !== null) {
     if ("status" in error && error.status === 403) {
-      return "This Google account can't create a CV. Sign in with Microsoft, or ask for an invite."
+      return t("formErrors.googleNotInvited")
     }
 
     if ("status" in error && error.status === 409) {
-      return "You already have a CV with this sign-in."
+      return t("formErrors.alreadyHasCv")
     }
 
     if (
@@ -117,24 +130,16 @@ export function getProfileFormError(error: unknown, action: string): string {
 
     if ("status" in error) {
       if (error.status === 400 || error.status === 422) {
-        return `${action} failed. Check that every field is valid and within its length limit.`
+        return t("formErrors.invalid", { action })
       }
 
       if (error.status === "FETCH_ERROR" || error.status === "TIMEOUT_ERROR") {
-        return `${action} failed. Can't reach the server; check your connection and try again.`
+        return t("formErrors.unreachable", { action })
       }
 
-      return `${action} failed. Please try again.`
-    }
-
-    if ("message" in error && typeof error.message === "string") {
-      return `${action} failed: ${error.message}`
-    }
-
-    if ("error" in error && typeof error.error === "string") {
-      return `${action} failed: ${error.error}`
+      return t("formErrors.failed", { action })
     }
   }
 
-  return `${action} failed. Please try again.`
+  return t("formErrors.failed", { action })
 }

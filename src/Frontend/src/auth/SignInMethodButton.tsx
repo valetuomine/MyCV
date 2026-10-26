@@ -1,4 +1,5 @@
 import { useId, type JSX } from "react"
+import { useTranslation } from "react-i18next"
 import googleLogo from "../assets/google-g-logo.svg"
 import microsoftLogo from "../assets/microsoft-logo.svg"
 import Button from "../pages/components/Button"
@@ -55,6 +56,7 @@ export default function SignInMethodButton({
   autoFocus = false,
   onSelect,
 }: SignInMethodButtonProps): JSX.Element {
+  const { t } = useTranslation()
   const badgeId = useId()
   const { logo, className } = methodStyles[method]
 
@@ -73,14 +75,15 @@ export default function SignInMethodButton({
         className={`w-full ${className}`}
       >
         <img src={logo} alt="" aria-hidden="true" className="size-5" />
-        {label ?? `Sign in with ${signInMethodNames[method]}`}
+        {label ??
+          t("signIn.signInWith", { provider: signInMethodNames[method] })}
       </Button>
       {isLastUsed && (
         <span
           id={badgeId}
           className="pointer-events-none absolute -top-2.5 right-5 rounded-full bg-cv-accent px-2 py-0.5 font-cv-mono text-[0.625rem] tracking-wide text-cv-accent-ink uppercase"
         >
-          Last used
+          {t("signIn.lastUsed")}
         </span>
       )}
     </div>

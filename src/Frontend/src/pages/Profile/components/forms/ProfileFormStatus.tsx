@@ -1,4 +1,5 @@
 import type { JSX } from "react"
+import { useTranslation } from "react-i18next"
 import Button from "../../../components/Button"
 
 interface ProfileFormStatusProps {
@@ -22,16 +23,18 @@ export default function ProfileFormStatus({
   isLoading,
   onCancel,
 }: ProfileFormStatusProps): JSX.Element {
+  const { t } = useTranslation()
+
   return (
     <div className="grid gap-3" aria-busy={isLoading}>
       <p
         role={error ? "alert" : "status"}
         className={error ? "text-cv-danger" : "text-cv-copy"}
       >
-        {error ?? "Loading profile details…"}
+        {error ?? t("profileForm.loadingDetails")}
       </p>
       <Button onClick={onCancel} className="w-fit">
-        Cancel
+        {t("common.cancel")}
       </Button>
     </div>
   )

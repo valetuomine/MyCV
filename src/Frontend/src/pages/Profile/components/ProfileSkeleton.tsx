@@ -1,4 +1,5 @@
 import type { JSX } from "react"
+import { useTranslation } from "react-i18next"
 
 const bar = "rounded-full bg-cv-overlay motion-safe:animate-pulse"
 
@@ -8,6 +9,8 @@ const bar = "rounded-full bg-cv-overlay motion-safe:animate-pulse"
  * @returns The busy main landmark with placeholder bars.
  */
 export default function ProfileSkeleton(): JSX.Element {
+  const { t } = useTranslation()
+
   return (
     <main
       aria-busy="true"
@@ -17,7 +20,7 @@ export default function ProfileSkeleton(): JSX.Element {
         role="status"
         className="grid w-full flex-1 items-center gap-14 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-16"
       >
-        <span className="sr-only">Loading CV…</span>
+        <span className="sr-only">{t("cv.loading")}</span>
         <div aria-hidden="true" className="grid justify-items-start gap-6">
           <div className={`${bar} h-3 w-40`} />
           <div

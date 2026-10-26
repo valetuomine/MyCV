@@ -1,5 +1,6 @@
 import type { JSX } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
+import { useTranslation } from "react-i18next"
 import type { ProfileSchema } from "../../schemas/profile-form-schema"
 
 const pill =
@@ -12,6 +13,7 @@ const pill =
  * @returns The preview card, shown on large screens.
  */
 export default function ProfilePreview(): JSX.Element {
+  const { t } = useTranslation()
   const { control } = useFormContext<ProfileSchema>()
   const [fullName, title, location, summary, gitHubUrl, linkedInUrl] = useWatch(
     {
@@ -34,9 +36,9 @@ export default function ProfilePreview(): JSX.Element {
     >
       <p className="m-0 flex items-center gap-3 font-cv-mono text-xs tracking-widest text-cv-copy uppercase">
         <span className="size-2 rounded-full bg-cv-accent" />
-        Live preview
+        {t("profileForm.livePreview")}
         <span className="text-cv-meta normal-case tracking-normal">
-          Finnish
+          {t("profileForm.previewLanguage")}
         </span>
       </p>
       <div className="relative mt-5 overflow-hidden rounded-3xl bg-cv-line p-0.5 shadow-cv-panel">
@@ -46,7 +48,7 @@ export default function ProfilePreview(): JSX.Element {
             dir="auto"
             className={`m-0 font-cv-display text-[2.75rem] leading-[0.95] font-semibold tracking-tighter text-balance wrap-anywhere ${fullName?.trim() ? "bg-linear-to-b from-cv-ink to-cv-muted bg-clip-text pt-[0.15em] pb-[0.08em] text-transparent" : "text-cv-meta"}`}
           >
-            {fullName?.trim() || "Your name"}
+            {fullName?.trim() || t("profileForm.previewName")}
           </p>
           {title?.trim() && (
             <p

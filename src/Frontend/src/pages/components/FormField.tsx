@@ -5,6 +5,7 @@ import {
   type PointerEvent,
   type ReactNode,
 } from "react"
+import { useTranslation } from "react-i18next"
 import FieldMessage from "./FieldMessage"
 
 /** A field's state that the frame shows, as `useFormField` returns it. */
@@ -97,6 +98,7 @@ export default function FormField({
   submitCount,
   children,
 }: FormFieldProps): JSX.Element {
+  const { t } = useTranslation()
   const frameRef = useRef<HTMLDivElement>(null)
   const pointerFrameRef = useRef(0)
   const handledSubmitCountRef = useRef(submitCount)
@@ -172,7 +174,7 @@ export default function FormField({
             className={`shrink-0 font-cv-mono text-xs tabular-nums transition-[color,opacity] duration-200 ${countTone}`}
           >
             {length} / {maxLength}
-            <span className="sr-only"> characters</span>
+            <span className="sr-only">{t("common.characters")}</span>
           </span>
         )}
       </div>

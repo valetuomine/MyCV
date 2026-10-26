@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type JSX } from "react"
+import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import {
   clearAuthReturnPaths,
@@ -46,6 +47,7 @@ export default function SignInCallback({
   destination,
   onLeave,
 }: SignInCallbackProps): JSX.Element {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const hasNavigated = useRef(false)
 
@@ -125,8 +127,10 @@ export default function SignInCallback({
         tone={isCancelled ? Tone.Neutral : Tone.Error}
         description={
           isCancelled
-            ? "You weren't signed in. Try again when you're ready."
-            : `${signInMethodNames[method]} sign-in couldn't be completed. Try again, or come back later.`
+            ? t("signIn.cancelledDescription")
+            : t("signIn.failedDescription", {
+                provider: signInMethodNames[method],
+              })
         }
         actions={
           <>
@@ -135,16 +139,16 @@ export default function SignInCallback({
                 variant={ButtonVariant.Primary}
                 onClick={() => retrySignIn(retryPath)}
               >
-                Try again
+                {t("common.tryAgain")}
               </Button>
             )}
             <Button onClick={goBack}>
-              {publicUrlSegment ? "Back to CV" : "Open a CV"}
+              {publicUrlSegment ? t("common.backToCv") : t("common.openCv")}
             </Button>
           </>
         }
       >
-        {isCancelled ? "Sign-in was cancelled" : "Sign-in didn't go through"}
+        {isCancelled ? t("signIn.cancelledTitle") : t("signIn.failedTitle")}
       </RouteMessage>
     )
   }
@@ -153,10 +157,10 @@ export default function SignInCallback({
     <RouteMessage
       tone={Tone.Pending}
       delayed
-      description="Taking you back in a moment."
+      description={t("signIn.finishingDescription")}
       showHomeButton={false}
     >
-      Finishing sign-in
+      {t("signIn.finishingTitle")}
     </RouteMessage>
   )
 }

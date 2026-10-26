@@ -1,38 +1,31 @@
 import { z } from "zod"
+import { validationMessage } from "../../../i18n/validationMessage"
 import { LanguageCode } from "../../../types"
 
 /** One language's title, summary and location, with their length limits. */
 const profileTranslationSchema = z.object({
   languageCode: z.enum([LanguageCode.Finnish, LanguageCode.English]),
-  title: z.string().max(100, "Title must be 100 characters or fewer"),
-  summary: z
-    .string()
-    .max(2500, "Summary must be 2500 characters or fewer")
-    .nullable(),
-  location: z
-    .string()
-    .max(100, "Location must be 100 characters or fewer")
-    .nullable(),
+  title: z.string().max(100, validationMessage("titleMax")),
+  summary: z.string().max(2500, validationMessage("summaryMax")).nullable(),
+  location: z.string().max(100, validationMessage("locationMax")).nullable(),
 })
 
 /** An optional profile link of at most 500 characters. */
-const urlSchema = z
-  .string()
-  .max(500, "Link must be 500 characters or fewer")
-  .nullable()
+const urlSchema = z.string().max(500, validationMessage("linkMax")).nullable()
 
 /**
  * The profile form. Requires a full name and a Finnish translation with a
  * title, allows each language only once, and requires a title for any
- * translation that has content.
+ * translation that has content. Its messages are translation keys, which
+ * the fields translate when they show them.
  */
 export const profileSchema = z
   .object({
     fullName: z
       .string()
       .trim()
-      .min(1, "Full name is required")
-      .max(100, "Full name must be 100 characters or fewer"),
+      .min(1, validationMessage("fullNameRequired"))
+      .max(100, validationMessage("fullNameMax")),
     linkedInUrl: urlSchema,
     gitHubUrl: urlSchema,
     translations: z.array(profileTranslationSchema),
@@ -44,7 +37,7 @@ export const profileSchema = z
       if (languageCodes.has(translation.languageCode)) {
         context.addIssue({
           code: "custom",
-          message: `Only one ${translation.languageCode} translation is allowed`,
+          message: validationMessage("duplicateTranslation"),
           path: ["translations", index, "languageCode"],
         })
       }
@@ -59,7 +52,7 @@ export const profileSchema = z
       if (hasContent && !translation.title.trim()) {
         context.addIssue({
           code: "custom",
-          message: "A title is required when translation content is provided",
+          message: validationMessage("titleRequired"),
           path: ["translations", index, "title"],
         })
       }
@@ -72,13 +65,13 @@ export const profileSchema = z
     if (!finnishTranslation) {
       context.addIssue({
         code: "custom",
-        message: "A Finnish translation is required",
+        message: validationMessage("finnishRequired"),
         path: ["translations"],
       })
     } else if (!finnishTranslation.title.trim()) {
       context.addIssue({
         code: "custom",
-        message: "Finnish title is required",
+        message: validationMessage("finnishTitleRequired"),
         path: [
           "translations",
           translations.indexOf(finnishTranslation),
@@ -98,15 +91,12 @@ export const createProfileSchema = profileSchema.safeExtend({
     .string()
     .trim()
     .toLowerCase()
-    .min(1, "Your CV link is required")
-    .max(100, "Your CV link must be 100 characters or fewer")
-    .regex(
-      /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
-      "Use letters and numbers separated by single hyphens",
-    )
+    .min(1, validationMessage("cvLinkRequired"))
+    .max(100, validationMessage("cvLinkMax"))
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, validationMessage("cvLinkFormat"))
     .refine(
       (publicUrlSegment) => publicUrlSegment !== "admin",
-      "This CV link is reserved",
+      validationMessage("cvLinkReserved"),
     ),
 })
 

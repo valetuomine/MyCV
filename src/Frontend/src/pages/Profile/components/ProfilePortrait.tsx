@@ -5,6 +5,7 @@ import {
   useSpring,
 } from "framer-motion"
 import { useState, type JSX, type PointerEvent } from "react"
+import { useTranslation } from "react-i18next"
 
 interface ProfilePortraitProps {
   fullName?: string | null
@@ -37,6 +38,7 @@ export default function ProfilePortrait({
   initials,
   imageUrl,
 }: ProfilePortraitProps): JSX.Element {
+  const { t } = useTranslation()
   const [failedUrl, setFailedUrl] = useState<string | null>(null)
   /** Shows the photo unless there is none or this URL failed to load. */
   const showImage = Boolean(imageUrl) && failedUrl !== imageUrl
@@ -92,7 +94,11 @@ export default function ProfilePortrait({
           {showImage ? (
             <img
               src={imageUrl ?? undefined}
-              alt={fullName ? `Portrait of ${fullName}` : "Profile portrait"}
+              alt={
+                fullName
+                  ? t("cv.portraitOf", { name: fullName })
+                  : t("cv.portrait")
+              }
               onError={() => setFailedUrl(imageUrl ?? null)}
               className="size-full object-cover"
             />

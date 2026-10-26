@@ -1,4 +1,5 @@
 import { useEffect, type JSX } from "react"
+import { useTranslation } from "react-i18next"
 import type { Profile } from "../../../api/profileQueries"
 import ProfileForm from "./forms/ProfileForm"
 
@@ -7,19 +8,24 @@ interface ProfilePageProps {
 }
 
 /**
- * The CV page. Names the browser tab after the candidate while it is open.
+ * The CV page. Names the browser tab after the candidate while it is open,
+ * and again after a language change, which resets the title.
  *
  * @param props - The component props.
  * @param props.values - The public profile to show.
  * @returns The page's main landmark with the CV.
  */
 export default function ProfilePage({ values }: ProfilePageProps): JSX.Element {
+  const { t, i18n } = useTranslation()
+
   useEffect(() => {
-    document.title = values.fullName ? `${values.fullName} · CV` : "MyCV"
+    document.title = values.fullName
+      ? t("meta.profileTitle", { name: values.fullName })
+      : t("meta.title")
     return () => {
-      document.title = "MyCV"
+      document.title = i18n.t("meta.title")
     }
-  }, [values.fullName])
+  }, [i18n, t, values.fullName])
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-7xl flex-col pt-20 lg:pt-4">

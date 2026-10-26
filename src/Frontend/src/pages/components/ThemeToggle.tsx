@@ -2,6 +2,7 @@ import { useReducedMotion } from "framer-motion"
 import { useAtom } from "jotai"
 import { useEffect, type JSX, type MouseEvent } from "react"
 import { flushSync } from "react-dom"
+import { useTranslation } from "react-i18next"
 import { themeAtom } from "../../state/themeAtoms"
 import { ButtonVariant, Theme } from "../../types"
 import Button from "./Button"
@@ -19,6 +20,7 @@ const iconClassName =
  * @returns The theme toggle button.
  */
 export default function ThemeToggle(): JSX.Element {
+  const { t } = useTranslation()
   const [theme, setTheme] = useAtom(themeAtom)
   const prefersReducedMotion = useReducedMotion()
   const isDark = theme === Theme.Dark
@@ -105,7 +107,7 @@ export default function ThemeToggle(): JSX.Element {
       variant={ButtonVariant.Icon}
       onClick={toggleTheme}
       onMouseDown={preventMultiClickSelection}
-      aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
+      aria-label={isDark ? t("theme.toLight") : t("theme.toDark")}
     >
       <svg
         aria-hidden="true"

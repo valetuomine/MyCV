@@ -1,4 +1,5 @@
 import type { JSX } from "react"
+import { useTranslation } from "react-i18next"
 import { signInMethodNames } from "../../../../auth/authSession"
 import { SignInMethod } from "../../../../types"
 import Button from "../../../components/Button"
@@ -24,6 +25,8 @@ export default function LinkPopupMessage({
   method,
   onCancel,
 }: LinkPopupMessageProps): JSX.Element {
+  const { t } = useTranslation()
+
   return (
     <div
       aria-busy="true"
@@ -35,17 +38,15 @@ export default function LinkPopupMessage({
             <span className="absolute inset-0 animate-cv-pulse rounded-full bg-cv-accent motion-reduce:hidden" />
             <span className="relative size-2 rounded-full bg-cv-accent" />
           </span>
-          Continue in the {signInMethodNames[method]} window
+          {t("signIn.popupTitle", { provider: signInMethodNames[method] })}
         </p>
         <p className="m-0 max-w-[60ch] text-sm text-pretty text-cv-copy">
-          Sign in in the window that opened. This page carries on once
-          you&apos;re done.
-          {method === SignInMethod.Microsoft &&
-            " Closed the window? Choose Cancel."}
+          {t("signIn.popupDescription")}
+          {method === SignInMethod.Microsoft && t("signIn.popupClosedHint")}
         </p>
       </div>
       <Button onClick={onCancel} autoFocus>
-        Cancel
+        {t("common.cancel")}
       </Button>
     </div>
   )

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type JSX } from "react"
+import { useTranslation } from "react-i18next"
 import { useLocation, useNavigate } from "react-router-dom"
 import Notice from "../pages/components/Notice"
 import { getSignOutReason } from "./signedOutState"
@@ -12,6 +13,7 @@ import { SignOutReason } from "../types"
  * @returns The sign-out notice.
  */
 export default function SignedOutNotice(): JSX.Element {
+  const { t } = useTranslation()
   const location = useLocation()
   const navigate = useNavigate()
   const [notice, setNotice] = useState<{
@@ -37,8 +39,8 @@ export default function SignedOutNotice(): JSX.Element {
   return (
     <Notice noticeKey={notice?.key ?? null} onDismiss={dismiss}>
       {notice?.reason === SignOutReason.Idle
-        ? "You were signed out after 5 minutes of inactivity"
-        : "You've signed out"}
+        ? t("signOut.idleNotice")
+        : t("signOut.userNotice")}
     </Notice>
   )
 }

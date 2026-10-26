@@ -44,6 +44,7 @@ export const ButtonVariant = {
   Icon: "icon",
   Text: "text",
   Brand: "brand",
+  Segment: "segment",
 } as const
 
 export type ButtonVariant = (typeof ButtonVariant)[keyof typeof ButtonVariant]

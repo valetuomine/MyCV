@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type JSX } from "react"
 import { useFormState } from "react-hook-form"
+import { useTranslation } from "react-i18next"
 import {
   signInMethodForProvider,
   useDeleteLoginMutation,
@@ -35,9 +36,25 @@ interface SignInMethodsSectionProps {
   linkResult: LinkSignInResult | null
 }
 
-/** A message shown above the list, as a status or, for failures, an alert. */
+/**
+ * A message shown above the list, as a status or, for failures, an alert.
+ * It is kept as its key and worded at render, so it follows a language
+ * change. The API's problem detail, when given, is shown as it came.
+ */
 interface SectionMessage {
-  text: string
+  key:
+    | "linked"
+    | "alreadyLinked"
+    | "linkedElsewhere"
+    | "sameAccount"
+    | "cancelled"
+    | "failed"
+    | "openFailed"
+    | "removed"
+    | "removeFailed"
+  method?: SignInMethod
+  detail?: string
+  showMicrosoftWindowHint?: boolean
   isError: boolean
 }
 
@@ -58,32 +75,19 @@ interface LinkProgress {
  */
 function describeLinkResult(result: LinkSignInResult): SectionMessage {
   const { method, outcome } = result
-  const name = signInMethodNames[method]
   switch (outcome) {
     case LinkOutcome.Linked:
-      return {
-        text: `${name} added. You can now sign in to this CV with it.`,
-        isError: false,
-      }
+      return { key: "linked", method, isError: false }
     case LinkOutcome.AlreadyLinked:
-      return { text: `That ${name} account was already added.`, isError: false }
+      return { key: "alreadyLinked", method, isError: false }
     case LinkOutcome.LinkedElsewhere:
-      return {
-        text: `That ${name} account is linked to another CV, so it can't be added here.`,
-        isError: true,
-      }
+      return { key: "linkedElsewhere", method, isError: true }
     case LinkOutcome.SameAccount:
-      return {
-        text: `That's the account you're signed in with now. Choose another ${name} account to add.`,
-        isError: false,
-      }
+      return { key: "sameAccount", method, isError: false }
     case LinkOutcome.Cancelled:
-      return { text: `Adding ${name} was cancelled.`, isError: false }
+      return { key: "cancelled", method, isError: false }
     default:
-      return {
-        text: `${name} couldn't be added. Try again, or come back later.`,
-        isError: true,
-      }
+      return { key: "failed", method, isError: true }
   }
 }
 
@@ -133,6 +137,7 @@ export default function SignInMethodsSection({
   publicUrlSegment,
   linkResult,
 }: SignInMethodsSectionProps): JSX.Element {
+  const { t } = useTranslation()
   const headingId = useId()
   const addHintId = useId()
   const messageId = useId()
@@ -157,9 +162,7 @@ export default function SignInMethodsSection({
     isSignInMethodConfigured,
   )
   /** Why the add buttons are disabled, or null when they aren't. */
-  const addBlockedReason = isDirty
-    ? "Save or cancel your profile changes before adding a sign-in method."
-    : null
+  const addBlockedReason = isDirty ? t("signInMethods.addBlocked") : null
   /** Whether adding is blocked now: by unsaved changes, adding under way, or a session or CV not yet known. */
   const isAddDisabled =
     addBlockedReason !== null ||
@@ -230,14 +233,10 @@ export default function SignInMethodsSection({
       submit: (linkToken, sessionToken) =>
         linkLogin({ linkToken, sessionToken }).unwrap(),
     })
-    const { text, isError } = describeLinkResult({ method, outcome })
     setLinkProgress(null)
     setMessage({
-      text:
-        isCancelled && method === SignInMethod.Microsoft
-          ? `${text} If the Microsoft window is still open, you can close it.`
-          : text,
-      isError,
+      ...describeLinkResult({ method, outcome }),
+      showMicrosoftWindowHint: isCancelled && method === SignInMethod.Microsoft,
     })
     if (isCancelled) {
       setCancelledMethod(method)
@@ -277,10 +276,7 @@ export default function SignInMethodsSection({
         }
 
         setLinkProgress(null)
-        setMessage({
-          text: `${signInMethodNames[method]} sign-in couldn't be opened. Try again.`,
-          isError: true,
-        })
+        setMessage({ key: "openFailed", method, isError: true })
       },
     )
   }
@@ -295,13 +291,12 @@ export default function SignInMethodsSection({
     try {
       await deleteLogin(loginId).unwrap()
       setConfirmingId(null)
-      setMessage({ text: "Sign-in method removed.", isError: false })
+      setMessage({ key: "removed", isError: false })
     } catch (error: unknown) {
       setConfirmingId(null)
       setMessage({
-        text:
-          problemDetail(error) ??
-          "The sign-in method couldn't be removed. Try again.",
+        key: "removeFailed",
+        detail: problemDetail(error) ?? undefined,
         isError: true,
       })
     }
@@ -316,10 +311,21 @@ export default function SignInMethodsSection({
    */
   const removeBlockedReason = (isCurrent: boolean): string | null =>
     logins.length <= 1
-      ? "Your only sign-in method"
+      ? t("signInMethods.onlyMethod")
       : isCurrent
-        ? "You're signed in with this"
+        ? t("signInMethods.currentMethod")
         : null
+
+  /** The message's text in the active language, or the API's detail as it came. */
+  const messageText = message
+    ? (message.detail ??
+      t(`signInMethods.${message.key}`, {
+        provider: message.method ? signInMethodNames[message.method] : "",
+      }) +
+        (message.showMicrosoftWindowHint
+          ? t("signIn.microsoftWindowHint")
+          : ""))
+    : null
 
   return (
     <section
@@ -328,7 +334,7 @@ export default function SignInMethodsSection({
     >
       <div className="grid gap-3">
         <p className="m-0 font-cv-mono text-xs tracking-widest text-cv-copy uppercase">
-          Account
+          {t("signInMethods.eyebrow")}
         </p>
         <h2
           id={headingId}
@@ -336,11 +342,10 @@ export default function SignInMethodsSection({
           tabIndex={-1}
           className="m-0 font-cv-display text-2xl font-semibold tracking-tight outline-none"
         >
-          Sign-in methods
+          {t("signInMethods.heading")}
         </h2>
         <p className="m-0 max-w-[60ch] text-pretty text-cv-copy">
-          You can sign in to manage this CV with any of these. Adding one asks
-          you to sign in with it, and your current session stays.
+          {t("signInMethods.intro")}
         </p>
       </div>
       {message && (
@@ -353,12 +358,12 @@ export default function SignInMethodsSection({
             aria-hidden="true"
             className={`mt-1.5 size-2 shrink-0 rounded-full ${message.isError ? "bg-cv-danger" : "bg-cv-accent"}`}
           />
-          {message.text}
+          {messageText}
         </p>
       )}
       {loginsQuery.isLoading ? (
         <div aria-busy="true" className="grid gap-3">
-          <span className="sr-only">Loading sign-in methods</span>
+          <span className="sr-only">{t("signInMethods.loading")}</span>
           {[0, 1].map((row) => (
             <div
               key={row}
@@ -369,9 +374,11 @@ export default function SignInMethodsSection({
       ) : loginsQuery.isError ? (
         <div className="flex flex-wrap items-center gap-3">
           <p role="alert" className="m-0 text-sm text-cv-danger">
-            Your sign-in methods couldn't be loaded.
+            {t("signInMethods.loadFailed")}
           </p>
-          <Button onClick={() => void loginsQuery.refetch()}>Try again</Button>
+          <Button onClick={() => void loginsQuery.refetch()}>
+            {t("common.tryAgain")}
+          </Button>
         </div>
       ) : (
         <ul className="m-0 list-none divide-y divide-cv-line border-y border-cv-line p-0">
@@ -414,9 +421,15 @@ export default function SignInMethodsSection({
                   label={
                     linkProgress?.method === method
                       ? linkProgress.step === "saving"
-                        ? `Adding ${signInMethodNames[method]}…`
-                        : `Opening ${signInMethodNames[method]}…`
-                      : `Add ${signInMethodNames[method]}`
+                        ? t("signInMethods.adding", {
+                            provider: signInMethodNames[method],
+                          })
+                        : t("signInMethods.opening", {
+                            provider: signInMethodNames[method],
+                          })
+                      : t("signInMethods.add", {
+                          provider: signInMethodNames[method],
+                        })
                   }
                   disabled={isAddDisabled}
                   autoFocus={method === cancelledMethod}

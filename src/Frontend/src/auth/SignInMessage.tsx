@@ -1,4 +1,5 @@
 import { useId, useState, type JSX, type ReactNode } from "react"
+import { useTranslation } from "react-i18next"
 import RouteMessage from "../pages/Profile/components/RouteMessage"
 import Button from "../pages/components/Button"
 import { readLastSignInMethod } from "./adminLoginStorage"
@@ -93,6 +94,7 @@ export default function SignInMessage({
   backLabel,
   onBack,
 }: SignInMessageProps): JSX.Element {
+  const { t } = useTranslation()
   const [lastUsedMethod] = useState(readLastSignInMethod)
   const cancelledNoteId = useId()
   const backButton = (
@@ -105,42 +107,44 @@ export default function SignInMessage({
     return (
       <RouteMessage
         tone={Tone.Error}
-        description="Sign-in isn't configured for this deployment."
+        description={t("signIn.notConfiguredDescription")}
         actions={backButton}
       >
-        Sign-in isn't set up
+        {t("signIn.notConfiguredTitle")}
       </RouteMessage>
     )
   }
 
   if (signInFailure) {
     const isCancelled = signInFailure === SignInFailure.Cancelled
-    /** The provider the failure concerns, for the message. */
-    const providerName = failedMethod
-      ? signInMethodNames[failedMethod]
-      : "Sign-in"
+    /** Why sign-in failed, naming the provider when it is known. */
+    const failedDescription = failedMethod
+      ? t("signIn.failedDescription", {
+          provider: signInMethodNames[failedMethod],
+        })
+      : t("signIn.failedDescriptionGeneric")
 
     return (
       <RouteMessage
         tone={isCancelled ? Tone.Neutral : Tone.Error}
         description={
-          isCancelled
-            ? "You weren't signed in. Try again when you're ready."
-            : `${providerName} sign-in couldn't be completed. Try again, or come back later.`
+          isCancelled ? t("signIn.cancelledDescription") : failedDescription
         }
         actions={
           <>
             <Button variant={ButtonVariant.Primary} onClick={retrySignIn}>
-              Try again
+              {t("common.tryAgain")}
             </Button>
             {hasSignInChoice && (
-              <Button onClick={chooseAnotherMethod}>Use another way</Button>
+              <Button onClick={chooseAnotherMethod}>
+                {t("signIn.useAnotherWay")}
+              </Button>
             )}
             {backButton}
           </>
         }
       >
-        {isCancelled ? "Sign-in was cancelled" : "Sign-in didn't go through"}
+        {isCancelled ? t("signIn.cancelledTitle") : t("signIn.failedTitle")}
       </RouteMessage>
     )
   }
@@ -151,15 +155,17 @@ export default function SignInMessage({
     return (
       <RouteMessage
         tone={Tone.Pending}
-        description={`Sign in in the window that opened. This page carries on once you're done.${isMicrosoft ? " Closed the window? Choose Cancel." : ""}`}
+        description={`${t("signIn.popupDescription")}${isMicrosoft ? t("signIn.popupClosedHint") : ""}`}
         actions={
           <Button key="cancel" onClick={cancelSignIn} autoFocus>
-            Cancel
+            {t("common.cancel")}
           </Button>
         }
         showHomeButton={false}
       >
-        Continue in the {signInMethodNames[popupMethod]} window
+        {t("signIn.popupTitle", {
+          provider: signInMethodNames[popupMethod],
+        })}
       </RouteMessage>
     )
   }
@@ -171,10 +177,12 @@ export default function SignInMessage({
         delayed
         description={
           isRedirectSlow
-            ? "This is taking longer than usual. Reloading the page usually helps."
+            ? t("signIn.slow")
             : pendingMethod
-              ? `You'll be sent to ${signInMethodNames[pendingMethod]} to confirm it's you.`
-              : "Checking whether you're already signed in."
+              ? t("signIn.redirecting", {
+                  provider: signInMethodNames[pendingMethod],
+                })
+              : t("signIn.checking")
         }
         actions={
           <>
@@ -184,7 +192,7 @@ export default function SignInMessage({
                 variant={ButtonVariant.Primary}
                 onClick={() => window.location.reload()}
               >
-                Reload page
+                {t("signIn.reloadPage")}
               </Button>
             ) : (
               pendingMethod && (
@@ -194,7 +202,7 @@ export default function SignInMessage({
                   aria-disabled={isRedirectLeaving || undefined}
                   autoFocus
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
               )
             )}
@@ -221,10 +229,10 @@ export default function SignInMessage({
                 role="status"
                 className="m-0 text-cv-copy"
               >
-                Sign-in was cancelled.
+                {t("signIn.cancelledNote")}
                 {isCancelledInPopup &&
                   cancelledMethod === SignInMethod.Microsoft &&
-                  " If the Microsoft window is still open, you can close it."}
+                  t("signIn.microsoftWindowHint")}
               </p>
             )}
             <div className="grid gap-4 sm:max-w-80">

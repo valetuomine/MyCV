@@ -7,6 +7,7 @@ import {
 } from "react"
 import { flushSync } from "react-dom"
 import { useFormState } from "react-hook-form"
+import { useTranslation } from "react-i18next"
 import { ButtonVariant } from "../../../../types"
 import Button from "../../../components/Button"
 import CopyLinkButton from "../../../components/CopyLinkButton"
@@ -47,6 +48,7 @@ export default function EditableProfileForm({
   saveError,
   publicUrlSegment,
 }: EditableProfileFormProps): JSX.Element {
+  const { t } = useTranslation()
   const headingRef = useRef<HTMLHeadingElement>(null)
   const cancelButtonRef = useRef<HTMLButtonElement>(null)
   const keepEditingButtonRef = useRef<HTMLButtonElement>(null)
@@ -112,20 +114,20 @@ export default function EditableProfileForm({
               aria-hidden="true"
               className="size-2 rounded-full bg-cv-accent"
             />
-            Editing
+            {t("profileForm.editing")}
           </p>
           <h1
             ref={headingRef}
             tabIndex={-1}
             className="m-0 font-cv-display text-4xl font-semibold tracking-tighter outline-none"
           >
-            Edit profile
+            {t("profileForm.heading")}
           </h1>
         </div>
         {publicUrl && (
           <div className="grid gap-2">
             <p className="m-0 font-cv-mono text-xs tracking-wide text-cv-muted uppercase">
-              Your CV link
+              {t("profileForm.cvLink")}
             </p>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
               <a
@@ -138,7 +140,10 @@ export default function EditableProfileForm({
                   {publicUrl.replace(/^https?:\/\//, "")}
                 </span>
               </a>
-              <CopyLinkButton url={publicUrl} label="Copy link" />
+              <CopyLinkButton
+                url={publicUrl}
+                label={t("profileForm.copyLink")}
+              />
             </div>
           </div>
         )}
@@ -152,16 +157,16 @@ export default function EditableProfileForm({
           {confirmingDiscard ? (
             <>
               <p className="m-0 mr-auto px-2 text-sm text-cv-ink">
-                Discard your unsaved changes?
+                {t("profileForm.discardQuestion")}
               </p>
               <Button
                 ref={keepEditingButtonRef}
                 variant={ButtonVariant.Primary}
                 onClick={keepEditing}
               >
-                Keep editing
+                {t("profileForm.keepEditing")}
               </Button>
-              <Button onClick={onCancel}>Discard</Button>
+              <Button onClick={onCancel}>{t("profileForm.discard")}</Button>
             </>
           ) : (
             <>
@@ -169,17 +174,17 @@ export default function EditableProfileForm({
                 type="submit"
                 variant={ButtonVariant.Primary}
                 loading={isSaving}
-                loadingText="Saving…"
+                loadingText={t("profileForm.saving")}
                 disabled={!isDirty}
               >
-                Save
+                {t("profileForm.save")}
               </Button>
               <Button
                 ref={cancelButtonRef}
                 onClick={requestCancel}
                 disabled={isSaving}
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
               <p
                 role="status"
@@ -189,7 +194,9 @@ export default function EditableProfileForm({
                   aria-hidden="true"
                   className={`size-2 rounded-full transition-colors ${isDirty ? "bg-cv-accent" : "bg-cv-line"}`}
                 />
-                {isDirty ? "Unsaved changes" : "No changes"}
+                {isDirty
+                  ? t("profileForm.unsavedChanges")
+                  : t("profileForm.noChanges")}
               </p>
             </>
           )}

@@ -1,4 +1,5 @@
 import type { JSX } from "react"
+import { useTranslation } from "react-i18next"
 import RouteMessage from "../pages/Profile/components/RouteMessage"
 import { SignOutReason, Tone } from "../types"
 
@@ -18,17 +19,19 @@ interface SignOutMessageProps {
 export default function SignOutMessage({
   reason,
 }: SignOutMessageProps): JSX.Element {
+  const { t } = useTranslation()
+
   return (
     <RouteMessage
       tone={Tone.Pending}
       description={
         reason === SignOutReason.Idle
-          ? "The app wasn't used for 5 minutes, so you're being signed out."
-          : "Clearing your session on this device."
+          ? t("signOut.idleDescription")
+          : t("signOut.userDescription")
       }
       showHomeButton={false}
     >
-      Signing out
+      {t("signOut.title")}
     </RouteMessage>
   )
 }

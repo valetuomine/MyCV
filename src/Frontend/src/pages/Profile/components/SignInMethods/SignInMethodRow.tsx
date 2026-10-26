@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, type JSX } from "react"
+import { useTranslation } from "react-i18next"
 import type { Login } from "../../../../api/loginQueries"
 import googleLogo from "../../../../assets/google-g-logo.svg"
 import microsoftLogo from "../../../../assets/microsoft-logo.svg"
@@ -57,15 +58,16 @@ export default function SignInMethodRow({
   onConfirmRemove,
   onKeep,
 }: SignInMethodRowProps): JSX.Element {
+  const { t, i18n } = useTranslation()
   const reasonId = useId()
   const removeButtonRef = useRef<HTMLButtonElement>(null)
   const keepButtonRef = useRef<HTMLButtonElement>(null)
   const wasConfirming = useRef(false)
   const name = signInMethodNames[method]
   /** When the method was linked, formatted. */
-  const addedAt = formatProfileDate(login.createdAt)
+  const addedAt = formatProfileDate(login.createdAt, i18n.language)
   /** When the method last opened the admin view, formatted, or undefined when never recorded. */
-  const lastUsedAt = formatProfileDate(login.lastSignInAt)
+  const lastUsedAt = formatProfileDate(login.lastSignInAt, i18n.language)
 
   useEffect(() => {
     if (isConfirming) {
@@ -89,7 +91,7 @@ export default function SignInMethodRow({
           {name}
           {login.isCurrent && (
             <span className="rounded-full bg-cv-accent px-2 py-0.5 font-cv-mono text-[0.625rem] tracking-wide text-cv-accent-ink uppercase">
-              This session
+              {t("signInMethods.thisSession")}
             </span>
           )}
         </p>
@@ -99,22 +101,24 @@ export default function SignInMethodRow({
           </p>
         )}
         <p className="m-0 text-sm text-cv-muted">
-          {addedAt && `Added ${addedAt}`}
+          {addedAt && t("signInMethods.added", { date: addedAt })}
           {addedAt && lastUsedAt && " · "}
-          {lastUsedAt && `Last used ${lastUsedAt}`}
+          {lastUsedAt && t("signInMethods.lastUsed", { date: lastUsedAt })}
         </p>
       </div>
       {isConfirming ? (
         <div className="flex flex-wrap items-center gap-2 max-sm:ml-9">
-          <span className="text-sm text-cv-ink">Remove {name}?</span>
+          <span className="text-sm text-cv-ink">
+            {t("signInMethods.removeQuestion", { provider: name })}
+          </span>
           <Button
             variant={ButtonVariant.Danger}
             size={ButtonSize.Small}
             onClick={onConfirmRemove}
             loading={isRemoving}
-            loadingText="Removing…"
+            loadingText={t("signInMethods.removing")}
           >
-            Remove
+            {t("signInMethods.remove")}
           </Button>
           <Button
             ref={keepButtonRef}
@@ -122,7 +126,7 @@ export default function SignInMethodRow({
             onClick={onKeep}
             disabled={isRemoving}
           >
-            Keep
+            {t("signInMethods.keep")}
           </Button>
         </div>
       ) : (
@@ -138,9 +142,9 @@ export default function SignInMethodRow({
             onClick={onRequestRemove}
             aria-disabled={removeBlockedReason !== null || undefined}
             aria-describedby={removeBlockedReason ? reasonId : undefined}
-            aria-label={`Remove ${name}`}
+            aria-label={t("signInMethods.removeLabel", { provider: name })}
           >
-            Remove
+            {t("signInMethods.remove")}
           </Button>
         </div>
       )}

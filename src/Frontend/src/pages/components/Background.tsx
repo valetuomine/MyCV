@@ -11,6 +11,7 @@ import SignOutButton from "../../auth/SignOutButton"
 import SignOutMessage from "../../auth/SignOutMessage"
 import useIdleSignOut from "../../auth/useIdleSignOut"
 import useSigningOutReason from "../../auth/useSigningOutReason"
+import LanguageToggle from "./LanguageToggle"
 import ThemeToggle from "./ThemeToggle"
 
 interface BackgroundProps {
@@ -18,8 +19,10 @@ interface BackgroundProps {
 }
 
 /**
- * The page frame: a dotted background with glows and grain, the sign-out and
- * theme controls, and the sign-out notice. It also signs an idle user out on
+ * The page frame: a dotted background with glows and grain, the sign-out,
+ * language and theme controls, and the sign-out notice. The controls share
+ * one row, which wraps only on screens too narrow for it, such as 320 px
+ * with the Finnish Sign out. It also signs an idle user out on
  * every page, and shows the sign-out screen instead of the page while a
  * sign-out is under way. With a mouse, a spotlight follows the pointer on a
  * spring and lights up the dots beneath it.
@@ -87,8 +90,9 @@ export default function Background({ children }: BackgroundProps): JSX.Element {
         <div className="absolute inset-0 bg-cv-grain opacity-[0.06]" />
       </div>
       <div className="relative z-10 min-h-dvh px-6 sm:px-[clamp(1.5rem,5vw,5.5rem)]">
-        <div className="absolute top-5 right-6 z-20 flex items-start gap-2 sm:right-[clamp(1.5rem,5vw,5.5rem)]">
+        <div className="absolute top-5 right-6 z-20 flex max-w-[calc(100%-3rem)] flex-wrap items-start justify-end gap-2 sm:right-[clamp(1.5rem,5vw,5.5rem)]">
           <SignOutButton />
+          <LanguageToggle />
           <ThemeToggle />
         </div>
         {signingOutReason ? (

@@ -1,4 +1,5 @@
 import type { JSX, ReactNode } from "react"
+import { useTranslation } from "react-i18next"
 import Button from "../../components/Button"
 import { RoutePaths } from "../../../routePaths"
 import { ButtonVariant, Tone } from "../../../types"
@@ -37,6 +38,7 @@ export default function RouteMessage({
   actions,
   delayed = false,
 }: RouteMessageProps): JSX.Element {
+  const { t } = useTranslation()
   /** Red for errors, accent otherwise. */
   const dotColor = tone === Tone.Error ? "bg-cv-danger" : "bg-cv-accent"
   /** Pending screens are centred so the loader is the focal point. */
@@ -101,11 +103,11 @@ export default function RouteMessage({
             <div className="flex flex-wrap gap-3">
               {onRetry && (
                 <Button variant={ButtonVariant.Primary} onClick={onRetry}>
-                  Try again
+                  {t("common.tryAgain")}
                 </Button>
               )}
               {showHomeButton && (
-                <Button to={RoutePaths.Home}>Open a CV</Button>
+                <Button to={RoutePaths.Home}>{t("common.openCv")}</Button>
               )}
             </div>
           )

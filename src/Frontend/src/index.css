@@ -95,6 +95,12 @@
   --font-cv-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
   --font-cv-mono: "Geist Mono Variable", ui-monospace, monospace;
 
+  /* The language flags' official colours, the same in both themes. */
+  --color-cv-flag-white: #ffffff;
+  --color-cv-flag-fi-blue: #002f6c;
+  --color-cv-flag-uk-blue: #012169;
+  --color-cv-flag-uk-red: #c8102e;
+
   --animate-cv-pulse: cv-pulse 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
   --animate-cv-sweep: cv-sweep 8s linear infinite;
   --animate-cv-spin: cv-sweep 0.9s linear infinite;

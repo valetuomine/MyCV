@@ -1,5 +1,6 @@
 import type { AccountInfo } from "@azure/msal-browser"
 import { useEffect, useRef, useState, type JSX } from "react"
+import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import {
   clearLinkSignInMarker,
@@ -57,6 +58,7 @@ export default function LinkSignInCallback({
   failure,
   onLeave,
 }: LinkSignInCallbackProps): JSX.Element {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [linkLogin] = useLinkLoginMutation()
   const hasStarted = useRef(false)
@@ -116,14 +118,16 @@ export default function LinkSignInCallback({
 
     return (
       <RouteMessage
-        description={`Your session ended while you were away, so ${methodName} wasn't added. Sign in again, then add it from your CV.`}
+        description={t("linkCallback.sessionExpiredDescription", {
+          provider: methodName,
+        })}
         actions={
           <Button variant={ButtonVariant.Primary} onClick={backToCv}>
-            Back to CV
+            {t("common.backToCv")}
           </Button>
         }
       >
-        Sign in again to add {methodName}
+        {t("linkCallback.sessionExpiredTitle", { provider: methodName })}
       </RouteMessage>
     )
   }
@@ -132,9 +136,9 @@ export default function LinkSignInCallback({
     return (
       <RouteMessage
         tone={Tone.Error}
-        description="Open your CV and add the sign-in method again."
+        description={t("linkCallback.notAddedDescription")}
       >
-        {methodName} wasn't added
+        {t("linkCallback.notAddedTitle", { provider: methodName })}
       </RouteMessage>
     )
   }
@@ -143,10 +147,10 @@ export default function LinkSignInCallback({
     <RouteMessage
       tone={Tone.Pending}
       delayed
-      description="Taking you back to your CV in a moment."
+      description={t("linkCallback.pendingDescription")}
       showHomeButton={false}
     >
-      Adding {methodName} sign-in
+      {t("linkCallback.pendingTitle", { provider: methodName })}
     </RouteMessage>
   )
 }
