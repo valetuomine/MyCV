@@ -191,10 +191,19 @@ Every button and button-styled link is the shared `Button` component (`src/Front
 
 ### Inputs / Fields
 
-- **Style:** 0.5rem radius, field-line border, faint wash fill, mono uppercase label above.
-- **Focus:** border becomes accent with a 3px accent ring at 20%.
-- **Error / Disabled:** danger border and ring, message below with `role="alert"`; disabled at 60% opacity.
-- **Placeholders:** realistic examples (`https://github.com/username`, `Helsinki, Suomi`), never "Enter …"; the label already says what goes in.
+Every field is `RHFInput` or `RHFTextarea`, framed by the shared `FormField` (`src/Frontend/src/pages/components/`). Floating labels are not used: the mono label above the field is the design.
+
+- **Style:** 0.5rem radius, field-line border, faint wash fill, mono uppercase label above with the character count at its right.
+- **Hover (mouse):** the border darkens to Muted, and an accent light follows the pointer around the border (an 8rem radial gradient at 70% accent, masked to the field's outer 2px) with an 8% tint in the fill under it (a wider 10rem radial gradient). Its position goes to CSS variables once per animation frame. No light for touch, reduced motion or disabled fields; on an invalid field it is danger-coloured.
+- **Focus:** a 3px accent ring at 20%, the label turns accent, and an accent light travels around the border, one lap every 6s (a comet a fifth of the border long that brightens from tail to head like the panels' sweep, drawn as overlapping dashes on an SVG outline of the border and moved with `stroke-dashoffset`; it shows on the field's outer 2px, the thickness of the orbiting light on the portrait panel). The border itself stays neutral so the light shows. Unlike the panels' angular sweep, the light follows the border, so it keeps its speed on the long and short edges of a wide field and its tail bends around the corners without pausing. It runs only on the focused field and is paused on the others.
+- **Error:** danger border and 3px danger ring at 20%, with or without focus, and no travelling light. The message opens below the field (`grid-template-rows` 0fr to 1fr with a fade, 200ms) in a `role="alert"` element, and keeps its text while closing. When a submit leaves the field invalid it shakes once sideways (±4px, settling, 300ms); typing never shakes it.
+- **Character count:** on every field with `maxLength`, in mono `tabular-nums` (`12 / 100`). Muted and shown only while the field has focus, then always visible from 90% of the limit in accent, and danger at the limit. It is part of the field's `aria-describedby`, never a live region, so screen readers don't read it on every keystroke.
+- **Textarea:** grows with its text (`field-sizing: content`, at least 4 lines, at most 70dvh, then it scrolls); browsers without `field-sizing` fall back to fitting the height in script.
+- **Autofill:** an opaque inset shadow in the wash-over-page colour and an ink text fill keep autofilled fields on theme in both themes.
+- **Disabled:** 60% opacity and a not-allowed cursor.
+- **Reduced motion:** no pointer light, travelling light, shake or height animation; a focused border turns accent instead, and the colour, ring and message still change, so every state stays distinct.
+- **Placeholders:** realistic examples (`https://github.com/username`, `Helsinki, Suomi`) or none, never "Enter …"; the label already says what goes in.
+- **Text link** (the CV link in the edit view): a half-strength accent underline at rest; on hover the text turns accent and a full accent underline draws over it from the left (250ms). Reduced motion keeps only the colour change.
 
 ### Edit View
 
@@ -217,7 +226,7 @@ Every button and button-styled link is the shared `Button` component (`src/Front
 
 ### Portrait Panel
 
-- 1.5rem radius, hairline border, surface fill, panel shadow. With a photo it is clamp(20rem, 68dvh, 40rem) tall. With no photo it shows the initials over a faint diagonal accent wash, at clamp(16rem, 46dvh, 26rem) from `lg` up and a compact 11rem below `lg`.
+- 1.5rem radius, 2px line border that carries the orbiting highlight, surface fill, panel shadow. With a photo it is clamp(20rem, 68dvh, 40rem) tall. With no photo it shows the initials over a faint diagonal accent wash, at clamp(16rem, 46dvh, 26rem) from `lg` up and a compact 11rem below `lg`.
 - **Initials:** traced once in a 1.25px accent outline (1.6s, `cubic-bezier(0.65, 0, 0.35, 1)`, after 0.5s), then filled to 80% accent. Shown filled straight away for reduced motion.
 - **Hover (mouse):** tilts up to 6° toward the pointer with a soft glare; an accent highlight orbits the border.
 - **Scroll (stacked layout, below `lg`):** a CSS scroll-driven animation (`animation-timeline: view()`) rises the panel from 3rem lower, tipped back 14°, at 40% opacity, and settles it by the time it is fully in view. A panel already in view on load is at rest. Browsers without scroll timelines, and reduced motion, show it at rest.

@@ -33,7 +33,15 @@ npm --prefix src/Frontend run build
 - With reduced motion (`browser_emulate_media`), the content still shows and the motion is off.
 - The browser console has no new errors or warnings.
 
-Signed-in views such as `/<cv-address>/admin` need a Microsoft sign-in in the Playwright browser window. Ask the user to sign in there, and never type credentials yourself. Never save, delete or otherwise change real data while testing; leave such steps to the user and say so. Screenshots and snapshots go to the git-ignored `.playwright-mcp/` folder. List what you checked under *Tarkistukset* in the reviewer comment, and anything you could not check under *Huomioitavaa*.
+Signed-in views such as `/<cv-address>/admin` need a Microsoft sign-in in the Playwright browser window. Ask the user to sign in there, and never type credentials yourself. Never save, delete or otherwise change real data while testing; leave such steps to the user and say so. Before submitting a form or testing an error state, block every write request in the page, so that a submit you expected to fail cannot save:
+
+```js
+await page.route("**/api/**", (route) =>
+  route.request().method() === "GET" ? route.continue() : route.abort(),
+);
+```
+
+Run it with `browser_run_code_unsafe`, and again after the browser restarts. Never assume a submit will fail validation: an optional field left empty is valid and saves. Screenshots and snapshots go to the git-ignored `.playwright-mcp/` folder. List what you checked under *Tarkistukset* in the reviewer comment, and anything you could not check under *Huomioitavaa*.
 
 **Formatting:** format the changed files the same way as User Story 32. Use `dotnet format` for C# and `npx prettier --write <files>` (from `src/Frontend`) for frontend files.
 

@@ -39,9 +39,9 @@ export default function ProfilePreview(): JSX.Element {
           Finnish
         </span>
       </p>
-      <div className="relative mt-5 overflow-hidden rounded-3xl bg-cv-line p-px shadow-cv-panel">
+      <div className="relative mt-5 overflow-hidden rounded-3xl bg-cv-line p-0.5 shadow-cv-panel">
         <div className="pointer-events-none absolute top-1/2 left-1/2 aspect-square w-[200%] -translate-1/2 bg-cv-sweep animate-cv-sweep motion-reduce:hidden" />
-        <div className="relative grid justify-items-start rounded-[calc(1.5rem-1px)] bg-cv-surface p-8">
+        <div className="relative grid justify-items-start rounded-[calc(1.5rem-2px)] bg-cv-surface p-8">
           <p
             dir="auto"
             className={`m-0 font-cv-display text-[2.75rem] leading-[0.95] font-semibold tracking-tighter text-balance wrap-anywhere ${fullName?.trim() ? "bg-linear-to-b from-cv-ink to-cv-muted bg-clip-text pt-[0.15em] pb-[0.08em] text-transparent" : "text-cv-meta"}`}

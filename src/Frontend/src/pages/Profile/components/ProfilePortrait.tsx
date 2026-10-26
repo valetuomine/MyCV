@@ -80,14 +80,14 @@ export default function ProfilePortrait({
     >
       <motion.div
         style={{ rotateX, rotateY }}
-        className="relative overflow-hidden rounded-3xl bg-cv-line p-px shadow-cv-panel will-change-transform"
+        className="relative overflow-hidden rounded-3xl bg-cv-line p-0.5 shadow-cv-panel will-change-transform"
       >
         <div
           aria-hidden="true"
           className="pointer-events-none absolute top-1/2 left-1/2 aspect-square w-[200%] -translate-1/2 bg-cv-sweep animate-cv-sweep motion-reduce:hidden print:hidden"
         />
         <div
-          className={`relative w-full overflow-hidden rounded-[calc(1.5rem-1px)] bg-cv-surface ${showImage ? "h-[clamp(20rem,68dvh,40rem)]" : "h-44 lg:h-[clamp(16rem,46dvh,26rem)]"}`}
+          className={`relative w-full overflow-hidden rounded-[calc(1.5rem-2px)] bg-cv-surface ${showImage ? "h-[clamp(20rem,68dvh,40rem)]" : "h-44 lg:h-[clamp(16rem,46dvh,26rem)]"}`}
         >
           {showImage ? (
             <img

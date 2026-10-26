@@ -22,6 +22,7 @@
   --cv-accent-ink: #ffffff;
   --cv-danger: #dc2626;
   --cv-wash: rgb(9 9 11 / 0.025);
+  --cv-autofill: color-mix(in srgb, var(--cv-ink) 2.5%, var(--cv-background));
   --cv-overlay: rgb(9 9 11 / 0.05);
   --cv-dot: rgb(9 9 11 / 0.14);
   --cv-shadow-panel: 0 2rem 4rem -2rem rgb(24 24 27 / 0.18);
@@ -48,6 +49,7 @@
   --cv-accent-ink: #04130d;
   --cv-danger: #f87171;
   --cv-wash: rgb(255 255 255 / 0.03);
+  --cv-autofill: color-mix(in srgb, var(--cv-ink) 3%, var(--cv-background));
   --cv-overlay: rgb(255 255 255 / 0.06);
   --cv-dot: rgb(255 255 255 / 0.11);
   --cv-shadow-panel: 0 2rem 4rem -2rem rgb(0 0 0 / 0.8);
@@ -83,6 +85,9 @@
   --shadow-cv-panel: var(--cv-shadow-panel);
   --shadow-cv-accent: 0 0.5rem 2rem -0.75rem
     color-mix(in srgb, var(--cv-accent) 55%, transparent);
+  /* Paints over the browser's autofill fill with the field's own wash, kept
+     opaque because the autofill colour sits underneath. */
+  --inset-shadow-cv-autofill: inset 0 0 0 100vmax var(--cv-autofill);
 }
 
 @theme {
@@ -94,6 +99,7 @@
   --animate-cv-sweep: cv-sweep 8s linear infinite;
   --animate-cv-spin: cv-sweep 0.9s linear infinite;
   --animate-cv-spin-slow: cv-sweep 2.4s linear infinite;
+  --animate-cv-trace: cv-trace 6s linear infinite;
   /* Held invisible briefly so screens that resolve quickly never flash. */
   --animate-cv-fade-in-delayed: cv-fade-in 200ms ease-out 300ms both;
 
@@ -118,6 +124,12 @@
   @keyframes cv-sweep {
     to {
       transform: rotate(1turn);
+    }
+  }
+
+  @keyframes cv-trace {
+    to {
+      stroke-dashoffset: -100;
     }
   }
 
@@ -202,6 +214,54 @@
     color-mix(in srgb, var(--cv-accent) 9%, transparent),
     transparent 70%
   );
+}
+
+/*
+ * Form field light under the pointer, at the --x and --y that FormField sets.
+ * bg-cv-field-glow tints the fill and bg-cv-field-edge is cut to the 1px
+ * border; --spot swaps the accent for the danger colour on an invalid field.
+ */
+@utility bg-cv-field-glow {
+  background-image: radial-gradient(
+    10rem circle at var(--x, 50%) var(--y, 50%),
+    color-mix(in srgb, var(--spot, var(--cv-accent)) 8%, transparent),
+    transparent
+  );
+}
+
+@utility bg-cv-field-edge {
+  background-image: radial-gradient(
+    8rem circle at var(--x, 50%) var(--y, 50%),
+    color-mix(in srgb, var(--spot, var(--cv-accent)) 70%, transparent),
+    transparent
+  );
+}
+
+/* Cuts an element and its children to its outer 2px, so a light laid over a
+   field shows only along the field's border, as thick as the orbiting light
+   on the portrait and preview panels. */
+@utility mask-cv-field-border {
+  padding: 2px;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+
+/* A resting half-strength accent underline, with a full one over it that
+   grows from the left to the width in --underline. */
+@utility bg-cv-underline {
+  background-image:
+    linear-gradient(var(--cv-accent), var(--cv-accent)),
+    linear-gradient(
+      color-mix(in srgb, var(--cv-accent) 50%, transparent),
+      color-mix(in srgb, var(--cv-accent) 50%, transparent)
+    );
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size:
+    var(--underline, 0%) 1px,
+    100% 1px;
 }
 
 @utility bg-cv-grain {

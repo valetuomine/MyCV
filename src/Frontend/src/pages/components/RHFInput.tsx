@@ -25,14 +25,15 @@ interface RHFInputProps<TFieldValues extends FieldValues> extends Omit<
 }
 
 /**
- * A labelled React Hook Form input with its validation message. Other native
- * input attributes are forwarded to the input.
+ * A labelled React Hook Form input with its validation message and, when
+ * `maxLength` is set, a character count. Other native input attributes, such
+ * as `placeholder`, are forwarded to the input.
  *
  * @param props - The component props.
  * @param props.name - The form field's name.
  * @param props.label - The field's label.
  * @param props.type - The input type.
- * @param props.placeholder - The placeholder, built from the label by default.
+ * @param props.maxLength - The character limit, which also shows the count.
  * @param props.required - Whether the field is required, marked with `*`.
  * @returns The labelled input.
  */
@@ -40,31 +41,26 @@ export default function RHFInput<TFieldValues extends FieldValues>({
   name,
   label,
   type = InputType.Text,
-  placeholder,
+  maxLength,
   required,
   ...inputAttributes
 }: RHFInputProps<TFieldValues>): JSX.Element {
-  const { id, errorId, error, registration } = useFormField(name)
-  /** The given placeholder, or one built from the label. */
-  const fieldPlaceholder = placeholder ?? `Enter ${label.toLowerCase()}`
+  const { id, error, describedBy, frameProps, registration } = useFormField(
+    name,
+    maxLength,
+  )
 
   return (
-    <FormField
-      id={id}
-      label={label}
-      required={required}
-      error={error}
-      errorId={errorId}
-    >
+    <FormField {...frameProps} label={label} required={required}>
       <input
         {...inputAttributes}
         {...registration}
         id={id}
         type={type}
-        placeholder={fieldPlaceholder}
+        maxLength={maxLength}
         required={required}
         aria-invalid={error ? true : undefined}
-        aria-describedby={error ? errorId : undefined}
+        aria-describedby={describedBy}
         className={fieldClassName}
       />
     </FormField>

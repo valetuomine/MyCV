@@ -132,9 +132,11 @@ export default function EditableProfileForm({
                 href={publicUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="min-w-0 text-cv-ink underline decoration-cv-accent/50 underline-offset-4 transition-colors wrap-anywhere hover:text-cv-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cv-accent"
+                className="min-w-0 text-cv-ink transition-colors duration-200 wrap-anywhere hover:text-cv-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cv-accent motion-safe:hover:[--underline:100%]"
               >
-                {publicUrl.replace(/^https?:\/\//, "")}
+                <span className="bg-cv-underline pb-0.5 transition-[background-size] duration-250 ease-[cubic-bezier(0.23,1,0.32,1)]">
+                  {publicUrl.replace(/^https?:\/\//, "")}
+                </span>
               </a>
               <CopyLinkButton url={publicUrl} label="Copy link" />
             </div>
