@@ -105,7 +105,7 @@
   --animate-cv-sweep: cv-sweep 8s linear infinite;
   --animate-cv-spin: cv-sweep 0.9s linear infinite;
   --animate-cv-spin-slow: cv-sweep 2.4s linear infinite;
-  --animate-cv-trace: cv-trace 6s linear infinite;
+  --animate-cv-trace: cv-trace 8s linear infinite;
   /* Held invisible briefly so screens that resolve quickly never flash. */
   --animate-cv-fade-in-delayed: cv-fade-in 200ms ease-out 300ms both;
 
@@ -135,7 +135,7 @@
 
   @keyframes cv-trace {
     to {
-      stroke-dashoffset: -100;
+      offset-distance: 100%;
     }
   }
 
@@ -252,6 +252,17 @@
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
   mask-composite: exclude;
+}
+
+/* Centres an element on a field's rounded border, at the point along it in
+   offset-distance (moved by animate-cv-trace). Hidden where motion paths
+   can't follow a shape, rather than left in a corner. */
+@utility offset-cv-field-border {
+  offset-path: inset(0 round 0.5rem);
+
+  @supports not (offset-path: inset(0 round 1px)) {
+    display: none;
+  }
 }
 
 /* A resting half-strength accent underline, with a full one over it that

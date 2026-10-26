@@ -35,15 +35,30 @@ const shakeKeyframes: Keyframe[] = [
   { transform: "translateX(0)" },
 ]
 
+/**
+ * One lap of the focus light, in seconds. Set on each glow, so it also sets
+ * how far apart the glows' delays place them.
+ */
+const traceLapSeconds = 8
+
 /** The length of the focus light's comet, in percent of the field's border. */
 const traceLength = 20
 
+/** How many soft glows make up the comet. */
+const traceGlowCount = 10
+
+/** The opacity of the glow at the comet's head. */
+const traceGlowPeak = 0.6
+
 /**
- * The comet's overlapping dashes, in percent of the border. They all end at
- * its head, so the more of them overlap, the brighter the light, and it
- * fades from the head to the tail.
+ * The comet's glows from tail to head, as fractions of its length. Each fades
+ * out from its centre and they overlap, so the comet brightens smoothly
+ * toward its head and bends around the corners.
  */
-const traceDashes = [2.5, 5, 7.5, 10, 12.5, 15, 17.5, 20]
+const traceGlows = Array.from(
+  { length: traceGlowCount },
+  (_, index) => (index + 1) / traceGlowCount,
+)
 
 /**
  * Reads the reduced-motion preference when it is needed, so that a change
@@ -195,21 +210,19 @@ export default function FormField({
         />
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 overflow-hidden rounded-lg opacity-0 transition-opacity duration-200 group-focus-within/frame:opacity-100 group-data-invalid/field:hidden motion-reduce:hidden"
+          className="pointer-events-none absolute inset-0 overflow-hidden rounded-lg mask-cv-field-border opacity-0 transition-opacity duration-200 group-focus-within/frame:opacity-100 group-data-invalid/field:hidden motion-reduce:hidden"
         >
-          <svg className="block size-full">
-            {traceDashes.map((length) => (
-              <rect
-                key={length}
-                width="100%"
-                height="100%"
-                rx="8"
-                pathLength={100}
-                strokeDasharray={`0 ${traceLength - length} ${length} ${100 - traceLength}`}
-                className="animate-cv-trace fill-none stroke-cv-accent stroke-4 opacity-20 [animation-play-state:paused] group-focus-within/frame:[animation-play-state:running]"
-              />
-            ))}
-          </svg>
+          {traceGlows.map((lead) => (
+            <span
+              key={lead}
+              style={{
+                opacity: lead * traceGlowPeak,
+                animationDuration: `${traceLapSeconds}s`,
+                animationDelay: `${(-lead * traceLength * traceLapSeconds) / 100}s`,
+              }}
+              className="absolute top-0 left-0 size-24 bg-cv-glow offset-cv-field-border animate-cv-trace [animation-play-state:paused] group-focus-within/frame:[animation-play-state:running]"
+            />
+          ))}
         </span>
       </div>
       <FieldMessage id={errorId} error={error} />
