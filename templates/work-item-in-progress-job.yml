@@ -10,8 +10,8 @@ jobs:
   - checkout: none
 
   # Moves the work items linked to this pull request to "In Progress" while the pull request
-  # is open: New User Stories and Tasks, User Stories that are "Ready for Development", and
-  # User Stories that are already "Waiting for Deployment" from an earlier pull request.
+  # is open: New or "Ready for Development" User Stories and Tasks, and User Stories that
+  # are already "Waiting for Deployment" from an earlier pull request.
   # After the merge, the main pipeline moves them forward again
   # (templates/work-item-state-job.yml). Closed and Removed items are left as
   # they are.
@@ -38,7 +38,7 @@ jobs:
         | while IFS=$'\t' read -r id type state; do
             move=false
             case "$type:$state" in
-              "User Story:New" | "User Story:Ready for Development" | "User Story:Waiting for Deployment" | "Task:New")
+              "User Story:New" | "User Story:Ready for Development" | "User Story:Waiting for Deployment" | "Task:New" | "Task:Ready for Development")
                 move=true
                 ;;
             esac

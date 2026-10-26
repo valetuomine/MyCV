@@ -63,16 +63,16 @@ Leave these out, since the backlog does not use them: Acceptance Criteria, Story
 
 ## State
 
-A User Story moves `New` → `Ready for Development` → `In Progress` → `Waiting for Deployment` → `Closed`. This skill sets only the first step; `create-pull-request` and the pipelines set the rest.
+A User Story moves `New` → `Ready for Development` → `In Progress` → `Waiting for Deployment` → `Closed`. A Task that has its own `Toteutusohje` moves `New` → `Ready for Development` → `In Progress` → `Closed`; other Tasks keep their default state (`New`) until the pipeline moves them. This skill sets only the first step; `create-pull-request` and the pipelines set the rest.
 
-When `create-pull-request` called this skill, skip this step: that skill moves the story to `In Progress`. Otherwise, once the story is complete (parent link, child Tasks and the kickoff prompt comment), update `System.State` with `wit_work_item_write` (`action: update`):
+When `create-pull-request` called this skill, skip this step: that skill moves the story to `In Progress`. Otherwise, once the story is complete (parent link, child Tasks and the kickoff prompt comment), update `System.State` with `wit_work_item_write` (`action: update`) on the story and on each Task that has its own `Toteutusohje`:
 
-| Story | State |
+| Story or Task | State |
 |---|---|
 | Its `Toteutusohje` is complete and has no `Avoimet kysymykset` | `Ready for Development`: the next chat can start from the kickoff prompt right away |
 | It has `Avoimet kysymykset`, or the user said it still needs refining | Leave it `New`, and say in the report what keeps it there |
 
-Whenever you update the description of a `New` story so that its `Avoimet kysymykset` are answered and its `Toteutusohje` is complete, move it to `Ready for Development` in the same update. Tasks keep their default state, whether they are child Tasks or not.
+Whenever you update the description of a `New` story, or of a `New` Task with its own `Toteutusohje`, so that its `Avoimet kysymykset` are answered and its `Toteutusohje` is complete, move it to `Ready for Development` in the same update.
 
 ## Tags
 

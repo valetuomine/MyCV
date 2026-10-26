@@ -17,6 +17,6 @@ Add Tasks only when the story splits into clearly separate pieces of work, such 
 <pre><code>GET /api/Profile/{profileId}</code></pre>
 ```
 
-A Task that is worked on in its own chat and pull request gets its own `Toteutusohje`, written the same way but limited to the Task. It names the parent story for the bigger picture instead of repeating it.
+A Task that is worked on in its own chat and pull request gets its own `Toteutusohje`, written the same way but limited to the Task. It names the parent story for the bigger picture instead of repeating it. Such a Task then gets its state like a story, see *State* in `SKILL.md`.
 
 Use the same area path, iteration path and assignee as the story. Tag each Task with the tags from *Tags* in `SKILL.md` that match the Task's own work, which is usually a subset of the story's tags (for example `Backend` for an endpoint Task under a `Backend; Database` story).
