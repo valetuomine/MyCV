@@ -22,7 +22,7 @@ Every change reaches `main` through a pull request, however small: a one-line fi
 
 Each step has its rules in a reference file. Read a file when you reach its step, and skip the files of steps that do not apply, such as `pull-request.md` when the branch already has an active pull request.
 
-1. **Inspect the changes.** Run `git status` and `git diff` (including untracked files) and understand what the change does. If there is nothing to commit, stop and tell the user.
+1. **Inspect the changes.** Run `git status` and `git diff` (including untracked files) and understand what the change does. If there is nothing to commit, stop and tell the user. If the change adds something production needs, such as a new setting or secret, an external service, a migration that drops or moves data, a redirect URI or origin, or a runtime dependency, add it to the local-only production notes `docs/azure-deployment.md` and their Finnish copy `docs/azure-deployment.fi.md`, with a change log row in both. Put the public-safe part, without IDs or personal data, in `README.md`.
 2. **Resolve the work item.** Read [references/work-item.md](references/work-item.md).
 3. **Check the current branch and create the feature branch.** If the current branch is wrong for this work, switch to `main` and pull from `origin` first. Read [references/branch.md](references/branch.md).
 4. **Run the checks.** Read [references/checks.md](references/checks.md) and run only the parts for the areas the change touches. Fix anything that fails before continuing.
@@ -44,4 +44,5 @@ End with:
 - The check results
 - The code review findings that were fixed and those left as they are
 - Any changes left uncommitted because they were unrelated
+- What was added to the production notes, if anything
 - The follow-up prompts, last
