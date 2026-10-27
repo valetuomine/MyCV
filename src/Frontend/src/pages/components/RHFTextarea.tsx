@@ -3,6 +3,7 @@ import {
   useLayoutEffect,
   useRef,
   type JSX,
+  type ReactNode,
   type TextareaHTMLAttributes,
 } from "react"
 import type { FieldValues, Path } from "react-hook-form"
@@ -24,6 +25,7 @@ interface RHFTextareaProps<TFieldValues extends FieldValues> extends Omit<
 > {
   name: Path<TFieldValues>
   label: string
+  description?: ReactNode
 }
 
 /** Tells whether the browser can size a textarea to its content in CSS. */
@@ -57,6 +59,8 @@ function fitToContent(textarea: HTMLTextAreaElement): void {
  * @param props.rows - The fewest lines the textarea shows.
  * @param props.maxLength - The character limit, which also shows the count.
  * @param props.required - Whether the field is required, marked with `*`.
+ * @param props.description - A hint below the field, which also describes it
+ * to screen readers.
  * @returns The labelled textarea.
  */
 export default function RHFTextarea<TFieldValues extends FieldValues>({
@@ -65,10 +69,11 @@ export default function RHFTextarea<TFieldValues extends FieldValues>({
   rows = 4,
   maxLength,
   required,
+  description,
   ...textareaAttributes
 }: RHFTextareaProps<TFieldValues>): JSX.Element {
   const { id, error, describedBy, value, frameProps, registration } =
-    useFormField(name, maxLength)
+    useFormField(name, maxLength, description)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const { ref: registerRef, ...textareaProps } = registration
   /**
@@ -112,7 +117,12 @@ export default function RHFTextarea<TFieldValues extends FieldValues>({
   }, [])
 
   return (
-    <FormField {...frameProps} label={label} required={required}>
+    <FormField
+      {...frameProps}
+      label={label}
+      required={required}
+      description={description}
+    >
       <textarea
         {...textareaAttributes}
         {...textareaProps}

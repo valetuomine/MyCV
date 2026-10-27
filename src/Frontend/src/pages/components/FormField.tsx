@@ -16,12 +16,15 @@ export interface FieldFrameProps {
   maxLength?: number
   length: number
   countId: string
+  descriptionId: string
   submitCount: number
 }
 
 interface FormFieldProps extends FieldFrameProps {
   label: string
   required?: boolean
+  description?: ReactNode
+  action?: ReactNode
   children: ReactNode
 }
 
@@ -74,12 +77,17 @@ function prefersReducedMotion(): boolean {
  * The frame of a form field: its label with a required marker and character
  * count, the field itself, and its validation message beneath it.
  *
- * With a mouse, a light follows the pointer around the field's border and
- * faintly tints its fill. The position goes to CSS variables once per frame,
- * so moving the pointer doesn't re-render. Touch and reduced motion get no
- * light. While the field has focus the label turns accent and a light
- * travels around its border, paused on every other field. An invalid field
- * and reduced motion get no travelling light.
+ * The frame draws the field's opaque surface, so the page background doesn't
+ * show through, and fades the whole field while it is disabled. With a
+ * mouse, a light follows the pointer around the field's border and faintly
+ * tints the surface beneath the transparent field. The position goes to CSS
+ * variables once per frame, so moving the pointer doesn't re-render. Touch
+ * and reduced motion get no light. While the field has focus the label turns
+ * accent and a light travels around its border, paused on every other field.
+ * An invalid field and reduced motion get no travelling light. While the
+ * field is hovered or has focus, a soft light also drifts slowly from side
+ * to side inside it, on its own timing, and pauses where it is otherwise.
+ * Reduced motion and a disabled field get no drifting light.
  *
  * The count shows while the field has focus, and always from 90% of the
  * limit, in accent and then in danger at the limit. Screen readers hear it
@@ -97,9 +105,17 @@ function prefersReducedMotion(): boolean {
  * @param props.maxLength - The character limit, which shows the count.
  * @param props.length - The number of characters in the field.
  * @param props.countId - The count's ID, for the field's `aria-describedby`.
+ * @param props.descriptionId - The description's ID, for the field's
+ * `aria-describedby`.
  * @param props.submitCount - How many times the form has been submitted.
+ * @param props.description - A hint shown below the field and its message,
+ * when it is truthy.
+ * @param props.action - A control beside the field, such as its form's
+ * submit button. It shares the field's row, so it stays level with the field
+ * and as tall as it whatever the label does, and focusing it doesn't light
+ * the label or the count.
  * @param props.children - The field.
- * @returns The labelled field with its count and message.
+ * @returns The labelled field with its count, message and description.
  */
 export default function FormField({
   id,
@@ -110,7 +126,10 @@ export default function FormField({
   maxLength,
   length,
   countId,
+  descriptionId,
   submitCount,
+  description,
+  action,
   children,
 }: FormFieldProps): JSX.Element {
   const { t } = useTranslation()
@@ -129,7 +148,7 @@ export default function FormField({
         ? "text-cv-danger"
         : length >= maxLength * 0.9
           ? "text-cv-accent"
-          : "text-cv-muted opacity-0 group-focus-within/field:opacity-100"
+          : "text-cv-muted opacity-0 group-has-[[data-field-frame]:focus-within]/field:opacity-100"
 
   useEffect(() => {
     if (submitCount === handledSubmitCountRef.current) {
@@ -173,7 +192,7 @@ export default function FormField({
       <div className="flex items-baseline justify-between gap-3">
         <label
           htmlFor={id}
-          className="font-cv-mono text-xs tracking-wide text-cv-muted uppercase transition-colors duration-200 group-focus-within/field:text-cv-accent"
+          className="font-cv-mono text-xs tracking-wide text-cv-muted uppercase transition-colors duration-200 group-has-[[data-field-frame]:focus-within]/field:text-cv-accent"
         >
           {label}
           {required && (
@@ -193,39 +212,54 @@ export default function FormField({
           </span>
         )}
       </div>
-      <div
-        ref={frameRef}
-        onPointerEnter={trackPointer}
-        onPointerMove={trackPointer}
-        className="group/frame relative isolate group-data-invalid/field:[--spot:var(--cv-danger)]"
-      >
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 -z-10 rounded-lg bg-cv-field-glow opacity-0 transition-opacity duration-200 group-hover/frame:opacity-100 group-has-disabled/frame:hidden motion-reduce:hidden"
-        />
-        {children}
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 rounded-lg bg-cv-field-edge mask-cv-field-border opacity-0 transition-opacity duration-200 group-hover/frame:opacity-100 group-has-disabled/frame:hidden motion-reduce:hidden"
-        />
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 overflow-hidden rounded-lg mask-cv-field-border opacity-0 transition-opacity duration-200 group-focus-within/frame:opacity-100 group-data-invalid/field:hidden motion-reduce:hidden"
+      <div className="flex min-w-0 gap-3">
+        <div
+          ref={frameRef}
+          data-field-frame
+          onPointerEnter={trackPointer}
+          onPointerMove={trackPointer}
+          className="group/frame relative isolate min-w-0 flex-1 rounded-lg bg-cv-surface group-data-invalid/field:[--spot:var(--cv-danger)] has-disabled:opacity-60"
         >
-          {traceGlows.map((lead) => (
-            <span
-              key={lead}
-              style={{
-                opacity: lead * traceGlowPeak,
-                animationDuration: `${traceLapSeconds}s`,
-                animationDelay: `${(-lead * traceLength * traceLapSeconds) / 100}s`,
-              }}
-              className="absolute top-0 left-0 size-24 bg-cv-glow offset-cv-field-border animate-cv-trace [animation-play-state:paused] group-focus-within/frame:[animation-play-state:running]"
-            />
-          ))}
-        </span>
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 -z-10 overflow-hidden rounded-lg opacity-0 transition-opacity duration-300 group-focus-within/frame:opacity-100 group-hover/frame:opacity-100 group-has-disabled/frame:hidden motion-reduce:hidden"
+          >
+            <span className="absolute inset-y-0 left-0 w-1/2 bg-cv-field-drift animate-cv-drift [animation-play-state:paused] group-focus-within/frame:[animation-play-state:running] group-hover/frame:[animation-play-state:running]" />
+          </span>
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 -z-10 rounded-lg bg-cv-field-glow opacity-0 transition-opacity duration-200 group-hover/frame:opacity-100 group-has-disabled/frame:hidden motion-reduce:hidden"
+          />
+          {children}
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 rounded-lg bg-cv-field-edge mask-cv-field-border opacity-0 transition-opacity duration-200 group-hover/frame:opacity-100 group-has-disabled/frame:hidden motion-reduce:hidden"
+          />
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 overflow-hidden rounded-lg mask-cv-field-border opacity-0 transition-opacity duration-200 group-focus-within/frame:opacity-100 group-data-invalid/field:hidden motion-reduce:hidden"
+          >
+            {traceGlows.map((lead) => (
+              <span
+                key={lead}
+                style={{
+                  opacity: lead * traceGlowPeak,
+                  animationDuration: `${traceLapSeconds}s`,
+                  animationDelay: `${(-lead * traceLength * traceLapSeconds) / 100}s`,
+                }}
+                className="absolute top-0 left-0 size-24 bg-cv-glow offset-cv-field-border animate-cv-trace [animation-play-state:paused] group-focus-within/frame:[animation-play-state:running]"
+              />
+            ))}
+          </span>
+        </div>
+        {action}
       </div>
       <FieldMessage id={errorId} error={error} />
+      {description ? (
+        <div id={descriptionId} className="min-w-0 text-sm text-cv-muted">
+          {description}
+        </div>
+      ) : null}
     </div>
   )
 }

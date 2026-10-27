@@ -69,6 +69,22 @@ export function toExternalUrl(value: string): string {
 }
 
 /**
+ * Accepts a bare public URL segment or a full CV link and returns the segment.
+ *
+ * @param input - What the visitor typed.
+ * @returns The link's last path segment, or the input without slashes.
+ */
+export function extractPublicUrlSegment(input: string): string {
+  const value = input.trim()
+  try {
+    const segments = new URL(value).pathname.split("/").filter(Boolean)
+    return segments[segments.length - 1] ?? ""
+  } catch {
+    return value.replace(/^\/+|\/+$/g, "")
+  }
+}
+
+/**
  * Formats a profile date for display in the given language.
  *
  * @param value - An ISO date string from the API.

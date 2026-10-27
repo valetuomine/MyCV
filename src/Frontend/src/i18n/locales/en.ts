@@ -31,7 +31,6 @@ export const en = {
       "Every CV has its own link. Paste a CV link or public address to view it.",
     inputLabel: "CV link or address",
     submit: "Open CV",
-    emptyError: "Enter a CV link or public address.",
   },
   notFound: {
     heading: "We couldn't find that page.",
@@ -159,6 +158,7 @@ export const en = {
     cvLinkMax: "Your CV link must be 100 characters or fewer",
     cvLinkFormat: "Use letters and numbers separated by single hyphens",
     cvLinkReserved: "This CV link is reserved",
+    cvAddressRequired: "Enter a CV link or public address",
   },
   signIn: {
     googleAccount: "Google account",

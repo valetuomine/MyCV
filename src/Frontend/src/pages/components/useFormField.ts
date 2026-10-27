@@ -1,4 +1,4 @@
-import { useId } from "react"
+import { useId, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 import {
   useFormContext,
@@ -30,12 +30,15 @@ interface FormFieldState<TFieldValues extends FieldValues> {
  * @param name - The form field's name.
  * @param maxLength - The field's character limit, which adds the character
  * count to the field's description.
+ * @param description - The field's description, if any. `FormField` shows it
+ * when it is truthy, and the same test adds it to `aria-describedby`.
  * @returns The field element's ID, its message, `aria-describedby` and text,
  * the props for its `FormField` frame, and its React Hook Form registration.
  */
 export default function useFormField<TFieldValues extends FieldValues>(
   name: Path<TFieldValues>,
   maxLength?: number,
+  description?: ReactNode,
 ): FormFieldState<TFieldValues> {
   const id = useId()
   const { t } = useTranslation()
@@ -46,9 +49,14 @@ export default function useFormField<TFieldValues extends FieldValues>(
   const message = translateValidationMessage(t, error?.message)
   const errorId = `${id}-error`
   const countId = `${id}-count`
-  /** The error and the count, which together describe the field. */
+  const descriptionId = `${id}-description`
+  /** The error, the count and the description, which describe the field. */
   const describedBy =
-    [error && errorId, maxLength !== undefined && countId]
+    [
+      error && errorId,
+      maxLength !== undefined && countId,
+      Boolean(description) && descriptionId,
+    ]
       .filter(Boolean)
       .join(" ") || undefined
 
@@ -64,6 +72,7 @@ export default function useFormField<TFieldValues extends FieldValues>(
       maxLength,
       length: value.length,
       countId,
+      descriptionId,
       submitCount: formState.submitCount,
     },
     registration: register(name),

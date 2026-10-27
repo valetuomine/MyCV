@@ -1,12 +1,6 @@
-import {
-  useEffect,
-  useId,
-  useRef,
-  useState,
-  type ChangeEvent,
-  type JSX,
-  type SubmitEvent,
-} from "react"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useEffect, useRef, useState, type JSX } from "react"
+import { FormProvider, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Navigate, useNavigate } from "react-router-dom"
 import {
@@ -16,24 +10,14 @@ import {
 } from "../../../../auth/adminLoginStorage"
 import { signedOutLocationState } from "../../../../auth/signedOutState"
 import Button from "../../../components/Button"
+import RHFInput from "../../../components/RHFInput"
 import { RoutePaths } from "../../../../routePaths"
 import { ButtonVariant } from "../../../../types"
-
-/**
- * Accepts a bare public URL segment or a full CV link and returns the segment.
- *
- * @param input - What the visitor typed.
- * @returns The link's last path segment, or the input without slashes.
- */
-function extractPublicUrlSegment(input: string): string {
-  const value = input.trim()
-  try {
-    const segments = new URL(value).pathname.split("/").filter(Boolean)
-    return segments[segments.length - 1] ?? ""
-  } catch {
-    return value.replace(/^\/+|\/+$/g, "")
-  }
-}
+import {
+  openCvDefaultValues,
+  openCvSchema,
+  type OpenCvSchema,
+} from "../../schemas/open-cv-schema"
 
 /**
  * The home page, where a visitor opens a CV by its link or public address.
@@ -45,10 +29,10 @@ function extractPublicUrlSegment(input: string): string {
 export default function Home(): JSX.Element {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const inputId = useId()
-  const errorId = `${inputId}-error`
-  const [value, setValue] = useState("")
-  const [isEmpty, setIsEmpty] = useState(false)
+  const form = useForm<OpenCvSchema>({
+    resolver: zodResolver(openCvSchema),
+    defaultValues: openCvDefaultValues,
+  })
 
   /**
    * Set before a sign-out lands here: the CV to return to, or "" to stay on
@@ -84,30 +68,12 @@ export default function Home(): JSX.Element {
   }
 
   /**
-   * Updates the input and clears its error.
-   *
-   * @param event - The input's change.
+   * Opens the CV the field points to, once the schema has turned it into a
+   * public URL segment that isn't empty.
    */
-  const handleChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    setValue(event.target.value)
-    setIsEmpty(false)
-  }
-
-  /**
-   * Opens the CV the input points to, or shows an error when it is empty.
-   *
-   * @param event - The form's submit.
-   */
-  const handleSubmit = (event: SubmitEvent<HTMLFormElement>): void => {
-    event.preventDefault()
-    const publicUrlSegment = extractPublicUrlSegment(value)
-    if (!publicUrlSegment) {
-      setIsEmpty(true)
-      return
-    }
-
-    navigate(RoutePaths.CandidateProfile(publicUrlSegment))
-  }
+  const submit = form.handleSubmit(({ cvAddress }) => {
+    navigate(RoutePaths.CandidateProfile(cvAddress))
+  })
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-6xl items-center pt-20 pb-12 lg:pt-4">
@@ -127,34 +93,23 @@ export default function Home(): JSX.Element {
             {t("home.intro")}
           </p>
         </div>
-        <form noValidate onSubmit={handleSubmit} className="grid w-full gap-2">
-          <label
-            htmlFor={inputId}
-            className="font-cv-mono text-xs tracking-wide text-cv-muted uppercase"
-          >
-            {t("home.inputLabel")}
-          </label>
-          <div className="flex flex-wrap gap-3">
-            <input
-              id={inputId}
-              value={value}
-              onChange={handleChange}
+        <FormProvider {...form}>
+          <form noValidate onSubmit={submit} className="grid w-full">
+            <RHFInput<OpenCvSchema>
+              name="cvAddress"
+              label={t("home.inputLabel")}
+              required
               autoComplete="off"
+              autoCapitalize="none"
               spellCheck={false}
-              aria-invalid={isEmpty ? true : undefined}
-              aria-describedby={isEmpty ? errorId : undefined}
-              className="min-h-11 min-w-0 flex-1 rounded-lg border border-cv-field bg-cv-wash px-3.5 py-2.5 text-cv-ink transition-colors outline-none placeholder:text-cv-meta hover:border-cv-muted focus:border-cv-accent focus:ring-3 focus:ring-cv-accent/20 aria-invalid:border-cv-danger aria-invalid:ring-cv-danger/20"
+              action={
+                <Button type="submit" variant={ButtonVariant.Primary}>
+                  {t("home.submit")}
+                </Button>
+              }
             />
-            <Button type="submit" variant={ButtonVariant.Primary}>
-              {t("home.submit")}
-            </Button>
-          </div>
-          {isEmpty && (
-            <span id={errorId} role="alert" className="text-sm text-cv-danger">
-              {t("home.emptyError")}
-            </span>
-          )}
-        </form>
+          </form>
+        </FormProvider>
       </div>
     </main>
   )

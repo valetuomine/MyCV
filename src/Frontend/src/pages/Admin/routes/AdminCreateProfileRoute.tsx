@@ -8,10 +8,10 @@ import { returnAdminPathKey } from "../../../auth/adminLoginStorage"
 import { isSignInConfigured, useAuthSession } from "../../../auth/authSession"
 import SignInMessage from "../../../auth/SignInMessage"
 import useLoginRedirect from "../../../auth/useLoginRedirect"
-import { translateValidationMessage } from "../../../i18n/validationMessage"
 import { RoutePaths } from "../../../routePaths"
 import { ButtonVariant } from "../../../types"
 import Button from "../../components/Button"
+import RHFInput from "../../components/RHFInput"
 import ProfileFields from "../../Profile/components/forms/ProfileFields"
 import {
   createProfileSchema,
@@ -60,11 +60,6 @@ export default function AdminCreateProfileRoute(): JSX.Element {
     control: form.control,
     name: "publicUrlSegment",
   })
-
-  const publicUrlSegmentError = translateValidationMessage(
-    t,
-    form.formState.errors.publicUrlSegment?.message,
-  )
 
   /**
    * Validates and creates the profile, then opens it at its public URL.
@@ -128,45 +123,24 @@ export default function AdminCreateProfileRoute(): JSX.Element {
             <legend className="sr-only">
               {t("createProfile.publicAddress")}
             </legend>
-            <div className="grid min-w-0 gap-2">
-              <label
-                htmlFor="profile-public-url-segment"
-                className="font-cv-mono text-xs tracking-wide text-cv-muted uppercase"
-              >
-                {t("createProfile.cvLink")}
-              </label>
-              <input
-                id="profile-public-url-segment"
-                autoComplete="off"
-                autoCapitalize="none"
-                spellCheck={false}
-                maxLength={100}
-                {...form.register("publicUrlSegment")}
-                aria-invalid={publicUrlSegmentError ? true : undefined}
-                aria-describedby={
-                  publicUrlSegmentError
-                    ? "profile-public-url-segment-error"
-                    : undefined
-                }
-                className="min-h-11 min-w-0 rounded-lg border border-cv-field bg-cv-wash px-3.5 py-2.5 text-cv-ink transition-colors outline-none placeholder:text-cv-meta hover:border-cv-muted focus:border-cv-accent focus:ring-3 focus:ring-cv-accent/20 aria-invalid:border-cv-danger aria-invalid:ring-cv-danger/20"
-              />
-              <p className="m-0 min-w-0 text-sm text-cv-muted">
-                {t("createProfile.cvLinkPreview")}{" "}
-                <span className="break-all text-cv-ink">
-                  {window.location.origin}/
-                  {publicUrlSegment || t("createProfile.cvLinkPlaceholder")}
-                </span>
-              </p>
-              {publicUrlSegmentError && (
-                <span
-                  id="profile-public-url-segment-error"
-                  role="alert"
-                  className="text-sm text-cv-danger"
-                >
-                  {publicUrlSegmentError}
-                </span>
-              )}
-            </div>
+            <RHFInput<CreateProfileSchema>
+              name="publicUrlSegment"
+              label={t("createProfile.cvLink")}
+              maxLength={100}
+              required
+              autoComplete="off"
+              autoCapitalize="none"
+              spellCheck={false}
+              description={
+                <>
+                  {t("createProfile.cvLinkPreview")}{" "}
+                  <span className="break-all text-cv-ink">
+                    {window.location.origin}/
+                    {publicUrlSegment || t("createProfile.cvLinkPlaceholder")}
+                  </span>
+                </>
+              }
+            />
           </fieldset>
           <ProfileFields isDisabled={createState.isLoading} />
           {submitError && (

@@ -33,7 +33,6 @@ export const fi: Translation = {
       "Jokaisella CV:llä on oma linkkinsä. Liitä CV:n linkki tai julkinen osoite nähdäksesi sen.",
     inputLabel: "CV:n linkki tai osoite",
     submit: "Avaa CV",
-    emptyError: "Anna CV:n linkki tai julkinen osoite.",
   },
   notFound: {
     heading: "Sivua ei löytynyt.",
@@ -164,6 +163,7 @@ export const fi: Translation = {
     cvLinkFormat:
       "Käytä kirjaimia ja numeroita, jotka on erotettu yksittäisillä yhdysmerkeillä",
     cvLinkReserved: "Tämä CV:n linkki on varattu",
+    cvAddressRequired: "Anna CV:n linkki tai julkinen osoite",
   },
   signIn: {
     googleAccount: "Google-tili",

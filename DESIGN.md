@@ -77,7 +77,7 @@ components:
     rounded: "{rounded.pill}"
     padding: "0.625rem 1.25rem"
   input:
-    backgroundColor: "{colors.paper}"
+    backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
     rounded: "{rounded.input}"
     padding: "0.625rem 0.875rem"
@@ -119,7 +119,7 @@ A restrained zinc palette with one emerald accent. Components use only the seman
 - **Paper** (#fafafa / dark #09090b): page background.
 - **Surface** (#ffffff / dark #111113): panels and the portrait card.
 - **Hairline** (#e4e4e7 / dark #26262b): decorative borders and dividers.
-- **Field Line** (#8a8a93 / dark #6b6b74): input borders; at least 3:1 against the page.
+- **Field Line** (#8a8a93 / dark #6b6b74): a grey at least 3:1 against the page, for the loading spinner's track. Form fields use Hairline instead, see Inputs / Fields.
 - **Ink** (#09090b / dark #f4f4f5): headings and primary text.
 - **Copy** (#3f3f46 / dark #b4b4bb): body text.
 - **Muted** (#5f5f68 / dark #9e9ea6) and **Meta** (#6e6e77 / dark #85858e): secondary info, placeholders, update dates; both at least 4.5:1 on page and surface.
@@ -193,15 +193,19 @@ Every button and button-styled link is the shared `Button` component (`src/Front
 
 Every field is `RHFInput` or `RHFTextarea`, framed by the shared `FormField` (`src/Frontend/src/pages/components/`). Floating labels are not used: the mono label above the field is the design.
 
-- **Style:** 0.5rem radius, field-line border, faint wash fill, mono uppercase label above with the character count at its right.
+- **Style:** 0.5rem radius, 1px hairline border and an opaque surface fill, like the preview panel, so the fields and the preview read as one set and the page's dot grid doesn't show through. Mono uppercase label above with the character count at its right. The surface is drawn by the `FormField` frame and the field itself is transparent, so the hover tint sits between the surface and the text.
+- **Why no 3:1 border:** the hairline is deliberately below 3:1 against the page. A field is always identified by its visible label, and its hover border, focus ring and error ring all stand out clearly. Keeping the grey field-line border with only the fill changed was considered and rejected, because the fields would no longer match the preview panel.
 - **Hover (mouse):** the border darkens to Muted, and an accent light follows the pointer around the border (an 8rem radial gradient at 70% accent, masked to the field's outer 2px) with an 8% tint in the fill under it (a wider 10rem radial gradient). Its position goes to CSS variables once per animation frame. No light for touch, reduced motion or disabled fields; on an invalid field it is danger-coloured.
 - **Focus:** a 3px accent ring at 20%, the label turns accent, and an accent light travels around the border, one lap every 8s like the panels' sweep (a comet a fifth of the border long that brightens smoothly from tail to head, built from ten overlapping 6rem radial glows like the hover light, that follow the border on a CSS motion path (`offset-path: inset(0 round 0.5rem)`) a little apart; it shows on the field's outer 2px, the thickness of the orbiting light on the portrait panel). Browsers without shape motion paths show no travelling light. The border itself stays neutral so the light shows. Unlike the panels' angular sweep, the light follows the border, so it keeps its speed on the long and short edges of a wide field and its tail bends around the corners without pausing. It runs only on the focused field and is paused on the others.
+- **Drift (hover and focus):** a soft accent light, half the field wide (a radial gradient at 14% accent, a deliberate small exception to the 10% glow cap so the drift reads on the surface; it fades out from its centre and covers only part of a small field), sways slowly from side to side inside the field, 6s each way on an ease-in-out curve, on its own timing apart from the border lights. It fades in over 300ms, pauses where it is when the field is left, and resumes from there. It sits under the text like the hover tint, turns danger on an invalid field, and is off for reduced motion and disabled fields.
 - **Error:** danger border and 3px danger ring at 20%, with or without focus, and no travelling light. The message opens below the field (`grid-template-rows` 0fr to 1fr with a fade, 200ms) in a `role="alert"` element, and keeps its text while closing. When a submit leaves the field invalid it shakes once sideways (±4px, settling, 300ms); typing never shakes it.
 - **Character count:** on every field with `maxLength`, in mono `tabular-nums` (`12 / 100`). Muted and shown only while the field has focus, then always visible from 90% of the limit in accent, and danger at the limit. It is part of the field's `aria-describedby`, never a live region, so screen readers don't read it on every keystroke.
+- **Description:** an optional hint below the field and its message, in muted 0.875rem text, that is also part of the field's `aria-describedby`, such as the CV link preview in the create view.
+- **Action:** an optional control in the field's row, such as the home page's Open CV button, as tall as the field and level with it however the label wraps. Focusing it doesn't light the label or the count.
 - **Textarea:** grows with its text (`field-sizing: content`, at least 4 lines, at most 70dvh, then it scrolls); browsers without `field-sizing` fall back to fitting the height in script.
-- **Autofill:** an opaque inset shadow in the wash-over-page colour and an ink text fill keep autofilled fields on theme in both themes.
-- **Disabled:** 60% opacity and a not-allowed cursor.
-- **Reduced motion:** no pointer light, travelling light, shake or height animation; a focused border turns accent instead, and the colour, ring and message still change, so every state stays distinct.
+- **Autofill:** an opaque inset shadow in the surface colour and an ink text fill keep autofilled fields on theme in both themes.
+- **Disabled:** 60% opacity on the whole field, surface included, and a not-allowed cursor.
+- **Reduced motion:** no pointer light, travelling light, drifting light, shake or height animation; a focused border turns accent instead, and the colour, ring and message still change, so every state stays distinct.
 - **Placeholders:** realistic examples (`https://github.com/username`, `Helsinki, Suomi`) or none, never "Enter …"; the label already says what goes in.
 - **Text link** (the CV link in the edit view): a half-strength accent underline at rest; on hover the text turns accent and a full accent underline draws over it from the left (250ms). Reduced motion keeps only the colour change.
 

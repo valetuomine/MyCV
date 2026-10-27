@@ -22,7 +22,7 @@
   --cv-accent-ink: #ffffff;
   --cv-danger: #dc2626;
   --cv-wash: rgb(9 9 11 / 0.025);
-  --cv-autofill: color-mix(in srgb, var(--cv-ink) 2.5%, var(--cv-background));
+  --cv-autofill: var(--cv-surface);
   --cv-overlay: rgb(9 9 11 / 0.05);
   --cv-dot: rgb(9 9 11 / 0.14);
   --cv-shadow-panel: 0 2rem 4rem -2rem rgb(24 24 27 / 0.18);
@@ -49,7 +49,7 @@
   --cv-accent-ink: #04130d;
   --cv-danger: #f87171;
   --cv-wash: rgb(255 255 255 / 0.03);
-  --cv-autofill: color-mix(in srgb, var(--cv-ink) 3%, var(--cv-background));
+  --cv-autofill: var(--cv-surface);
   --cv-overlay: rgb(255 255 255 / 0.06);
   --cv-dot: rgb(255 255 255 / 0.11);
   --cv-shadow-panel: 0 2rem 4rem -2rem rgb(0 0 0 / 0.8);
@@ -106,6 +106,8 @@
   --animate-cv-spin: cv-sweep 0.9s linear infinite;
   --animate-cv-spin-slow: cv-sweep 2.4s linear infinite;
   --animate-cv-trace: cv-trace 8s linear infinite;
+  --animate-cv-drift: cv-drift 6s cubic-bezier(0.45, 0, 0.55, 1) infinite
+    alternate;
   /* Held invisible briefly so screens that resolve quickly never flash. */
   --animate-cv-fade-in-delayed: cv-fade-in 200ms ease-out 300ms both;
 
@@ -136,6 +138,17 @@
   @keyframes cv-trace {
     to {
       offset-distance: 100%;
+    }
+  }
+
+  /* Carries a half-width light from the left edge to the right one; run
+     alternate, it sways back and forth. */
+  @keyframes cv-drift {
+    from {
+      transform: translateX(-50%);
+    }
+    to {
+      transform: translateX(150%);
     }
   }
 
@@ -231,6 +244,16 @@
   background-image: radial-gradient(
     10rem circle at var(--x, 50%) var(--y, 50%),
     color-mix(in srgb, var(--spot, var(--cv-accent)) 8%, transparent),
+    transparent
+  );
+}
+
+/* The soft light that drifts inside a hovered or focused field (moved by
+   animate-cv-drift); --spot turns it danger on an invalid field. */
+@utility bg-cv-field-drift {
+  background-image: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--spot, var(--cv-accent)) 14%, transparent),
     transparent
   );
 }

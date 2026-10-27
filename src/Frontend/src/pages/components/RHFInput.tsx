@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes, JSX } from "react"
+import type { InputHTMLAttributes, JSX, ReactNode } from "react"
 import type { FieldValues, Path } from "react-hook-form"
 import { InputType } from "../../types"
 import { fieldClassName } from "./fieldClassName"
@@ -22,6 +22,8 @@ interface RHFInputProps<TFieldValues extends FieldValues> extends Omit<
   name: Path<TFieldValues>
   label: string
   type?: InputType
+  description?: ReactNode
+  action?: ReactNode
 }
 
 /**
@@ -35,6 +37,10 @@ interface RHFInputProps<TFieldValues extends FieldValues> extends Omit<
  * @param props.type - The input type.
  * @param props.maxLength - The character limit, which also shows the count.
  * @param props.required - Whether the field is required, marked with `*`.
+ * @param props.description - A hint below the field, which also describes it
+ * to screen readers.
+ * @param props.action - A control beside the field, such as its form's
+ * submit button, kept level with the field.
  * @returns The labelled input.
  */
 export default function RHFInput<TFieldValues extends FieldValues>({
@@ -43,15 +49,24 @@ export default function RHFInput<TFieldValues extends FieldValues>({
   type = InputType.Text,
   maxLength,
   required,
+  description,
+  action,
   ...inputAttributes
 }: RHFInputProps<TFieldValues>): JSX.Element {
   const { id, error, describedBy, frameProps, registration } = useFormField(
     name,
     maxLength,
+    description,
   )
 
   return (
-    <FormField {...frameProps} label={label} required={required}>
+    <FormField
+      {...frameProps}
+      label={label}
+      required={required}
+      description={description}
+      action={action}
+    >
       <input
         {...inputAttributes}
         {...registration}
