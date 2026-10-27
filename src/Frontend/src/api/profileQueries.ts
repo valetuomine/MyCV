@@ -1,10 +1,44 @@
 import type { components } from "../generated/openapi"
-import { baseApi } from "./baseApi"
+import { apiBaseUrl, baseApi } from "./baseApi"
 
 export type Profile = components["schemas"]["ProfileDto"]
 export type ProfileAdmin = components["schemas"]["ProfileAdminDto"]
 export type CreateProfileRequest = components["schemas"]["CreateProfileRequest"]
 export type UpdateProfileRequest = components["schemas"]["UpdateProfileRequest"]
+
+interface ProfilePdfUrlArgs {
+  profileId: string
+  languageCode?: string
+  download?: boolean
+}
+
+/**
+ * Builds the URL of a profile's PDF. The PDF is a public file, so the browser
+ * loads it straight from this URL, in an embedded viewer or as a download,
+ * instead of through RTK Query.
+ *
+ * @param args - The URL's parts.
+ * @param args.profileId - The profile to render.
+ * @param args.languageCode - The PDF's language; the API defaults to Finnish.
+ * @param args.download - Whether the API serves it as an attachment.
+ * @returns The PDF's URL.
+ */
+export function getProfilePdfUrl({
+  profileId,
+  languageCode,
+  download = false,
+}: ProfilePdfUrlArgs): string {
+  const params = new URLSearchParams()
+  if (languageCode) {
+    params.set("lang", languageCode)
+  }
+  if (download) {
+    params.set("download", "true")
+  }
+
+  const query = params.size > 0 ? `?${params}` : ""
+  return `${apiBaseUrl}/api/Profile/${encodeURIComponent(profileId)}/pdf${query}`
+}
 
 interface UpdateProfileArgs {
   profileId: string

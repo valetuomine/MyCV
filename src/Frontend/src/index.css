@@ -299,6 +299,11 @@
   box-sizing: border-box;
 }
 
+/* A print route prints on white paper, also in the page margins. */
+:root[data-print] {
+  background: var(--cv-surface);
+}
+
 body {
   min-width: 320px;
   min-height: 100dvh;

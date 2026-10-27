@@ -32,6 +32,26 @@ The Vite development server proxies `/api` requests to the ASP.NET Core API, so 
 
    CV pages are served at `http://localhost:3000/<cv-address>`.
 
+## CV PDFs
+
+The API prints a CV's PDF (`GET /api/Profile/{profileId}/pdf`) by opening the frontend's print route `/print/<profile-id>?lang=fi|en` in headless Chromium with Playwright for .NET, so the frontend must be running and reachable from the API. Printed PDFs are cached in memory for an hour.
+
+Settings in the `PdfPrinter` configuration section:
+
+| Key | Default | Purpose |
+|---|---|---|
+| `FrontendBaseUrl` | The first `Cors:AllowedOrigins` entry, or `http://localhost:3000` in Development | The frontend origin whose print route is printed. Set it when `Cors:AllowedOrigins` lists several origins. |
+| `ExecutablePath` | Empty | An installed Chrome or Chromium. When empty, the API installs Playwright's Chromium (about 150 MB) in the background at startup, into the folder named by `PLAYWRIGHT_BROWSERS_PATH` or Playwright's default. |
+| `LaunchArgs` | Empty | Extra Chromium arguments, such as `--no-sandbox` in a container that runs as root. |
+| `TimeoutSeconds` | `30` | How long one print, or waiting for a free print slot, may take. |
+| `MaxConcurrentPrints` | `2` | How many PDFs are printed at the same time. |
+
+In a deployment, install Chromium when deploying instead of at runtime:
+
+- Publish for the host's runtime identifier, for example `dotnet publish -r linux-x64`, so the Playwright driver for that platform is included.
+- On Linux, install Chromium with its system libraries using the script in the publish output: `pwsh playwright.ps1 install --with-deps chromium`. This needs root. Alternatively, run the API in Microsoft's Playwright for .NET container image, which has them.
+- Chromium can't run in the Windows App Service sandbox, so host the API on Linux or in a container.
+
 Public CV pages are readable without signing in. Creating and editing profiles is limited to the site administrator, who signs in with Microsoft Entra ID; that setup is not part of this README.
 
 ## Configuration and secrets

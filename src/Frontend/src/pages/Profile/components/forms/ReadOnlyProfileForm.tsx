@@ -17,6 +17,7 @@ interface ReadOnlyProfileFormProps {
   values: Profile
   onEdit?: () => void
   focusEdit?: boolean
+  pdfPath?: string
 }
 
 const container: Variants = {
@@ -81,12 +82,15 @@ function ExpandableSummary({ text }: { text: string }): JSX.Element {
  * @param props.onEdit - Enters edit mode; the Edit profile button shows only
  *   when given.
  * @param props.focusEdit - Whether to focus Edit profile, after editing.
+ * @param props.pdfPath - The path of the CV's PDF view; the View as PDF link
+ *   shows only when given.
  * @returns The CV.
  */
 export default function ReadOnlyProfileForm({
   values,
   onEdit,
   focusEdit = false,
+  pdfPath,
 }: ReadOnlyProfileFormProps): JSX.Element {
   const { t, i18n } = useTranslation()
   const editButtonRef = useRef<HTMLButtonElement>(null)
@@ -170,6 +174,7 @@ export default function ReadOnlyProfileForm({
           className="mt-10 flex flex-wrap items-start gap-3"
         >
           <CopyLinkButton url={publicUrl} label={t("cv.copyLink")} />
+          {pdfPath && <Button to={pdfPath}>{t("cv.viewPdf")}</Button>}
           {hasActions && (
             <>
               {values.gitHubUrl && (

@@ -21,6 +21,11 @@ namespace CV.LogicInterface.Dto.Profile
         public DateTimeOffset? UpdatedAt { get; set; }
 
         /// <summary>
+        /// Gets or sets the language of the translated content, which is Finnish when the requested translation is missing.
+        /// </summary>
+        public string LanguageCode { get; set; } = null!;
+
+        /// <summary>
         /// Gets or sets the candidate's full name.
         /// </summary>
         public string FullName { get; set; } = null!;

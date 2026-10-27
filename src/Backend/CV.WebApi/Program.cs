@@ -1,8 +1,11 @@
 using CV.DataAccess;
+using CV.Logic.Pdf;
 using CV.Logic.Services;
 using CV.LogicInterface.Authentication;
+using CV.LogicInterface.Pdf;
 using CV.LogicInterface.ServiceInterfaces;
 using CV.WebApi.Authentication;
+using CV.WebApi.HostedServices;
 using CV.WebApi.Middleware;
 using CV.WebApi.Swagger.Examples;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -11,6 +14,7 @@ using Microsoft.IdentityModel.Tokens;
 using Swashbuckle.AspNetCore.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
+
 var allowedOrigins = builder.Configuration
     .GetSection("Cors:AllowedOrigins")
     .Get<string[]>() ?? [];
@@ -106,11 +110,21 @@ builder.Services.AddSwaggerExamplesFromAssemblyOf<CreateProfileRequestExample>()
 builder.Services.AddSwaggerGen(options => options.ExampleFilters());
 
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddMemoryCache();
+
+// PDFs are printed from the frontend's print routes, so the printer needs the frontend's
+// origin. It defaults to the first CORS origin, which is the frontend in every environment.
+builder.Services.Configure<PdfPrinterOptions>(builder.Configuration.GetSection(PdfPrinterOptions.SectionName));
+builder.Services.PostConfigure<PdfPrinterOptions>(options =>
+    options.FrontendBaseUrl ??= allowedOrigins.FirstOrDefault());
+builder.Services.AddSingleton<IHtmlPdfPrinter, HtmlPdfPrinter>();
+builder.Services.AddHostedService<PdfPrinterWarmUp>();
 builder.Services.AddScoped<ICurrentUser, CurrentUserAccessor>();
 builder.Services.AddSingleton<ILinkTokenValidator, LinkTokenValidator>();
 builder.Services.AddTransient<IProfileService, ProfileService>();
 builder.Services.AddTransient<ICandidateService, CandidateService>();
 builder.Services.AddTransient<ILoginService, LoginService>();
+builder.Services.AddTransient<IProfilePdfService, ProfilePdfService>();
 
 var app = builder.Build();
 

@@ -29,6 +29,15 @@ export const CopyStatus = {
 
 export type CopyStatus = (typeof CopyStatus)[keyof typeof CopyStatus]
 
+export const DownloadStatus = {
+  Idle: "idle",
+  Pending: "pending",
+  Error: "error",
+} as const
+
+export type DownloadStatus =
+  (typeof DownloadStatus)[keyof typeof DownloadStatus]
+
 export const Tone = {
   Neutral: "neutral",
   Pending: "pending",

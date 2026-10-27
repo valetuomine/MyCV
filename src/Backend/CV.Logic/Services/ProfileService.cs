@@ -20,6 +20,9 @@ namespace CV.Logic.Services
         private readonly GoogleAuthenticationOptions _googleOptions = googleOptions.Value;
         private static readonly HashSet<string> SupportedLanguageCodes = ["fi", "en"];
 
+        // Frontend routes that start with a static segment: /admin and /print/{profileId}.
+        private static readonly HashSet<string> ReservedPublicUrlSegments = ["admin", "print"];
+
         [GeneratedRegex("^[a-z0-9]+(?:-[a-z0-9]+)*$", RegexOptions.None, matchTimeoutMilliseconds: 100)]
         private static partial Regex PublicUrlSegmentRegex();
 
@@ -280,9 +283,9 @@ namespace CV.Logic.Services
                     "PublicUrlSegment must be 1-100 lowercase letters or numbers separated by single hyphens.");
             }
 
-            if (normalizedPublicUrlSegment == "admin")
+            if (ReservedPublicUrlSegments.Contains(normalizedPublicUrlSegment))
             {
-                throw new BadRequestException("The public CV URL segment 'admin' is reserved.");
+                throw new BadRequestException($"The public CV URL segment '{normalizedPublicUrlSegment}' is reserved.");
             }
 
             return normalizedPublicUrlSegment;

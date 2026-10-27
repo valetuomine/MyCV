@@ -1,0 +1,80 @@
+import { skipToken } from "@reduxjs/toolkit/query"
+import { useAtomValue } from "jotai"
+import type { JSX } from "react"
+import { useTranslation } from "react-i18next"
+import { useParams } from "react-router-dom"
+import { useGetCandidateQuery } from "../../../../api/candidateQueries"
+import { useGetProfileQuery } from "../../../../api/profileQueries"
+import { languageAtom } from "../../../../state/languageAtoms"
+import { Tone } from "../../../../types"
+import { describeRouteError } from "../../utils/describeRouteError"
+import ProfilePdfPage from "../ProfilePdfPage"
+import ProfileSkeleton from "../ProfileSkeleton"
+import RouteMessage from "../RouteMessage"
+
+/**
+ * The CV as a PDF. Looks up the candidate by its public URL segment and loads
+ * the profile in the UI language for the heading, then shows the PDF in that
+ * language, with a skeleton while loading and a message for a missing profile
+ * or a failed request. After a language change, the page stays on screen
+ * while the new PDF loads.
+ *
+ * @returns The PDF page, its skeleton, or a message.
+ */
+export default function CandidatePdfRoute(): JSX.Element {
+  const { t } = useTranslation()
+  const { publicUrlSegment } = useParams()
+  const language = useAtomValue(languageAtom)
+  const candidateQuery = useGetCandidateQuery(publicUrlSegment ?? "", {
+    skip: !publicUrlSegment,
+  })
+  const profileId = candidateQuery.data?.profileId
+  const profileQuery = useGetProfileQuery(
+    profileId ? { profileId, languageCode: language } : skipToken,
+  )
+
+  if (candidateQuery.isLoading) {
+    return <ProfileSkeleton />
+  }
+
+  if (candidateQuery.isError) {
+    const { message, retryable } = describeRouteError(candidateQuery.error, t)
+    return (
+      <RouteMessage
+        tone={Tone.Error}
+        onRetry={retryable ? () => void candidateQuery.refetch() : undefined}
+      >
+        {message}
+      </RouteMessage>
+    )
+  }
+
+  if (!profileId || !publicUrlSegment) {
+    return <RouteMessage>{t("cv.noProfile")}</RouteMessage>
+  }
+
+  if (profileQuery.isLoading) {
+    return <ProfileSkeleton />
+  }
+
+  if (profileQuery.isError || !profileQuery.data) {
+    const { message, retryable } = describeRouteError(profileQuery.error, t)
+    return (
+      <RouteMessage
+        tone={Tone.Error}
+        onRetry={retryable ? () => void profileQuery.refetch() : undefined}
+      >
+        {message}
+      </RouteMessage>
+    )
+  }
+
+  return (
+    <ProfilePdfPage
+      values={profileQuery.data}
+      profileId={profileId}
+      publicUrlSegment={publicUrlSegment}
+      languageCode={language}
+    />
+  )
+}

@@ -1,7 +1,7 @@
 import { lazy, Suspense, type JSX } from "react"
 import { LazyMotion, MotionConfig, domAnimation } from "framer-motion"
 import { useTranslation } from "react-i18next"
-import { Route, Routes } from "react-router-dom"
+import { Outlet, Route, Routes } from "react-router-dom"
 import Background from "./components/Background"
 import Home from "./Profile/components/routes/Home"
 import ProfileSkeleton from "./Profile/components/ProfileSkeleton"
@@ -20,6 +20,14 @@ const loadCandidateProfileRoute = () =>
   import("./Profile/components/routes/CandidateProfileRoute")
 /** The public CV route, loaded on demand. */
 const CandidateProfileRoute = lazy(loadCandidateProfileRoute)
+/** The CV's print route for the API's PDF printer, loaded on demand. */
+const ProfilePrintRoute = lazy(
+  () => import("./Profile/components/routes/ProfilePrintRoute"),
+)
+/** The CV's PDF route, loaded on demand. */
+const CandidatePdfRoute = lazy(
+  () => import("./Profile/components/routes/CandidatePdfRoute"),
+)
 
 /**
  * The admin sign-in route, loaded on demand like the other admin and sign-in
@@ -59,9 +67,17 @@ function SignInRouteFallback(): JSX.Element {
 
 const signInRouteFallback = <SignInRouteFallback />
 
+/** The page frame around every route except the print route. */
+const framedLayout = (
+  <Background>
+    <Outlet />
+  </Background>
+)
+
 /**
- * The app's routes inside the shared background, with motion that follows
- * the user's reduced-motion setting.
+ * The app's routes, inside the shared background except the print route that
+ * the API prints to PDF, with motion that follows the user's reduced-motion
+ * setting.
  *
  * @returns The routed app.
  */
@@ -69,8 +85,16 @@ export default function App(): JSX.Element {
   return (
     <MotionConfig reducedMotion="user">
       <LazyMotion features={domAnimation} strict>
-        <Background>
-          <Routes>
+        <Routes>
+          <Route
+            path={RoutePaths.ProfilePrintPattern}
+            element={
+              <Suspense fallback={null}>
+                <ProfilePrintRoute />
+              </Suspense>
+            }
+          />
+          <Route element={framedLayout}>
             <Route path={RoutePaths.Home} element={<Home />} />
             <Route
               path={RoutePaths.AuthCallback}
@@ -105,6 +129,14 @@ export default function App(): JSX.Element {
               }
             />
             <Route
+              path={RoutePaths.CandidatePdfPattern}
+              element={
+                <Suspense fallback={<ProfileSkeleton />}>
+                  <CandidatePdfRoute />
+                </Suspense>
+              }
+            />
+            <Route
               path={RoutePaths.CandidateProfilePattern}
               element={
                 <Suspense fallback={<ProfileSkeleton />}>
@@ -113,8 +145,8 @@ export default function App(): JSX.Element {
               }
             />
             <Route path="*" element={<UnknownRoute />} />
-          </Routes>
-        </Background>
+          </Route>
+        </Routes>
       </LazyMotion>
     </MotionConfig>
   )

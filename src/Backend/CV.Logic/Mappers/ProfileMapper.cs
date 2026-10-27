@@ -99,6 +99,7 @@ namespace CV.Logic.Mappers
                 Id = dbProfile.Id,
                 CreatedAt = TimestampMapper.ToFinlandTime(dbProfile.CreatedAt),
                 UpdatedAt = TimestampMapper.ToFinlandTime(dbProfile.UpdatedAt),
+                LanguageCode = translation?.LanguageCode ?? DefaultLanguageCode,
                 FullName = dbProfile.FullName,
                 Title = translation?.Title ?? string.Empty,
                 Summary = translation?.Summary,

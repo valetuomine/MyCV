@@ -5,6 +5,7 @@ import ProfileForm from "./forms/ProfileForm"
 
 interface ProfilePageProps {
   values: Profile
+  pdfPath?: string
 }
 
 /**
@@ -13,9 +14,13 @@ interface ProfilePageProps {
  *
  * @param props - The component props.
  * @param props.values - The public profile to show.
+ * @param props.pdfPath - The path of the CV's PDF view, for the CV's link to it.
  * @returns The page's main landmark with the CV.
  */
-export default function ProfilePage({ values }: ProfilePageProps): JSX.Element {
+export default function ProfilePage({
+  values,
+  pdfPath,
+}: ProfilePageProps): JSX.Element {
   const { t, i18n } = useTranslation()
 
   useEffect(() => {
@@ -31,7 +36,7 @@ export default function ProfilePage({ values }: ProfilePageProps): JSX.Element {
     <main className="mx-auto flex min-h-dvh w-full max-w-7xl flex-col pt-20 lg:pt-4">
       <div className="flex flex-1 items-center overflow-clip py-12 sm:py-16">
         <div className="w-full">
-          <ProfileForm values={values} />
+          <ProfileForm values={values} pdfPath={pdfPath} />
         </div>
       </div>
     </main>

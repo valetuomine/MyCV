@@ -1,5 +1,4 @@
 import { skipToken } from "@reduxjs/toolkit/query"
-import type { TFunction } from "i18next"
 import { useAtomValue } from "jotai"
 import type { JSX } from "react"
 import { useTranslation } from "react-i18next"
@@ -11,6 +10,8 @@ import ProfilePage from "../ProfilePage"
 import ProfileSkeleton from "../ProfileSkeleton"
 import RouteMessage from "../RouteMessage"
 import { Tone } from "../../../../types"
+import { describeRouteError } from "../../utils/describeRouteError"
+import { RoutePaths } from "../../../../routePaths"
 
 /**
  * The public CV route. Looks up the candidate by its public URL segment, then
@@ -38,7 +39,7 @@ export default function CandidateProfileRoute(): JSX.Element {
   }
 
   if (candidateQuery.isError) {
-    const { message, retryable } = describeError(candidateQuery.error, t)
+    const { message, retryable } = describeRouteError(candidateQuery.error, t)
     return (
       <RouteMessage
         tone={Tone.Error}
@@ -49,7 +50,7 @@ export default function CandidateProfileRoute(): JSX.Element {
     )
   }
 
-  if (!profileId) {
+  if (!profileId || !publicUrlSegment) {
     return <RouteMessage>{t("cv.noProfile")}</RouteMessage>
   }
 
@@ -58,7 +59,7 @@ export default function CandidateProfileRoute(): JSX.Element {
   }
 
   if (profileQuery.isError || !profileQuery.data) {
-    const { message, retryable } = describeError(profileQuery.error, t)
+    const { message, retryable } = describeRouteError(profileQuery.error, t)
     return (
       <RouteMessage
         tone={Tone.Error}
@@ -69,36 +70,10 @@ export default function CandidateProfileRoute(): JSX.Element {
     )
   }
 
-  return <ProfilePage values={profileQuery.data} />
-}
-
-/**
- * Turns a failed request into a message, and tells whether retrying could
- * help: not for a missing CV, but yes for network and server errors.
- *
- * @param error - The RTK Query error.
- * @param t - The translation function.
- * @returns The message and whether to offer a retry.
- */
-function describeError(
-  error: unknown,
-  t: TFunction,
-): {
-  message: string
-  retryable: boolean
-} {
-  const status =
-    typeof error === "object" && error !== null && "status" in error
-      ? error.status
-      : undefined
-
-  if (status === 404) {
-    return { message: t("cv.notFound"), retryable: false }
-  }
-
-  if (status === "FETCH_ERROR" || status === "TIMEOUT_ERROR") {
-    return { message: t("cv.unreachable"), retryable: true }
-  }
-
-  return { message: t("cv.failed"), retryable: true }
+  return (
+    <ProfilePage
+      values={profileQuery.data}
+      pdfPath={RoutePaths.CandidatePdf(publicUrlSegment)}
+    />
+  )
 }

@@ -7,6 +7,7 @@ export const fi: Translation = {
     description:
       "MyCV näyttää kehittäjän CV:n sen omassa osoitteessa: titteli, tiivistelmä, sijainti ja profiililinkit.",
     profileTitle: "{{name}} · CV",
+    pdfTitle: "{{name}} · CV (PDF)",
   },
   common: {
     tryAgain: "Yritä uudelleen",
@@ -51,9 +52,25 @@ export const fi: Translation = {
     readMore: "Lue lisää",
     showLess: "Näytä vähemmän",
     copyLink: "Kopioi CV:n linkki",
+    viewPdf: "Näytä PDF:nä",
     editProfile: "Muokkaa profiilia",
     portraitOf: "Kuva: {{name}}",
     portrait: "Profiilikuva",
+  },
+  pdf: {
+    eyebrow: "Ansioluettelo · PDF",
+    download: "Lataa PDF",
+    downloading: "Ladataan…",
+    downloadFailed:
+      "PDF:n lataus epäonnistui. Tarkista yhteytesi ja yritä uudelleen.",
+    openInNewTab: "Avaa uudessa välilehdessä",
+    viewerLabel: "{{name}}: CV PDF-muodossa",
+    unsupported:
+      "Selaimesi ei voi näyttää PDF:ää tässä. Lataa se tai avaa se uudessa välilehdessä.",
+  },
+  print: {
+    profile: "Profiili",
+    links: "Linkit",
   },
   copyLink: {
     copied: "Kopioitu",

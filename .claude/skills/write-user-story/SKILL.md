@@ -13,14 +13,25 @@ Use this workflow to add a User Story to the `MyCV` project in Azure DevOps orga
 ## Workflow
 
 1. **Understand the change.** If the request is vague, ask one short question. Otherwise draft right away.
-2. **Pick the parent Feature.** Every User Story has a Feature as its parent. Use the table below, and confirm the Feature still exists with a WIQL query if unsure.
-3. **Check for duplicates.** Query existing User Stories for a similar title before drafting a new one. If one exists, suggest updating it or adding a Task under it instead.
-4. **Study the code the story touches.** Read the relevant files, components, endpoints and skills, so that the *Toteutusohje* names real paths and builds on how the code works today. See [references/implementation-prompt.md](references/implementation-prompt.md). Then choose the skills for the work; see [references/choosing-skills.md](references/choosing-skills.md).
-5. **Show the draft** to the user in the format under *Draft preview*. Do not create anything before the user approves it. Exception: when the `create-pull-request` skill calls this skill, create the story directly, because the user reviews it as part of the pull request.
-6. **Create** the story with `wit_work_item_write` (`action: create`), then link it to the parent Feature with `wit_work_item_link_write` (`type: parent`). Create any child Tasks with `wit_work_item_write` (`action: add_child`). Then install any new skill the draft named; see [references/choosing-skills.md](references/choosing-skills.md).
-7. **Post the kickoff prompt** to the work item's discussion. See [references/kickoff-prompt.md](references/kickoff-prompt.md).
-8. **Set the state** as described under *State*.
-9. **Report** the new ID and its link: `https://dev.azure.com/valetuominen/MyCV/_workitems/edit/<id>`, the state it was set to, and end with the kickoff prompt.
+2. **Check the ideas page.** If the change matches an idea on the ideas page, start from it. See *Ideas page*.
+3. **Pick the parent Feature.** Every User Story has a Feature as its parent. Use the table below, and confirm the Feature still exists with a WIQL query if unsure.
+4. **Check for duplicates.** Query existing User Stories for a similar title before drafting a new one. If one exists, suggest updating it or adding a Task under it instead.
+5. **Study the code the story touches.** Read the relevant files, components, endpoints and skills, so that the *Toteutusohje* names real paths and builds on how the code works today. See [references/implementation-prompt.md](references/implementation-prompt.md). Then choose the skills for the work; see [references/choosing-skills.md](references/choosing-skills.md).
+6. **Show the draft** to the user in the format under *Draft preview*. Do not create anything before the user approves it. Exception: when the `create-pull-request` skill calls this skill, create the story directly, because the user reviews it as part of the pull request.
+7. **Create** the story with `wit_work_item_write` (`action: create`), then link it to the parent Feature with `wit_work_item_link_write` (`type: parent`). Create any child Tasks with `wit_work_item_write` (`action: add_child`). Then install any new skill the draft named; see [references/choosing-skills.md](references/choosing-skills.md).
+8. **Mark the idea exported** on the ideas page when the story came from one. See *Ideas page*.
+9. **Post the kickoff prompt** to the work item's discussion. See [references/kickoff-prompt.md](references/kickoff-prompt.md).
+10. **Set the state** as described under *State*.
+11. **Report** the new ID and its link: `https://dev.azure.com/valetuominen/MyCV/_workitems/edit/<id>`, the state it was set to, and end with the kickoff prompt.
+
+## Ideas Page
+
+Ideas and story drafts written away from the computer wait in the `ideas` collection of the private `MyCV-ideat` artifact. Find its URL with the `Artifact` tool (`action: list`). Cloud sessions add them, as described in `CLAUDE.md`. Read and write the collection with the `ArtifactData` tool.
+
+- **Before drafting**, list the collection (`action: list`, `collection: ideas`) and look for an idea that matches the request and is not yet `viety`. When one matches, build the draft from its `title`, `descriptionHtml`, `parent`, `tags` and `tasks`, and show the draft for approval as usual.
+- **After creating the story**, update that idea (`action: update`, with `if_version` from the list): set `status` to `viety`, `workItemId` to the new ID and `updatedAt` to the current UTC time in ISO 8601. If the approved title or description differs from the idea, update `title` and `descriptionHtml` as well, so the page matches the work item.
+- **Stop there.** The work item is the source of truth after this, and the pipelines move its state, so do not mirror later states to the ideas page.
+- If `ArtifactData` is not available, give the user the idea's title and the new ID so they can set the status on the page by hand.
 
 ## Parent Features
 

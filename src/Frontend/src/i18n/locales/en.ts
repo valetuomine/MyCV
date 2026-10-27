@@ -5,6 +5,7 @@ export const en = {
     description:
       "MyCV shows a developer's CV at its own link: title, summary, location and profile links.",
     profileTitle: "{{name}} · CV",
+    pdfTitle: "{{name}} · CV (PDF)",
   },
   common: {
     tryAgain: "Try again",
@@ -48,9 +49,25 @@ export const en = {
     readMore: "Read more",
     showLess: "Show less",
     copyLink: "Copy CV link",
+    viewPdf: "View as PDF",
     editProfile: "Edit profile",
     portraitOf: "Portrait of {{name}}",
     portrait: "Profile portrait",
+  },
+  pdf: {
+    eyebrow: "Curriculum vitae · PDF",
+    download: "Download PDF",
+    downloading: "Downloading…",
+    downloadFailed:
+      "The PDF couldn't be downloaded. Check your connection and try again.",
+    openInNewTab: "Open in new tab",
+    viewerLabel: "{{name}} CV as PDF",
+    unsupported:
+      "Your browser can't show the PDF here. Download it or open it in a new tab instead.",
+  },
+  print: {
+    profile: "Profile",
+    links: "Links",
   },
   copyLink: {
     copied: "Copied",

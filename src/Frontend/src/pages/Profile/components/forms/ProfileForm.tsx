@@ -30,6 +30,7 @@ import SignInMethodsSection from "../SignInMethods/SignInMethodsSection"
 
 interface ProfileFormProps {
   values: Profile
+  pdfPath?: string
 }
 
 /** Why the last save failed: the profile had no ID, or the request failed. */
@@ -55,9 +56,13 @@ const viewTransition: Transition = {
  *
  * @param props - The component props.
  * @param props.values - The public profile.
+ * @param props.pdfPath - The path of the CV's PDF view, for the CV's link to it.
  * @returns The CV or the edit form, with the saved notice.
  */
-export default function ProfileForm({ values }: ProfileFormProps): JSX.Element {
+export default function ProfileForm({
+  values,
+  pdfPath,
+}: ProfileFormProps): JSX.Element {
   const { t } = useTranslation()
   const { canEdit, publicUrlSegment } = useCanEditProfile(values.id)
   const location = useLocation()
@@ -207,6 +212,7 @@ export default function ProfileForm({ values }: ProfileFormProps): JSX.Element {
                 values={values}
                 onEdit={canEdit ? startEditing : undefined}
                 focusEdit={hasEdited}
+                pdfPath={pdfPath}
               />
             )}
           </motion.div>

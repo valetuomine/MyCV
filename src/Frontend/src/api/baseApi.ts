@@ -2,7 +2,7 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 import { acquireApiToken } from "../auth/authSession"
 
 /** The API origin from `VITE_API_BASE_URL`, or "" to call the same origin. */
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim() ?? ""
+export const apiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim() ?? ""
 
 /**
  * The RTK Query API that the feature query files inject their endpoints into.
