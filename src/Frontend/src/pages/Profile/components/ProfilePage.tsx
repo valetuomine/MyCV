@@ -10,7 +10,12 @@ interface ProfilePageProps {
 
 /**
  * The CV page. Names the browser tab after the candidate while it is open,
- * and again after a language change, which resets the title.
+ * and again after a language change, which resets the title. From `2xl` up
+ * the page widens while the edit view (`data-edit-view`, set by
+ * `ProfileForm`) shows, so its preview gets the room; the CV itself keeps
+ * `max-w-7xl`. The 84.6rem is the edit form's 45.6rem form column, its 4rem
+ * gap and a 35rem preview, wide enough for a long name on one row, so it
+ * changes with them.
  *
  * @param props - The component props.
  * @param props.values - The public profile to show.
@@ -33,7 +38,7 @@ export default function ProfilePage({
   }, [i18n, t, values.fullName])
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-7xl flex-col pt-20 lg:pt-4">
+    <main className="mx-auto flex min-h-dvh w-full max-w-7xl flex-col pt-20 lg:pt-4 2xl:has-data-edit-view:max-w-[84.6rem]">
       <div className="flex flex-1 items-center overflow-clip py-12 sm:py-16">
         <div className="w-full">
           <ProfileForm values={values} pdfPath={pdfPath} />

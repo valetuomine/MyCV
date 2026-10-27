@@ -52,7 +52,8 @@ const viewTransition: Transition = {
  * one, the CV opens in the edit view with the outcome, and the router state
  * that carried it is dropped so a reload doesn't show it again. A failed
  * save is kept as its cause and worded at render, so its message follows a
- * language change.
+ * language change. The edit view carries `data-edit-view`, which
+ * `ProfilePage` reads to widen the page for it.
  *
  * @param props - The component props.
  * @param props.values - The public profile.
@@ -174,6 +175,7 @@ export default function ProfileForm({
         <AnimatePresence mode="wait">
           <motion.div
             key={isEditing ? "edit" : "view"}
+            data-edit-view={isEditing ? true : undefined}
             initial={viewEntrance}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}

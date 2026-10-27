@@ -249,11 +249,16 @@
 }
 
 /* The soft light that drifts inside a hovered or focused field (moved by
-   animate-cv-drift); --spot turns it danger on an invalid field. */
+   animate-cv-drift); --spot turns it danger on an invalid field, and
+   --drift-strength dims it on a larger surface such as the preview card. */
 @utility bg-cv-field-drift {
   background-image: radial-gradient(
     closest-side,
-    color-mix(in srgb, var(--spot, var(--cv-accent)) 14%, transparent),
+    color-mix(
+      in srgb,
+      var(--spot, var(--cv-accent)) var(--drift-strength, 14%),
+      transparent
+    ),
     transparent
   );
 }

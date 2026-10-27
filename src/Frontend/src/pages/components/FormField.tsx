@@ -1,12 +1,8 @@
-import {
-  useEffect,
-  useRef,
-  type JSX,
-  type PointerEvent,
-  type ReactNode,
-} from "react"
+import { useEffect, useRef, type JSX, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 import FieldMessage from "./FieldMessage"
+import prefersReducedMotion from "./prefersReducedMotion"
+import usePointerLight from "./usePointerLight"
 
 /** A field's state that the frame shows, as `useFormField` returns it. */
 export interface FieldFrameProps {
@@ -62,16 +58,6 @@ const traceGlows = Array.from(
   { length: traceGlowCount },
   (_, index) => (index + 1) / traceGlowCount,
 )
-
-/**
- * Reads the reduced-motion preference when it is needed, so that a change
- * made while the page is open applies at once.
- *
- * @returns Whether the user prefers reduced motion.
- */
-function prefersReducedMotion(): boolean {
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches
-}
 
 /**
  * The frame of a form field: its label with a required marker and character
@@ -134,7 +120,7 @@ export default function FormField({
 }: FormFieldProps): JSX.Element {
   const { t } = useTranslation()
   const frameRef = useRef<HTMLDivElement>(null)
-  const pointerFrameRef = useRef(0)
+  const trackPointer = usePointerLight()
   const handledSubmitCountRef = useRef(submitCount)
 
   /**
@@ -160,29 +146,6 @@ export default function FormField({
       frameRef.current?.animate(shakeKeyframes, { duration: 300 })
     }
   }, [submitCount, error])
-
-  useEffect(() => () => cancelAnimationFrame(pointerFrameRef.current), [])
-
-  /**
-   * Moves the border light to a mouse pointer on the next frame, unless
-   * motion is reduced.
-   *
-   * @param event - The pointer entering or moving over the field.
-   */
-  const trackPointer = (event: PointerEvent<HTMLDivElement>): void => {
-    if (event.pointerType !== "mouse" || prefersReducedMotion()) {
-      return
-    }
-
-    const frame = event.currentTarget
-    const { clientX, clientY } = event
-    cancelAnimationFrame(pointerFrameRef.current)
-    pointerFrameRef.current = requestAnimationFrame(() => {
-      const bounds = frame.getBoundingClientRect()
-      frame.style.setProperty("--x", `${clientX - bounds.left}px`)
-      frame.style.setProperty("--y", `${clientY - bounds.top}px`)
-    })
-  }
 
   return (
     <div

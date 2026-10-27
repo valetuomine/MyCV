@@ -26,7 +26,10 @@ interface EditableProfileFormProps {
 /**
  * The profile in edit mode: the fields, a live preview and the CV link, with
  * Save and Cancel in a bar that stays in view at the bottom of the screen
- * while the form scrolls.
+ * while the form scrolls. From `2xl` up the page widens for the edit view,
+ * and the form column keeps the 45.6rem it has in the CV's 80rem container
+ * (three fifths of what the 4rem gap leaves), so the extra width goes to the
+ * preview. `ProfilePage` sizes the wider page from this column and the gap.
  *
  * Entering edit mode moves focus to the heading, so keyboard and screen
  * reader users start at the top of the form. With unsaved changes, the
@@ -105,7 +108,7 @@ export default function EditableProfileForm({
       onSubmit={onSubmit}
       noValidate
       aria-busy={isSaving}
-      className="grid w-full items-start gap-14 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-16"
+      className="group/edit grid w-full items-start gap-14 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-16 2xl:grid-cols-[45.6rem_minmax(0,1fr)]"
     >
       <div className="grid min-w-0 gap-6">
         <div className="grid gap-4">
