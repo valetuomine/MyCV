@@ -5,6 +5,7 @@ import type { Profile } from "../../../../api/profileQueries"
 import { ButtonVariant } from "../../../../types"
 import Button from "../../../components/Button"
 import CopyLinkButton from "../../../components/CopyLinkButton"
+import Magnetic from "../../../components/Magnetic"
 import {
   formatProfileDate,
   getInitials,
@@ -74,8 +75,8 @@ function ExpandableSummary({ text }: { text: string }): JSX.Element {
 
 /**
  * The CV: name, title, location, summary, links and portrait, entering one
- * after another. Coming back from editing, focus returns to the Edit profile
- * button that started it.
+ * after another. With a mouse, the actions lean toward the pointer. Coming
+ * back from editing, focus returns to the Edit profile button that started it.
  *
  * @param props - The component props.
  * @param props.values - The public profile.
@@ -173,31 +174,41 @@ export default function ReadOnlyProfileForm({
           variants={item}
           className="mt-10 flex flex-wrap items-start gap-3"
         >
-          <CopyLinkButton url={publicUrl} label={t("cv.copyLink")} />
-          {pdfPath && <Button to={pdfPath}>{t("cv.viewPdf")}</Button>}
+          <CopyLinkButton url={publicUrl} label={t("cv.copyLink")} magnetic />
+          {pdfPath && (
+            <Magnetic>
+              <Button to={pdfPath}>{t("cv.viewPdf")}</Button>
+            </Magnetic>
+          )}
           {hasActions && (
             <>
               {values.gitHubUrl && (
-                <Button
-                  variant={ButtonVariant.Primary}
-                  href={toExternalUrl(values.gitHubUrl)}
-                >
-                  GitHub
-                </Button>
+                <Magnetic>
+                  <Button
+                    variant={ButtonVariant.Primary}
+                    href={toExternalUrl(values.gitHubUrl)}
+                  >
+                    GitHub
+                  </Button>
+                </Magnetic>
               )}
               {values.linkedInUrl && (
-                <Button href={toExternalUrl(values.linkedInUrl)}>
-                  LinkedIn
-                </Button>
+                <Magnetic>
+                  <Button href={toExternalUrl(values.linkedInUrl)}>
+                    LinkedIn
+                  </Button>
+                </Magnetic>
               )}
               {onEdit && (
-                <Button
-                  ref={editButtonRef}
-                  onClick={onEdit}
-                  className="border-dashed"
-                >
-                  {t("cv.editProfile")}
-                </Button>
+                <Magnetic>
+                  <Button
+                    ref={editButtonRef}
+                    onClick={onEdit}
+                    className="border-dashed"
+                  >
+                    {t("cv.editProfile")}
+                  </Button>
+                </Magnetic>
               )}
             </>
           )}

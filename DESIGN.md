@@ -94,7 +94,7 @@ components:
 
 The candidate's name is the exhibit and everything else is gallery wall. A zinc-neutral canvas, a single emerald accent and a very large, tightly tracked name carry the page. Chrome stays small: mono eyebrow labels, pill buttons and a thin-lined portrait panel. The system is dark-first in feel but ships equal light and dark themes switched by the visitor.
 
-Atmosphere comes from a faint grid, soft accent glows, film grain and a pointer-following spotlight, all low opacity and non-interactive. They add depth without competing with content. Motion is a short staggered rise-in, never a showpiece; the few signature moments (the name rising letter by letter and catching the spotlight, the initials being traced) all serve the name.
+Atmosphere comes from a faint grid, soft accent glows, film grain and a pointer-following spotlight, all low opacity and non-interactive. They add depth without competing with content. Motion has one authored moment: the name assembles letter by letter, each letter rising from its clipped baseline while it sharpens from a thin blur into its full weight, and the rest of the page follows in a short staggered rise-in. Afterwards the page answers the mouse: the name moves along the font's weight axis and catches the spotlight, the portrait card behaves like a physical object that tilts toward the pointer with its initials floating above it, and the actions lean toward the pointer. Every effect serves the name or the visitor's action, plays only for a mouse (touch screens get one weight wave through the name), and stops for reduced motion.
 
 **Key Characteristics:**
 
@@ -141,7 +141,7 @@ A restrained zinc palette with one emerald accent. Components use only the seman
 
 ### Hierarchy
 
-- **Display** (600, clamp(3rem, 8.5vw, 7rem), 0.95, tracking -0.05em): the candidate's name. Section titles use clamp(3rem, 7vw, 5.5rem) at line-height 1.
+- **Display** (600, clamp(3rem, 8.5vw, 7rem), 0.95, tracking -0.05em): the candidate's name, which moves between weights 540 and 800 under a mouse pointer (see Name) while every letter keeps its weight-600 width. Section titles use clamp(3rem, 7vw, 5.5rem) at line-height 1.
 - **Title** (500, 1.25-1.5rem, tracking -0.025em): job title in accent colour.
 - **Body** (400, 1.125rem, 1.625): summary text, capped at 52ch.
 - **Label** (400 mono, 0.75rem, tracking 0.1em, uppercase): eyebrows, "Curriculum vitae", form labels.
@@ -186,6 +186,8 @@ Every button and button-styled link is the shared `Button` component (`src/Front
 - **Brand:** the Microsoft and Google sign-in buttons in each provider's own colours; hover lays a faint 8% layer of the button's own text colour over it, which shows on any brand colour in both themes.
 - **Hover rule:** every usable button changes visibly on hover; a shadow alone doesn't count. Unavailable and loading buttons don't react.
 - **Press / Focus:** `scale-[0.97]` on active (icons 0.92); 2px accent outline, 2px offset on focus-visible; 200ms ease-out. Reduced motion keeps the colour changes and drops the press scale. External links add a "↗" that nudges up and right on hover.
+- **Pointer pull:** with a mouse, the CV's actions (Copy CV link, View as PDF, GitHub, LinkedIn, Edit profile) lean toward the pointer by about a quarter of its offset from their centre, a little more vertically, on a spring (stiffness 220, damping 15). Not in the edit view, and off for touch and reduced motion.
+- **Copy link:** the label swaps to an accent check mark and "Copied" in the same grid cell (200ms, the check draws in over 300ms), so the width never jumps, and each successful copy sprays 14 small accent dots outward from the button's centre (950ms, `cubic-bezier(0.16, 1, 0.3, 1)`). It resets after 2 seconds and announces the copy to screen readers. No dots for reduced motion.
 - **Loading:** a small spinner and the loading label ("Saving…") replace the label in place, so the button keeps its width; it keeps focus and ignores clicks.
 - **Unavailable:** 60% opacity and a not-allowed cursor. A button whose reason is shown beside it, or that becomes unavailable while focused, stays focusable (`aria-disabled`).
 
@@ -226,15 +228,21 @@ Every field is `RHFInput` or `RHFTextarea`, framed by the shared `FormField` (`s
 
 ### Name
 
-- Display type with an ink-to-muted fade, set one element per letter so each letter rises from behind its word's clipped bottom edge: 0.9s, `cubic-bezier(0.22, 1, 0.36, 1)`, letters spread over at most 0.6s. Screen readers get the whole name from a visually hidden copy.
+- Display type with an ink-to-muted fade, set one element per letter so each letter rises from behind its word's clipped bottom edge while it sharpens from a 14px blur and weight 200 into weight 600 and fades in: 0.9s, `cubic-bezier(0.22, 1, 0.36, 1)`, letters spread over at most 0.6s. The edge clips only vertically, so the blur isn't cut at the sides. Screen readers get the whole name from a visually hidden copy.
+- **Wrapping:** words break after a hyphen, and a part wider than the whole line wraps between its letters, so a long name never overflows at 320px.
 - Splitting the letters drops the font's kerning, so each letter carries its pair kerning back as an end margin, measured with canvas at the heading's weight and tracking. Every letter box bleeds 0.1em sideways and 0.15em / 0.08em vertically (taken back with negative margins), because background-clipped text only paints inside its own box.
-- **Sheen:** once the letters are in, an accent radial gradient clipped to the same letters follows a mouse pointer on the spotlight's spring (stiffness 100, damping 20), so the name catches the spotlight. Hidden for reduced motion, print and forced colours.
+- **Sheen:** once the letters are in, an accent radial gradient clipped to the same letters follows a mouse pointer on the spotlight's spring (stiffness 100, damping 20), so the name catches the spotlight. Its letters copy the name's weights, widths and lift, so it stays on the glyphs. They lift with `top` rather than a transform, because Chromium leaves transformed descendants out of a `background-clip: text` mask. Hidden for reduced motion, print and forced colours.
+- **Weight (mouse):** once the letters are in and a mouse pointer comes within a line height of the name, the letters nearest it move along the weight axis toward 800 and the rest toward 540 (a Gaussian falloff over 1.35em, vertical distance counted 1.6 times), easing about a fifth of the way per 60 Hz frame, scaled to the actual frame time so the speed is the same on 120 and 144 Hz displays. The nearest letters lift 0.035em and their fade ends in the accent instead of Muted. Every letter keeps the width it has at weight 600, measured from a hidden copy once the font is ready and whenever the heading resizes, so the lines never reflow.
+- **Weight wave (touch):** on touch screens one weight wave runs through the name from start to end (1.5s) once the letters are in, and tapping the name repeats it. A scroll that starts on the name and a mouse click don't.
+- Reduced motion shows the letters at weight 600 straight away, with no blur, weight play or wave.
 
 ### Portrait Panel
 
 - 1.5rem radius, 2px line border that carries the orbiting highlight, surface fill, panel shadow. With a photo it is clamp(20rem, 68dvh, 40rem) tall. With no photo it shows the initials over a faint diagonal accent wash, at clamp(16rem, 46dvh, 26rem) from `lg` up and a compact 11rem below `lg`.
+- **Depth:** the card is a 3D object (`preserve-3d`, 900px perspective). The initials float 70px above its surface and cast a soft, blurred 30% accent shadow on it, 14px below them, that lands as they fill in.
 - **Initials:** traced once in a 1.25px accent outline (1.6s, `cubic-bezier(0.65, 0, 0.35, 1)`, after 0.5s), then filled to 80% accent. Shown filled straight away for reduced motion.
-- **Hover (mouse):** tilts up to 6° toward the pointer with a soft glare; an accent highlight orbits the border.
+- **Hover (mouse):** tilts up to 11° toward the pointer on a spring (stiffness 140, damping 16), and the initials' shadow shifts against the tilt. The border lights up in accent under the pointer (a 220px radial glow at 85% on the 2px border), a soft glare follows the pointer (25% accent; 40% white overlay on photos), and a foil of thin accent and ink bands slides across with the tilt. An accent highlight orbits the border.
+- **Foil sweep:** 0.9s after load the foil sweeps across the card once (1.6s, `cubic-bezier(0.45, 0, 0.2, 1)`), also on touch screens. Off for reduced motion; foil, border light and shadow are hidden in print.
 - **Scroll (stacked layout, below `lg`):** a CSS scroll-driven animation (`animation-timeline: view()`) rises the panel from 3rem lower, tipped back 14°, at 40% opacity, and settles it by the time it is fully in view. A panel already in view on load is at rest. Browsers without scroll timelines, and reduced motion, show it at rest.
 
 ### Theme Toggle
@@ -262,12 +270,13 @@ The CV once paged between full-viewport sections. That code was removed when the
 - **Do** use `cv-*` tokens and keep both themes working.
 - **Do** keep the accent to identity, action and focus.
 - **Do** let the name be the largest element on the page.
-- **Do** use the shared spring (stiffness 100, damping 20) and an 18px rise for entrances; respect reduced motion.
+- **Do** use the shared spring (stiffness 100, damping 20) and an 18px rise for entrances; respect reduced motion: no letter blur, weight play, tilt, foil sweep, pointer pull or copy burst. Animate `transform` and `opacity`; the only exceptions are the name's blur and weight axis (with every letter's width locked) and the pointer lights' `background-image` and `background-position` (the name's sheen, the portrait's border light and foil).
+- **Do** keep pointer effects to mouse input (`pointerType === "mouse"`); touch gets the name's weight wave instead.
 - **Do** keep focus-visible outlines on every interactive element.
 
 ### Don't:
 
-- **Don't** add a second accent colour or gradient fills beyond the name's ink-to-muted fade.
+- **Don't** add a second accent colour or gradient fills beyond the name's ink-to-muted fade (ending in the accent under the pointer), the portrait placeholder's accent wash and the portrait foil.
 - **Don't** put shadows or cards on content by default.
 - **Don't** use mono type for body copy.
 - **Don't** let background effects exceed ~10% opacity or capture pointer events.

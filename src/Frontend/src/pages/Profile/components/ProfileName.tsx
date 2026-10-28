@@ -1,13 +1,15 @@
 import {
   m as motion,
   useMotionTemplate,
-  useMotionValue,
   useReducedMotion,
   useSpring,
   type Variants,
 } from "framer-motion"
-import { Fragment, useEffect, useMemo, useRef, useState, type JSX } from "react"
+import { Fragment, useMemo, type JSX } from "react"
+import useFontLoaded from "../../components/useFontLoaded"
+import { kerningFont, measureKerning } from "../utils/nameKerning"
 import { splitGraphemes } from "../utils/profileFormUtils"
+import useNameWeightPlay, { restWeight } from "./useNameWeightPlay"
 
 interface ProfileNameProps {
   fullName: string
@@ -17,25 +19,41 @@ interface Glyph {
   letter: string
   kerning: number
   delay: number
+  index: number
 }
 
-/** The heading's weight and family at 100px, so measured widths read as em. */
-const kerningFont = '600 100px "Geist Variable"'
 const revealDelay = 0.15
 const revealSpread = 0.6
 const maxLetterStagger = 0.035
 const revealDuration = 0.9
+const revealEase = [0.22, 1, 0.36, 1] as const
 const sheenSpring = { stiffness: 100, damping: 20 }
 
 /**
  * Each letter rises from behind its word's clipped bottom edge, after its own
- * delay.
+ * delay, sharpening from a thin blur into the heading's weight on the way.
  */
 const letterReveal: Variants = {
+  hidden: { y: "110%", opacity: 0, filter: "blur(14px)", fontWeight: 200 },
+  visible: (delay: number) => ({
+    y: "0%",
+    opacity: 1,
+    filter: "blur(0px)",
+    fontWeight: restWeight,
+    transition: { duration: revealDuration, ease: revealEase, delay },
+    transitionEnd: { filter: "none" },
+  }),
+}
+
+/**
+ * The reveal for reduced motion: the rise alone, which `MotionConfig` then
+ * skips, so the letters show straight away at the heading's weight.
+ */
+const letterRise: Variants = {
   hidden: { y: "110%" },
   visible: (delay: number) => ({
     y: "0%",
-    transition: { duration: revealDuration, ease: [0.22, 1, 0.36, 1], delay },
+    transition: { duration: revealDuration, ease: revealEase, delay },
   }),
 }
 
@@ -75,76 +93,33 @@ function letterMargin(kerning: number): { marginInlineEnd: string } {
 }
 
 /**
- * Measures each letter's kerning against the next one, in em. One element
- * per letter drops the font's kerning, so each letter gets its pair
- * adjustment back as an end margin. Returns null without a canvas context.
+ * Splits a word after each hyphen, so a double-barrelled name can wrap there.
+ * Each part stays one inline block, which wraps between its own letters only
+ * when it is wider than the whole line.
  *
- * The canvas uses the heading's tracking-tighter. Any letter spacing turns
- * ligatures off, as in the heading itself, and it cancels out of each pair's
- * difference.
- *
- * @param words - The name's words, each split into letters.
- * @returns Each letter's kerning in em, 0 for a word's last letter, or null.
+ * @param word - The word's letters.
+ * @returns The word's parts, in order.
  */
-function measureKerning(words: string[][]): number[][] | null {
-  const context = document.createElement("canvas").getContext("2d")
-  if (!context) {
-    return null
-  }
-
-  context.font = kerningFont
-  context.letterSpacing = "-5px"
-  /**
-   * Measures the rendered width of a text run.
-   *
-   * @param text - The text to measure.
-   * @returns The width in pixels.
-   */
-  const width = (text: string): number => context.measureText(text).width
-  return words.map((letters) =>
-    letters.map((letter, index) => {
-      const next = letters[index + 1]
-      return next === undefined
-        ? 0
-        : (width(letter + next) - width(letter) - width(next)) / 100
-    }),
-  )
+function splitAtHyphens(word: Glyph[]): Glyph[][] {
+  const parts: Glyph[][] = [[]]
+  word.forEach((glyph, index) => {
+    parts[parts.length - 1].push(glyph)
+    if (glyph.letter === "-" && index < word.length - 1) {
+      parts.push([])
+    }
+  })
+  return parts
 }
 
 /**
- * Tells whether the font is ready to render the text, and loads it when it
- * isn't yet.
- *
- * @param font - The CSS font shorthand to check.
- * @param text - The text whose glyphs must be available.
- * @returns True once the font is loaded.
- */
-function useFontLoaded(font: string, text: string): boolean {
-  const [loaded, setLoaded] = useState(() => document.fonts.check(font, text))
-
-  useEffect(() => {
-    if (loaded) {
-      return
-    }
-
-    let active = true
-    void document.fonts.load(font, text).then(() => {
-      if (active) {
-        setLoaded(true)
-      }
-    })
-    return () => {
-      active = false
-    }
-  }, [font, text, loaded])
-
-  return loaded
-}
-
-/**
- * The candidate's name, revealed letter by letter. With a mouse, an accent
- * sheen follows the pointer across it on the background spotlight's spring.
- * The sheen repeats the letters' layout, so it lands on each glyph.
+ * The candidate's name, revealed letter by letter: each letter rises from
+ * behind its word's clipped bottom edge while it sharpens from a thin blur
+ * into its full weight. Afterwards the name plays its weight axis under a
+ * mouse pointer or in a wave on touch screens (`useNameWeightPlay`). With a
+ * mouse, an accent sheen also follows the pointer across the name on the
+ * background spotlight's spring. The sheen repeats the letters' layout,
+ * weights and widths, so it lands on each glyph. Reduced motion shows the
+ * letters at once and turns the weight play and the sheen off.
  *
  * @param props - The component props.
  * @param props.fullName - The candidate's name.
@@ -153,22 +128,16 @@ function useFontLoaded(font: string, text: string): boolean {
 export default function ProfileName({
   fullName,
 }: ProfileNameProps): JSX.Element {
-  const headingRef = useRef<HTMLHeadingElement>(null)
   const prefersReducedMotion = useReducedMotion()
   const fontLoaded = useFontLoaded(kerningFont, fullName)
-  const pointerX = useMotionValue(-1000)
-  const pointerY = useMotionValue(-1000)
-  const sheenX = useSpring(pointerX, sheenSpring)
-  const sheenY = useSpring(pointerY, sheenSpring)
-  /** An accent glow centred on the spring-following pointer position. */
-  const sheen = useMotionTemplate`radial-gradient(14rem circle at ${sheenX}px ${sheenY}px, color-mix(in srgb, var(--cv-accent) 85%, transparent), transparent)`
 
   /**
-   * Splits the name into words of letters, each with its kerning and reveal
-   * delay. The stagger shrinks for long names, so the whole reveal fits in
-   * `revealSpread`, and the sheen appears once the last letter has risen.
+   * Splits the name into words of letters, each with its kerning, reveal
+   * delay and place in the whole name. The stagger shrinks for long names, so
+   * the whole reveal fits in `revealSpread`, and the sheen appears once the
+   * last letter has risen.
    */
-  const { words, sheenDelay } = useMemo(() => {
+  const { words, letterCount, sheenDelay } = useMemo(() => {
     const letters = fullName.split(/\s+/).filter(Boolean).map(splitGraphemes)
     const kerning = fontLoaded ? measureKerning(letters) : null
     const count = letters.flat().length
@@ -181,66 +150,67 @@ export default function ProfileName({
       word.map((letter, letterIndex) => ({
         letter,
         kerning: kerning?.[wordIndex][letterIndex] ?? 0,
-        delay: revealDelay + index++ * stagger,
+        delay: revealDelay + index * stagger,
+        index: index++,
       })),
     )
     return {
-      words: glyphs,
+      words: glyphs.map(splitAtHyphens),
+      letterCount: count,
       sheenDelay:
         revealDelay + Math.max(count - 1, 0) * stagger + revealDuration,
     }
   }, [fullName, fontLoaded])
 
-  useEffect(() => {
-    if (prefersReducedMotion) {
-      return
-    }
-
-    /**
-     * Moves the sheen to a mouse pointer, relative to the heading.
-     *
-     * @param event - The pointer move anywhere on the page.
-     */
-    const track = (event: PointerEvent): void => {
-      const heading = headingRef.current
-      if (event.pointerType !== "mouse" || !heading) {
-        return
-      }
-
-      const bounds = heading.getBoundingClientRect()
-      pointerX.set(event.clientX - bounds.left)
-      pointerY.set(event.clientY - bounds.top)
-    }
-
-    window.addEventListener("pointermove", track, { passive: true })
-    return () => window.removeEventListener("pointermove", track)
-  }, [prefersReducedMotion, pointerX, pointerY])
+  const {
+    headingRef,
+    lettersRef,
+    registerLetter,
+    registerSheen,
+    pointerX,
+    pointerY,
+    finishReveal,
+  } = useNameWeightPlay(letterCount, words)
+  const sheenX = useSpring(pointerX, sheenSpring)
+  const sheenY = useSpring(pointerY, sheenSpring)
+  /** An accent glow centred on the spring-following pointer position. */
+  const sheen = useMotionTemplate`radial-gradient(14rem circle at ${sheenX}px ${sheenY}px, color-mix(in srgb, var(--cv-accent) 85%, transparent), transparent)`
 
   return (
     <motion.h1
       ref={headingRef}
       variants={nameGroup}
+      onAnimationComplete={finishReveal}
       dir="auto"
       className="relative mt-8 font-cv-display text-[clamp(3rem,8.5vw,7rem)] leading-[0.95] font-semibold tracking-tighter text-balance"
     >
       <span className="sr-only">{fullName}</span>
-      <span aria-hidden="true" className="block">
-        {words.map((word, wordIndex) => (
+      <span ref={lettersRef} aria-hidden="true" className="block">
+        {words.map((parts, wordIndex) => (
           <Fragment key={wordIndex}>
             {wordIndex > 0 && " "}
-            <span className={`inline-block overflow-clip ${bleed}`}>
-              {word.map(({ letter, kerning, delay }, letterIndex) => (
-                <motion.span
-                  key={letterIndex}
-                  custom={delay}
-                  variants={letterReveal}
-                  style={letterMargin(kerning)}
-                  className={`inline-block bg-linear-to-b from-cv-ink to-cv-muted bg-clip-text text-transparent print:bg-none print:text-cv-ink forced-colors:bg-none forced-colors:text-[CanvasText] ${bleed}`}
-                >
-                  {letter}
-                </motion.span>
-              ))}
-            </span>
+            {parts.map((part, partIndex) => (
+              <span
+                key={partIndex}
+                className={`inline-block overflow-y-clip ${bleed}`}
+              >
+                {part.map(({ letter, kerning, delay, index }) => (
+                  <motion.span
+                    key={index}
+                    ref={(element: HTMLElement | null) =>
+                      registerLetter(index, element)
+                    }
+                    data-letter=""
+                    custom={delay}
+                    variants={prefersReducedMotion ? letterRise : letterReveal}
+                    style={letterMargin(kerning)}
+                    className={`inline-block bg-linear-to-b from-cv-ink to-cv-muted bg-clip-text text-transparent print:bg-none print:text-cv-ink forced-colors:bg-none forced-colors:text-[CanvasText] ${bleed}`}
+                  >
+                    {letter}
+                  </motion.span>
+                ))}
+              </span>
+            ))}
           </Fragment>
         ))}
       </span>
@@ -251,20 +221,23 @@ export default function ProfileName({
         style={{ backgroundImage: sheen }}
         className="pointer-events-none absolute inset-0 block bg-clip-text text-transparent select-none motion-reduce:hidden print:hidden forced-colors:hidden"
       >
-        {words.map((word, wordIndex) => (
+        {words.map((parts, wordIndex) => (
           <Fragment key={wordIndex}>
             {wordIndex > 0 && " "}
-            <span className={`inline-block ${bleed}`}>
-              {word.map(({ letter, kerning }, letterIndex) => (
-                <span
-                  key={letterIndex}
-                  style={letterMargin(kerning)}
-                  className={`inline-block ${bleed}`}
-                >
-                  {letter}
-                </span>
-              ))}
-            </span>
+            {parts.map((part, partIndex) => (
+              <span key={partIndex} className={`inline-block ${bleed}`}>
+                {part.map(({ letter, kerning, index }) => (
+                  <span
+                    key={index}
+                    ref={(element) => registerSheen(index, element)}
+                    style={letterMargin(kerning)}
+                    className={`relative inline-block ${bleed}`}
+                  >
+                    {letter}
+                  </span>
+                ))}
+              </span>
+            ))}
           </Fragment>
         ))}
       </motion.span>

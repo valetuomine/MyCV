@@ -15,7 +15,10 @@ interface ProfilePageProps {
  * `ProfileForm`) shows, so its preview gets the room; the CV itself keeps
  * `max-w-7xl`. The 84.6rem is the edit form's 45.6rem form column, its 4rem
  * gap and a 35rem preview, wide enough for a long name on one row, so it
- * changes with them.
+ * changes with them. The content clips only vertically, so the actions that
+ * lean toward the pointer, the copy burst and the name's reveal blur can
+ * reach into the page gutter; the page frame's `overflow-x-clip` still keeps
+ * the page from scrolling sideways.
  *
  * @param props - The component props.
  * @param props.values - The public profile to show.
@@ -39,7 +42,7 @@ export default function ProfilePage({
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-7xl flex-col pt-20 lg:pt-4 2xl:has-data-edit-view:max-w-[84.6rem]">
-      <div className="flex flex-1 items-center overflow-clip py-12 sm:py-16">
+      <div className="flex flex-1 items-center overflow-y-clip py-12 sm:py-16">
         <div className="w-full">
           <ProfileForm values={values} pdfPath={pdfPath} />
         </div>
