@@ -101,6 +101,10 @@
   --color-cv-flag-uk-blue: #012169;
   --color-cv-flag-uk-red: #c8102e;
 
+  /* The neutral light that the portrait's glare and foil lay over a photo
+     (mix-blend-overlay), the same in both themes so a photo keeps its colours. */
+  --color-cv-sheen: #ffffff;
+
   --animate-cv-pulse: cv-pulse 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
   --animate-cv-sweep: cv-sweep 8s linear infinite;
   --animate-cv-spin: cv-sweep 0.9s linear infinite;

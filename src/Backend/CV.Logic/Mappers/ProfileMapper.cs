@@ -1,4 +1,5 @@
 ﻿using CV.DataAccess.Entity;
+using CV.Logic.Pictures;
 using CV.LogicInterface.Dto.Profile;
 
 namespace CV.Logic.Mappers
@@ -9,6 +10,19 @@ namespace CV.Logic.Mappers
     public static class ProfileMapper
     {
         public const string DefaultLanguageCode = "fi";
+
+        /// <summary>
+        /// Builds the path of a profile's picture endpoint, with the picture's version.
+        /// </summary>
+        /// <param name="profileId">The identifier of the profile.</param>
+        /// <param name="pictureBlobName">The picture's blob name, or null when the profile has none.</param>
+        /// <returns>The path relative to the API's origin, or null without a picture.</returns>
+        public static string? ToPictureUrl(Guid profileId, string? pictureBlobName)
+        {
+            return pictureBlobName is null
+                ? null
+                : $"/api/Profile/{profileId}/picture?v={ProfilePictureNames.GetVersion(pictureBlobName)}";
+        }
 
         /// <summary>
         /// Maps a create request to a new profile entity.
@@ -105,7 +119,8 @@ namespace CV.Logic.Mappers
                 Summary = translation?.Summary,
                 Location = translation?.Location,
                 LinkedInUrl = dbProfile.LinkedInUrl,
-                GitHubUrl = dbProfile.GitHubUrl
+                GitHubUrl = dbProfile.GitHubUrl,
+                PictureUrl = ToPictureUrl(dbProfile.Id, dbProfile.PictureBlobName)
             };
         }
 
@@ -124,6 +139,7 @@ namespace CV.Logic.Mappers
                 FullName = dbProfile.FullName,
                 LinkedInUrl = dbProfile.LinkedInUrl,
                 GitHubUrl = dbProfile.GitHubUrl,
+                PictureUrl = ToPictureUrl(dbProfile.Id, dbProfile.PictureBlobName),
                 Translations = [.. dbProfile.Translations
                     .Select(translation => new ProfileTranslationDto
                     {

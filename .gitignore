@@ -12,6 +12,9 @@
 *.snupkg
 packages/
 
+# Azurite storage emulator data (README: Profile pictures)
+.azurite/
+
 # Frontend dependencies and build output
 node_modules/
 dist/

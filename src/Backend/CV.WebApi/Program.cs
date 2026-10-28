@@ -1,9 +1,11 @@
 using CV.DataAccess;
 using CV.Logic.Pdf;
 using CV.Logic.Services;
+using CV.Logic.Storage;
 using CV.LogicInterface.Authentication;
 using CV.LogicInterface.Pdf;
 using CV.LogicInterface.ServiceInterfaces;
+using CV.LogicInterface.Storage;
 using CV.WebApi.Authentication;
 using CV.WebApi.HostedServices;
 using CV.WebApi.Middleware;
@@ -121,6 +123,20 @@ builder.Services.AddSingleton<IHtmlPdfPrinter, HtmlPdfPrinter>();
 builder.Services.AddHostedService<PdfPrinterWarmUp>();
 builder.Services.AddScoped<ICurrentUser, CurrentUserAccessor>();
 builder.Services.AddSingleton<ILinkTokenValidator, LinkTokenValidator>();
+
+// Profile pictures: BlobStorage:ServiceUri with the managed identity in production, or the
+// ConnectionStrings:BlobStorage Azurite connection string locally. With neither, the API still
+// starts, and saving or deleting a picture answers 503.
+builder.Services.Configure<BlobStorageOptions>(builder.Configuration.GetSection(BlobStorageOptions.SectionName));
+builder.Services.PostConfigure<BlobStorageOptions>(options =>
+    options.ConnectionString ??= builder.Configuration.GetConnectionString("BlobStorage"));
+builder.Services.AddSingleton<IProfilePictureStore, BlobProfilePictureStore>();
+
+// Fetches only the signed-in user's Google picture; never follows redirects.
+builder.Services.AddHttpClient<IProfilePictureService, ProfilePictureService>(client =>
+        client.Timeout = TimeSpan.FromSeconds(10))
+    .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler { AllowAutoRedirect = false });
+
 builder.Services.AddTransient<IProfileService, ProfileService>();
 builder.Services.AddTransient<ICandidateService, CandidateService>();
 builder.Services.AddTransient<ILoginService, LoginService>();

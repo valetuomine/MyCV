@@ -16,6 +16,16 @@ Deleting a Profile must not delete Candidate. The Profile service must:
 2. Set that `ProfileId` to `null`.
 3. Remove only the Profile.
 4. Save both changes together.
+5. Delete the profile's picture blob, if it has one, through `IProfilePictureStore.RemoveUnused` after the save.
+
+Deleting a Candidate deletes its Profile through `CascadeDeleteCandidateReferences`, which knows only the profile's ID, so `CandidateService` reads the profile's `PictureBlobName` before the save and deletes that blob after it.
+
+## Profile pictures
+
+- `Profile.PictureBlobName` names the picture's blob, `{profileId}/{guid}.webp` (`ProfilePictureNames`), in the private `profile-pictures` container. Every picture gets a new name, so a stored blob never changes. A picture change updates the column only while it still holds the name the request read (`ExecuteUpdate` with that condition); otherwise the change answers 409 and deletes its own new blob, so two changes at the same time can't leave a blob unused. Its `guid` is the version in `ProfileDto.PictureUrl` and `ProfileAdminDto.PictureUrl` (`/api/Profile/{profileId}/picture?v={guid}`, relative to the API's origin and the same in every language), and the GET endpoint caches the current version for good.
+- `ProfilePictureService` owns the picture: upload (`PUT .../picture`, multipart field `file`, at most 10 MB), the Google picture (`PUT .../picture/google`, from the caller's Google token's `picture` claim, checked by `GooglePictureUri`: only on `googleusercontent.com` over `https`, never a URL from the request), delete (`DELETE .../picture`) and the public read (`GET .../picture`). The writes follow the owner-or-`CvAdmin` rule, with 404 for a non-owner, set `Profile.UpdatedAt` (so the CV's date and the PDF cache key change), and are saved at once, apart from `UpdateProfile`.
+- `ProfilePictureProcessor` checks the format from the file's bytes (JPEG, PNG or WebP), refuses too many pixels from the header before decoding, turns the image upright by its EXIF orientation, scales it to at most 1200 px and re-encodes it as WebP with SkiaSharp, without metadata or an ICC profile. Failures are `PayloadTooLargeException` (413) and `UnsupportedMediaTypeException` (415). `CV.Logic.Tests` covers it and `GooglePictureUri`.
+- `IProfilePictureStore` hides Azure Blob Storage (`BlobProfilePictureStore`, a singleton). Without a storage setting it answers 503 (`ServiceUnavailableException`), and a storage outage is 502 (`BadGatewayException`). A replaced or removed blob is deleted with `RemoveUnused` only after the database change is saved, and a failure there is logged, not thrown. A new blob is uploaded before the database points at it, and deleted again if that save fails.
 
 ## Profile creation
 

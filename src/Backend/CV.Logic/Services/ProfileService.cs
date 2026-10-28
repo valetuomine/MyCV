@@ -14,10 +14,12 @@ namespace CV.Logic.Services
 {
     public partial class ProfileService(
         CvContext dataContext,
-        IOptions<GoogleAuthenticationOptions> googleOptions) : BaseService(dataContext), IProfileService
+        IOptions<GoogleAuthenticationOptions> googleOptions,
+        IProfilePictureStore pictureStore) : BaseService(dataContext), IProfileService
     {
         private readonly CvContext _dataContext = dataContext;
         private readonly GoogleAuthenticationOptions _googleOptions = googleOptions.Value;
+        private readonly IProfilePictureStore _pictureStore = pictureStore;
         private static readonly HashSet<string> SupportedLanguageCodes = ["fi", "en"];
 
         // Frontend routes that start with a static segment: /admin and /print/{profileId}.
@@ -174,8 +176,14 @@ namespace CV.Logic.Services
 
             dbCandidate?.ProfileId = null;
 
+            var pictureBlobName = dbProfile.PictureBlobName;
             _dataContext.Profile.Remove(dbProfile);
             await _dataContext.SaveChangesAsync(cancellationToken);
+
+            if (pictureBlobName is not null)
+            {
+                await _pictureStore.RemoveUnused(pictureBlobName);
+            }
         }
 
         public async Task<ProfileAdminDto> UpdateProfile(
@@ -329,12 +337,9 @@ namespace CV.Logic.Services
             return isOwner;
         }
 
-        private async Task<bool> IsOwner(Guid profileId, ExternalIdentity? actor, CancellationToken cancellationToken)
+        private Task<bool> IsOwner(Guid profileId, ExternalIdentity? actor, CancellationToken cancellationToken)
         {
-            return actor is not null
-                && await _dataContext.CandidateLogin
-                    .ForIdentity(actor)
-                    .AnyAsync(login => login.Candidate.ProfileId == profileId, cancellationToken);
+            return _dataContext.CandidateLogin.OwnsProfile(actor, profileId, cancellationToken);
         }
     }
 }

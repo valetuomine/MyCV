@@ -1,7 +1,10 @@
 import { m as motion, type Variants } from "framer-motion"
 import { useEffect, useId, useRef, useState, type JSX } from "react"
 import { useTranslation } from "react-i18next"
-import type { Profile } from "../../../../api/profileQueries"
+import {
+  getProfilePictureUrl,
+  type Profile,
+} from "../../../../api/profileQueries"
 import { ButtonVariant } from "../../../../types"
 import Button from "../../../components/Button"
 import CopyLinkButton from "../../../components/CopyLinkButton"
@@ -221,6 +224,7 @@ export default function ReadOnlyProfileForm({
         <ProfilePortrait
           fullName={values.fullName}
           initials={getInitials(values.fullName)}
+          imageUrl={getProfilePictureUrl(values.pictureUrl)}
         />
       </motion.div>
     </motion.div>

@@ -30,8 +30,21 @@ const monogramClassName =
 /** Thin accent and ink bands, the foil that slides across with the tilt. */
 const foilBands =
   "repeating-linear-gradient(105deg, transparent 0%, color-mix(in srgb, var(--cv-accent) 14%, transparent) 4%, transparent 8%, color-mix(in srgb, var(--cv-ink) 6%, transparent) 10%, transparent 13%)"
+/**
+ * The foil over a photo: thin bands of neutral light, laid on with
+ * `mix-blend-overlay` so they brighten the photo without tinting it green.
+ */
+const sheenBands =
+  "repeating-linear-gradient(105deg, transparent 0%, color-mix(in srgb, var(--color-cv-sheen) 40%, transparent) 4%, transparent 8%, color-mix(in srgb, var(--color-cv-sheen) 18%, transparent) 10%, transparent 13%)"
 /** When the traced initials fill in, which is also when their shadow lands. */
 const fillTransition = { duration: 0.6, ease: "easeOut", delay: 1.6 } as const
+/** The photo's reveal, on the name's ease-out curve. */
+const photoTransition = { duration: 0.8, ease: [0.22, 1, 0.36, 1] } as const
+/**
+ * The load sweep's delay: after the card's own entrance for the monogram,
+ * and for a photo once it has loaded and mostly sharpened.
+ */
+const sweepDelay = { monogram: 0.9, photo: 0.5 }
 
 /**
  * Shows the profile photo when one exists, otherwise a monogram placeholder
@@ -43,6 +56,15 @@ const fillTransition = { duration: 0.6, ease: "easeOut", delay: 1.6 } as const
  * slides across with the tilt. On load the foil sweeps across once. In the
  * stacked layout the card rises into place as it scrolls into view. Reduced
  * motion shows the filled initials at rest, without the sweep or the tilt.
+ *
+ * With a photo the card is the photo's height from the start, so nothing
+ * moves when it arrives: the surface pulses softly while it loads, then the
+ * photo fades in, sharpening from a slight blur and settling from a slight
+ * zoom, and the sweep crosses it once it is in. The border lights stay in
+ * the accent, which marks the CV, but the glare and the foil turn to neutral
+ * light over the photo, so its colours stay true. Reduced motion shows the
+ * photo as soon as it loads, at rest. A photo that fails to load gives way
+ * to the monogram.
  *
  * @param props - The component props.
  * @param props.fullName - The candidate's name, for the photo's alt text.
@@ -57,8 +79,11 @@ export default function ProfilePortrait({
 }: ProfilePortraitProps): JSX.Element {
   const { t } = useTranslation()
   const [failedUrl, setFailedUrl] = useState<string | null>(null)
+  const [loadedUrl, setLoadedUrl] = useState<string | null>(null)
   /** Shows the photo unless there is none or this URL failed to load. */
   const showImage = Boolean(imageUrl) && failedUrl !== imageUrl
+  /** Whether the photo shown has loaded, which starts its reveal. */
+  const isImageLoaded = showImage && loadedUrl === imageUrl
   const prefersReducedMotion = useReducedMotion()
   const rotateX = useSpring(0, tiltSpring)
   const rotateY = useSpring(0, tiltSpring)
@@ -92,18 +117,18 @@ export default function ProfilePortrait({
   const shadowY = useTransform(rotateX, (tiltX) => tiltX * 1.6 + 14)
 
   useEffect(() => {
-    if (prefersReducedMotion) {
+    if (prefersReducedMotion || (showImage && !isImageLoaded)) {
       return
     }
 
     sweep.set(-40)
     const controls = animate(sweep, 40, {
       duration: 1.6,
-      delay: 0.9,
+      delay: showImage ? sweepDelay.photo : sweepDelay.monogram,
       ease: [0.45, 0, 0.2, 1],
     })
     return () => controls.stop()
-  }, [prefersReducedMotion, sweep])
+  }, [prefersReducedMotion, sweep, showImage, isImageLoaded])
 
   /**
    * Tilts the card toward a mouse pointer and moves the glare and the border
@@ -160,16 +185,34 @@ export default function ProfilePortrait({
             className={`relative w-full overflow-hidden rounded-[calc(1.5rem-2px)] bg-cv-surface ${showImage ? "h-[clamp(20rem,68dvh,40rem)]" : "h-44 lg:h-[clamp(16rem,46dvh,26rem)]"}`}
           >
             {showImage ? (
-              <img
-                src={imageUrl ?? undefined}
-                alt={
-                  fullName
-                    ? t("cv.portraitOf", { name: fullName })
-                    : t("cv.portrait")
-                }
-                onError={() => setFailedUrl(imageUrl ?? null)}
-                className="size-full object-cover"
-              />
+              <>
+                {!isImageLoaded && (
+                  <div
+                    aria-hidden="true"
+                    className="absolute inset-0 bg-cv-overlay motion-safe:animate-pulse"
+                  />
+                )}
+                <motion.img
+                  src={imageUrl ?? undefined}
+                  alt={
+                    fullName
+                      ? t("cv.portraitOf", { name: fullName })
+                      : t("cv.portrait")
+                  }
+                  onLoad={() => setLoadedUrl(imageUrl ?? null)}
+                  onError={() => setFailedUrl(imageUrl ?? null)}
+                  initial={false}
+                  animate={
+                    isImageLoaded
+                      ? { opacity: 1, filter: "blur(0px)", scale: 1 }
+                      : { opacity: 0, filter: "blur(10px)", scale: 1.03 }
+                  }
+                  transition={
+                    prefersReducedMotion ? { duration: 0 } : photoTransition
+                  }
+                  className="relative size-full object-cover"
+                />
+              </>
             ) : (
               <div
                 aria-hidden="true"
@@ -200,17 +243,17 @@ export default function ProfilePortrait({
             <motion.div
               aria-hidden="true"
               style={{
-                backgroundImage: foilBands,
+                backgroundImage: showImage ? sheenBands : foilBands,
                 backgroundSize: "250% 100%",
                 backgroundPosition: foilPosition,
                 opacity: foilOpacity,
               }}
-              className="pointer-events-none absolute inset-0 print:hidden"
+              className={`pointer-events-none absolute inset-0 print:hidden ${showImage ? "mix-blend-overlay" : ""}`}
             />
             <motion.div
               aria-hidden="true"
               style={{ x: glareX, y: glareY }}
-              className={`pointer-events-none absolute top-0 left-0 -mt-40 -ml-40 size-80 bg-cv-glow opacity-0 transition-opacity duration-300 motion-reduce:hidden ${showImage ? "mix-blend-overlay [--glow:#fff] group-hover:opacity-40" : "group-hover:opacity-25"}`}
+              className={`pointer-events-none absolute top-0 left-0 -mt-40 -ml-40 size-80 bg-cv-glow opacity-0 transition-opacity duration-300 motion-reduce:hidden ${showImage ? "mix-blend-overlay [--glow:var(--color-cv-sheen)] group-hover:opacity-40" : "group-hover:opacity-25"}`}
             />
           </div>
         </div>

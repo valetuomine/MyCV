@@ -25,6 +25,9 @@ namespace CV.DataAccess.Configurations
 
             builder.Property(profile => profile.GitHubUrl)
                 .HasMaxLength(500);
+
+            builder.Property(profile => profile.PictureBlobName)
+                .HasMaxLength(100);
         }
     }
 }

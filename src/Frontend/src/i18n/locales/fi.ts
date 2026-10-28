@@ -134,6 +134,45 @@ export const fi: Translation = {
       "Valitse kirjautumistapa. Käytät samaa tapaa myöhemmin, kun muokkaat CV:täsi.",
     signInPending: "Kirjaudutaan profiilin luomista varten",
   },
+  profilePicture: {
+    heading: "Profiilikuva",
+    savedAtOnce: "Tallentuu heti",
+    hint: "Kuvan muutokset tallentuvat heti, kun teet ne. Alla olevat Tallenna ja Peruuta eivät koske kuvaa.",
+    formats:
+      "JPEG, PNG tai WebP, enintään 10 Mt. Puhelimella voit ottaa kuvan tai valita sen galleriasta.",
+    current: "Profiilikuvasi",
+    none: "Ei vielä kuvaa: CV:ssäsi näkyvät nimikirjaimesi.",
+    choose: "Valitse kuva",
+    change: "Vaihda kuva",
+    useGoogle: "Käytä Google-kuvaa",
+    remove: "Poista kuva",
+    removeQuestion: "Poistetaanko kuva CV:ltäsi?",
+    confirmRemove: "Poista",
+    keep: "Säilytä",
+    uploading: "Ladataan…",
+    fetchingGoogle: "Haetaan…",
+    removing: "Poistetaan…",
+    saved: "Kuva tallennettu.",
+    removed: "Kuva poistettu.",
+    actions: {
+      upload: "Kuvan lataus",
+      google: "Google-kuvan käyttöönotto",
+      remove: "Kuvan poisto",
+    },
+    errors: {
+      tooLarge: "Kuva on liian suuri. Valitse enintään 10 Mt:n kuva.",
+      unsupportedType:
+        "Tätä tiedostoa ei voi käyttää. Valitse JPEG-, PNG- tai WebP-kuva.",
+      notAllowed: "Et voi vaihtaa tämän CV:n kuvaa.",
+      changedElsewhere:
+        "Kuvaa muutettiin samaan aikaan toisaalla. Tarkista kuva ja yritä uudelleen.",
+      serviceUnreachable:
+        "Kuvan tarvitsema palvelu ei vastannut. Yritä hetken päästä uudelleen.",
+      storageNotSetUp:
+        "Kuvien tallennusta ei ole vielä otettu käyttöön, joten kuvaa ei voi tallentaa.",
+      googleUnavailable: "Google-tililläsi ei ole kuvaa, jota voisi käyttää.",
+    },
+  },
   formErrors: {
     update: "Profiilin päivitys",
     details: "Profiilin tietojen lataus",

@@ -13,6 +13,7 @@ import Button from "../../../components/Button"
 import CopyLinkButton from "../../../components/CopyLinkButton"
 import type { ProfileSchema } from "../../schemas/profile-form-schema"
 import ProfileFields from "./ProfileFields"
+import ProfilePictureSection from "./ProfilePictureSection"
 import ProfilePreview from "./ProfilePreview"
 
 interface EditableProfileFormProps {
@@ -21,6 +22,9 @@ interface EditableProfileFormProps {
   isSaving: boolean
   saveError?: string
   publicUrlSegment?: string
+  profileId: string
+  pictureUrl?: string | null
+  savedFullName?: string | null
 }
 
 /**
@@ -34,7 +38,9 @@ interface EditableProfileFormProps {
  * Entering edit mode moves focus to the heading, so keyboard and screen
  * reader users start at the top of the form. With unsaved changes, the
  * browser warns before the tab is closed or reloaded, and Cancel asks before
- * discarding them.
+ * discarding them. The profile picture comes before the fields, at every
+ * width rather than in the preview, and is saved on its own, so Save and
+ * Cancel leave it alone.
  *
  * @param props - The component props.
  * @param props.onCancel - Leaves edit mode without saving.
@@ -42,6 +48,9 @@ interface EditableProfileFormProps {
  * @param props.isSaving - Whether a save is in progress.
  * @param props.saveError - The message from a failed save.
  * @param props.publicUrlSegment - The CV's public URL segment, for its link.
+ * @param props.profileId - The profile being edited, for its picture.
+ * @param props.pictureUrl - The current picture's path from the API, if any.
+ * @param props.savedFullName - The saved name, for the picture's initials.
  * @returns The edit form.
  */
 export default function EditableProfileForm({
@@ -50,6 +59,9 @@ export default function EditableProfileForm({
   isSaving,
   saveError,
   publicUrlSegment,
+  profileId,
+  pictureUrl,
+  savedFullName,
 }: EditableProfileFormProps): JSX.Element {
   const { t } = useTranslation()
   const headingRef = useRef<HTMLHeadingElement>(null)
@@ -150,6 +162,11 @@ export default function EditableProfileForm({
             </div>
           </div>
         )}
+        <ProfilePictureSection
+          profileId={profileId}
+          pictureUrl={pictureUrl}
+          fullName={savedFullName}
+        />
         <ProfileFields isDisabled={isSaving} />
         {saveError && (
           <p role="alert" className="m-0 text-sm text-cv-danger">

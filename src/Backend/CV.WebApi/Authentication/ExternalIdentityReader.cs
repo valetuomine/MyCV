@@ -34,7 +34,8 @@ namespace CV.WebApi.Authentication
                     GoogleAuthenticationOptions.Issuer,
                     subject,
                     user.FindFirst("email")?.Value,
-                    string.Equals(user.FindFirst("email_verified")?.Value, "true", StringComparison.OrdinalIgnoreCase));
+                    string.Equals(user.FindFirst("email_verified")?.Value, "true", StringComparison.OrdinalIgnoreCase),
+                    user.FindFirst("picture")?.Value);
             }
 
             var tenantId = user.FindFirst("tid")?.Value;

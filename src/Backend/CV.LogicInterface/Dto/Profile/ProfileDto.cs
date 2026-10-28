@@ -54,5 +54,11 @@ namespace CV.LogicInterface.Dto.Profile
         /// Gets or sets the candidate's GitHub profile URL.
         /// </summary>
         public string? GitHubUrl { get; set; }
+
+        /// <summary>
+        /// Gets or sets the path of the profile picture, relative to the API's origin and the same in every
+        /// language, or null when the profile has none. Its version parameter changes with the picture.
+        /// </summary>
+        public string? PictureUrl { get; set; }
     }
 }

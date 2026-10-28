@@ -106,6 +106,61 @@ export function formatProfileDate(
     : new Intl.DateTimeFormat(language, { dateStyle: "medium" }).format(date)
 }
 
+/** A change to the profile picture, each saved at once. */
+export type PictureChange = "upload" | "google" | "remove"
+
+/**
+ * Turns a failed profile picture change into a message, by the status code
+ * first, because the API's problem detail is English only: a file too large
+ * (413) or of the wrong type (415), a profile the user may not change (401,
+ * 403, 404), a picture changed at the same time elsewhere (409), storage or
+ * Google not answering (502), storage not set up yet (503), and a Google
+ * account without a usable picture (400 on the Google change). Network
+ * failures and anything else get the general messages that name the change.
+ *
+ * @param error - The error from the request, or `{ status: 413 }` when the browser found the file too large.
+ * @param change - Which change failed.
+ * @param t - The translation function.
+ * @returns The message to show in the picture section.
+ */
+export function getProfilePictureError(
+  error: unknown,
+  change: PictureChange,
+  t: TFunction,
+): string {
+  const status =
+    typeof error === "object" && error !== null && "status" in error
+      ? error.status
+      : undefined
+  const action = t(`profilePicture.actions.${change}`)
+
+  switch (status) {
+    case 413:
+      return t("profilePicture.errors.tooLarge")
+    case 415:
+      return t("profilePicture.errors.unsupportedType")
+    case 401:
+    case 403:
+    case 404:
+      return t("profilePicture.errors.notAllowed")
+    case 409:
+      return t("profilePicture.errors.changedElsewhere")
+    case 502:
+      return t("profilePicture.errors.serviceUnreachable")
+    case 503:
+      return t("profilePicture.errors.storageNotSetUp")
+    case 400:
+      return change === "google"
+        ? t("profilePicture.errors.googleUnavailable")
+        : t("formErrors.failed", { action })
+    case "FETCH_ERROR":
+    case "TIMEOUT_ERROR":
+      return t("formErrors.unreachable", { action })
+    default:
+      return t("formErrors.failed", { action })
+  }
+}
+
 /**
  * Turns a failed profile request into a message that starts with the action.
  * Explains the creation refusals first (403 for a Google account that isn't

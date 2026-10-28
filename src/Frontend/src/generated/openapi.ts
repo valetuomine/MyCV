@@ -517,6 +517,126 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Profile/{profileId}/picture": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    v?: string;
+                };
+                header?: never;
+                path: {
+                    profileId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "image/webp": string;
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    profileId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProfilePictureDto"];
+                        "application/json": components["schemas"]["ProfilePictureDto"];
+                        "text/json": components["schemas"]["ProfilePictureDto"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    profileId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Profile/{profileId}/picture/google": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    profileId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProfilePictureDto"];
+                        "application/json": components["schemas"]["ProfilePictureDto"];
+                        "text/json": components["schemas"]["ProfilePictureDto"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Profile/{profileId}/admin": {
         parameters: {
             query?: never;
@@ -607,6 +727,7 @@ export interface components {
             isOwner?: boolean;
             linkedInUrl?: string | null;
             gitHubUrl?: string | null;
+            pictureUrl?: string | null;
             translations?: components["schemas"]["ProfileTranslationDto"][] | null;
         };
         ProfileDto: {
@@ -623,6 +744,10 @@ export interface components {
             location?: string | null;
             linkedInUrl?: string | null;
             gitHubUrl?: string | null;
+            pictureUrl?: string | null;
+        };
+        ProfilePictureDto: {
+            pictureUrl?: string | null;
         };
         ProfileTranslationDto: {
             languageCode?: string | null;

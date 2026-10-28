@@ -8,7 +8,10 @@ Run the same checks as the pull request pipeline for the areas the change touche
 
 ```powershell
 dotnet build src/MyCV.sln --configuration Release
+dotnet test src/MyCV.sln --configuration Release --no-build
 ```
+
+The tests are MSTest projects next to the code they test, such as `src/Backend/CV.Logic.Tests`.
 
 If entities, configurations or the DbContext changed, also check that a migration exists for every model change:
 

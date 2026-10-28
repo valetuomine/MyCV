@@ -17,12 +17,20 @@ namespace CV.WebApi.Middleware
                 ForbiddenException => (StatusCodes.Status403Forbidden, exception.Message),
                 NotFoundException => (StatusCodes.Status404NotFound, exception.Message),
                 ConflictException => (StatusCodes.Status409Conflict, exception.Message),
+                PayloadTooLargeException => (StatusCodes.Status413PayloadTooLarge, exception.Message),
+                UnsupportedMediaTypeException => (StatusCodes.Status415UnsupportedMediaType, exception.Message),
+                BadGatewayException => (StatusCodes.Status502BadGateway, exception.Message),
+                ServiceUnavailableException => (StatusCodes.Status503ServiceUnavailable, exception.Message),
                 _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred")
             };
 
             if (statusCode == StatusCodes.Status500InternalServerError)
             {
                 logger.LogError(exception, "Unhandled exception while processing request");
+            }
+            else if (exception is BadGatewayException { InnerException: { } upstreamError })
+            {
+                logger.LogWarning(upstreamError, "Upstream request failed: {Detail}", detail);
             }
 
             httpContext.Response.StatusCode = statusCode;

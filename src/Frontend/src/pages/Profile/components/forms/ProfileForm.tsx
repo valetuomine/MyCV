@@ -182,7 +182,7 @@ export default function ProfileForm({
             transition={viewTransition}
           >
             {isEditing ? (
-              profileAdminQuery.data ? (
+              profileAdminQuery.data && values.id ? (
                 <div className="grid gap-20">
                   <EditableProfileForm
                     onCancel={cancelEditing}
@@ -190,6 +190,9 @@ export default function ProfileForm({
                     isSaving={updateProfileState.isLoading}
                     saveError={saveError}
                     publicUrlSegment={publicUrlSegment}
+                    profileId={values.id}
+                    pictureUrl={profileAdminQuery.data.pictureUrl}
+                    savedFullName={profileAdminQuery.data.fullName}
                   />
                   {profileAdminQuery.data.isOwner && (
                     <SignInMethodsSection

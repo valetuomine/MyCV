@@ -5,6 +5,7 @@
         public string FullName { get; set; } = null!;
         public string? LinkedInUrl { get; set; }
         public string? GitHubUrl { get; set; }
+        public string? PictureBlobName { get; set; }
 
         public ICollection<ProfileTranslation> Translations { get; set; } = [];
     }

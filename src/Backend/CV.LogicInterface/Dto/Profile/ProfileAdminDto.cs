@@ -52,6 +52,12 @@ namespace CV.LogicInterface.Dto.Profile
         public string? GitHubUrl { get; set; }
 
         /// <summary>
+        /// Gets or sets the path of the profile picture, relative to the API's origin and shared across
+        /// languages, or null when the profile has none. Its version parameter changes with the picture.
+        /// </summary>
+        public string? PictureUrl { get; set; }
+
+        /// <summary>
         /// Gets or sets all language-specific profile content.
         /// </summary>
         public IReadOnlyCollection<ProfileTranslationDto> Translations { get; set; } = [];

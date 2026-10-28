@@ -32,6 +32,36 @@ The Vite development server proxies `/api` requests to the ASP.NET Core API, so 
 
    CV pages are served at `http://localhost:3000/<cv-address>`.
 
+## Profile pictures
+
+Profile pictures are stored in Azure Blob Storage, in a private `profile-pictures` container that the API creates on the first upload. The API turns each upload upright, shrinks it to at most 1200 px and re-encodes it as WebP with SkiaSharp, which drops all metadata, and serves it publicly from `GET /api/Profile/{profileId}/picture`.
+
+Locally, run the [Azurite](https://learn.microsoft.com/azure/storage/common/storage-use-azurite) storage emulator and point the API at it:
+
+1. Start Azurite's blob service, with Docker or with Node:
+
+   ```powershell
+   docker run -p 10000:10000 mcr.microsoft.com/azure-storage/azurite azurite-blob --blobHost 0.0.0.0
+   npx azurite --blobHost 127.0.0.1 --location .azurite --skipApiVersionCheck
+   ```
+
+   `.azurite` is ignored by Git, so its data stays on your machine.
+
+2. Store the emulator connection string in User Secrets. `UseDevelopmentStorage=true` is Azurite's well-known development account, not a secret:
+
+   ```powershell
+   dotnet user-secrets set "ConnectionStrings:BlobStorage" "UseDevelopmentStorage=true" --project src/Backend/CV.WebApi
+   ```
+
+Settings, in the `BlobStorage` section or as a connection string:
+
+| Key | Purpose |
+|---|---|
+| `BlobStorage:ServiceUri` | The account's blob endpoint, such as `https://<account>.blob.core.windows.net`. The API signs in with `DefaultAzureCredential`, the App Service's managed identity in production, which needs the `Storage Blob Data Contributor` role. No connection string or account key is used in production. It takes precedence over the connection string. |
+| `ConnectionStrings:BlobStorage` | A connection string, for Azurite in local development. |
+
+Without either setting the API still starts, and the public CV, its PDF and profile deletion work as before; saving or removing a picture answers `503`.
+
 ## CV PDFs
 
 The API prints a CV's PDF (`GET /api/Profile/{profileId}/pdf`) by opening the frontend's print route `/print/<profile-id>?lang=fi|en` in headless Chromium with Playwright for .NET, so the frontend must be running and reachable from the API. Printed PDFs are cached in memory for an hour.

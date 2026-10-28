@@ -9,9 +9,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CV.Logic.Services
 {
-    public class CandidateService(CvContext dataContext) : BaseService(dataContext), ICandidateService
+    public class CandidateService(
+        CvContext dataContext,
+        IProfilePictureStore pictureStore) : BaseService(dataContext), ICandidateService
     {
         private readonly CvContext _dataContext = dataContext;
+        private readonly IProfilePictureStore _pictureStore = pictureStore;
 
         public async Task<CandidateDto> GetCandidateByPublicUrlSegment(
             string publicUrlSegment,
@@ -57,8 +60,20 @@ namespace CV.Logic.Services
                 throw new NotFoundException($"Candidate not found with Id: {candidateId}");
             }
 
+            // CascadeDeleteCandidateReferences deletes the profile by ID only, so read its picture first.
+            var pictureBlobName = await _dataContext.Profile
+                .AsNoTracking()
+                .Where(profile => profile.Id == dbCandidate.ProfileId)
+                .Select(profile => profile.PictureBlobName)
+                .FirstOrDefaultAsync(cancellationToken);
+
             _dataContext.Candidate.Remove(dbCandidate);
             await _dataContext.SaveChangesAsync(cancellationToken);
+
+            if (pictureBlobName is not null)
+            {
+                await _pictureStore.RemoveUnused(pictureBlobName);
+            }
         }
     }
 }

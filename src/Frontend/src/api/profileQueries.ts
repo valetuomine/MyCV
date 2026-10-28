@@ -5,6 +5,21 @@ export type Profile = components["schemas"]["ProfileDto"]
 export type ProfileAdmin = components["schemas"]["ProfileAdminDto"]
 export type CreateProfileRequest = components["schemas"]["CreateProfileRequest"]
 export type UpdateProfileRequest = components["schemas"]["UpdateProfileRequest"]
+export type ProfilePicture = components["schemas"]["ProfilePictureDto"]
+
+/**
+ * Builds the URL of a profile picture from the API's `pictureUrl`, which is
+ * relative to the API's origin. The picture is a public file, so `<img>`
+ * loads it straight from this URL instead of through RTK Query.
+ *
+ * @param pictureUrl - The picture's path and version from the API.
+ * @returns The picture's URL, or undefined when the profile has none.
+ */
+export function getProfilePictureUrl(
+  pictureUrl: string | null | undefined,
+): string | undefined {
+  return pictureUrl ? `${apiBaseUrl}${pictureUrl}` : undefined
+}
 
 interface ProfilePdfUrlArgs {
   profileId: string
@@ -43,6 +58,24 @@ export function getProfilePdfUrl({
 interface UpdateProfileArgs {
   profileId: string
   body: UpdateProfileRequest
+}
+
+interface SaveProfilePictureArgs {
+  profileId: string
+  picture: Blob
+  fileName: string
+}
+
+/**
+ * Lists the profile's queries to refetch after a successful change, so the
+ * CV and the edit view show it.
+ *
+ * @param error - The failed request's error, if it failed.
+ * @param profileId - The changed profile.
+ * @returns The profile's tag, or none after a failure.
+ */
+function profileTagsAfter(error: unknown, profileId: string) {
+  return error ? [] : [{ type: "Profile" as const, id: profileId }]
 }
 
 /** Profile endpoints. */
@@ -98,7 +131,48 @@ export const profileQueries = baseApi.injectEndpoints({
         body,
       }),
       invalidatesTags: (_result, error, { profileId }) =>
-        error ? [] : [{ type: "Profile", id: profileId }],
+        profileTagsAfter(error, profileId),
+    }),
+    /**
+     * Uploads a new profile picture, which is saved at once, apart from the
+     * profile's fields. The API processes it and replaces the old one.
+     */
+    saveProfilePicture: builder.mutation<
+      ProfilePicture,
+      SaveProfilePictureArgs
+    >({
+      query: ({ profileId, picture, fileName }) => {
+        const body = new FormData()
+        body.append("file", picture, fileName)
+        return {
+          url: `/api/Profile/${encodeURIComponent(profileId)}/picture`,
+          method: "PUT",
+          body,
+        }
+      },
+      invalidatesTags: (_result, error, { profileId }) =>
+        profileTagsAfter(error, profileId),
+    }),
+    /**
+     * Saves the signed-in Google account's picture as the profile picture.
+     * The API reads it from the Google sign-in, never from the request.
+     */
+    saveGoogleProfilePicture: builder.mutation<ProfilePicture, string>({
+      query: (profileId) => ({
+        url: `/api/Profile/${encodeURIComponent(profileId)}/picture/google`,
+        method: "PUT",
+      }),
+      invalidatesTags: (_result, error, profileId) =>
+        profileTagsAfter(error, profileId),
+    }),
+    /** Removes the profile picture, at once, and deletes it from storage. */
+    deleteProfilePicture: builder.mutation<void, string>({
+      query: (profileId) => ({
+        url: `/api/Profile/${encodeURIComponent(profileId)}/picture`,
+        method: "DELETE",
+      }),
+      invalidatesTags: (_result, error, profileId) =>
+        profileTagsAfter(error, profileId),
     }),
   }),
 })
@@ -108,4 +182,7 @@ export const {
   useGetProfileAdminQuery,
   useCreateProfileMutation,
   useUpdateProfileMutation,
+  useSaveProfilePictureMutation,
+  useSaveGoogleProfilePictureMutation,
+  useDeleteProfilePictureMutation,
 } = profileQueries

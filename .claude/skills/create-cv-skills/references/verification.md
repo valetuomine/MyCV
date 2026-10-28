@@ -1,6 +1,6 @@
 # Verification
 
-1. Build the affected projects and run focused tests.
+1. Build the affected projects and run the tests (`dotnet test src/MyCV.sln`). Add MSTest unit tests for new logic that needs no database, such as parsing, validation or image processing, in a `<Project>.Tests` project next to the code (`src/Backend/CV.Logic.Tests`).
 2. Test GET: success, empty ID, missing resource, and cancellation.
 3. Test POST: validation, `201 Created`, `Location`, and generated ID.
 4. Test PUT: validation, missing resource, full replacement, nullable fields, `UpdatedAt`, and `200 OK`.

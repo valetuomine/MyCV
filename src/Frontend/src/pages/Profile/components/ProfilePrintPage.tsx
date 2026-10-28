@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useState, type JSX } from "react"
 import { useTranslation } from "react-i18next"
-import type { Profile } from "../../../api/profileQueries"
+import { getProfilePictureUrl, type Profile } from "../../../api/profileQueries"
 import { Theme, type LanguageCode } from "../../../types"
 import { formatProfileDate, toExternalUrl } from "../utils/profileFormUtils"
 
@@ -52,7 +52,9 @@ function pageFooterCss(updatedText: string): string {
  * theme, in the given language whatever the UI language is. Names the
  * document after the candidate, which becomes the PDF's title, prints the
  * updated date and page numbers on every page, and sets `data-print-ready`
- * once its fonts are in use, which the API waits for before printing.
+ * once its fonts are in use and its picture has loaded, which the API waits
+ * for before printing. The picture sits small and rounded beside the name;
+ * without one, or when it fails to load, the header prints without it.
  *
  * @param props - The component props.
  * @param props.values - The public profile in the print's language.
@@ -64,7 +66,32 @@ export default function ProfilePrintPage({
   languageCode,
 }: ProfilePrintPageProps): JSX.Element {
   const { t } = useTranslation(undefined, { lng: languageCode })
-  const [ready, setReady] = useState(false)
+  const [fontsReady, setFontsReady] = useState(false)
+  const pictureUrl = getProfilePictureUrl(values.pictureUrl)
+  const [settledPictureUrl, setSettledPictureUrl] = useState<string | null>(
+    null,
+  )
+  const [failedPictureUrl, setFailedPictureUrl] = useState<string | null>(null)
+  /** Shows the picture unless there is none or it failed to load. */
+  const showPicture = Boolean(pictureUrl) && failedPictureUrl !== pictureUrl
+  /** Ready to print once the fonts are in and the picture has loaded or failed. */
+  const ready = fontsReady && (!pictureUrl || settledPictureUrl === pictureUrl)
+
+  /**
+   * Records that the picture finished loading, or failed and is left out.
+   *
+   * @param failed - Whether it failed to load.
+   */
+  const settlePicture = (failed: boolean): void => {
+    if (!pictureUrl) {
+      return
+    }
+
+    if (failed) {
+      setFailedPictureUrl(pictureUrl)
+    }
+    setSettledPictureUrl(pictureUrl)
+  }
   /** When the profile last changed, falling back to when it was created. */
   const updatedAt = formatProfileDate(
     values.updatedAt ?? values.createdAt,
@@ -86,7 +113,7 @@ export default function ProfilePrintPage({
     let active = true
     void document.fonts.ready.then(() => {
       if (active) {
-        setReady(true)
+        setFontsReady(true)
       }
     })
     return () => {
@@ -103,28 +130,39 @@ export default function ProfilePrintPage({
       <style>
         {pageFooterCss(updatedAt ? t("cv.updated", { date: updatedAt }) : "")}
       </style>
-      <header className="grid gap-2 border-b border-cv-line pb-6">
-        <p className="m-0 font-cv-mono text-[0.6875rem] tracking-widest text-cv-accent uppercase">
-          {t("cv.eyebrow")}
-        </p>
-        <h1
-          dir="auto"
-          className="m-0 mt-2 font-cv-display text-4xl leading-tight font-semibold tracking-tight wrap-anywhere text-cv-ink"
-        >
-          {values.fullName}
-        </h1>
-        {values.title && (
-          <p
+      <header className="flex items-center gap-8 border-b border-cv-line pb-6">
+        <div className="grid min-w-0 flex-1 gap-2">
+          <p className="m-0 font-cv-mono text-[0.6875rem] tracking-widest text-cv-accent uppercase">
+            {t("cv.eyebrow")}
+          </p>
+          <h1
             dir="auto"
-            className="m-0 font-cv-display text-lg font-medium text-cv-accent"
+            className="m-0 mt-2 font-cv-display text-4xl leading-tight font-semibold tracking-tight wrap-anywhere text-cv-ink"
           >
-            {values.title}
-          </p>
-        )}
-        {values.location && (
-          <p dir="auto" className="m-0 text-cv-meta">
-            {values.location}
-          </p>
+            {values.fullName}
+          </h1>
+          {values.title && (
+            <p
+              dir="auto"
+              className="m-0 font-cv-display text-lg font-medium text-cv-accent"
+            >
+              {values.title}
+            </p>
+          )}
+          {values.location && (
+            <p dir="auto" className="m-0 text-cv-meta">
+              {values.location}
+            </p>
+          )}
+        </div>
+        {showPicture && (
+          <img
+            src={pictureUrl}
+            alt={t("cv.portraitOf", { name: values.fullName ?? "" })}
+            onLoad={() => settlePicture(false)}
+            onError={() => settlePicture(true)}
+            className="size-28 shrink-0 rounded-3xl border border-cv-line object-cover"
+          />
         )}
       </header>
       {values.summary && (

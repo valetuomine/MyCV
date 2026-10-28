@@ -130,6 +130,45 @@ export const en = {
       "Choose how you sign in. You'll use the same method to edit your CV later.",
     signInPending: "Signing in to create a profile",
   },
+  profilePicture: {
+    heading: "Profile picture",
+    savedAtOnce: "Saved right away",
+    hint: "Picture changes are saved as soon as you make them. Save and Cancel below don't apply to the picture.",
+    formats:
+      "JPEG, PNG or WebP, up to 10 MB. On a phone you can take a photo or pick one from your gallery.",
+    current: "Your profile picture",
+    none: "No picture yet: your CV shows your initials.",
+    choose: "Choose picture",
+    change: "Change picture",
+    useGoogle: "Use Google picture",
+    remove: "Remove picture",
+    removeQuestion: "Remove the picture from your CV?",
+    confirmRemove: "Remove",
+    keep: "Keep",
+    uploading: "Uploading…",
+    fetchingGoogle: "Fetching…",
+    removing: "Removing…",
+    saved: "Picture saved.",
+    removed: "Picture removed.",
+    actions: {
+      upload: "Picture upload",
+      google: "Using the Google picture",
+      remove: "Removing the picture",
+    },
+    errors: {
+      tooLarge: "The picture is too large. Choose one of 10 MB or less.",
+      unsupportedType:
+        "This file can't be used. Choose a JPEG, PNG or WebP picture.",
+      notAllowed: "You can't change the picture of this CV.",
+      changedElsewhere:
+        "The picture was changed somewhere else at the same time. Check it and try again.",
+      serviceUnreachable:
+        "A service the picture needs didn't answer. Try again in a moment.",
+      storageNotSetUp:
+        "Picture storage isn't set up yet, so pictures can't be saved.",
+      googleUnavailable: "Your Google account has no picture that can be used.",
+    },
+  },
   formErrors: {
     update: "Profile update",
     details: "Profile details",
