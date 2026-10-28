@@ -115,9 +115,10 @@ function splitAtHyphens(word: Glyph[]): Glyph[][] {
  * The candidate's name, revealed letter by letter: each letter rises from
  * behind its word's clipped bottom edge while it sharpens from a thin blur
  * into its full weight. Afterwards the name plays its weight axis under a
- * mouse pointer or in a wave on touch screens (`useNameWeightPlay`). With a
- * mouse, an accent sheen also follows the pointer across the name on the
- * background spotlight's spring. The sheen repeats the letters' layout,
+ * mouse pointer or in a wave on touch screens, and echoes in the
+ * background's dots when the reveal ends and when it is clicked or tapped
+ * (`useNameWeightPlay`). With a mouse, an accent sheen also follows the
+ * pointer across the name on the background spotlight's spring. The sheen repeats the letters' layout,
  * weights and widths, so it lands on each glyph. Reduced motion shows the
  * letters at once and turns the weight play and the sheen off.
  *

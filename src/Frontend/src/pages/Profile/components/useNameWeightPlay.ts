@@ -3,7 +3,9 @@ import {
   useReducedMotion,
   type MotionValue,
 } from "framer-motion"
-import { useLayoutEffect, useRef, type RefObject } from "react"
+import { useSetAtom } from "jotai"
+import { useEffect, useLayoutEffect, useRef, type RefObject } from "react"
+import { nameEchoAtom } from "../../../state/nameEchoAtom"
 
 interface NameWeightPlay {
   headingRef: RefObject<HTMLHeadingElement | null>
@@ -46,13 +48,19 @@ function easeStep(factor: number, elapsed: number): number {
  * it; a mouse click or a scroll that starts on the name doesn't. It also
  * gives the sheen the pointer's position relative to the heading.
  *
+ * The name also echoes in the background's dots (`DotEcho`): the end of the
+ * reveal sends an echo from the middle of the letters, and every click or tap
+ * on the name, with a mouse too, sends one from the pressed point. The echo
+ * goes to `nameEchoAtom`, which goes back to null when the name leaves the
+ * page.
+ *
  * Every letter, and its sheen copy, keeps the width it has at the heading's
  * weight, measured from a hidden copy of the letters once the font is ready
  * and whenever the heading resizes, so the weight changes never reflow the
  * lines. The letters lift with `translate`, which leaves Framer's `transform`
  * alone; the sheen copies lift with `top`, because Chromium leaves transformed
  * descendants out of a `background-clip: text` mask. Reduced motion turns it
- * all off.
+ * all off, the echo included.
  *
  * @param letterCount - How many letters the name has.
  * @param layout - Anything that changes when the letters' layout does, such
@@ -69,8 +77,9 @@ export default function useNameWeightPlay(
   const letterRefs = useRef<HTMLElement[]>([])
   const sheenRefs = useRef<HTMLElement[]>([])
   const revealedRef = useRef(false)
-  const startWaveRef = useRef<() => void>(() => undefined)
+  const answerRevealRef = useRef<() => void>(() => undefined)
   const prefersReducedMotion = useReducedMotion()
+  const setEcho = useSetAtom(nameEchoAtom)
   const pointerX = useMotionValue(-1000)
   const pointerY = useMotionValue(-1000)
 
@@ -278,28 +287,67 @@ export default function useNameWeightPlay(
     }
 
     /**
-     * Repeats the wave when the name is tapped on a touch screen. A click
-     * fires for a tap but not for a scroll that starts on the name.
+     * Sends an echo of the name into the background's dots from a point in
+     * the viewport, which the echo keeps in page coordinates.
+     *
+     * @param clientX - The point's distance from the viewport's left edge.
+     * @param clientY - The point's distance from the viewport's top edge.
      */
-    const tapWave = (): void => {
+    const sendEcho = (clientX: number, clientY: number): void => {
+      setEcho((previous) => ({
+        id: (previous?.id ?? 0) + 1,
+        x: clientX + window.scrollX,
+        y: clientY + window.scrollY,
+      }))
+    }
+
+    /**
+     * Answers the end of the reveal: sends an echo from the middle of the
+     * letters, and on touch screens, where no pointer hovers the name,
+     * starts the weight wave.
+     */
+    const answerReveal = (): void => {
+      const range = document.createRange()
+      range.selectNodeContents(root)
+      const bounds = range.getBoundingClientRect()
+      sendEcho(bounds.left + bounds.width / 2, bounds.top + bounds.height / 2)
       if (window.matchMedia("(hover: none)").matches) {
         startWave()
       }
     }
 
-    startWaveRef.current = startWave
+    /**
+     * Answers a click or tap on the name once the letters are in: sends an
+     * echo from the pressed point, and on touch screens repeats the weight
+     * wave. A click fires for a tap but not for a scroll that starts on the
+     * name.
+     *
+     * @param event - The click.
+     */
+    const answerClick = (event: MouseEvent): void => {
+      if (!revealedRef.current) {
+        return
+      }
+
+      sendEcho(event.clientX, event.clientY)
+      if (window.matchMedia("(hover: none)").matches) {
+        startWave()
+      }
+    }
+
+    answerRevealRef.current = answerReveal
     window.addEventListener("pointermove", followPointer, { passive: true })
-    heading.addEventListener("click", tapWave)
+    heading.addEventListener("click", answerClick)
 
     return () => {
       active = false
       if (frame) {
         cancelAnimationFrame(frame)
       }
-      startWaveRef.current = () => undefined
+      answerRevealRef.current = () => undefined
       resizeObserver.disconnect()
       window.removeEventListener("pointermove", followPointer)
-      heading.removeEventListener("click", tapWave)
+      heading.removeEventListener("click", answerClick)
       letters.forEach((letter) => {
         letter.style.width = ""
         letter.style.fontWeight = ""
@@ -312,7 +360,9 @@ export default function useNameWeightPlay(
         sheen.style.top = ""
       })
     }
-  }, [layout, letterCount, prefersReducedMotion, pointerX, pointerY])
+  }, [layout, letterCount, prefersReducedMotion, pointerX, pointerY, setEcho])
+
+  useEffect(() => () => setEcho(null), [setEcho])
 
   /**
    * Keeps a letter's element by its place in the name.
@@ -339,8 +389,8 @@ export default function useNameWeightPlay(
   }
 
   /**
-   * Marks the letters as in once the reveal ends, and starts the weight wave
-   * on touch screens, where no pointer hovers the name.
+   * Marks the letters as in once the reveal ends, and answers it with the
+   * echo and, on touch screens, the weight wave.
    *
    * @param definition - The variant that finished animating.
    */
@@ -350,9 +400,7 @@ export default function useNameWeightPlay(
     }
 
     revealedRef.current = true
-    if (window.matchMedia("(hover: none)").matches) {
-      startWaveRef.current()
-    }
+    answerRevealRef.current()
   }
 
   return {

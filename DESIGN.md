@@ -94,7 +94,7 @@ components:
 
 The candidate's name is the exhibit and everything else is gallery wall. A zinc-neutral canvas, a single emerald accent and a very large, tightly tracked name carry the page. Chrome stays small: mono eyebrow labels, pill buttons and a thin-lined portrait panel. The system is dark-first in feel but ships equal light and dark themes switched by the visitor.
 
-Atmosphere comes from a faint grid, soft accent glows, film grain and a pointer-following spotlight, all low opacity and non-interactive. They add depth without competing with content. Motion has one authored moment: the name assembles letter by letter, each letter rising from its clipped baseline while it sharpens from a thin blur into its full weight, and the rest of the page follows in a short staggered rise-in. Afterwards the page answers the mouse: the name moves along the font's weight axis and catches the spotlight, the portrait card behaves like a physical object that tilts toward the pointer with its initials floating above it, and the actions lean toward the pointer. Every effect serves the name or the visitor's action, plays only for a mouse (touch screens get one weight wave through the name), and stops for reduced motion.
+Atmosphere comes from a faint dot grid, soft accent glows, film grain and a pointer-following spotlight, all low opacity and non-interactive. They add depth without competing with content. Motion has one authored moment: the name assembles letter by letter, each letter rising from its clipped baseline while it sharpens from a thin blur into its full weight, the rest of the page follows in a short staggered rise-in, and as the name settles one accent wave echoes outward from it through the dot grid. The background moves only for the name: clicking or tapping the name sends another echo, and otherwise the dots stay still. Afterwards the page answers the mouse: the name moves along the font's weight axis and catches the spotlight, the dots under the spotlight swell slightly, the portrait card behaves like a physical object that tilts toward the pointer with its initials floating above it, and the actions lean toward the pointer. Every effect serves the name or the visitor's action. Pointer effects play only for a mouse (touch screens get a weight wave through the name instead), and everything stops for reduced motion.
 
 **Key Characteristics:**
 
@@ -234,7 +234,8 @@ Every field is `RHFInput` or `RHFTextarea`, framed by the shared `FormField` (`s
 - **Sheen:** once the letters are in, an accent radial gradient clipped to the same letters follows a mouse pointer on the spotlight's spring (stiffness 100, damping 20), so the name catches the spotlight. Its letters copy the name's weights, widths and lift, so it stays on the glyphs. They lift with `top` rather than a transform, because Chromium leaves transformed descendants out of a `background-clip: text` mask. Hidden for reduced motion, print and forced colours.
 - **Weight (mouse):** once the letters are in and a mouse pointer comes within a line height of the name, the letters nearest it move along the weight axis toward 800 and the rest toward 540 (a Gaussian falloff over 1.35em, vertical distance counted 1.6 times), easing about a fifth of the way per 60 Hz frame, scaled to the actual frame time so the speed is the same on 120 and 144 Hz displays. The nearest letters lift 0.035em and their fade ends in the accent instead of Muted. Every letter keeps the width it has at weight 600, measured from a hidden copy once the font is ready and whenever the heading resizes, so the lines never reflow.
 - **Weight wave (touch):** on touch screens one weight wave runs through the name from start to end (1.5s) once the letters are in, and tapping the name repeats it. A scroll that starts on the name and a mouse click don't.
-- Reduced motion shows the letters at weight 600 straight away, with no blur, weight play or wave.
+- **Echo:** when the reveal ends, the name sends one echo into the background's dot grid from the middle of its letters (see Background), and every click or tap on the name sends another from the pressed point. A mouse click sends the echo but still doesn't start the weight wave; on touch screens the echo and the weight wave start together.
+- Reduced motion shows the letters at weight 600 straight away, with no blur, weight play, wave or echo.
 
 ### Portrait Panel
 
@@ -251,7 +252,11 @@ Every field is `RHFInput` or `RHFTextarea`, framed by the shared `FormField` (`s
 
 ### Background
 
-- Fixed non-interactive layer: two static radial-gradient glows (no blur filter), a 4rem grid masked to the upper centre, a spring-following accent spotlight moved by transform (mouse pointers only, disabled for reduced motion) that also lights the dots and the name (see Name), and 6% grain.
+- Non-interactive layer behind the content, as tall as the page: two static radial-gradient glows (no blur filter), a 24px dot grid (1px dots in `--cv-dot`) masked to the upper centre (`radial-gradient(70% 60% at 50% 30%, #000 20%, transparent 100%)`), a spring-following accent spotlight moved by transform (mouse pointers only, disabled for reduced motion) that also lights the dots under it to 75% accent and lights the name (see Name), and 6% grain.
+- **Name echo:** a canvas over the dots (`DotEcho`) that is transparent at rest and draws only the dots that a wave or the spotlight reaches, on the same grid and through the same mask, so they land on the static dots. When the name's reveal ends, and on every click or tap on the name, a wave spreads from it at 0.75px/ms with a 34px crest and fades out quadratically over 2.6s. On the crest the dots light up in the accent, never past the lit dots' 75%, grow from 1px to about 2.4px and move up to 3px away from the wave's start. At most four waves run at once.
+- **Spotlight swelling:** while the CV shows, the dots under a mouse's spotlight grow from 1px to 1.6px in their own colours, with the lit dots' falloff and on the spotlight's spring, without moving.
+- **Budget:** the canvas draws only while a wave runs or the spotlight moves, on Framer Motion's frame loop, which a hidden tab pauses. It is at most 2× the CSS pixels, and 1× on a page over 4 million CSS pixels. Other pages (sign-in, error pages, the PDF view) keep an empty 0×0 canvas. Reduced motion leaves the canvas out, and print and forced colours hide it.
+- **Rejected:** a comet that circles the page without end, dots that dodge the pointer and ripple from clicks anywhere, and a depth layer that shifts against the pointer. The first two compete with the name's weight play and the portrait's tilt, and the comet is an endless decorative loop; the depth layer was too faint to notice.
 
 ### Section Transitions (reserved; not in the UI while the CV has one section)
 
@@ -270,7 +275,7 @@ The CV once paged between full-viewport sections. That code was removed when the
 - **Do** use `cv-*` tokens and keep both themes working.
 - **Do** keep the accent to identity, action and focus.
 - **Do** let the name be the largest element on the page.
-- **Do** use the shared spring (stiffness 100, damping 20) and an 18px rise for entrances; respect reduced motion: no letter blur, weight play, tilt, foil sweep, pointer pull or copy burst. Animate `transform` and `opacity`; the only exceptions are the name's blur and weight axis (with every letter's width locked) and the pointer lights' `background-image` and `background-position` (the name's sheen, the portrait's border light and foil).
+- **Do** use the shared spring (stiffness 100, damping 20) and an 18px rise for entrances; respect reduced motion: no letter blur, weight play, tilt, foil sweep, pointer pull, copy burst or dot echo. Animate `transform` and `opacity`; the only exceptions are the name's blur and weight axis (with every letter's width locked), the pointer lights' `background-image` and `background-position` (the name's sheen, the portrait's border light and foil), and the background's dot echo, which a canvas draws only while it moves.
 - **Do** keep pointer effects to mouse input (`pointerType === "mouse"`); touch gets the name's weight wave instead.
 - **Do** keep focus-visible outlines on every interactive element.
 
@@ -279,4 +284,5 @@ The CV once paged between full-viewport sections. That code was removed when the
 - **Don't** add a second accent colour or gradient fills beyond the name's ink-to-muted fade (ending in the accent under the pointer), the portrait placeholder's accent wash and the portrait foil.
 - **Don't** put shadows or cards on content by default.
 - **Don't** use mono type for body copy.
-- **Don't** let background effects exceed ~10% opacity or capture pointer events.
+- **Don't** let background effects exceed ~10% opacity or capture pointer events. The dots are the one exception: a lit dot, under the spotlight or on an echo's crest, reaches 75% accent, because each is only a few pixels wide.
+- **Don't** let the background move on its own or answer anything but the name and the spotlight: no endless loops, no dots that dodge the pointer, no ripples from clicks elsewhere on the page.

@@ -11,6 +11,7 @@ import SignOutButton from "../../auth/SignOutButton"
 import SignOutMessage from "../../auth/SignOutMessage"
 import useIdleSignOut from "../../auth/useIdleSignOut"
 import useSigningOutReason from "../../auth/useSigningOutReason"
+import DotEcho from "./DotEcho"
 import LanguageToggle from "./LanguageToggle"
 import ThemeToggle from "./ThemeToggle"
 
@@ -25,7 +26,8 @@ interface BackgroundProps {
  * with the Finnish Sign out. It also signs an idle user out on
  * every page, and shows the sign-out screen instead of the page while a
  * sign-out is under way. With a mouse, a spotlight follows the pointer on a
- * spring and lights up the dots beneath it.
+ * spring and lights up the dots beneath it. While the CV shows, `DotEcho`
+ * draws the name's echo in the dots and swells the dots under the spotlight.
  *
  * @param props - The component props.
  * @param props.children - The page content.
@@ -87,6 +89,7 @@ export default function Background({ children }: BackgroundProps): JSX.Element {
             backgroundPosition: litDotsPosition,
           }}
         />
+        <DotEcho spotlightX={spotlightX} spotlightY={spotlightY} />
         <div className="absolute inset-0 bg-cv-grain opacity-[0.06]" />
       </div>
       <div className="relative z-10 min-h-dvh px-6 sm:px-[clamp(1.5rem,5vw,5.5rem)]">
