@@ -127,10 +127,27 @@ builder.Services.AddSingleton<ILinkTokenValidator, LinkTokenValidator>();
 // Profile pictures: BlobStorage:ServiceUri with the managed identity in production, or the
 // ConnectionStrings:BlobStorage Azurite connection string locally. With neither, the API still
 // starts, and saving or deleting a picture answers 503.
+void UseBlobStorageConnectionString(BlobStorageOptions options) =>
+    options.ConnectionString ??= builder.Configuration.GetConnectionString("BlobStorage");
+
 builder.Services.Configure<BlobStorageOptions>(builder.Configuration.GetSection(BlobStorageOptions.SectionName));
-builder.Services.PostConfigure<BlobStorageOptions>(options =>
-    options.ConnectionString ??= builder.Configuration.GetConnectionString("BlobStorage"));
+builder.Services.PostConfigure<BlobStorageOptions>(UseBlobStorageConnectionString);
 builder.Services.AddSingleton<IProfilePictureStore, BlobProfilePictureStore>();
+
+// Locally, Azurite starts and stops with the API when the connection string points at it,
+// as the launch profiles' UseDevelopmentStorage=true does. Never outside Development.
+if (builder.Environment.IsDevelopment())
+{
+    var blobStorage = builder.Configuration.GetSection(BlobStorageOptions.SectionName).Get<BlobStorageOptions>()
+        ?? new BlobStorageOptions();
+    UseBlobStorageConnectionString(blobStorage);
+
+    if (AzuriteLauncher.GetLocalBlobEndpoint(blobStorage) is { } azuriteEndpoint)
+    {
+        builder.Services.AddHostedService(services =>
+            ActivatorUtilities.CreateInstance<AzuriteLauncher>(services, azuriteEndpoint));
+    }
+}
 
 // Fetches only the signed-in user's Google picture; never follows redirects.
 builder.Services.AddHttpClient<IProfilePictureService, ProfilePictureService>(client =>

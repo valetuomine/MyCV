@@ -36,29 +36,35 @@ The Vite development server proxies `/api` requests to the ASP.NET Core API, so 
 
 Profile pictures are stored in Azure Blob Storage, in a private `profile-pictures` container that the API creates on the first upload. The API turns each upload upright, shrinks it to at most 1200 px and re-encodes it as WebP with SkiaSharp, which drops all metadata, and serves it publicly from `GET /api/Profile/{profileId}/picture`.
 
-Locally, run the [Azurite](https://learn.microsoft.com/azure/storage/common/storage-use-azurite) storage emulator and point the API at it:
+### Locally
 
-1. Start Azurite's blob service, with Docker or with Node:
+Locally, the pictures go to the [Azurite](https://learn.microsoft.com/azure/storage/common/storage-use-azurite) storage emulator, which starts with the API. Nothing needs to be set up beyond Node.js, which the frontend already needs:
 
-   ```powershell
-   docker run -p 10000:10000 mcr.microsoft.com/azure-storage/azurite azurite-blob --blobHost 0.0.0.0
-   npx azurite --blobHost 127.0.0.1 --location .azurite --skipApiVersionCheck
-   ```
+- The `http` and `https` launch profiles set `ConnectionStrings__BlobStorage` to `UseDevelopmentStorage=true`, Azurite's well-known development account, which is not a secret.
+- In Development, when that connection string points at a local address and `BlobStorage:ServiceUri` is not set, the API checks whether Azurite answers on port 10000. If it does, the API uses it. If not, the API starts Azurite's blob service with `npx`, keeps its data in `.azurite` at the repository root, and stops it again when the API shuts down. The first start downloads Azurite, which can take a minute. If Azurite can't be started, for example because Node.js is missing, the API still starts, logs a warning that points here, and saving a picture answers `502`.
+- On Windows, Azurite runs in a job object that ends it even when the API is killed rather than shut down, such as with *Stop Debugging* in Visual Studio. On Linux and macOS, a killed API leaves Azurite running, and the next start finds it on port 10000 and uses it.
 
-   `.azurite` is ignored by Git, so its data stays on your machine.
+To run Azurite yourself instead, start it before the API, with Docker or with Node. The API then uses it and leaves it running:
 
-2. Store the emulator connection string in User Secrets. `UseDevelopmentStorage=true` is Azurite's well-known development account, not a secret:
+```powershell
+docker run -p 10000:10000 mcr.microsoft.com/azure-storage/azurite azurite-blob --blobHost 0.0.0.0 --disableTelemetry
+npx --yes --package=azurite@3.37.0 azurite-blob --blobHost 127.0.0.1 --location .azurite --skipApiVersionCheck --disableTelemetry
+```
 
-   ```powershell
-   dotnet user-secrets set "ConnectionStrings:BlobStorage" "UseDevelopmentStorage=true" --project src/Backend/CV.WebApi
-   ```
+`.azurite` is ignored by Git, so its data stays on your machine.
+
+To use another storage account locally, set `BlobStorage:ServiceUri` or `BlobStorage:ConnectionString` in User Secrets. Both take precedence over the launch profile's `ConnectionStrings:BlobStorage`, which in turn overrides a `ConnectionStrings:BlobStorage` user secret.
+
+To look at the stored pictures, open [Azure Storage Explorer](https://azure.microsoft.com/products/storage/storage-explorer/), choose *Attach to a resource* → *Local storage emulator*, and open *Blob Containers* → `profile-pictures` under the attached emulator. Each picture is named `{profileId}/{guid}.webp`, so a profile's pictures sit in a folder named after its ID.
+
+### Settings
 
 Settings, in the `BlobStorage` section or as a connection string:
 
 | Key | Purpose |
 |---|---|
 | `BlobStorage:ServiceUri` | The account's blob endpoint, such as `https://<account>.blob.core.windows.net`. The API signs in with `DefaultAzureCredential`, the App Service's managed identity in production, which needs the `Storage Blob Data Contributor` role. No connection string or account key is used in production. It takes precedence over the connection string. |
-| `ConnectionStrings:BlobStorage` | A connection string, for Azurite in local development. |
+| `ConnectionStrings:BlobStorage` | A connection string, for Azurite in local development. The `http` and `https` launch profiles set it to `UseDevelopmentStorage=true`. |
 
 Without either setting the API still starts, and the public CV, its PDF and profile deletion work as before; saving or removing a picture answers `503`.
 
