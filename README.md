@@ -96,3 +96,25 @@ Public CV pages are readable without signing in. Creating and editing profiles i
 - Backend secrets belong in .NET User Secrets for local development and a secret manager/environment variables in deployments.
 - Frontend `.env.local` files are ignored by Git. `VITE_*` values are still included in the built JavaScript and are public configuration only—never put passwords, API keys, or tokens there.
 - The repository ignores `.env*` and environment-specific `appsettings.*.json` files, with `.env.example` as the safe tracked template. Check `git status` before committing local configuration.
+
+## Azure DevOps from Claude Code cloud sessions
+
+Claude Code cloud sessions at claude.ai/code, started from a browser or the Claude app, can read and create Azure DevOps work items in a personal cloud environment named `MyCV`. Microsoft's remote Azure DevOps MCP server requires an organization backed by Microsoft Entra ID, so the environment runs the same `@azure-devops/mcp` server that `.mcp.json` runs locally, and keeps the access token outside the session. Keep the token out of the `Default` environment, because a network secret is sent from every session in its environment, whatever the repository.
+
+1. In Azure DevOps, create a personal access token for the cloud environment only, with the **Work Items (Read & write)** scope and a short expiry. Without the Code scope, a cloud session cannot push or open pull requests.
+2. At claude.ai/code, add the environment with **Trusted** network access, which already allows `dev.azure.com` and `registry.npmjs.org`. It needs no environment variables.
+3. Add a network secret to the environment: host `dev.azure.com`, type **Username and password**, any user name and the token as the password. The agent proxy adds it to requests to that host as Basic authentication after they leave the session, so the token never enters the session.
+4. Use this setup script. It registers the MCP server with a placeholder token, the base64 of `:proxy-injected`, which the network secret replaces. `NODE_USE_ENV_PROXY=1` makes Node's built-in `fetch` use the session's proxy too: some of the server's tools, such as `add_child`, linking and comments, call `fetch` directly, and without it they reach Azure DevOps with the placeholder and fail as unauthorized.
+
+   ```bash
+   #!/bin/bash
+   exec > /root/mycv-setup.log 2>&1
+   npm install -g @azure-devops/mcp || true
+   claude mcp add --scope user azure-devops \
+     -e PERSONAL_ACCESS_TOKEN=OnByb3h5LWluamVjdGVk \
+     -e NODE_USE_ENV_PROXY=1 \
+     -- mcp-server-azuredevops valetuominen -d core work work-items -a pat || true
+   exit 0
+   ```
+
+The script doesn't fail the session when a step fails, so if the `azure-devops` tools are missing in a session, read `/root/mycv-setup.log`. When the token expires, create a new one, delete the network secret and add it again with the new token. To work with the full local setup from the phone instead, use Remote Control, which needs the workstation to stay on.

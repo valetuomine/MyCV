@@ -18,7 +18,7 @@ Use this workflow to add a User Story to the `MyCV` project in Azure DevOps orga
 4. **Check for duplicates.** Query existing User Stories for a similar title before drafting a new one. If one exists, suggest updating it or adding a Task under it instead.
 5. **Study the code the story touches.** Read the relevant files, components, endpoints and skills, so that the *Toteutusohje* names real paths and builds on how the code works today. See [references/implementation-prompt.md](references/implementation-prompt.md). Then choose the skills for the work; see [references/choosing-skills.md](references/choosing-skills.md).
 6. **Show the draft** to the user in the format under *Draft preview*. Do not create anything before the user approves it. Exception: when the `create-pull-request` skill calls this skill, create the story directly, because the user reviews it as part of the pull request.
-7. **Create** the story with `wit_work_item_write` (`action: create`), then link it to the parent Feature with `wit_work_item_link_write` (`type: parent`). Create any child Tasks with `wit_work_item_write` (`action: add_child`). Then install any new skill the draft named; see [references/choosing-skills.md](references/choosing-skills.md).
+7. **Create** the story with `wit_work_item_write` (`action: create`), then link it to the parent Feature with `wit_work_item_link_write` (`type: parent`). Create any child Tasks with `wit_work_item_write` (`action: add_child`). Then install any new skill the draft named; see [references/choosing-skills.md](references/choosing-skills.md). If the Azure DevOps tools are unavailable, as in a cloud session outside the `MyCV` environment, save the approved draft to the ideas page with status `luonnos` instead, and stop there.
 8. **Mark the idea exported** on the ideas page when the story came from one. See *Ideas page*.
 9. **Post the kickoff prompt** to the work item's discussion. See [references/kickoff-prompt.md](references/kickoff-prompt.md).
 10. **Set the state** as described under *State*.
@@ -26,7 +26,7 @@ Use this workflow to add a User Story to the `MyCV` project in Azure DevOps orga
 
 ## Ideas Page
 
-Ideas and story drafts written away from the computer wait in the `ideas` collection of the private `MyCV-ideat` artifact. Find its URL with the `Artifact` tool (`action: list`). Cloud sessions add them, as described in `CLAUDE.md`. Read and write the collection with the `ArtifactData` tool.
+Ideas that were not ready to become stories, and drafts from cloud sessions that cannot reach Azure DevOps, wait in the `ideas` collection of the private `MyCV-ideat` artifact, as described in `CLAUDE.md` (*Ideas page*). Find its URL with the `Artifact` tool (`action: list`). Read and write the collection with the `ArtifactData` tool. This skill runs the same way in a local session and in a cloud session in the `MyCV` environment.
 
 - **Before drafting**, list the collection (`action: list`, `collection: ideas`) and look for an idea that matches the request and is not yet `viety`. When one matches, build the draft from its `title`, `descriptionHtml`, `parent`, `tags` and `tasks`, and show the draft for approval as usual.
 - **After creating the story**, update that idea (`action: update`, with `if_version` from the list): set `status` to `viety`, `workItemId` to the new ID and `updatedAt` to the current UTC time in ISO 8601. If the approved title or description differs from the idea, update `title` and `descriptionHtml` as well, so the page matches the work item.
