@@ -38,6 +38,16 @@ export const DownloadStatus = {
 export type DownloadStatus =
   (typeof DownloadStatus)[keyof typeof DownloadStatus]
 
+export const PdfLoadStatus = {
+  Starting: "starting",
+  Pending: "pending",
+  Ready: "ready",
+  NoViewer: "no-viewer",
+  Error: "error",
+} as const
+
+export type PdfLoadStatus = (typeof PdfLoadStatus)[keyof typeof PdfLoadStatus]
+
 export const Tone = {
   Neutral: "neutral",
   Pending: "pending",

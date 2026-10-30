@@ -64,6 +64,11 @@ export const fi: Translation = {
       "PDF:n lataus epäonnistui. Tarkista yhteytesi ja yritä uudelleen.",
     openInNewTab: "Avaa uudessa välilehdessä",
     viewerLabel: "{{name}}: CV PDF-muodossa",
+    preparing: "PDF valmistuu…",
+    preparingHint: "Tämä voi kestää muutaman sekunnin.",
+    ready: "PDF on valmis.",
+    loadFailed:
+      "PDF:ää ei saatu ladattua. Tarkista yhteytesi ja yritä uudelleen.",
     unsupported:
       "Selaimesi ei voi näyttää PDF:ää tässä. Lataa se tai avaa se uudessa välilehdessä.",
   },

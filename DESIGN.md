@@ -227,6 +227,14 @@ Every field is `RHFInput` or `RHFTextarea`, framed by the shared `FormField` (`s
 
 - Bottom-centre pill (hairline border, surface fill, accent dot) that fades and rises 8px in for 4 seconds, inside an always-present `role="status"` region. Used for "You've signed out" and "Profile saved".
 
+### PDF View
+
+- **Frame:** the PDF sits in one panel (1.5rem radius, hairline border, surface fill, panel shadow), `min(80dvh, 70rem)` tall, so nothing moves between loading, failure and the viewer.
+- **Indicator:** a small page in A4 proportions (0.5rem radius, hairline border, wash fill) with the PDF's first page in skeleton bars, and below it "Preparing the PDF…" in Copy with a Muted hint that it can take a few seconds. A skeleton, because the PDF is the content on its way; the orbit loader keeps turning under reduced motion, and this has to stand still. The page shrinks with the frame on short screens.
+- **Timing:** a first print takes about 1.5 to 5 seconds and a cached PDF about 20 ms, so the indicator holds for 300ms and then fades in over 200ms. A cached PDF never shows it. The pulse stops as soon as the PDF has arrived, and the indicator stays under the transparent viewer until the viewer paints over it.
+- **Failure:** a danger line and Try again, centred in the frame, like the fallback for browsers without a PDF viewer.
+- **Reduced motion:** the bars stand still; the indicator's fade stays.
+
 ### Name
 
 - Display type with an ink-to-muted fade, set one element per letter so each letter rises from behind its word's clipped bottom edge while it sharpens from a 14px blur and weight 200 into weight 600 and fades in: 0.9s, `cubic-bezier(0.22, 1, 0.36, 1)`, letters spread over at most 0.6s. The edge clips only vertically, so the blur isn't cut at the sides. Screen readers get the whole name from a visually hidden copy.

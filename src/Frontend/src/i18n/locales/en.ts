@@ -61,6 +61,11 @@ export const en = {
       "The PDF couldn't be downloaded. Check your connection and try again.",
     openInNewTab: "Open in new tab",
     viewerLabel: "{{name}} CV as PDF",
+    preparing: "Preparing the PDF…",
+    preparingHint: "This can take a few seconds.",
+    ready: "The PDF is ready.",
+    loadFailed:
+      "The PDF couldn't be loaded. Check your connection and try again.",
     unsupported:
       "Your browser can't show the PDF here. Download it or open it in a new tab instead.",
   },

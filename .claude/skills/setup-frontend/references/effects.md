@@ -7,7 +7,7 @@ Part of the `setup-frontend` skill. Read it before writing a `useEffect`.
   - Run logic caused by a user action in that action's event handler.
   - Render `<Navigate replace>` when the destination follows from current state, instead of calling `navigate()` from an effect.
   - Read one-shot values, such as session-storage markers, in a `useState` initializer.
-  - Fetch with RTK Query, never from an effect.
+  - Fetch with RTK Query, never from an effect. The one exception is `useProfilePdfLoad`, which fetches a whole PDF only to learn when it is ready: RTK Query would keep the file in the store and doesn't cancel the request when the component goes away.
   - Reset a component's state for a different entity with a `key`.
   - Set app-wide state, such as the MSAL active account, once in its module (`src/auth/entraAuth.ts`) rather than from each route.
 

@@ -8,6 +8,7 @@ import {
   type LanguageCode,
 } from "../../../types"
 import Button from "../../components/Button"
+import ProfilePdfFrame from "./ProfilePdfFrame"
 
 interface ProfilePdfPageProps {
   values: Profile
@@ -18,10 +19,11 @@ interface ProfilePdfPageProps {
 
 /**
  * The CV as a PDF in the browser's own viewer, in the UI language, with
- * actions to download it or open it in a new tab. Browsers without a PDF
- * viewer get a download button in its place. A download that would fail
- * shows an error instead of leaving the page. Names the browser tab after the
- * candidate while it is open.
+ * actions to download it or open it in a new tab. The frame shows that the
+ * PDF is loading, and each language loads anew. Browsers without a PDF viewer
+ * get a download button in its place. A download that would fail shows an
+ * error instead of leaving the page. Names the browser tab after the candidate
+ * while it is open.
  *
  * @param props - The component props.
  * @param props.values - The public profile, for the heading and tab title.
@@ -123,20 +125,18 @@ export default function ProfilePdfPage({
           </p>
         )}
       </header>
-      <object
+      <ProfilePdfFrame
         key={viewUrl}
-        data={viewUrl}
-        type="application/pdf"
-        aria-label={t("pdf.viewerLabel", { name: values.fullName ?? "" })}
-        className="h-[min(80dvh,70rem)] w-full rounded-3xl border border-cv-line bg-cv-surface shadow-cv-panel"
+        url={viewUrl}
+        label={t("pdf.viewerLabel", { name: values.fullName ?? "" })}
       >
-        <div className="grid h-full place-content-center justify-items-center gap-4 p-8 text-center">
+        <div className="grid h-full place-content-center justify-items-center gap-4 bg-cv-surface p-8 text-center">
           <p className="m-0 max-w-[40ch] text-lg leading-relaxed text-pretty text-cv-copy">
             {t("pdf.unsupported")}
           </p>
           {downloadButton}
         </div>
-      </object>
+      </ProfilePdfFrame>
     </main>
   )
 }
