@@ -51,6 +51,8 @@ The story's estimate then covers all its Tasks, and each Task with its own `Tote
    <div><b>Työmäärä:</b> S, noin 2–5 milj. tokenia, malli Sonnet, effort-taso medium. Kaksi komponenttia frontendissä ja yksi näkymä selaimessa.</div>
    ```
 
+   The `.claude/hooks/model-hint.mjs` hook reads this line when a chat starts, so keep the wording `malli <Sonnet|Opus>, effort-taso <level>` exactly.
+
 2. **`Microsoft.VSTS.Scheduling.Effort`** on a User Story: the class number from the table. It makes the size queryable and can be shown on the board cards. Tasks have no `Effort` field, so a Task's estimate lives only in its description.
 3. **Draft preview and report:** the `Työmäärä` line, see *Draft Preview* in `SKILL.md`.
 4. **Kickoff prompt comment:** the same line above the prompt, with the model and effort level to start the chat with. See [kickoff-prompt.md](kickoff-prompt.md).

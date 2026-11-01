@@ -6,5 +6,18 @@
       "Read(./src/Frontend/dist/**)",
       "Read(./.playwright-mcp/**)"
     ]
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "NODE_USE_ENV_PROXY=1 node \"$CLAUDE_PROJECT_DIR/.claude/hooks/model-hint.mjs\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
   }
 }
