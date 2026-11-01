@@ -29,10 +29,19 @@ Each step has its rules in a reference file. Read a file when you reach its step
 5. **Review the code** and wait for the user to choose which findings to fix. Read [references/code-review.md](references/code-review.md).
 6. **Commit** the changes as several focused commits. Read [references/commits.md](references/commits.md).
 7. **Push** the branch: `git push -u origin <branch>`. The `origin` remote pushes only to Azure DevOps; the pipeline copies `main` to GitHub after the merge, so feature branches never go to GitHub.
-8. **Open the pull request** and post the reviewer comment. Read [references/pull-request.md](references/pull-request.md). If the branch already has an active pull request, as when fixing review comments, the push updates it: skip creating a new one.
+8. **Open the pull request** and post the reviewer comment. Read [references/pull-request.md](references/pull-request.md). If the branch already has an active pull request, as when fixing review comments, the push updates it: skip creating a new one. Then delete the cloud handoff page if the change came from one; see *Cloud Handoff* below.
 9. **Report** the PR link, the work item link, the commit list and the check results to the user, and end with the follow-up prompts. See *Report* below and [references/follow-up-prompts.md](references/follow-up-prompts.md).
 
 How the pipelines move the work items after the merge, and what to do when they did not move, is in [references/after-merge.md](references/after-merge.md). Read it only when the user asks about work item states after a merge.
+
+## Cloud Handoff
+
+A cloud session that cannot push publishes its patch on a private handoff page (an artifact linked from the work item's discussion, or from an idea's `handoffUrl`), as `CLAUDE.md` says under *Cloud sessions*. Once the pull request is open, the branch and the pull request hold everything the page carried, so delete it:
+
+- Delete it with the `Artifact` tool (`action: delete`, the page's `url`). The user confirms the delete.
+- If an idea on the ideas page still points to it in `handoffUrl`, remove that field with `ArtifactData` (`action: update`, `{"handoffUrl": {"__delete__": true}}`).
+- The work item's discussion still links to the deleted page. That is expected: the pull request replaces it.
+- Keep the page if the patch did not apply in full or the pull request was not opened, and say why in the report.
 
 ## Report
 
@@ -45,4 +54,5 @@ End with:
 - The code review findings that were fixed and those left as they are
 - Any changes left uncommitted because they were unrelated
 - What was added to the production notes, if anything
+- Whether a cloud handoff page was deleted
 - The follow-up prompts, last

@@ -1,6 +1,6 @@
 ---
 name: write-user-story
-description: 'Draft and create MyCV User Stories (and optional child Tasks) in Azure DevOps, written in the same style as the existing backlog. Use when asked to write, add, or create a User Story or Task for the MyCV project.'
+description: 'Draft and create MyCV User Stories (and optional child Tasks) in Azure DevOps, written in the same style as the existing backlog, each with a work size and token estimate. Use when asked to write, add, or create a User Story or Task for the MyCV project, or to find small stories to work on when the usage limit is running low.'
 argument-hint: '[what the story is about]'
 user-invocable: true
 model: sonnet
@@ -17,12 +17,13 @@ Use this workflow to add a User Story to the `MyCV` project in Azure DevOps orga
 3. **Pick the parent Feature.** Every User Story has a Feature as its parent. Use the table below, and confirm the Feature still exists with a WIQL query if unsure.
 4. **Check for duplicates.** Query existing User Stories for a similar title before drafting a new one. If one exists, suggest updating it or adding a Task under it instead.
 5. **Study the code the story touches.** Read the relevant files, components, endpoints and skills, so that the *Toteutusohje* names real paths and builds on how the code works today. See [references/implementation-prompt.md](references/implementation-prompt.md). Then choose the skills for the work; see [references/choosing-skills.md](references/choosing-skills.md).
-6. **Show the draft** to the user in the format under *Draft preview*. Do not create anything before the user approves it. Exception: when the `create-pull-request` skill calls this skill, create the story directly, because the user reviews it as part of the pull request.
-7. **Create** the story with `wit_work_item_write` (`action: create`), then link it to the parent Feature with `wit_work_item_link_write` (`type: parent`). Create any child Tasks with `wit_work_item_write` (`action: add_child`). Then install any new skill the draft named; see [references/choosing-skills.md](references/choosing-skills.md). If the Azure DevOps tools are unavailable, as in a cloud session outside the `MyCV` environment, save the approved draft to the ideas page with status `luonnos` instead, and stop there.
-8. **Mark the idea exported** on the ideas page when the story came from one. See *Ideas page*.
-9. **Post the kickoff prompt** to the work item's discussion. See [references/kickoff-prompt.md](references/kickoff-prompt.md).
-10. **Set the state** as described under *State*.
-11. **Report** the new ID and its link: `https://dev.azure.com/valetuominen/MyCV/_workitems/edit/<id>`, the state it was set to, and end with the kickoff prompt.
+6. **Estimate the work:** the size class, tokens, model and effort level, and the `Tokenien säästö` part of the `Toteutusohje`. See [references/estimate.md](references/estimate.md).
+7. **Show the draft** to the user in the format under *Draft preview*. Do not create anything before the user approves it. Exception: when the `create-pull-request` skill calls this skill, create the story directly, because the user reviews it as part of the pull request.
+8. **Create** the story with `wit_work_item_write` (`action: create`), with `Effort` set as under *Fields*, then link it to the parent Feature with `wit_work_item_link_write` (`type: parent`). Create any child Tasks with `wit_work_item_write` (`action: add_child`). Then install any new skill the draft named; see [references/choosing-skills.md](references/choosing-skills.md). If the Azure DevOps tools are unavailable, as in a cloud session outside the `MyCV` environment, save the approved draft to the ideas page with status `luonnos` instead, and stop there.
+9. **Mark the idea exported** on the ideas page when the story came from one. See *Ideas page*.
+10. **Post the kickoff prompt** to the work item's discussion. See [references/kickoff-prompt.md](references/kickoff-prompt.md).
+11. **Set the state** as described under *State*.
+12. **Report** the new ID and its link: `https://dev.azure.com/valetuominen/MyCV/_workitems/edit/<id>`, the state it was set to and the `Työmäärä` line, and end with the kickoff prompt.
 
 ## Ideas Page
 
@@ -67,6 +68,7 @@ When an improvement concerns an existing area that has no Feature under Epic #43
 | `System.IterationPath` | `MyCV\Backlog\Work Items` |
 | `System.AssignedTo` | Copy the `uniqueName` of the parent Feature's `System.AssignedTo` |
 | `System.Tags` | See *Tags* |
+| `Microsoft.VSTS.Scheduling.Effort` | The size class number, see [references/estimate.md](references/estimate.md). User Stories only; Tasks have no such field |
 
 Read the assignee from the parent Feature instead of writing an email address into this skill, because the repository is mirrored to a public GitHub repository. If the Feature has no assignee, ask the user who the story should be assigned to.
 
@@ -126,8 +128,9 @@ The rules and examples for these live in reference files. Read each one when the
 
 | File | Read when |
 |---|---|
-| [references/description.md](references/description.md) | Writing or updating the description: opening paragraph, `Muutokset:`, `Lisäksi` |
+| [references/description.md](references/description.md) | Writing or updating the description: opening paragraph, `Muutokset:`, `Lisäksi`, `Työmäärä` |
 | [references/implementation-prompt.md](references/implementation-prompt.md) | Writing or updating the `Toteutusohje` |
+| [references/estimate.md](references/estimate.md) | Estimating the size, tokens, model and effort level, writing the `Tokenien säästö` part, and finding small stories |
 | [references/choosing-skills.md](references/choosing-skills.md) | Choosing the skills a `Toteutusohje` or prompt names, and installing a new one |
 | [references/child-tasks.md](references/child-tasks.md) | The story splits into child Tasks |
 | [references/kickoff-prompt.md](references/kickoff-prompt.md) | Ending the report with the kickoff prompt and posting it to the work item (skipped when `create-pull-request` calls this skill) |
@@ -140,14 +143,19 @@ Show the draft to the user like this before creating anything:
 User Story: <title>
 Parent:     #<feature id> <feature title>
 Tags:       <tags, or "(ei tageja)">
+Työmäärä:   <koko>, noin <x–y> milj. tokenia, malli <Sonnet|Opus>, effort-taso <low|medium|high> (Effort-kenttä <n>): <what drives the size>
 Skills:     <installed skills to use; new ones as "<name> (asennetaan: <owner/repo>, <installs> asennusta)", or "(ei skillejä)">
 Description:
   <plain-text rendering of the description, or "(tyhjä)">
 Toteutusohje:
   <plain-text rendering of the Toteutusohje, part by part>
 Tasks:
-  - <task title>   (or "ei tehtäviä")
+  - <task title>   (<koko>, when it has its own Toteutusohje; or "ei tehtäviä")
 ```
+
+## Small Stories
+
+When the user asks for small stories to work on, for example because their usage limit is running low, query them by `Effort` as described under *Finding Small Stories* in [references/estimate.md](references/estimate.md).
 
 ## After Creation
 

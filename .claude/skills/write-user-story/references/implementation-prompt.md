@@ -12,8 +12,9 @@ Write it in Finnish, in these parts:
 | `Lähtötilanne` | How the code works today where the change lands: the real files, components, hooks, endpoints, entities and settings involved, with paths. Name the patterns the change should follow and the skills to use, chosen as in [choosing-skills.md](choosing-skills.md), with what each one is for. |
 | `Toteutus` | The approach as numbered steps, in the order the work should go. Record every decision already made with the user and the alternatives that were ruled out, with the reason, so the agent does not reopen them. Describe the behaviour and structure, not line-by-line code, and leave the rest to the agent's judgment. |
 | `Rajaukset` | What is out of scope or must not change, such as related features, other stories' work, or existing behaviour that has to stay. |
+| `Tokenien säästö` | How to finish in fewer turns and with a smaller context: the files that are enough to read, the check areas that apply, the exact views to check in the browser, and facts the agent would otherwise have to find out. Written as in [estimate.md](estimate.md); it never drops a check that `Valmis, kun` or `CLAUDE.md` requires. |
 | `Valmis, kun` | Observable done criteria: what the user sees or can do, edge cases and error states that work, and the checks and browser views from `/create-pull-request` that apply to this change. End with "Toimita muutos `/create-pull-request`-skillillä." |
-| `Avoimet kysymykset` | Optional. Questions the agent must ask the user before starting, because the answer changes the work. Leave the part out when there are none. |
+| `Avoimet kysymykset` | Optional. Questions the agent must ask the user before starting, because the answer changes the work. Ask the user what you can while writing the story, and keep here only what the user wants to decide later: each question costs the next chat a round trip. Leave the part out when there are none. |
 
 Rules:
 
@@ -47,6 +48,12 @@ Format it as HTML after the rest of the description, separated with a rule. Use 
 <div><ul>
 <li>Kirjautumisen tekninen toteutus ja backendin autentikaatio eivät muutu.</li>
 </ul></div>
+<div><b>Tokenien säästö</b></div>
+<div><ul>
+<li>Lähtötilanteen kolme tiedostoa riittävät; muuta kirjautumiskoodia ei tarvitse lukea.</li>
+<li>Backend ei muutu, joten aja vain frontend-tarkistukset.</li>
+<li>Tee kaikki viestit ennen selaintarkistusta, ja käy aloitettu, peruttu ja epäonnistunut kirjautuminen läpi kerralla.</li>
+</ul></div>
 <div><b>Valmis, kun</b></div>
 <div><ul>
 <li>Aloitettu, peruttu ja epäonnistunut kirjautuminen näyttävät oikean viestin työpöydällä ja mobiilissa, molemmissa teemoissa.</li>
@@ -55,4 +62,4 @@ Format it as HTML after the rest of the description, separated with a rule. Use 
 </ul></div>
 ```
 
-When the story is created after the work is done (as `create-pull-request` does), write the `Toteutusohje` from the diff: it then describes how the work was done, so a follow-up chat can continue from it.
+When the story is created after the work is done (as `create-pull-request` does), write the `Toteutusohje` from the diff: it then describes how the work was done, so a follow-up chat can continue from it. Leave out `Tokenien säästö` then, because the work is done.

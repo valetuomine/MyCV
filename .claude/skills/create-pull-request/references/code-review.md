@@ -8,7 +8,16 @@ Run `git fetch origin` first. Review the whole change against `origin/main`: `gi
 
 Read the work item yourself and copy its acceptance criteria (`Valmis, kun`) and `Toteutusohje` into the review prompt. The subagent may not load the Azure DevOps tools, and without them it would silently skip that part of the review.
 
-Run the review in a fresh-context subagent (`Agent`, `subagent_type: general-purpose`), because the session that wrote the code is blind to its own assumptions. Tell it to:
+Run the review in a fresh-context subagent (`Agent`, `subagent_type: general-purpose`), because the session that wrote the code is blind to its own assumptions. Pick its `model` and `effort` from the work item's size class (see `references/estimate.md` in `write-user-story`) and pass both to `Agent`:
+
+| Size | `model` | `effort` | Why |
+|---|---|---|---|
+| XS, S | `sonnet` | `medium` | A small change; Sonnet finds its problems at a lower cost |
+| M, L, XL | `opus` | `high` | The review is the step where a stronger model that thinks longer catches the bugs the writer missed, and it is one call with a fresh context, so the extra cost stays bounded |
+
+Read the size from the story's `Effort` field (1–2 is XS–S, 3 or more is M or larger), or from the `Työmäärä` line of a Task or of a story that has no `Effort`. If the work item has neither, size the diff with the table in `estimate.md`, and take `opus` and `high` when in doubt.
+
+Tell the subagent to:
 
 - Follow the `code-review-and-quality` skill: the five axes, change sizing, dead code and dependency discipline.
 - Check the change against the acceptance criteria and the `Toteutusohje` you copied in, and against the decisions already made with the user, so it does not reopen them.

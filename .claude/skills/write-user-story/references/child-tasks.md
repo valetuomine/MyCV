@@ -17,6 +17,8 @@ Add Tasks only when the story splits into clearly separate pieces of work, such 
 <pre><code>GET /api/Profile/{profileId}</code></pre>
 ```
 
-A Task that is worked on in its own chat and pull request gets its own `Toteutusohje`, written the same way but limited to the Task. It names the parent story for the bigger picture instead of repeating it. Such a Task then gets its state like a story, see *State* in `SKILL.md`.
+A Task that is worked on in its own chat and pull request gets its own `Toteutusohje`, written the same way but limited to the Task. It names the parent story for the bigger picture instead of repeating it. Such a Task then gets its state like a story, see *State* in `SKILL.md`, and its own `Työmäärä` line and `Tokenien säästö` part, see [estimate.md](estimate.md). Tasks have no `Effort` field, so the line in the description is the only place for its size.
+
+Split an XL story into such Tasks, and suggest a split for an L story that has a natural seam, as [estimate.md](estimate.md) says.
 
 Use the same area path, iteration path and assignee as the story. Tag each Task with the tags from *Tags* in `SKILL.md` that match the Task's own work, which is usually a subset of the story's tags (for example `Backend` for an endpoint Task under a `Backend; Database` story).
