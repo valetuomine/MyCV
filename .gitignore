@@ -54,3 +54,4 @@ agent/skills/
 !.claude/skills/create-cv-skills/
 !.claude/skills/write-user-story/
 !.claude/skills/create-pull-request/
+!.claude/skills/check-ideas-artifact/

@@ -20,7 +20,7 @@ Use this workflow to add a User Story to the `MyCV` project in Azure DevOps orga
 6. **Estimate the work:** the size class, tokens, model and effort level, and the `Tokenien säästö` part of the `Toteutusohje`. See [references/estimate.md](references/estimate.md).
 7. **Show the draft** to the user in the format under *Draft preview*. Do not create anything before the user approves it. Exception: when the `create-pull-request` skill calls this skill, create the story directly, because the user reviews it as part of the pull request.
 8. **Create** the story with `wit_work_item_write` (`action: create`), with `Effort` set as under *Fields*, then link it to the parent Feature with `wit_work_item_link_write` (`type: parent`). Create any child Tasks with `wit_work_item_write` (`action: add_child`). Then install any new skill the draft named; see [references/choosing-skills.md](references/choosing-skills.md). If the Azure DevOps tools are unavailable, as in a cloud session outside the `MyCV` environment, save the approved draft to the ideas page with status `luonnos` instead, and stop there.
-9. **Mark the idea exported** on the ideas page when the story came from one. See *Ideas page*.
+9. **Delete the idea** from the ideas page when the story came from one. See *Ideas page*.
 10. **Post the kickoff prompt** to the work item's discussion. See [references/kickoff-prompt.md](references/kickoff-prompt.md).
 11. **Set the state** as described under *State*.
 12. **Report** the new ID and its link: `https://dev.azure.com/valetuominen/MyCV/_workitems/edit/<id>`, the state it was set to and the `Työmäärä` line, and end with the kickoff prompt.
@@ -29,10 +29,10 @@ Use this workflow to add a User Story to the `MyCV` project in Azure DevOps orga
 
 Ideas that were not ready to become stories, and drafts from cloud sessions that cannot reach Azure DevOps, wait in the `ideas` collection of the private `MyCV-ideat` artifact, as described in `CLAUDE.md` (*Ideas page*). Find its URL with the `Artifact` tool (`action: list`). Read and write the collection with the `ArtifactData` tool. This skill runs the same way in a local session and in a cloud session in the `MyCV` environment.
 
-- **Before drafting**, list the collection (`action: list`, `collection: ideas`) and look for an idea that matches the request and is not yet `viety`. When one matches, build the draft from its `title`, `descriptionHtml`, `parent`, `tags` and `tasks`, and show the draft for approval as usual.
-- **After creating the story**, update that idea (`action: update`, with `if_version` from the list): set `status` to `viety`, `workItemId` to the new ID and `updatedAt` to the current UTC time in ISO 8601. If the approved title or description differs from the idea, update `title` and `descriptionHtml` as well, so the page matches the work item.
-- **Stop there.** The work item is the source of truth after this, and the pipelines move its state, so do not mirror later states to the ideas page.
-- If `ArtifactData` is not available, give the user the idea's title and the new ID so they can set the status on the page by hand.
+- **Before drafting**, list the collection (`action: list`, `collection: ideas`) and look for an idea that matches the request. When one matches, build the draft from its `title`, `descriptionHtml`, `parent`, `tags` and `tasks`, and show the draft for approval as usual.
+- **After creating the story**, once the story exists with its parent link, delete that idea (`action: delete`, with `if_version` from the list). The work item is the source of truth from then on, so the ideas page holds only ideas that still need a story. Never delete the idea before the story is created, and do not delete it when the story creation failed or the draft was saved as `luonnos`.
+- **Stop there.** The pipelines move the work item's state, so do not mirror later states to the ideas page.
+- If `ArtifactData` is not available, give the user the idea's title and the new ID so they can delete the idea on the page by hand.
 
 ## Parent Features
 
