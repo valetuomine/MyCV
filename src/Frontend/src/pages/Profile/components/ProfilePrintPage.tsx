@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useState, type JSX } from "react"
 import { useTranslation } from "react-i18next"
 import { getProfilePictureUrl, type Profile } from "../../../api/profileQueries"
-import { Theme, type LanguageCode } from "../../../types"
+import type { LanguageCode } from "../../../types"
 import { formatProfileDate, toExternalUrl } from "../utils/profileFormUtils"
 
 interface ProfilePrintPageProps {
@@ -30,9 +30,10 @@ function toCssString(value: string): string {
 }
 
 /**
- * The footer of every page, in the page's bottom margin: when the CV was
- * updated on the left and the page number out of the page count on the
- * right. Chromium prints `@page` margin boxes with the document's fonts.
+ * The page setup: A4 with the margins the API prints with, and a footer on
+ * every page in the bottom margin: when the CV was updated on the left and the
+ * page number out of the page count on the right. Chromium prints `@page`
+ * margin boxes with the document's fonts.
  *
  * @param updatedText - The translated "Updated" line, or "" for none.
  * @returns The `@page` rule.
@@ -41,6 +42,8 @@ function pageFooterCss(updatedText: string): string {
   const footer =
     "font-family: var(--font-cv-sans); font-size: 8pt; color: var(--cv-meta);"
   return `@page {
+  size: A4;
+  margin: 16mm 17mm;
   @bottom-left { content: ${toCssString(updatedText)}; ${footer} }
   @bottom-right { content: counter(page) " / " counter(pages); ${footer} }
 }`
@@ -49,12 +52,12 @@ function pageFooterCss(updatedText: string): string {
 /**
  * The CV laid out for an A4 PDF, which the API prints in headless Chromium:
  * name, title, location, summary and links on white paper in the light
- * theme, in the given language whatever the UI language is. Names the
- * document after the candidate, which becomes the PDF's title, prints the
+ * theme, in the given language whatever the UI language is. Prints the
  * updated date and page numbers on every page, and sets `data-print-ready`
  * once its fonts are in use and its picture has loaded, which the API waits
  * for before printing. The picture sits small and rounded beside the name;
- * without one, or when it fails to load, the header prints without it.
+ * without one, or when it fails to load, the header prints without it. The
+ * page that shows it provides the `main` landmark.
  *
  * @param props - The component props.
  * @param props.values - The public profile in the print's language.
@@ -104,12 +107,6 @@ export default function ProfilePrintPage({
   ].filter((link): link is ProfileLink => Boolean(link.url))
 
   useEffect(() => {
-    const root = document.documentElement
-    root.dataset.theme = Theme.Light
-    root.dataset.print = ""
-    root.lang = languageCode
-    document.title = t("meta.profileTitle", { name: values.fullName ?? "" })
-
     let active = true
     void document.fonts.ready.then(() => {
       if (active) {
@@ -118,12 +115,11 @@ export default function ProfilePrintPage({
     })
     return () => {
       active = false
-      delete root.dataset.print
     }
-  }, [languageCode, t, values.fullName])
+  }, [])
 
   return (
-    <main
+    <div
       data-print-ready={ready ? "" : undefined}
       className="grid gap-8 text-sm leading-relaxed text-cv-copy"
     >
@@ -193,6 +189,6 @@ export default function ProfilePrintPage({
           </dl>
         </section>
       )}
-    </main>
+    </div>
   )
 }

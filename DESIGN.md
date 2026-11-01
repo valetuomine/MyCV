@@ -233,6 +233,7 @@ Every field is `RHFInput` or `RHFTextarea`, framed by the shared `FormField` (`s
 - **Indicator:** a small page in A4 proportions (0.5rem radius, hairline border, wash fill) with the PDF's first page in skeleton bars, and below it "Preparing the PDF…" in Copy with a Muted hint that it can take a few seconds. A skeleton, because the PDF is the content on its way; the orbit loader keeps turning under reduced motion, and this has to stand still. The page shrinks with the frame on short screens.
 - **Timing:** a first print takes about 1.5 to 5 seconds and a cached PDF about 20 ms, so the indicator holds for 300ms and then fades in over 200ms. A cached PDF never shows it. The pulse stops as soon as the PDF has arrived, and the indicator stays under the transparent viewer until the viewer paints over it.
 - **Failure:** a danger line and Try again, centred in the frame, like the fallback for browsers without a PDF viewer.
+- **Print:** Ctrl + P prints only the CV's A4 layout, the same light CV on white as the download, in either screen theme. The frame, controls, heading, buttons and viewer stay off the paper.
 - **Reduced motion:** the bars stand still; the indicator's fade stays.
 
 ### Name

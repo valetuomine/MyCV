@@ -76,6 +76,7 @@ namespace CV.Logic.Pdf
                 {
                     Format = "A4",
                     PrintBackground = true,
+                    // Keep in step with the @page rule in ProfilePrintPage.tsx, which the browser's own print uses.
                     Margin = new Margin
                     {
                         Top = "16mm",

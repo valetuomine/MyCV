@@ -34,31 +34,33 @@
   --cv-microsoft-ink: #5e5e5e;
 }
 
-:root[data-theme="dark"] {
-  color-scheme: dark;
-  --cv-background: #09090b;
-  --cv-surface: #111113;
-  --cv-line: #26262b;
-  --cv-field-line: #6b6b74;
-  --cv-ink: #f4f4f5;
-  --cv-copy: #b4b4bb;
-  --cv-muted: #9e9ea6;
-  --cv-meta: #85858e;
-  --cv-accent: #4fd1a5;
-  --cv-accent-strong: #7ee2bf;
-  --cv-accent-ink: #04130d;
-  --cv-danger: #f87171;
-  --cv-wash: rgb(255 255 255 / 0.03);
-  --cv-autofill: var(--cv-surface);
-  --cv-overlay: rgb(255 255 255 / 0.06);
-  --cv-dot: rgb(255 255 255 / 0.11);
-  --cv-shadow-panel: 0 2rem 4rem -2rem rgb(0 0 0 / 0.8);
-  --cv-google-surface: #131314;
-  --cv-google-line: #8e918f;
-  --cv-google-ink: #e3e3e3;
-  --cv-microsoft-surface: #2f2f2f;
-  --cv-microsoft-line: #2f2f2f;
-  --cv-microsoft-ink: #ffffff;
+@media screen {
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --cv-background: #09090b;
+    --cv-surface: #111113;
+    --cv-line: #26262b;
+    --cv-field-line: #6b6b74;
+    --cv-ink: #f4f4f5;
+    --cv-copy: #b4b4bb;
+    --cv-muted: #9e9ea6;
+    --cv-meta: #85858e;
+    --cv-accent: #4fd1a5;
+    --cv-accent-strong: #7ee2bf;
+    --cv-accent-ink: #04130d;
+    --cv-danger: #f87171;
+    --cv-wash: rgb(255 255 255 / 0.03);
+    --cv-autofill: var(--cv-surface);
+    --cv-overlay: rgb(255 255 255 / 0.06);
+    --cv-dot: rgb(255 255 255 / 0.11);
+    --cv-shadow-panel: 0 2rem 4rem -2rem rgb(0 0 0 / 0.8);
+    --cv-google-surface: #131314;
+    --cv-google-line: #8e918f;
+    --cv-google-ink: #e3e3e3;
+    --cv-microsoft-surface: #2f2f2f;
+    --cv-microsoft-line: #2f2f2f;
+    --cv-microsoft-ink: #ffffff;
+  }
 }
 
 @theme inline {
@@ -331,9 +333,11 @@
   box-sizing: border-box;
 }
 
-/* A print route prints on white paper, also in the page margins. */
-:root[data-print] {
-  background: var(--cv-surface);
+/* Paper is always white, also in the page margins. */
+@media print {
+  :root {
+    background: var(--cv-surface);
+  }
 }
 
 body {

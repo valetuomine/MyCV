@@ -9,6 +9,7 @@ import {
 } from "../../../types"
 import Button from "../../components/Button"
 import ProfilePdfFrame from "./ProfilePdfFrame"
+import ProfilePrintPage from "./ProfilePrintPage"
 
 interface ProfilePdfPageProps {
   values: Profile
@@ -23,14 +24,16 @@ interface ProfilePdfPageProps {
  * PDF is loading, and each language loads anew. Browsers without a PDF viewer
  * get a download button in its place. A download that would fail shows an
  * error instead of leaving the page. Names the browser tab after the candidate
- * while it is open.
+ * while it is open. Printing shows only the CV's A4 layout, as in the
+ * downloadable PDF, and leaves the rest of the page out.
  *
  * @param props - The component props.
  * @param props.values - The public profile, for the heading and tab title.
  * @param props.profileId - The profile whose PDF to show.
  * @param props.publicUrlSegment - The CV's public URL segment, for the way back.
  * @param props.languageCode - The language to render the PDF in.
- * @returns The page's main landmark with the PDF viewer.
+ * @returns The page's main landmark with the PDF viewer, and the print layout
+ * that only paper shows.
  */
 export default function ProfilePdfPage({
   values,
@@ -92,51 +95,56 @@ export default function ProfilePdfPage({
   )
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-5xl flex-col gap-8 pt-20 pb-12 lg:pt-12">
-      <header className="grid gap-6">
-        <Button
-          variant={ButtonVariant.Text}
-          to={RoutePaths.CandidateProfile(publicUrlSegment)}
-          className="justify-self-start"
-        >
-          <span aria-hidden="true">←</span>
-          {t("common.backToCv")}
-        </Button>
-        <div className="flex flex-wrap items-end justify-between gap-6">
-          <div className="grid min-w-0 gap-2">
-            <p className="m-0 font-cv-mono text-xs tracking-widest text-cv-meta uppercase">
-              {t("pdf.eyebrow")}
+    <>
+      <main className="mx-auto flex min-h-dvh w-full max-w-5xl flex-col gap-8 pt-20 pb-12 lg:pt-12 print:hidden">
+        <header className="grid gap-6">
+          <Button
+            variant={ButtonVariant.Text}
+            to={RoutePaths.CandidateProfile(publicUrlSegment)}
+            className="justify-self-start"
+          >
+            <span aria-hidden="true">←</span>
+            {t("common.backToCv")}
+          </Button>
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <div className="grid min-w-0 gap-2">
+              <p className="m-0 font-cv-mono text-xs tracking-widest text-cv-meta uppercase">
+                {t("pdf.eyebrow")}
+              </p>
+              <h1
+                dir="auto"
+                className="m-0 font-cv-display text-3xl leading-tight font-semibold tracking-tight text-balance wrap-anywhere text-cv-ink sm:text-4xl"
+              >
+                {values.fullName}
+              </h1>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              {downloadButton}
+              <Button href={viewUrl}>{t("pdf.openInNewTab")}</Button>
+            </div>
+          </div>
+          {downloadStatus === DownloadStatus.Error && (
+            <p role="alert" className="m-0 text-sm text-cv-danger">
+              {t("pdf.downloadFailed")}
             </p>
-            <h1
-              dir="auto"
-              className="m-0 font-cv-display text-3xl leading-tight font-semibold tracking-tight text-balance wrap-anywhere text-cv-ink sm:text-4xl"
-            >
-              {values.fullName}
-            </h1>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
+          )}
+        </header>
+        <ProfilePdfFrame
+          key={viewUrl}
+          url={viewUrl}
+          label={t("pdf.viewerLabel", { name: values.fullName ?? "" })}
+        >
+          <div className="grid h-full place-content-center justify-items-center gap-4 bg-cv-surface p-8 text-center">
+            <p className="m-0 max-w-[40ch] text-lg leading-relaxed text-pretty text-cv-copy">
+              {t("pdf.unsupported")}
+            </p>
             {downloadButton}
-            <Button href={viewUrl}>{t("pdf.openInNewTab")}</Button>
           </div>
-        </div>
-        {downloadStatus === DownloadStatus.Error && (
-          <p role="alert" className="m-0 text-sm text-cv-danger">
-            {t("pdf.downloadFailed")}
-          </p>
-        )}
-      </header>
-      <ProfilePdfFrame
-        key={viewUrl}
-        url={viewUrl}
-        label={t("pdf.viewerLabel", { name: values.fullName ?? "" })}
-      >
-        <div className="grid h-full place-content-center justify-items-center gap-4 bg-cv-surface p-8 text-center">
-          <p className="m-0 max-w-[40ch] text-lg leading-relaxed text-pretty text-cv-copy">
-            {t("pdf.unsupported")}
-          </p>
-          {downloadButton}
-        </div>
-      </ProfilePdfFrame>
-    </main>
+        </ProfilePdfFrame>
+      </main>
+      <div className="hidden print:block">
+        <ProfilePrintPage values={values} languageCode={languageCode} />
+      </div>
+    </>
   )
 }
