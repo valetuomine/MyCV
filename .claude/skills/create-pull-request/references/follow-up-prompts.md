@@ -7,6 +7,7 @@ End the report with prompts that the user copies into a new chat to continue the
 **Review fixes**, always. The user pastes it after reviewing the PR:
 
 ```text
+Act as <role>.
 Address the review comments on pull request <PR id> (User Story <id>: <title>).
 Read its active comment threads, fix each one on branch <branch>, and reply to each thread with what changed.
 Ship the fixes with /create-pull-request: it pushes to the same branch and pull request.
@@ -17,6 +18,7 @@ Ship the fixes with /create-pull-request: it pushes to the same branch and pull 
 - If the PR has the `Jatkuu` label, continue the story:
 
   ```text
+  Act as <role>.
   Continue User Story <id>: <title>.
   Wait until pull request <PR id> is completed, then start from an up-to-date main.
   Read the work item in Azure DevOps. Start from what remains in the Tilanne part of its Toteutusohje, and follow the rest of the Toteutusohje.
@@ -25,6 +27,8 @@ Ship the fixes with /create-pull-request: it pushes to the same branch and pull 
   ```
 
 - If the story has open child Tasks that this PR does not link, give the kickoff prompt of the next one, in the Task form from `references/kickoff-prompt.md` in `write-user-story`, with the `Wait until pull request <PR id> is completed` line added when it builds on this PR.
+
+Every prompt starts with the role line, chosen as in `references/roles.md` of `write-user-story`: the role of the work it continues, so review fixes keep the role of the original story and a `Jatkuu` prompt uses the role of what remains.
 
 Leave out the `Skills:` line when the `Toteutusohje` names no skill.
 

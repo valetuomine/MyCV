@@ -10,6 +10,8 @@ model: sonnet
 
 Use this workflow to add a User Story to the `MyCV` project in Azure DevOps organization `valetuominen`, matching how the existing backlog is written.
 
+Act as a product owner and technical analyst: clarify the goal, read the code before promising anything, and write a brief that a different chat can follow alone. The role of the chat that will do the work goes on the first line of the kickoff prompt; see [references/roles.md](references/roles.md).
+
 ## Workflow
 
 1. **Understand the change.** If the request is vague, ask one short question. Otherwise draft right away.
@@ -133,6 +135,7 @@ The rules and examples for these live in reference files. Read each one when the
 | [references/estimate.md](references/estimate.md) | Estimating the size, tokens, model and effort level, writing the `Tokenien säästö` part, and finding small stories |
 | [references/choosing-skills.md](references/choosing-skills.md) | Choosing the skills a `Toteutusohje` or prompt names, and installing a new one |
 | [references/child-tasks.md](references/child-tasks.md) | The story splits into child Tasks |
+| [references/roles.md](references/roles.md) | Choosing the `Act as ...` role line that starts a kickoff prompt |
 | [references/kickoff-prompt.md](references/kickoff-prompt.md) | Ending the report with the kickoff prompt and posting it to the work item (skipped when `create-pull-request` calls this skill) |
 
 ## Draft Preview
@@ -144,6 +147,7 @@ User Story: <title>
 Parent:     #<feature id> <feature title>
 Tags:       <tags, or "(ei tageja)">
 Työmäärä:   <koko>, noin <x–y> milj. tokenia, malli <Sonnet|Opus>, effort-taso <low|medium|high> (Effort-kenttä <n>): <what drives the size>
+Rooli:      <the role line of the kickoff prompt, e.g. "Act as a UI designer and front-end developer.">
 Skills:     <installed skills to use; new ones as "<name> (asennetaan: <owner/repo>, <installs> asennusta)", or "(ei skillejä)">
 Description:
   <plain-text rendering of the description, or "(tyhjä)">

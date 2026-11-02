@@ -10,6 +10,10 @@ model: sonnet
 
 Use this workflow to take changes in the working tree all the way to an open pull request in the `MyCV` repository (Azure DevOps organization `valetuominen`, project `MyCV`). The user's manual steps are to decide which code review findings to fix and to review and complete the pull request, so every other step happens here without asking for approval in between. Stop and ask only when something below says so.
 
+## Role
+
+Act as a senior developer, code reviewer and release engineer: review the diff critically, keep the commits focused, and leave a pull request that is easy to review. If the chat began with an `Act as ...` line for the implementation work, that role still applies to the code; this role leads the review, commit and PR steps. Roles never override `CLAUDE.md`. See `references/roles.md` in the `write-user-story` skill.
+
 ## Never Commit On `main`
 
 Every change reaches `main` through a pull request, however small: a one-line fix, a typo, a skill or README tweak. No commit is ever made on local `main`, not even one you plan to move to a branch later.
@@ -36,7 +40,7 @@ How the pipelines move the work items after the merge, and what to do when they 
 
 ## Cloud Handoff
 
-A cloud session that cannot push publishes its patch on a private handoff page (an artifact linked from the work item's discussion, or from an idea's `handoffUrl`), as `CLAUDE.md` says under *Cloud sessions*. Once the pull request is open, the branch and the pull request hold everything the page carried, so delete it:
+A cloud session that cannot push publishes its patch on a private handoff page (an artifact linked from the work item's discussion, or from an idea's `handoffUrl`), as `CLAUDE.md` says under *Cloud sessions*. How a cloud session makes the patch and posts the handoff comment, and how a local chat applies it, is in [references/cloud-handoff.md](references/cloud-handoff.md). Once the pull request is open, the branch and the pull request hold everything the page carried, so delete it:
 
 - Delete it with the `Artifact` tool (`action: delete`, the page's `url`). The user confirms the delete.
 - If an idea on the ideas page still points to it in `handoffUrl`, remove that field with `ArtifactData` (`action: update`, `{"handoffUrl": {"__delete__": true}}`).
