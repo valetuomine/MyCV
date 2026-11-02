@@ -19,13 +19,14 @@ When every Valmis, kun criterion holds, ship the change with /create-pull-reques
 - Build the branch name with the slug rules in `references/branch.md` of the `create-pull-request` skill.
 - For a Task, after the role line start with `Implement Task <id>: <title> (part of User Story <parent id>: <parent title>).` and use the Task branch pattern `feat/<id>_<Title_slug>`.
 - Leave out the `Skills:` line when the `Toteutusohje` names no skill, and the `Avoimet kysymykset` sentence when it has none.
-- Skip the kickoff prompt when the story was created for work that is already done, as when `create-pull-request` calls this skill. That skill gives its own follow-up prompts.
+- **The work item comment is mandatory.** Post it for every story and every Task with its own `Toteutusohje`, also when the story was created for work that is already done, as when `create-pull-request` calls this skill. Do not decide that it is pointless: a later chat, or the user, copies it from Azure DevOps. Only the report's closing prompt is skipped in that case, because `create-pull-request` gives its own follow-up prompts.
+- When the comment is posted for work that is already in the working tree (not when the work is done in a later chat), add one line to the prompt in the comment: `The changes may already be in the working tree: compare them with the Toteutus steps and finish whatever is missing.`
 - Give the kickoff prompt even when the work continues in the same chat, so the work item carries it for a later chat.
 - Put the `Työmäärä` line right above each prompt in the report, and recommend starting a new chat with that model and effort level: a new chat carries none of the context of writing the story. See [estimate.md](estimate.md).
 
 ## Work Item Comment
 
-Also post each kickoff prompt to the discussion of the work item it starts, so it can be copied from Azure DevOps later. Use `wit_work_item_comment_write` (`action: add`, `format: Markdown`) right after creating the work item, with the work estimate, a Finnish heading and the same `text` block:
+Always also post each kickoff prompt to the discussion of the work item it starts, so it can be copied from Azure DevOps later. Use `wit_work_item_comment_write` (`action: add`, `format: Markdown`) right after creating the work item, with the work estimate, a Finnish heading and the same `text` block:
 
 ````markdown
 **Työmäärä:** <koko>, noin <x–y> milj. tokenia. Aloita uusi chat mallilla <Sonnet|Opus> ja effort-tasolla <low|medium|high> ennen komennon liittämistä, paikallisesti komennolla `claude --model <sonnet|opus> --effort <low|medium|high>`.

@@ -23,9 +23,9 @@ Act as a product owner and technical analyst: clarify the goal, read the code be
 7. **Show the draft** to the user in the format under *Draft preview*. Do not create anything before the user approves it. Exception: when the `create-pull-request` skill calls this skill, create the story directly, because the user reviews it as part of the pull request.
 8. **Create** the story with `wit_work_item_write` (`action: create`), with `Effort` set as under *Fields*, then link it to the parent Feature with `wit_work_item_link_write` (`type: parent`). Create any child Tasks with `wit_work_item_write` (`action: add_child`). Then install any new skill the draft named; see [references/choosing-skills.md](references/choosing-skills.md). If the Azure DevOps tools are unavailable, as in a cloud session outside the `MyCV` environment, save the approved draft to the ideas page with status `luonnos` instead, and stop there.
 9. **Delete the idea** from the ideas page when the story came from one. See *Ideas page*.
-10. **Post the kickoff prompt** to the work item's discussion. See [references/kickoff-prompt.md](references/kickoff-prompt.md).
+10. **Always post the kickoff prompt** to the work item's discussion once the work item exists, for every story and every Task with its own `Toteutusohje`, with no exception: also when the work is already done, when `create-pull-request` called this skill, and when the work continues in the same chat. A story without the comment is unfinished. See [references/kickoff-prompt.md](references/kickoff-prompt.md).
 11. **Set the state** as described under *State*.
-12. **Report** the new ID and its link: `https://dev.azure.com/valetuominen/MyCV/_workitems/edit/<id>`, the state it was set to and the `Työmäärä` line, and end with the kickoff prompt.
+12. **Report** the new ID and its link: `https://dev.azure.com/valetuominen/MyCV/_workitems/edit/<id>`, the state it was set to and the `Työmäärä` line, and end with the kickoff prompt (not when `create-pull-request` called this skill: it gives its own follow-up prompts).
 
 ## Ideas Page
 
@@ -79,6 +79,8 @@ Leave these out, since the backlog does not use them: Acceptance Criteria, Story
 ## State
 
 A User Story moves `New` → `Ready for Development` → `In Progress` → `Waiting for Deployment` → `Closed`. A Task that has its own `Toteutusohje` moves `New` → `Ready for Development` → `In Progress` → `Closed`; other Tasks keep their default state (`New`) until the pipeline moves them. This skill sets only the first step; `create-pull-request` and the pipelines set the rest.
+
+A User Story can also be `On Hold`: it is valid work that is deliberately not scheduled, for example a story that only matters if the app is opened to other users (like the privacy notice). Move a story there only when the user asks. Leave it out of the estimate and "small stories to work on" lists; when work on it starts, `create-pull-request` moves it to `In Progress`.
 
 When `create-pull-request` called this skill, skip this step: that skill moves the story to `In Progress`. Otherwise, once the story is complete (parent link, child Tasks and the kickoff prompt comment), update `System.State` with `wit_work_item_write` (`action: update`) on the story and on each Task that has its own `Toteutusohje`:
 
@@ -136,7 +138,7 @@ The rules and examples for these live in reference files. Read each one when the
 | [references/choosing-skills.md](references/choosing-skills.md) | Choosing the skills a `Toteutusohje` or prompt names, and installing a new one |
 | [references/child-tasks.md](references/child-tasks.md) | The story splits into child Tasks |
 | [references/roles.md](references/roles.md) | Choosing the `Act as ...` role line that starts a kickoff prompt |
-| [references/kickoff-prompt.md](references/kickoff-prompt.md) | Ending the report with the kickoff prompt and posting it to the work item (skipped when `create-pull-request` calls this skill) |
+| [references/kickoff-prompt.md](references/kickoff-prompt.md) | Posting the kickoff prompt to the work item (always) and ending the report with it (skipped only when `create-pull-request` calls this skill) |
 
 ## Draft Preview
 
