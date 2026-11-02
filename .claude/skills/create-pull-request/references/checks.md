@@ -46,6 +46,10 @@ await page.route("**/api/**", (route) =>
 
 Run it with `browser_run_code_unsafe`, and again after the browser restarts. Never assume a submit will fail validation: an optional field left empty is valid and saves. Screenshots and snapshots go to the git-ignored `.playwright-mcp/` folder. List what you checked under *Tarkistukset* in the reviewer comment, and anything you could not check under *Huomioitavaa*.
 
+**Screenshots** (only for a Frontend UI change): while checking the changed view, take one screenshot of it on desktop (1440×900) and one on mobile (390×844) with `browser_take_screenshot`, after setting the size with `browser_resize`, and pass an ASCII `filename` such as `us-<id>-<view>-desktop.png`. One theme is enough, and at most two images per changed view, so pick the views that show the change best. They are saved in the git-ignored `.playwright-mcp/` folder, and step 8 uploads them to the pull request ([pull-request.md](pull-request.md)). Never copy them into the repository. Take no screenshots for backend, pipeline or skill changes.
+
+A screenshot must not show secrets or personal data, such as tokens, email addresses, tenant or client IDs, or real data from a signed-in view. Look at every screenshot of a signed-in view (`/<cv-address>/admin`) before it is uploaded, and leave out any image that shows something suspicious, naming the view under *Huomioitavaa*.
+
 **Formatting:** format the changed files the same way as User Story 32. Use `dotnet format` for C# and `npx prettier --write <files>` (from `src/Frontend`) for frontend files.
 
 If a check fails, fix the cause and run it again. Never push code that fails a check, and never skip, disable or weaken a check to make it pass. If you cannot fix a failure, stop and report it with the error output.
