@@ -26,9 +26,9 @@ Title, using the work item title as written in Azure DevOps:
 Description: only the commit list, in the same format as the earlier PRs, so that the squash merge commit on `main` looks the same as before. One link per commit, oldest first, separated by blank lines, followed by the attribution line:
 
 ```markdown
-- [US-46: Move project skills from .github/skills to .claude/skills](https://dev.azure.com/valetuominen/MyCV/_git/MyCV/commit/<full sha>?refName=refs/heads/<branch>)
+- [US-46: Move project skills from .github/skills to .claude/skills](<project url>/_git/MyCV/commit/<full sha>?refName=refs/heads/<branch>)
 
-- [US-46: Improve Microsoft sign-in and sign-out experience](https://dev.azure.com/valetuominen/MyCV/_git/MyCV/commit/<full sha>?refName=refs/heads/<branch>)
+- [US-46: Improve Microsoft sign-in and sign-out experience](<project url>/_git/MyCV/commit/<full sha>?refName=refs/heads/<branch>)
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 ```
@@ -44,11 +44,12 @@ Only when the change is a Frontend UI change and [checks.md](checks.md) produced
 The images go to the reviewer comment, never to the description, because the description ends up in the public GitHub mirror through the squash commit. Name each file `us-<id>-<view>-<device>.png`, in ASCII and unique within the PR. Upload each image as a pull request attachment, with the Bash tool (Git Bash), because the command uses bash syntax:
 
 ```bash
+project=$(node -p "require('./.claude/azure-devops.json').projectUrl")
 curl -sS -X POST \
   -H "Authorization: Basic $AZURE_DEVOPS_MCP" \
   -H "Content-Type: application/octet-stream" \
   --data-binary @.playwright-mcp/<file>.png \
-  "https://dev.azure.com/valetuominen/MyCV/_apis/git/repositories/MyCV/pullRequests/<pr id>/attachments/<file>.png?api-version=7.1"
+  "$project/_apis/git/repositories/MyCV/pullRequests/<pr id>/attachments/<file>.png?api-version=7.1"
 ```
 
 `AZURE_DEVOPS_MCP` is the base64 token that `.mcp.json` passes to the Azure DevOps MCP server. Use its value as it is, without encoding it again, and never print it or run `curl` with `-v`, because the token would end up in the transcript. In a cloud session, leave out the `Authorization` header, because the network secret adds the token to requests to `dev.azure.com`. The Read tool is blocked in `.playwright-mcp/`, but `curl --data-binary` reads the file there.

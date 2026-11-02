@@ -1,6 +1,6 @@
 // UserPromptSubmit hook: stops the first message of a chat once when it names a work item
 // whose `Työmäärä` line recommends a model and effort level, so the user can switch before tokens are spent.
-import { closeSync, openSync } from 'node:fs';
+import { closeSync, openSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -35,10 +35,12 @@ const claimFirstMessage = (sessionId) => {
 /**
  * Fetches the work item description from Azure DevOps.
  * @param {string} id The work item id.
- * @returns {Promise<string | null>} The HTML description, or null on any failure.
+ * @returns {Promise<string | null>} The HTML description, or null when Azure DevOps doesn't return it.
+ * @throws When `.claude/azure-devops.json` can't be read or the request fails; `main`'s caller swallows it.
  */
 const fetchDescription = async (id) => {
-  const url = `https://dev.azure.com/valetuominen/MyCV/_apis/wit/workitems/${id}?fields=System.Description&api-version=7.1`;
+  const { projectUrl } = JSON.parse(readFileSync(new URL('../azure-devops.json', import.meta.url), 'utf8'));
+  const url = `${projectUrl}/_apis/wit/workitems/${id}?fields=System.Description&api-version=7.1`;
   const token = process.env.AZURE_DEVOPS_MCP || PLACEHOLDER_TOKEN;
   const response = await fetch(url, {
     headers: { Authorization: `Basic ${token}` },

@@ -8,7 +8,8 @@ Every User Story gets a description. Write it in Finnish, in this structure:
 2. **`Muutokset:` list.** The concrete changes, one per bullet. Each bullet is a full sentence that a reader understands without opening the code: describe what the user or developer sees or gets, not file or class names. Aim for 3 to 7 bullets.
 3. **`Lisäksi` line (optional).** One sentence for side work that lands in the same PR but is not part of the story's main purpose.
 4. **`Työmäärä` line.** The size class, tokens, model and effort level, and what drives the size. See [estimate.md](estimate.md).
-5. **`Toteutusohje` section.** A prompt for an AI agent that implements the story. See [implementation-prompt.md](implementation-prompt.md).
+5. **`Kuvakaappaus` (optional).** The screenshot the user gave with the request. See [screenshots.md](screenshots.md).
+6. **`Toteutusohje` section.** A prompt for an AI agent that implements the story. See [implementation-prompt.md](implementation-prompt.md).
 
 Keep implementation steps and done criteria out of the parts before the `Toteutusohje`. They belong in the `Toteutusohje`, so the top of the description stays readable for a person.
 

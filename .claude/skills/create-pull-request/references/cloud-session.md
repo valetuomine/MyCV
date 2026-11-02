@@ -7,7 +7,7 @@ Part of the `create-pull-request` skill. Read it at the start of the workflow wh
 A cloud session clones the GitHub mirror, so its `origin` is public GitHub and can be behind Azure DevOps. Add a second remote:
 
 ```bash
-git remote get-url azure 2>/dev/null || git remote add azure https://dev.azure.com/valetuominen/MyCV/_git/MyCV
+git remote get-url azure 2>/dev/null || git remote add azure "$(node -p "require('./.claude/azure-devops.json').projectUrl")/_git/MyCV"
 git fetch azure main
 ```
 

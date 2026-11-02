@@ -24,7 +24,7 @@ An idea lives on the page only until its story exists, so the collection holds j
    - An idea with status `uusi` is raw: draft the story from its `title` and `summary`, and ask its open questions in the draft's `Avoimet kysymykset`.
    - If the user rejects or postpones a draft, leave that idea unchanged and move on.
 7. **Confirm each idea is gone** after its story is created. `write-user-story` deletes it; list the collection again to check. If the idea is still there, delete it with the `if_version` from that fresh list, never the one from step 2, which is stale after earlier writes.
-8. **Report** each new story as `User Story <id>: <title>` with its link `https://dev.azure.com/valetuominen/MyCV/_workitems/edit/<id>`, its state and `Työmäärä` line, then the ideas deleted as already exported and the ideas left untouched and why. Include a kickoff prompt only for stories the user wants to start now; `write-user-story` already posts it to each work item.
+8. **Report** each new story as `User Story <id>: <title>` with its link `<project url>/_workitems/edit/<id>` (`projectUrl` in `.claude/azure-devops.json`), its state and `Työmäärä` line, then the ideas deleted as already exported and the ideas left untouched and why. Include a kickoff prompt only for stories the user wants to start now; `write-user-story` already posts it to each work item.
 
 ## Cleaning Up
 

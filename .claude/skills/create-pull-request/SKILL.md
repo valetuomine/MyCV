@@ -8,7 +8,7 @@ model: sonnet
 
 # Create A Pull Request
 
-Use this workflow to take changes in the working tree all the way to an open pull request in the `MyCV` repository (Azure DevOps organization `valetuominen`, project `MyCV`). The user's manual steps are to decide which code review findings to fix and to review and complete the pull request, so every other step happens here without asking for approval in between. Stop and ask only when something below says so.
+Use this workflow to take changes in the working tree all the way to an open pull request in the `MyCV` repository (Azure DevOps project `MyCV`). `<project url>` below is `projectUrl` in `.claude/azure-devops.json`. The user's manual steps are to decide which code review findings to fix and to review and complete the pull request, so every other step happens here without asking for approval in between. Stop and ask only when something below says so.
 
 ## Role
 
@@ -53,7 +53,7 @@ The handoff page is the fallback for a cloud session that cannot push: another e
 
 End with:
 
-- The PR link: `https://dev.azure.com/valetuominen/MyCV/_git/MyCV/pullrequest/<id>`
+- The PR link: `<project url>/_git/MyCV/pullrequest/<id>`
 - The work item link, whether it was created or reused, and whether its description or `Toteutusohje` was added or updated
 - The branch name and the list of commits
 - The check results

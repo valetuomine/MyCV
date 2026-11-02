@@ -8,7 +8,7 @@ model: sonnet
 
 # Write A User Story
 
-Use this workflow to add a User Story to the `MyCV` project in Azure DevOps organization `valetuominen`, matching how the existing backlog is written.
+Use this workflow to add a User Story to the `MyCV` project in Azure DevOps, matching how the existing backlog is written.
 
 Act as a product owner and technical analyst: clarify the goal, read the code before promising anything, and write a brief that a different chat can follow alone. The role of the chat that will do the work goes on the first line of the kickoff prompt; see [references/roles.md](references/roles.md).
 
@@ -21,11 +21,11 @@ Act as a product owner and technical analyst: clarify the goal, read the code be
 5. **Study the code the story touches.** Read the relevant files, components, endpoints and skills, so that the *Toteutusohje* names real paths and builds on how the code works today. See [references/implementation-prompt.md](references/implementation-prompt.md). Then choose the skills for the work; see [references/choosing-skills.md](references/choosing-skills.md).
 6. **Estimate the work:** the size class, tokens, model and effort level, and the `Tokenien säästö` part of the `Toteutusohje`. See [references/estimate.md](references/estimate.md).
 7. **Show the draft** to the user in the format under *Draft preview*. Do not create anything before the user approves it. Exception: when the `create-pull-request` skill calls this skill, create the story directly, because the user reviews it as part of the pull request.
-8. **Create** the story with `wit_work_item_write` (`action: create`), with `Effort` set as under *Fields*, then link it to the parent Feature with `wit_work_item_link_write` (`type: parent`). Create any child Tasks with `wit_work_item_write` (`action: add_child`). Then install any new skill the draft named; see [references/choosing-skills.md](references/choosing-skills.md). If the Azure DevOps tools are unavailable, as in a cloud session outside the `MyCV` environment, save the approved draft to the ideas page with status `luonnos` instead, and stop there.
+8. **Create** the story with `wit_work_item_write` (`action: create`), with `Effort` set as under *Fields*, then link it to the parent Feature with `wit_work_item_link_write` (`type: parent`). Create any child Tasks with `wit_work_item_write` (`action: add_child`). Attach any screenshot the user gave with the request; see *Screenshots*. Then install any new skill the draft named; see [references/choosing-skills.md](references/choosing-skills.md). If the Azure DevOps tools are unavailable, as in a cloud session outside the `MyCV` environment, save the approved draft to the ideas page with status `luonnos` instead, and stop there.
 9. **Delete the idea** from the ideas page when the story came from one. See *Ideas page*.
 10. **Always post the kickoff prompt** to the work item's discussion once the work item exists, for every story and every Task with its own `Toteutusohje`, with no exception: also when the work is already done, when `create-pull-request` called this skill, and when the work continues in the same chat. A story without the comment is unfinished. See [references/kickoff-prompt.md](references/kickoff-prompt.md).
 11. **Set the state** as described under *State*.
-12. **Report** the new ID and its link: `https://dev.azure.com/valetuominen/MyCV/_workitems/edit/<id>`, the state it was set to and the `Työmäärä` line, and end with the kickoff prompt (not when `create-pull-request` called this skill: it gives its own follow-up prompts).
+12. **Report** the new ID and its link: `<project url>/_workitems/edit/<id>` (`projectUrl` in `.claude/azure-devops.json`), the state it was set to and the `Työmäärä` line, and end with the kickoff prompt (not when `create-pull-request` called this skill: it gives its own follow-up prompts).
 
 ## Ideas Page
 
@@ -35,6 +35,12 @@ Ideas that were not ready to become stories, and drafts from cloud sessions that
 - **After creating the story**, once the story exists with its parent link, delete that idea (`action: delete`, with `if_version` from the list). The work item is the source of truth from then on, so the ideas page holds only ideas that still need a story. Never delete the idea before the story is created, and do not delete it when the story creation failed or the draft was saved as `luonnos`.
 - **Stop there.** The pipelines move the work item's state, so do not mirror later states to the ideas page.
 - If `ArtifactData` is not available, give the user the idea's title and the new ID so they can delete the idea on the page by hand.
+
+## Screenshots
+
+When the user gives a screenshot with the request, attach it to the story and show it in the description, so the next chat and the user see what the story started from. See [references/screenshots.md](references/screenshots.md). The image stays in Azure DevOps and never reaches the public GitHub mirror, so do not copy it into the repository.
+
+If the upload fails, the story is still valid: say in the report that the image is missing, and do not put it anywhere else. A draft saved to the ideas page has no work item, so it takes no attachment: say in the report that the image was not saved, so the user can give it again when the story is created.
 
 ## Parent Features
 
@@ -139,6 +145,7 @@ The rules and examples for these live in reference files. Read each one when the
 | [references/child-tasks.md](references/child-tasks.md) | The story splits into child Tasks |
 | [references/roles.md](references/roles.md) | Choosing the `Act as ...` role line that starts a kickoff prompt |
 | [references/kickoff-prompt.md](references/kickoff-prompt.md) | Posting the kickoff prompt to the work item (always) and ending the report with it (skipped only when `create-pull-request` calls this skill) |
+| [references/screenshots.md](references/screenshots.md) | The user gave a screenshot with the request |
 
 ## Draft Preview
 

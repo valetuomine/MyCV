@@ -1,6 +1,6 @@
 # MyCV
 
-A personal CV site: an ASP.NET Core REST API (`src/Backend`) and a React, TypeScript and Vite client (`src/Frontend`), tracked in Azure DevOps (organization `valetuominen`, project `MyCV`). See `README.md` for local setup, `DESIGN.md` and `PRODUCT.md` for the UI and product direction.
+A personal CV site: an ASP.NET Core REST API (`src/Backend`) and a React, TypeScript and Vite client (`src/Frontend`), tracked in Azure DevOps (project `MyCV`). See `README.md` for local setup, `DESIGN.md` and `PRODUCT.md` for the UI and product direction.
 
 ## Workflow
 
@@ -57,6 +57,7 @@ Check every frontend UI change in a real browser with the `playwright` MCP serve
 
 ## Tools
 
+- **Azure DevOps address:** the only copy is `projectUrl` in `.claude/azure-devops.json`. Skills write it as `<project url>`, and scripts read it from that file, so never write the address into any other tracked file.
 - **Azure DevOps** is reached through the `azure-devops` MCP server (`@azure-devops/mcp`) with a personal access token, because neither the browser sign-in nor Microsoft's remote MCP server accepts the user's personal Microsoft account. Locally, `.mcp.json` (local only) passes the `AZURE_DEVOPS_MCP` user environment variable (base64 of `:<PAT>`) to the server as `PERSONAL_ACCESS_TOKEN`. Cloud sessions get the token from their cloud environment, see *Cloud sessions*.
 - **Model hint hook:** `.claude/hooks/model-hint.mjs` (`UserPromptSubmit`, registered in `.claude/settings.json`) stops the first message of a chat once (later messages are never checked, and a failed lookup is not retried) when it names a `User Story <id>` or `Task <id>` whose `Työmäärä` line recommends a model and effort level. It shows the recommendation so the user can switch with `/model` and `/effort` before tokens are spent, and resending the message lets it through. It does nothing on any failure, and it cannot change the model itself.
 - **Weekly usage budget:** the status line (`.claude/hooks/usage-statusline.mjs`, `statusLine` in `.claude/settings.json`) shows the weekly usage, today's cumulative limit and the five-hour window usage, e.g. `Viikko 38 % / raja 42 % · 5 h 12 %`. It stores the weekly usage in the temp directory, and the `UserPromptSubmit` hook `.claude/hooks/usage-budget.mjs` reads it and shows a `systemMessage` warning once a day when usage nears the limit and once when it passes it. It never blocks a message. Each weekday's share is set in `.claude/hooks/usage-budget.json` (default 14 % a day, warning margin 3 percentage points). The limit is cumulative from the week's start (`resets_at` minus 7 days), so an unused day moves its share to the following days. Both scripts share `usage-budget-core.mjs`. Only a running local Claude Code CLI session reports usage, and a missing file or field is skipped silently. The VS Code chat panel does not run the status line, so it shows no numbers and the hook has nothing to read there: start sessions with `claude` in a terminal, or set `claudeCode.useTerminal` and use the "✻ Claude Code" status bar button (both need `claude` on PATH).
