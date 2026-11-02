@@ -1,0 +1,12 @@
+{
+  "dailyShare": {
+    "sunday": 14,
+    "monday": 14,
+    "tuesday": 14,
+    "wednesday": 14,
+    "thursday": 14,
+    "friday": 14,
+    "saturday": 14
+  },
+  "warningMargin": 3
+}

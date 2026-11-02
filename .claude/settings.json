@@ -7,10 +7,19 @@
       "Read(./.playwright-mcp/**)"
     ]
   },
+  "statusLine": {
+    "type": "command",
+    "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/usage-statusline.mjs\""
+  },
   "hooks": {
     "UserPromptSubmit": [
       {
         "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/usage-budget.mjs\"",
+            "timeout": 10
+          },
           {
             "type": "command",
             "command": "NODE_USE_ENV_PROXY=1 node \"$CLAUDE_PROJECT_DIR/.claude/hooks/model-hint.mjs\"",
