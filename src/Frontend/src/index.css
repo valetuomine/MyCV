@@ -15,7 +15,7 @@
   --cv-field-line: #8a8a93;
   --cv-ink: #09090b;
   --cv-copy: #3f3f46;
-  --cv-muted: #5f5f68;
+  --cv-muted: #56565f;
   --cv-meta: #6e6e77;
   --cv-accent: #047857;
   --cv-accent-strong: #065f46;
@@ -25,6 +25,9 @@
   --cv-autofill: var(--cv-surface);
   --cv-overlay: rgb(9 9 11 / 0.05);
   --cv-dot: rgb(9 9 11 / 0.14);
+  --cv-light: 16%;
+  --cv-light-rest: 20%;
+  --cv-shade: rgb(24 24 27 / 0.035);
   --cv-shadow-panel: 0 2rem 4rem -2rem rgb(24 24 27 / 0.18);
   --cv-google-surface: #ffffff;
   --cv-google-line: #747775;
@@ -53,6 +56,8 @@
     --cv-autofill: var(--cv-surface);
     --cv-overlay: rgb(255 255 255 / 0.06);
     --cv-dot: rgb(255 255 255 / 0.11);
+    --cv-light-rest: 11.2%;
+    --cv-shade: transparent;
     --cv-shadow-panel: 0 2rem 4rem -2rem rgb(0 0 0 / 0.8);
     --cv-google-surface: #131314;
     --cv-google-line: #8e918f;
@@ -114,6 +119,9 @@
   --animate-cv-trace: cv-trace 8s linear infinite;
   --animate-cv-drift: cv-drift 6s cubic-bezier(0.45, 0, 0.55, 1) infinite
     alternate;
+  --animate-cv-light-sweep: cv-light-sweep 1.8s cubic-bezier(0.45, 0, 0.2, 1)
+    both;
+  --animate-cv-light-echo: cv-light-echo 1.8s cubic-bezier(0.45, 0, 0.2, 1) both;
   /* Held invisible briefly so screens that resolve quickly never flash. */
   --animate-cv-fade-in-delayed: cv-fade-in 200ms ease-out 300ms both;
 
@@ -158,6 +166,36 @@
     }
   }
 
+  @keyframes cv-light-sweep {
+    0% {
+      transform: translateX(-70vw);
+      opacity: 0;
+    }
+    15%,
+    70% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateX(100vw);
+      opacity: 0;
+    }
+  }
+
+  @keyframes cv-light-echo {
+    0% {
+      transform: translate(-50%, 100dvh) rotate(15deg);
+      opacity: 0;
+    }
+    15%,
+    70% {
+      opacity: 1;
+    }
+    100% {
+      transform: translate(-50%, -70dvh) rotate(15deg);
+      opacity: 0;
+    }
+  }
+
   @keyframes cv-scroll-rise {
     from {
       opacity: 0.4;
@@ -192,8 +230,175 @@
   background-size: 24px 24px;
 }
 
+/* The dots fade toward the far corner, and out under the resting band, which
+   leaves only the band's light there. The band's stops count from the layer's
+   top-right corner, where a 195deg gradient starts, so they stay on the band
+   however tall the page is: --band is the distance to the band's middle, half
+   the screen across and 55% down the one-screen box. */
 @utility bg-cv-dots-fade {
-  mask-image: radial-gradient(70% 60% at 50% 30%, #000 20%, transparent 100%);
+  --box: max(100dvh, 48rem);
+  --band: calc(sin(15deg) * 50vw + cos(15deg) * var(--box) * 0.55);
+  mask-image:
+    radial-gradient(78% 72% at 20% 12%, #000 18%, transparent 100%),
+    linear-gradient(
+      195deg,
+      #000 calc(var(--band) - var(--box) * 0.34),
+      rgb(0 0 0 / 0.72) calc(var(--band) - var(--box) * 0.28),
+      rgb(0 0 0 / 0.3) calc(var(--band) - var(--box) * 0.22),
+      rgb(0 0 0 / 0.06) calc(var(--band) - var(--box) * 0.17),
+      transparent calc(var(--band) - var(--box) * 0.13),
+      transparent calc(var(--band) + var(--box) * 0.13),
+      rgb(0 0 0 / 0.06) calc(var(--band) + var(--box) * 0.17),
+      rgb(0 0 0 / 0.3) calc(var(--band) + var(--box) * 0.22),
+      rgb(0 0 0 / 0.72) calc(var(--band) + var(--box) * 0.28),
+      #000 calc(var(--band) + var(--box) * 0.34)
+    );
+  mask-composite: intersect;
+}
+
+/* The directed light, the portrait card's diagonal wash at page scale. Its
+   stops are eased so it has no visible end, and it runs out at the box's other
+   two corners, so the box has no edge either. The box is larger than the screen,
+   which carries the light past it. --cv-light sets its strength. */
+@utility bg-cv-light-wash {
+  background-image: linear-gradient(
+    to bottom right,
+    color-mix(in srgb, var(--cv-accent) var(--cv-light), transparent) 0%,
+    color-mix(
+        in srgb,
+        var(--cv-accent) calc(var(--cv-light) * 0.62),
+        transparent
+      )
+      14%,
+    color-mix(
+        in srgb,
+        var(--cv-accent) calc(var(--cv-light) * 0.3),
+        transparent
+      )
+      29%,
+    color-mix(
+        in srgb,
+        var(--cv-accent) calc(var(--cv-light) * 0.08),
+        transparent
+      )
+      42%,
+    transparent 50%
+  );
+}
+
+/* The beam from a source outside the top-left corner, which turns around that
+   corner when the box rotates. Its sides and its end are eased, because a
+   straight ramp's corners show as edges on the near-black page. The box reaches
+   below the screen, so the beam runs out before it on a page taller than that. */
+@utility bg-cv-light-beam {
+  background-image: conic-gradient(
+    from 90deg at 0 0,
+    transparent 6deg,
+    color-mix(
+        in srgb,
+        var(--cv-accent) calc(var(--cv-light) * 0.07),
+        transparent
+      )
+      14deg,
+    color-mix(
+        in srgb,
+        var(--cv-accent) calc(var(--cv-light) * 0.26),
+        transparent
+      )
+      20deg,
+    color-mix(
+        in srgb,
+        var(--cv-accent) calc(var(--cv-light) * 0.45),
+        transparent
+      )
+      24deg,
+    color-mix(
+        in srgb,
+        var(--cv-accent) calc(var(--cv-light) * 0.55),
+        transparent
+      )
+      28deg,
+    color-mix(
+        in srgb,
+        var(--cv-accent) calc(var(--cv-light) * 0.45),
+        transparent
+      )
+      32deg,
+    color-mix(
+        in srgb,
+        var(--cv-accent) calc(var(--cv-light) * 0.26),
+        transparent
+      )
+      38deg,
+    color-mix(
+        in srgb,
+        var(--cv-accent) calc(var(--cv-light) * 0.07),
+        transparent
+      )
+      48deg,
+    transparent 58deg
+  );
+  mask-image: radial-gradient(
+    farthest-corner at 0 0,
+    #000 10%,
+    rgb(0 0 0 / 0.72) 30%,
+    rgb(0 0 0 / 0.42) 47%,
+    rgb(0 0 0 / 0.16) 65%,
+    rgb(0 0 0 / 0.04) 80%,
+    transparent 90%
+  );
+}
+
+/* One wide band of light at the portrait foil's angle (moved by
+   animate-cv-light-sweep). The gradient's length follows the box's height too,
+   so on a narrow, tall screen its ends fall outside the box; the mask keeps the
+   box's sides and bottom from showing as edges. */
+@utility bg-cv-light-sweep {
+  background-image: linear-gradient(
+    105deg,
+    transparent 15%,
+    color-mix(
+        in srgb,
+        var(--cv-accent) calc(var(--cv-light) * 0.7),
+        transparent
+      )
+      50%,
+    transparent 85%
+  );
+  mask-image:
+    linear-gradient(to right, transparent, #000 25% 75%, transparent),
+    linear-gradient(to bottom, #000 70%, transparent);
+  mask-composite: intersect;
+}
+
+/* The sweep's copy from the bottom up (moved by animate-cv-light-echo, which
+   tilts its box by the foil's angle), and the light at rest, which stays where a
+   passing echo would be and sets --band-light to --cv-light-rest. Straight inside
+   the box, it keeps its full strength from edge to edge, and it runs out at the
+   box's top and bottom, so they don't show as edges. The box is wider than any
+   screen when tilted. */
+@utility bg-cv-light-echo {
+  background-image: linear-gradient(
+    to top,
+    transparent,
+    color-mix(
+        in srgb,
+        var(--cv-accent) var(--band-light, calc(var(--cv-light) * 0.7)),
+        transparent
+      )
+      50%,
+    transparent
+  );
+}
+
+/* The far corner, where the light has run out. Only the light theme has it:
+   the near-black page has so few steps that it shows as diagonal stripes. */
+@utility bg-cv-light-falloff {
+  background-image: linear-gradient(
+    to bottom right,
+    transparent 40%,
+    var(--cv-shade)
+  );
 }
 
 @utility bg-cv-dots-lit {

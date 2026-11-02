@@ -115,8 +115,8 @@ function splitAtHyphens(word: Glyph[]): Glyph[][] {
  * The candidate's name, revealed letter by letter: each letter rises from
  * behind its word's clipped bottom edge while it sharpens from a thin blur
  * into its full weight. Afterwards the name plays its weight axis under a
- * mouse pointer or in a wave on touch screens, and echoes in the
- * background's dots when the reveal ends and when it is clicked or tapped
+ * mouse pointer or in a wave on touch screens, and sends light across the
+ * background when the reveal starts and when it is clicked or tapped
  * (`useNameWeightPlay`). With a mouse, an accent sheen also follows the
  * pointer across the name on the background spotlight's spring. The sheen repeats the letters' layout,
  * weights and widths, so it lands on each glyph. Reduced motion shows the
@@ -170,6 +170,7 @@ export default function ProfileName({
     registerSheen,
     pointerX,
     pointerY,
+    startReveal,
     finishReveal,
   } = useNameWeightPlay(letterCount, words)
   const sheenX = useSpring(pointerX, sheenSpring)
@@ -181,6 +182,7 @@ export default function ProfileName({
     <motion.h1
       ref={headingRef}
       variants={nameGroup}
+      onAnimationStart={startReveal}
       onAnimationComplete={finishReveal}
       dir="auto"
       className="relative mt-8 font-cv-display text-[clamp(3rem,8.5vw,7rem)] leading-[0.95] font-semibold tracking-tighter text-balance"

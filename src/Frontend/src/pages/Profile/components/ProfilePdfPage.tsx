@@ -108,7 +108,7 @@ export default function ProfilePdfPage({
           </Button>
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div className="grid min-w-0 gap-2">
-              <p className="m-0 font-cv-mono text-xs tracking-widest text-cv-meta uppercase">
+              <p className="m-0 font-cv-mono text-xs tracking-widest text-cv-muted uppercase">
                 {t("pdf.eyebrow")}
               </p>
               <h1

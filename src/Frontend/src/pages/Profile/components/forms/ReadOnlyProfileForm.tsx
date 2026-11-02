@@ -131,7 +131,7 @@ export default function ReadOnlyProfileForm({
           </span>
           {t("cv.eyebrow")}
           {updatedAt && (
-            <span className="text-cv-meta normal-case tracking-normal">
+            <span className="text-cv-muted normal-case tracking-normal">
               {t("cv.updated", { date: updatedAt })}
             </span>
           )}
@@ -141,7 +141,7 @@ export default function ReadOnlyProfileForm({
           <motion.p
             variants={item}
             dir="auto"
-            className="mt-6 font-cv-display text-xl font-medium tracking-tight text-cv-accent sm:text-2xl"
+            className="mt-6 font-cv-display text-xl font-medium tracking-tight text-cv-accent-strong sm:text-2xl"
           >
             {values.title}
           </motion.p>

@@ -98,9 +98,9 @@ const variantClasses: Record<
       "hover:border-cv-meta hover:bg-cv-overlay hover:text-cv-ink active:scale-[0.92]",
   },
   [ButtonVariant.Text]: {
-    rest: "rounded-md text-cv-accent underline decoration-cv-accent/40 underline-offset-4",
+    rest: "rounded-md text-cv-accent-strong underline decoration-cv-accent-strong/40 underline-offset-4",
     interactive:
-      "hover:text-cv-accent-strong hover:decoration-cv-accent-strong active:scale-[0.97]",
+      "hover:text-cv-ink hover:decoration-cv-ink active:scale-[0.97]",
   },
   [ButtonVariant.Segment]: {
     rest: "rounded-full text-cv-copy aria-pressed:bg-cv-accent aria-pressed:text-cv-accent-ink",

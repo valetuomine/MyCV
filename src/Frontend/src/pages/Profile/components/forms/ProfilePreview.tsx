@@ -47,7 +47,7 @@ export default function ProfilePreview(): JSX.Element {
       <p className="m-0 flex items-center gap-3 font-cv-mono text-xs tracking-widest text-cv-copy uppercase">
         <span className="size-2 rounded-full bg-cv-accent" />
         {t("profileForm.livePreview")}
-        <span className="text-cv-meta normal-case tracking-normal">
+        <span className="text-cv-muted normal-case tracking-normal">
           {t("profileForm.previewLanguage")}
         </span>
       </p>

@@ -14,8 +14,8 @@ Use this workflow when recreating the MyCV frontend inside `src/Frontend`.
 - React with TypeScript
 - Vite using the `react-ts` template
 - Tailwind CSS v4 with `@tailwindcss/vite`
-- Layered background (glows, dot grid, grain, cursor spotlight, and the name's echo drawn on a canvas) with light and dark themes through CSS custom properties
-- Framer Motion for motion, Jotai for UI state (theme, language, the name's echo)
+- Layered background (a directed light from the top-left corner, dot grid, grain, cursor spotlight, and the lit dots of the name's sweep and echo drawn on a canvas) with light and dark themes through CSS custom properties
+- Framer Motion for motion, Jotai for UI state (theme, language, the name's echo, the light's sweep)
 - Geist headings/body text and Geist Mono labels
 - Node.js `24.21.0` managed with NVM
 
@@ -59,7 +59,7 @@ Theme variables, `ThemeToggle` and the first-paint script are in [references/the
 
 ### Motion
 
-- Use Framer Motion with spring physics (`type: "spring", stiffness: 100, damping: 20`) and staggered entry (`staggerChildren`) instead of linear easing or mounting everything at once. Animate only `transform` and `opacity`, with these exceptions, none of which changes layout: the CV name's letters reveal through `filter: blur()` and move along the font's weight axis, because each letter's width is locked to its weight-600 width so the weight never reflows the lines; the portrait photo sharpens in from a `filter: blur()` once it loads; the pointer lights (the name's sheen, the portrait's border light and foil) move their `background-image` and `background-position`; and the background's echo of the name is drawn on a canvas, only while it moves (see [references/layout.md](references/layout.md)).
+- Use Framer Motion with spring physics (`type: "spring", stiffness: 100, damping: 20`) and staggered entry (`staggerChildren`) instead of linear easing or mounting everything at once. Animate only `transform` and `opacity`, with these exceptions, none of which changes layout: the CV name's letters reveal through `filter: blur()` and move along the font's weight axis, because each letter's width is locked to its weight-600 width so the weight never reflows the lines; the portrait photo sharpens in from a `filter: blur()` once it loads; the pointer lights (the name's sheen, the portrait's border light and foil) move their `background-image` and `background-position`; and the background's lit dots, under the name's echo and the light's sweep, are drawn on a canvas, only while they move (see [references/layout.md](references/layout.md)).
 - Keep pointer effects (tilt, pull, the name's weight play) to `pointerType === "mouse"` and turn them off for reduced motion; give touch screens a one-off equivalent, like the name's weight wave, rather than nothing.
 - Wrap CV pages in `MotionConfig reducedMotion="user"` so reduced-motion preferences are honored.
 - Keep infinite loops to small status details (pulse dot, hint arrow, skeleton pulse).

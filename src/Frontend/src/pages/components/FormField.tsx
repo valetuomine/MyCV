@@ -133,7 +133,7 @@ export default function FormField({
       : length >= maxLength
         ? "text-cv-danger"
         : length >= maxLength * 0.9
-          ? "text-cv-accent"
+          ? "text-cv-accent-strong"
           : "text-cv-muted opacity-0 group-has-[[data-field-frame]:focus-within]/field:opacity-100"
 
   useEffect(() => {
@@ -155,11 +155,11 @@ export default function FormField({
       <div className="flex items-baseline justify-between gap-3">
         <label
           htmlFor={id}
-          className="font-cv-mono text-xs tracking-wide text-cv-muted uppercase transition-colors duration-200 group-has-[[data-field-frame]:focus-within]/field:text-cv-accent"
+          className="font-cv-mono text-xs tracking-wide text-cv-muted uppercase transition-colors duration-200 group-has-[[data-field-frame]:focus-within]/field:text-cv-accent-strong"
         >
           {label}
           {required && (
-            <span aria-hidden="true" className="text-cv-accent">
+            <span aria-hidden="true" className="text-cv-accent-strong">
               {" "}
               *
             </span>

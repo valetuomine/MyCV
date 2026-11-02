@@ -13,22 +13,39 @@ import useIdleSignOut from "../../auth/useIdleSignOut"
 import useSigningOutReason from "../../auth/useSigningOutReason"
 import DotEcho from "./DotEcho"
 import LanguageToggle from "./LanguageToggle"
+import LightEcho from "./LightEcho"
+import LightSweep from "./LightSweep"
 import ThemeToggle from "./ThemeToggle"
 
 interface BackgroundProps {
   children: ReactNode
 }
 
+/** How far the beam's source sits outside the page's corner, in pixels. */
+const beamSourceOffset = 128
+/** The beam's resting direction from its source, in degrees. */
+const beamRestAngle = 32
+/** The share of the pointer's angle from the rest that the beam follows. */
+const beamLeanShare = 0.35
+/** The furthest the beam leans either way, in degrees. */
+const maxBeamLean = 9
+
 /**
- * The page frame: a dotted background with glows and grain, the sign-out,
- * language and theme controls, and the sign-out notice. None of them are
- * printed, and the frame leaves no padding or minimum height on paper. The
- * controls share one row, which wraps only on screens too narrow for it, such
- * as 320 px with the Finnish Sign out. It also signs an idle user out on every
- * page, and shows the sign-out screen instead of the page while a sign-out is
- * under way. With a mouse, a spotlight follows the pointer on a
- * spring and lights up the dots beneath it. While the CV shows, `DotEcho`
- * draws the name's echo in the dots and swells the dots under the spotlight.
+ * The page frame: a background lit from the top-left corner like the portrait
+ * card, with dots and grain, the sign-out, language and theme controls, and
+ * the sign-out notice. None of them are printed, and the frame leaves no
+ * padding or minimum height on paper. The controls share one row, which wraps
+ * only on screens too narrow for it, such as 320 px with the Finnish Sign out.
+ * It also signs an idle user out on every page, and shows the sign-out screen
+ * instead of the page while a sign-out is under way. The light falls as a
+ * diagonal wash and a beam past the first screen, one band of it rests across
+ * the page with no dots under it, and the light theme fades into a faint shade
+ * in the far corner. With a mouse, a spotlight follows the pointer on a spring
+ * and lights up the dots beneath it, and the beam leans toward the pointer around
+ * its source, as the card tilts. While the CV shows, `LightSweep` carries one
+ * band of light across the page from the left, `LightEcho` carries another one
+ * from the bottom up, and `DotEcho` lights the dots under both and swells the
+ * dots under the spotlight. Forced colours leave the light out.
  *
  * @param props - The component props.
  * @param props.children - The page content.
@@ -50,9 +67,11 @@ export default function Background({ children }: BackgroundProps): JSX.Element {
   )
 
   const prefersReducedMotion = useReducedMotion()
+  const beamLean = useSpring(0, { stiffness: 100, damping: 20 })
 
   /**
-   * Moves the spotlight to a mouse pointer, unless motion is reduced.
+   * Moves the spotlight to a mouse pointer and leans the beam toward it,
+   * unless motion is reduced.
    *
    * @param event - The pointer move over the page.
    */
@@ -62,21 +81,48 @@ export default function Background({ children }: BackgroundProps): JSX.Element {
     }
 
     const bounds = event.currentTarget.getBoundingClientRect()
-    pointerX.set(event.clientX - bounds.left)
-    pointerY.set(event.clientY - bounds.top)
+    const x = event.clientX - bounds.left
+    const y = event.clientY - bounds.top
+    pointerX.set(x)
+    pointerY.set(y)
+
+    /** The pointer's direction from the beam's source, in degrees. */
+    const towardPointer =
+      (Math.atan2(y + beamSourceOffset, x + beamSourceOffset) * 180) / Math.PI
+    beamLean.set(
+      Math.max(
+        -maxBeamLean,
+        Math.min(maxBeamLean, (towardPointer - beamRestAngle) * beamLeanShare),
+      ),
+    )
+  }
+
+  /** Lets the beam settle back when the pointer leaves the page. */
+  const releaseBeam = (): void => {
+    beamLean.set(0)
   }
 
   return (
     <div
       onPointerMove={trackPointer}
+      onPointerLeave={releaseBeam}
       className="relative isolate min-h-dvh overflow-x-clip bg-cv-background text-cv-ink print:min-h-0 print:bg-transparent"
     >
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 z-0 overflow-hidden print:hidden"
       >
-        <div className="absolute -top-48 left-[8%] size-176 bg-cv-glow opacity-10" />
-        <div className="absolute -right-40 bottom-0 size-128 bg-cv-glow opacity-5 [--glow:var(--cv-copy)]" />
+        <div className="absolute inset-0 bg-cv-light-falloff forced-colors:hidden" />
+        <div className="absolute inset-x-0 top-0 h-[max(100dvh,48rem)] forced-colors:hidden">
+          <div className="absolute top-0 left-0 size-[130%] bg-cv-light-wash" />
+          <motion.div
+            style={{ rotate: beamLean }}
+            className="absolute -top-32 right-0 -bottom-[35%] -left-32 origin-top-left bg-cv-light-beam motion-safe:pointer-fine:will-change-transform"
+          />
+          <div className="absolute top-[20%] left-1/2 h-[70%] w-[calc(105vw+30dvh)] -translate-x-1/2 rotate-15 bg-cv-light-echo [--band-light:var(--cv-light-rest)]" />
+          <LightSweep />
+          <LightEcho />
+        </div>
         <div className="absolute inset-0 bg-cv-dots bg-cv-dots-fade" />
         <motion.div
           className="absolute top-0 left-0 -mt-[34rem] -ml-[34rem] size-[68rem] bg-cv-spotlight will-change-transform"

@@ -1,5 +1,6 @@
 import {
   cancelFrame,
+  cubicBezier,
   frame,
   useReducedMotion,
   type FrameData,
@@ -7,20 +8,21 @@ import {
 } from "framer-motion"
 import { useStore } from "jotai"
 import { useEffect, useRef, type JSX } from "react"
-import { nameEchoAtom } from "../../state/nameEchoAtom"
+import { lightSweepAtom } from "../../state/lightSweepAtom"
+import { maxEchoes, nameEchoAtom } from "../../state/nameEchoAtom"
 
 interface DotEchoProps {
   spotlightX: MotionValue<number>
   spotlightY: MotionValue<number>
 }
 
-interface Wave {
-  x: number
-  y: number
-  age: number
-  radius: number
-  nearSquared: number
-  farSquared: number
+type BandKind = "sweep" | "echo"
+
+interface Band {
+  kind: BandKind
+  startedAt: number
+  middle: number
+  width: number
   fade: number
 }
 
@@ -28,19 +30,8 @@ interface Wave {
 const cell = 24
 /** A dot's solid radius in `bg-cv-dots`, which fades out by 1.5px. */
 const dotRadius = 1
-/** How fast a wave spreads, in pixels per millisecond. */
-const waveSpeed = 0.75
-/** The width of a wave's crest, in pixels. */
-const waveWidth = 34
-/** How far from a wave's radius its crest still lights a dot, in pixels. */
-const crestReach = waveWidth * 2.5
-const waveMs = 2600
-/** The most waves that run at once; a new one replaces the oldest. */
-const maxWaves = 4
-/** How far a dot on a crest moves away from the wave's start, in pixels. */
-const wavePush = 3
-/** How much a dot on a crest grows, in pixels. */
-const waveSwell = 1.4
+/** How much a dot under a band grows, in pixels. */
+const bandSwell = 1.4
 /** How much a dot right under the spotlight grows, in pixels. */
 const spotlightSwell = 0.6
 /**
@@ -52,11 +43,42 @@ const litStrength = 0.75
 const litRadiusRem = 14
 /** Above this many CSS pixels the canvas draws at 1x, so it stays small. */
 const largeArea = 4_000_000
+/** How long a band takes, as in its CSS animation. */
+const bandMs = 1800
+/** The curve of `animate-cv-light-sweep` and `animate-cv-light-echo`. */
+const bandEase = cubicBezier(0.45, 0, 0.2, 1)
+/** Where a band's middle starts, as a share of the viewport along its way. */
+const bandStart = -0.35
+/** How far a band's middle travels, as a share of the viewport along its way. */
+const bandTravel = 1.7
+/** The last share of the run, in which both CSS animations fade out. */
+const bandFadeShare = 0.3
+/** The width of the sweep's crest, as a share of the viewport's width. */
+const sweepBandShare = 0.13
+/** The least height of the sweep's box, in rem. */
+const sweepBoxRem = 48
+/** The width of the echo's crest, as a share of the viewport's height. */
+const echoBandShare = 0.15
+/**
+ * The way each band moves: the sweep at the card foil's 105°, and the echo up
+ * the page, a quarter of a circle from it.
+ */
+const bandDirections: Record<BandKind, { x: number; y: number }> = {
+  sweep: {
+    x: Math.sin((105 * Math.PI) / 180),
+    y: -Math.cos((105 * Math.PI) / 180),
+  },
+  echo: {
+    x: Math.sin((15 * Math.PI) / 180),
+    y: -Math.cos((15 * Math.PI) / 180),
+  },
+}
 
 /**
- * Tells how strongly the static dots show at a point, with the falloff of
- * `bg-cv-dots-fade`: `radial-gradient(70% 60% at 50% 30%, #000 20%,
- * transparent 100%)`.
+ * Tells how strongly the dots show at a point, with the falloff of the first
+ * mask of `bg-cv-dots-fade`: `radial-gradient(78% 72% at 20% 12%, #000 18%,
+ * transparent 100%)`. Its second mask, which hides the static dots under the
+ * resting band, is left out, so a passing band lights the dots there too.
  *
  * @param x - The point's distance from the layer's left edge.
  * @param y - The point's distance from the layer's top edge.
@@ -66,10 +88,10 @@ const largeArea = 4_000_000
  */
 function fadeMask(x: number, y: number, width: number, height: number): number {
   const distance = Math.hypot(
-    (x - width * 0.5) / (width * 0.7),
-    (y - height * 0.3) / (height * 0.6),
+    (x - width * 0.2) / (width * 0.78),
+    (y - height * 0.12) / (height * 0.72),
   )
-  return Math.min(1, Math.max(0, 1 - (distance - 0.2) / 0.8))
+  return Math.min(1, Math.max(0, 1 - (distance - 0.18) / 0.82))
 }
 
 /**
@@ -86,15 +108,16 @@ function litMask(distance: number, radius: number): number {
 }
 
 /**
- * The CV name's echo in the background's dots: a canvas over the static dot
- * layers that draws only the dots a wave or the spotlight reaches, on the
- * same 24px grid and through the same fade mask, so they land on the static
- * dots. Every echo in `nameEchoAtom` starts a wave from its point. The wave
- * spreads at 0.75px/ms and fades out over 2.6s, and the dots on its crest
- * light up in the accent, at most as strongly as the lit dots, grow, and
- * move a few pixels away from the wave's start. While the CV shows, the dots
- * under a mouse's spotlight also grow from 1px to 1.6px in their own colours,
- * on the spotlight's spring, without moving.
+ * The lit dots of the background's light: a canvas over the static dot layers
+ * that draws only the dots a band of light or the spotlight reaches, on the
+ * same 24px grid and through the first mask of `bg-cv-dots-fade`, so they
+ * land on the static dots, and under the resting band, where none show, they
+ * appear on their own. Every count in `lightSweepAtom` carries a band through the dots from
+ * the left, in step with `LightSweep`, and every echo in `nameEchoAtom` carries
+ * one from the bottom up, in step with `LightEcho`. The dots under a band
+ * light up in the accent, at most as strongly as the lit dots, and grow without
+ * moving. While the CV shows, the dots under a mouse's spotlight also grow from
+ * 1px to 1.6px in their own colours, on the spotlight's spring, without moving.
  *
  * It draws on Framer Motion's frame loop, after the spring has moved, so the
  * dots keep up with the spotlight, and only while something moves. At rest
@@ -109,7 +132,7 @@ function litMask(distance: number, radius: number): number {
  * @param props - The component props.
  * @param props.spotlightX - The spotlight's spring-following x position.
  * @param props.spotlightY - The spotlight's spring-following y position.
- * @returns The echo's canvas, or nothing for reduced motion.
+ * @returns The lit dots' canvas, or nothing for reduced motion.
  */
 export default function DotEcho({
   spotlightX,
@@ -138,7 +161,8 @@ export default function DotEcho({
     let isPainted = false
     let layoutPixelRatio = 0
     let isNameShown = store.get(nameEchoAtom) !== null
-    const waves: Wave[] = []
+    let bands: Band[] = []
+    let rootFontSize = 16
 
     /** Reads the current theme's dot and accent colours. */
     const readColors = (): void => {
@@ -162,9 +186,10 @@ export default function DotEcho({
       )
       canvas.width = Math.round(width * ratio)
       canvas.height = Math.round(height * ratio)
-      litRadius =
-        parseFloat(getComputedStyle(document.documentElement).fontSize) *
-        litRadiusRem
+      rootFontSize = parseFloat(
+        getComputedStyle(document.documentElement).fontSize,
+      )
+      litRadius = rootFontSize * litRadiusRem
 
       const columns = Math.ceil(width / cell)
       const rows = Math.ceil(height / cell)
@@ -183,40 +208,51 @@ export default function DotEcho({
     }
 
     /**
-     * Ages the waves by one frame, drops the finished ones in place, and
-     * works out each wave's radius, fade and the squared distances between
-     * which its crest lights dots, so the dot loop can skip the rest of the
-     * grid without a square root.
+     * Moves the bands to a frame's time, drops the finished ones in place, and
+     * works out each band's middle along its direction, width and fade.
      *
-     * @param delta - The time since the previous frame, in milliseconds.
+     * @param timestamp - The frame's time, the clock of the CSS animations.
      */
-    const ageWaves = (delta: number): void => {
+    const moveBands = (timestamp: number): void => {
       let alive = 0
-      for (const wave of waves) {
-        wave.age += delta
-        if (wave.age < waveMs) {
-          wave.radius = wave.age * waveSpeed
-          wave.nearSquared = Math.max(0, wave.radius - crestReach) ** 2
-          wave.farSquared = (wave.radius + crestReach) ** 2
-          wave.fade = (1 - wave.age / waveMs) ** 2
-          waves[alive++] = wave
+      for (const band of bands) {
+        /** How far through its run the band is, from 0 to 1. */
+        const time = Math.max(0, timestamp - band.startedAt) / bandMs
+        if (time < 1) {
+          /** How far along the viewport the band's middle is. */
+          const along = bandStart + bandTravel * bandEase(time)
+          const isSweep = band.kind === "sweep"
+          const middleX = isSweep
+            ? window.innerWidth * along
+            : window.innerWidth / 2
+          const middleY = isSweep
+            ? Math.max(window.innerHeight, sweepBoxRem * rootFontSize) / 2
+            : window.innerHeight * (1 - along)
+          const direction = bandDirections[band.kind]
+          band.middle = middleX * direction.x + middleY * direction.y
+          band.width = isSweep
+            ? window.innerWidth * sweepBandShare
+            : window.innerHeight * echoBandShare
+          band.fade = Math.min(1, (1 - time) / bandFadeShare)
+          bands[alive++] = band
         }
       }
-      waves.length = alive
+      bands.length = alive
     }
 
     /**
-     * Draws one frame: clears the previous one, ages the waves, and draws
-     * the dots under the spotlight and on the crests. A spotlight dot is a
-     * ring around the static dot in the static and lit dots' colours, so the
-     * dot looks the same, only larger. Asks for another frame while a wave
-     * runs; the spotlight's spring asks for its own.
+     * Draws one frame: clears the previous one, moves the bands, and draws the
+     * dots under the spotlight and under the bands. A spotlight dot is a ring
+     * around the static dot in the static and lit dots' colours, so the dot
+     * looks the same, only larger. Asks for another frame while a band runs;
+     * the first frame without one clears the last band, and the spotlight's
+     * spring asks for its own.
      *
      * @param frameData - The frame's timing.
-     * @param frameData.delta - The time since the previous frame, in
-     *   milliseconds, which ages the waves.
+     * @param frameData.timestamp - The frame's time, which keeps the bands on
+     *   the clock of their CSS animations, unlike the capped `delta`.
      */
-    const draw = ({ delta }: FrameData): void => {
+    const draw = ({ timestamp }: FrameData): void => {
       if (needsLayout || window.devicePixelRatio !== layoutPixelRatio) {
         layOut()
       }
@@ -226,8 +262,8 @@ export default function DotEcho({
         isPainted = false
       }
 
-      ageWaves(delta)
-      if (waves.length === 0 && !isNameShown) {
+      moveBands(timestamp)
+      if (bands.length === 0 && !isNameShown) {
         return
       }
 
@@ -259,72 +295,74 @@ export default function DotEcho({
           isPainted = true
         }
 
-        let crest = 0
-        let pushX = 0
-        let pushY = 0
-        for (const wave of waves) {
-          const dx = x - wave.x
-          const dy = y - wave.y
-          const distanceSquared = dx * dx + dy * dy
-          if (
-            distanceSquared < wave.nearSquared ||
-            distanceSquared > wave.farSquared
-          ) {
-            continue
-          }
-
-          const distance = Math.sqrt(distanceSquared)
-          const band = (distance - wave.radius) / waveWidth
-          const strength = Math.exp(-band * band) * wave.fade
-          const push = (wavePush * strength) / (distance || 1)
-          crest = Math.max(crest, strength)
-          pushX += dx * push
-          pushY += dy * push
+        let lit = 0
+        for (const band of bands) {
+          const direction = bandDirections[band.kind]
+          /** The dot's distance from the band's middle, in crest widths. */
+          const distance =
+            (x * direction.x + y * direction.y - band.middle) / band.width
+          lit = Math.max(lit, Math.exp(-distance * distance) * band.fade)
         }
-        if (crest * fade > 0.01) {
+        if (lit * fade > 0.01) {
           context.beginPath()
-          context.arc(
-            x + pushX,
-            y + pushY,
-            dotRadius + waveSwell * crest,
-            0,
-            Math.PI * 2,
-          )
+          context.arc(x, y, dotRadius + bandSwell * lit, 0, Math.PI * 2)
           context.fillStyle = accent
-          context.globalAlpha = litStrength * crest * fade
+          context.globalAlpha = litStrength * lit * fade
           context.fill()
           isPainted = true
         }
       }
       context.globalAlpha = 1
 
-      if (waves.length > 0) {
+      if (bands.length > 0) {
         frame.render(draw)
       }
     }
 
     /**
-     * Starts a wave from a new echo of the name, moved from page to layer
-     * coordinates, and turns the spotlight's swelling on while the name is
-     * on the page and off once it leaves.
+     * Starts a band through the dots.
+     *
+     * @param kind - Which light the band follows.
+     */
+    const startBand = (kind: BandKind): void => {
+      bands.push({
+        kind,
+        startedAt: performance.now(),
+        middle: 0,
+        width: 1,
+        fade: 1,
+      })
+    }
+
+    /** Starts the sweep's band through the dots. */
+    const startSweep = (): void => {
+      startBand("sweep")
+      frame.render(draw)
+    }
+
+    /**
+     * Tells whether a band is the echo's.
+     *
+     * @param band - The band.
+     * @returns Whether it follows an echo.
+     */
+    const isEcho = (band: Band): boolean => band.kind === "echo"
+
+    /**
+     * Starts a band for a new echo of the name, which replaces the oldest echo
+     * when `maxEchoes` already run, and turns the spotlight's swelling on while
+     * the name is on the page. Once the name leaves, it drops the echoes along
+     * with `LightEcho`'s bands and turns the swelling off.
      */
     const answerEcho = (): void => {
-      const echo = store.get(nameEchoAtom)
-      isNameShown = echo !== null
-      if (echo) {
-        const bounds = layer.getBoundingClientRect()
-        if (waves.length === maxWaves) {
-          waves.shift()
+      isNameShown = store.get(nameEchoAtom) !== null
+      if (!isNameShown) {
+        bands = bands.filter((band) => !isEcho(band))
+      } else {
+        if (bands.filter(isEcho).length === maxEchoes) {
+          bands.splice(bands.findIndex(isEcho), 1)
         }
-        waves.push({
-          x: echo.x - window.scrollX - bounds.left,
-          y: echo.y - window.scrollY - bounds.top,
-          age: 0,
-          radius: 0,
-          nearSquared: 0,
-          farSquared: 0,
-          fade: 1,
-        })
+        startBand("echo")
       }
       frame.render(draw)
     }
@@ -339,7 +377,7 @@ export default function DotEcho({
     /** Lays the dots out again on the next draw, and redraws what shows. */
     const relayOut = (): void => {
       needsLayout = true
-      if (isPainted || waves.length > 0) {
+      if (isPainted || bands.length > 0) {
         frame.render(draw)
       }
     }
@@ -360,6 +398,7 @@ export default function DotEcho({
       attributeFilter: ["data-theme"],
     })
     const stopEchoes = store.sub(nameEchoAtom, answerEcho)
+    const stopSweeps = store.sub(lightSweepAtom, startSweep)
     const stopSpotlightX = spotlightX.on("change", followSpotlight)
     const stopSpotlightY = spotlightY.on("change", followSpotlight)
 
@@ -368,6 +407,7 @@ export default function DotEcho({
       resizeObserver.disconnect()
       themeObserver.disconnect()
       stopEchoes()
+      stopSweeps()
       stopSpotlightX()
       stopSpotlightY()
     }
