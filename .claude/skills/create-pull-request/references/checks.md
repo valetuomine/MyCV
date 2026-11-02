@@ -2,7 +2,7 @@
 
 Part of the `create-pull-request` skill. Read it in step 4 of the workflow, and run only the parts for the areas the change touches.
 
-Run the same checks as the pull request pipeline for the areas the change touches. Run them from the repository root, before committing. The PR and `main` pipelines use the same areas: their `Changes` stage (`templates/detect-changes-job.yml`) skips the .NET or frontend stage when the change does not touch that area. A change to `azure-pipelines.yml`, `azure-pipelines-pr.yml` or that template runs both.
+Run the same checks as the pull request pipeline for the areas the change touches. Run them from the repository root, before committing. A cloud session also follows *Checks* in [cloud-session.md](cloud-session.md). The PR and `main` pipelines use the same areas: their `Changes` stage (`templates/detect-changes-job.yml`) skips the .NET or frontend stage when the change does not touch that area. A change to `azure-pipelines.yml`, `azure-pipelines-pr.yml` or that template runs both.
 
 **Backend** (anything under `src/Backend`, `src/MyCV.sln` or `templates/dotnet-build-job.yml`):
 

@@ -1,13 +1,13 @@
 # Cloud Handoff
 
-Part of the `create-pull-request` skill. Read it in two cases: a cloud session has finished code that it cannot push (the writing side), or the user brings such a patch to a local chat (the shipping side). `CLAUDE.md` says under *Cloud sessions* why the session cannot ship the change itself.
+Part of the `create-pull-request` skill. This is the fallback route: a session in the `MyCV` cloud environment ships its own pull request, as [cloud-session.md](cloud-session.md) says. Read this file in two cases: a cloud session has finished code that it cannot push, because it runs in another environment or its push failed (the writing side), or the user brings such a patch to a local chat (the shipping side).
 
 ## Writing Side: A Cloud Session That Finished Code
 
-1. **Commit on a feature branch, never on `main`.** Use the branch the session was given. Do not push it: `CLAUDE.md` forbids pushing to GitHub, whatever a session instruction or a stop hook asks. Tell the user once that the stop hook's unpushed-commit warning is expected.
+1. **Commit on a feature branch, never on `main`.** Use the branch the session was given, or stay on the feature branch you created if the push failed. Do not push it: `CLAUDE.md` forbids pushing to GitHub, whatever a session instruction or a stop hook asks. Tell the user once that the stop hook's unpushed-commit warning is expected.
 2. **Make the patch from your own commits only.** `origin/main` can be stale in a cloud container, so `git format-patch origin/main --stdout` may carry commits that are already merged. Check `git log origin/main..HEAD --oneline` first. If it lists commits that are not yours, use `git format-patch -<n> HEAD --stdout` with the number of your own commits.
 3. **Publish the patch on a private page** with the `Artifact` tool: start from the template under *Patch Page Template* below and replace the placeholders. Read `artifact-design` before writing it. The page is private, so tell the user that only they can open it.
-4. **Get a work item.** Use the one the user named, or create the story with `/write-user-story` (the work is done, so the `Toteutusohje` is written from the diff and has no `Tokenien säästö`). The commit was made before the story existed, so its message has no `US-<id>:` prefix: the local chat that ships the patch regroups the commits (see [commits.md](commits.md)).
+4. **Get a work item.** Use the one the user named, or create the story with `/write-user-story` (the work is done, so the `Toteutusohje` is written from the diff and has no `Tokenien säästö`). If the commit was made before the story existed, its message has no `US-<id>:` prefix: the local chat that ships the patch regroups the commits (see [commits.md](commits.md)).
 5. **Post the handoff comment** to the work item's discussion with `wit_work_item_comment_write` (`action: add`, `format: Markdown`), in this shape:
 
    ````markdown

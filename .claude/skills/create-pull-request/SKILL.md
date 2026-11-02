@@ -26,13 +26,15 @@ Every change reaches `main` through a pull request, however small: a one-line fi
 
 Each step has its rules in a reference file. Read a file when you reach its step, and skip the files of steps that do not apply, such as `pull-request.md` when the branch already has an active pull request.
 
+In a cloud session (`CLAUDE_CODE_REMOTE` is `true`), read [references/cloud-session.md](references/cloud-session.md) before step 1. `origin` is the public GitHub mirror there, so the branch, the checks and the push follow that file.
+
 1. **Inspect the changes.** Run `git status` and `git diff` (including untracked files) and understand what the change does. If there is nothing to commit, stop and tell the user. If the change adds something production needs, such as a new setting or secret, an external service, a migration that drops or moves data, a redirect URI or origin, or a runtime dependency, add it to the local-only production notes `docs/azure-deployment.md` and their Finnish copy `docs/azure-deployment.fi.md`, with a change log row in both. Put the public-safe part, without IDs or personal data, in `README.md`.
 2. **Resolve the work item.** Read [references/work-item.md](references/work-item.md).
 3. **Check the current branch and create the feature branch.** If the current branch is wrong for this work, switch to `main` and pull from `origin` first. Read [references/branch.md](references/branch.md).
 4. **Run the checks.** Read [references/checks.md](references/checks.md) and run only the parts for the areas the change touches. Fix anything that fails before continuing.
 5. **Review the code** and wait for the user to choose which findings to fix. Read [references/code-review.md](references/code-review.md).
 6. **Commit** the changes as several focused commits. Read [references/commits.md](references/commits.md).
-7. **Push** the branch: `git push -u origin <branch>`. The `origin` remote pushes only to Azure DevOps; the pipeline copies `main` to GitHub after the merge, so feature branches never go to GitHub.
+7. **Push** the branch: `git push -u origin <branch>`. The `origin` remote pushes only to Azure DevOps; the pipeline copies `main` to GitHub after the merge, so feature branches never go to GitHub. In a cloud session, push as `cloud-session.md` says instead.
 8. **Open the pull request** and post the reviewer comment. Read [references/pull-request.md](references/pull-request.md). If the branch already has an active pull request, as when fixing review comments, the push updates it: skip creating a new one. Then delete the cloud handoff page if the change came from one; see *Cloud Handoff* below.
 9. **Report** the PR link, the work item link, the commit list and the check results to the user, and end with the follow-up prompts. See *Report* below and [references/follow-up-prompts.md](references/follow-up-prompts.md).
 
@@ -40,7 +42,7 @@ How the pipelines move the work items after the merge, and what to do when they 
 
 ## Cloud Handoff
 
-A cloud session that cannot push publishes its patch on a private handoff page (an artifact linked from the work item's discussion, or from an idea's `handoffUrl`), as `CLAUDE.md` says under *Cloud sessions*. How a cloud session makes the patch and posts the handoff comment, and how a local chat applies it, is in [references/cloud-handoff.md](references/cloud-handoff.md). Once the pull request is open, the branch and the pull request hold everything the page carried, so delete it:
+The handoff page is the fallback for a cloud session that cannot push: another environment, or a push that failed. Such a session publishes its patch on a private page (an artifact linked from the work item's discussion, or from an idea's `handoffUrl`), as `CLAUDE.md` says under *Cloud sessions*. How a cloud session makes the patch and posts the handoff comment, and how a local chat applies it, is in [references/cloud-handoff.md](references/cloud-handoff.md). Once the pull request is open, the branch and the pull request hold everything the page carried, so delete it:
 
 - Delete it with the `Artifact` tool (`action: delete`, the page's `url`). The user confirms the delete.
 - If an idea on the ideas page still points to it in `handoffUrl`, remove that field with `ArtifactData` (`action: update`, `{"handoffUrl": {"__delete__": true}}`).
@@ -59,4 +61,5 @@ End with:
 - Any changes left uncommitted because they were unrelated
 - What was added to the production notes, if anything
 - Whether a cloud handoff page was deleted
+- In a cloud session, the result of the `git ls-remote` checks
 - The follow-up prompts, last

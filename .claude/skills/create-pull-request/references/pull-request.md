@@ -33,7 +33,7 @@ Description: only the commit list, in the same format as the earlier PRs, so tha
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 ```
 
-Get each full SHA with `git log --reverse --format='%H %s' origin/main..HEAD` after pushing.
+Get each full SHA with `git log --reverse --format='%H %s' origin/main..HEAD` after pushing (`azure/main` in a cloud session).
 
 Labels: when the PR is a follow-up for a story that is still being worked on (like User Story 38, which had several PRs), pass `labels: ["Jatkuu"]`. The pipeline then leaves the story `In Progress` after the merge. See [after-merge.md](after-merge.md).
 
