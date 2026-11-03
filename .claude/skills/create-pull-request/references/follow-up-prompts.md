@@ -11,6 +11,7 @@ Act as <role>.
 Address the review comments on pull request <PR id> (User Story <id>: <title>).
 Read its active comment threads, fix each one on branch <branch>, and reply to each thread with what changed.
 Ship the fixes with /create-pull-request: it pushes to the same branch and pull request.
+Reply to me in Finnish, even though this prompt is in English.
 ```
 
 **Next work item**, when work remains on the story after this PR:
@@ -24,11 +25,14 @@ Ship the fixes with /create-pull-request: it pushes to the same branch and pull 
   Read the work item in Azure DevOps. Start from what remains in the Tilanne part of its Toteutusohje, and follow the rest of the Toteutusohje.
   Skills: <the skills for what remains, chosen as in references/choosing-skills.md of write-user-story>
   When every Valmis, kun criterion holds, ship the change with /create-pull-request.
+  Reply to me in Finnish, even though this prompt is in English.
   ```
 
 - If the story has open child Tasks that this PR does not link, give the kickoff prompt of the next one, in the Task form from `references/kickoff-prompt.md` in `write-user-story`, with the `Wait until pull request <PR id> is completed` line added when it builds on this PR.
 
 Every prompt starts with the role line, chosen as in `references/roles.md` of `write-user-story`: the role of the work it continues, so review fixes keep the role of the original story and a `Jatkuu` prompt uses the role of what remains.
+
+Every prompt, the Task kickoff prompt included, ends with the line `Reply to me in Finnish, even though this prompt is in English.`: the prompts are in English, but the user wants the chat to answer in Finnish.
 
 Leave out the `Skills:` line when the `Toteutusohje` names no skill.
 

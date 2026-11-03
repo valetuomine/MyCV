@@ -24,6 +24,7 @@ Part of the `create-pull-request` skill. This is the fallback route: a session i
    Start from an up-to-date main, create branch <branch>, and apply the patch with git am.
    Read the work item in Azure DevOps and check the change against its Toteutusohje.
    Then ship the change with /create-pull-request.
+   Reply to me in Finnish, even though this prompt is in English.
    ```
    ````
 

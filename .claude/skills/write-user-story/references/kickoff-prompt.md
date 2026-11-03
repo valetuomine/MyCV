@@ -13,8 +13,10 @@ Read the work item in Azure DevOps and follow the Toteutusohje at the end of its
 Branch: feat/US-<id>_<Title_slug>
 Skills: <the skills its Lähtötilanne names>
 When every Valmis, kun criterion holds, ship the change with /create-pull-request.
+Reply to me in Finnish, even though this prompt is in English.
 ```
 
+- Every prompt ends with the `Reply to me in Finnish, even though this prompt is in English.` line, as the last line (after the working-tree line below, when that is added): the prompts are in English, but the user wants the chat to answer in Finnish.
 - Start with the role line, chosen with [roles.md](roles.md), for example `Act as a UI designer and front-end developer.` for a UI story. Every kickoff prompt has one, including the Task form.
 - Build the branch name with the slug rules in `references/branch.md` of the `create-pull-request` skill.
 - For a Task, after the role line start with `Implement Task <id>: <title> (part of User Story <parent id>: <parent title>).` and use the Task branch pattern `feat/<id>_<Title_slug>`.
