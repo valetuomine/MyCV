@@ -37,7 +37,7 @@ const maxStepMs = 64
 
 /**
  * Turns an easing factor tuned for one 60 Hz frame into the factor for the
- * time that actually passed, so the weight play runs at the same speed on
+ * time that actually passed, so the glow and the wave run at the same speed on
  * 60, 120 and 144 Hz displays.
  *
  * @param factor - The share of the way to the target covered per 60 Hz frame.
@@ -49,12 +49,12 @@ function easeStep(factor: number, elapsed: number): number {
 }
 
 /**
- * Plays the name heading's weight axis. Once the letters are in, the
- * letters nearest a mouse pointer move toward bold, lift slightly and catch
- * some accent light, while the rest thin out. On touch screens a weight wave
- * runs through the name when the reveal ends, and tapping the name repeats
- * it; a mouse click or a scroll that starts on the name doesn't. It also
- * gives the sheen the pointer's position relative to the heading.
+ * Plays the name heading. Once the letters are in, the letters nearest a
+ * mouse pointer glow softly in the accent, while their weight, spacing and
+ * baseline stay put. On touch screens a weight wave runs through the name
+ * when the reveal ends, and tapping the name repeats it; a mouse click or a
+ * scroll that starts on the name doesn't. It also gives the sheen the
+ * pointer's position relative to the heading.
  *
  * The name also lights the background. The start of the reveal sends two bands
  * of light across it together, unless motion is reduced: the sweep from the left
@@ -66,10 +66,8 @@ function easeStep(factor: number, elapsed: number): number {
  * Every letter, and its sheen copy, keeps the width it has at the heading's
  * weight, measured from a hidden copy of the letters once the font is ready
  * and whenever the heading resizes, so the weight changes never reflow the
- * lines. The letters lift with `translate`, which leaves Framer's `transform`
- * alone; the sheen copies lift with `top`, because Chromium leaves transformed
- * descendants out of a `background-clip: text` mask. Reduced motion turns it
- * all off, the echo included.
+ * lines, as the touch wave changes the weights. Reduced motion turns it all
+ * off, the echo included.
  *
  * @param letterCount - How many letters the name has.
  * @param layout - Anything that changes when the letters' layout does, such
@@ -125,7 +123,7 @@ export default function useNameWeightPlay(
      * widths come from a hidden copy of the letters, so a reveal or weight
      * change in progress never skews them, and the name stays once in the
      * page text. The heading is positioned, so each letter's offsets are
-     * relative to it and ignore the reveal's and the lift's transforms.
+     * relative to it and ignore the reveal's transforms.
      */
     const measure = (): void => {
       if (!active) {
@@ -163,32 +161,31 @@ export default function useNameWeightPlay(
     resizeObserver.observe(heading)
 
     /**
-     * Writes each letter's current weight, lift and accent light to it, and
-     * the weight and lift to its sheen copy.
+     * Writes each letter's current weight and accent halo to it, and the
+     * weight to its sheen copy. The halo's strength and spread come from the
+     * theme's `--cv-name-glow-*` tokens, so a theme change updates it at once.
      */
     const paint = (): void => {
       letters.forEach((letter, index) => {
         const glow = glows[index]
         const weight = String(Math.round(weights[index]))
-        const lift = glow > 0.01 ? `${(-0.035 * glow).toFixed(4)}em` : ""
         letter.style.fontWeight = weight
-        letter.style.translate = lift ? `0 ${lift}` : ""
-        letter.style.backgroundImage =
+        letter.style.filter =
           glow > 0.01
-            ? `linear-gradient(to bottom, var(--cv-ink) 35%, color-mix(in srgb, var(--cv-accent) ${Math.round(glow * 75)}%, var(--cv-muted)))`
+            ? `drop-shadow(0 0 var(--cv-name-glow-spread) color-mix(in srgb, var(--cv-accent) calc(${glow.toFixed(3)} * var(--cv-name-glow-strength) * 1%), transparent))`
             : ""
         if (sheens[index]) {
           sheens[index].style.fontWeight = weight
-          sheens[index].style.top = lift
         }
       })
     }
 
     /**
-     * Eases every letter toward its target weight and light for one frame,
-     * and asks for another frame while anything is still moving. A running
-     * wave sets the targets by each letter's place in the name; otherwise
-     * the mouse pointer's distance does, scaled by how engaged it is.
+     * Eases every letter toward its target weight and glow for one frame, and
+     * asks for another frame while anything is still moving. A running wave
+     * sets the weight targets by each letter's place in the name and keeps the
+     * glow off; otherwise the mouse pointer's distance sets the glow, scaled
+     * by how engaged it is, and the weight rests.
      *
      * @param now - The frame's timestamp.
      */
@@ -230,16 +227,16 @@ export default function useNameWeightPlay(
           focus = Math.exp(-distance * distance) * engaged
         }
 
-        const influence = waveProgress !== null ? 1 : engaged
         const targetWeight =
-          restWeight +
-          (thinWeight + (boldWeight - thinWeight) * focus - restWeight) *
-            influence
+          waveProgress !== null
+            ? thinWeight + (boldWeight - thinWeight) * focus
+            : restWeight
+        const targetGlow = waveProgress !== null ? 0 : focus
         weights[index] += (targetWeight - weights[index]) * settle
-        glows[index] += (focus - glows[index]) * settle
+        glows[index] += (targetGlow - glows[index]) * settle
         if (
           Math.abs(targetWeight - weights[index]) > 0.5 ||
-          Math.abs(focus - glows[index]) > 0.005
+          Math.abs(targetGlow - glows[index]) > 0.005
         ) {
           isMoving = true
         }
@@ -262,7 +259,7 @@ export default function useNameWeightPlay(
 
     /**
      * Follows a mouse pointer anywhere on the page: moves the sheen to it,
-     * and once the letters are in, engages the weight play while the pointer
+     * and once the letters are in, engages the glow while the pointer
      * is within one line height of the heading.
      *
      * @param event - The pointer move.
@@ -343,13 +340,11 @@ export default function useNameWeightPlay(
       letters.forEach((letter) => {
         letter.style.width = ""
         letter.style.fontWeight = ""
-        letter.style.translate = ""
-        letter.style.backgroundImage = ""
+        letter.style.filter = ""
       })
       sheens.forEach((sheen) => {
         sheen.style.width = ""
         sheen.style.fontWeight = ""
-        sheen.style.top = ""
       })
     }
   }, [layout, letterCount, prefersReducedMotion, pointerX, pointerY, sendEcho])

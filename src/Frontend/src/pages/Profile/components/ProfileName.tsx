@@ -82,6 +82,15 @@ const bleed =
   "px-[0.1em] pt-[0.15em] pb-[0.08em] -mx-[0.1em] -mt-[0.15em] -mb-[0.08em]"
 
 /**
+ * The bleed for the word part that clips the reveal, with more vertical room
+ * than a letter's: the glow's halo spreads 0.12em past the glyphs, and the
+ * clip must not cut it off above accents or below descenders. Negative
+ * margins give the room back, so layout stays the same.
+ */
+const clipRoom =
+  "px-[0.1em] pt-[0.3em] pb-[0.22em] -mx-[0.1em] -mt-[0.3em] -mb-[0.22em]"
+
+/**
  * Builds a letter's end margin, which carries both the bleed and the
  * restored kerning.
  *
@@ -114,13 +123,14 @@ function splitAtHyphens(word: Glyph[]): Glyph[][] {
 /**
  * The candidate's name, revealed letter by letter: each letter rises from
  * behind its word's clipped bottom edge while it sharpens from a thin blur
- * into its full weight. Afterwards the name plays its weight axis under a
- * mouse pointer or in a wave on touch screens, and sends light across the
- * background when the reveal starts and when it is clicked or tapped
- * (`useNameWeightPlay`). With a mouse, an accent sheen also follows the
- * pointer across the name on the background spotlight's spring. The sheen repeats the letters' layout,
- * weights and widths, so it lands on each glyph. Reduced motion shows the
- * letters at once and turns the weight play and the sheen off.
+ * into its full weight. Afterwards the name plays its weight axis in a
+ * wave on touch screens, and sends light across the background when the
+ * reveal starts and when it is clicked or tapped (`useNameWeightPlay`). With
+ * a mouse, an accent sheen follows the pointer across the name on the
+ * background spotlight's spring, and the letters nearest it glow softly. The
+ * sheen repeats the letters' layout, weights and widths, so it lands on each
+ * glyph. Reduced motion shows the letters at once and turns the weight wave,
+ * the glow and the sheen off.
  *
  * @param props - The component props.
  * @param props.fullName - The candidate's name.
@@ -175,8 +185,8 @@ export default function ProfileName({
   } = useNameWeightPlay(letterCount, words)
   const sheenX = useSpring(pointerX, sheenSpring)
   const sheenY = useSpring(pointerY, sheenSpring)
-  /** An accent glow centred on the spring-following pointer position. */
-  const sheen = useMotionTemplate`radial-gradient(14rem circle at ${sheenX}px ${sheenY}px, color-mix(in srgb, var(--cv-accent) 85%, transparent), transparent)`
+  /** A soft oval light centred on the spring-following pointer position. */
+  const sheen = useMotionTemplate`radial-gradient(11rem 6.5rem at ${sheenX}px ${sheenY}px, var(--cv-name-light), var(--cv-name-light) 30%, transparent)`
 
   return (
     <motion.h1
@@ -195,7 +205,7 @@ export default function ProfileName({
             {parts.map((part, partIndex) => (
               <span
                 key={partIndex}
-                className={`inline-block overflow-y-clip ${bleed}`}
+                className={`inline-block overflow-y-clip ${clipRoom}`}
               >
                 {part.map(({ letter, kerning, delay, index }) => (
                   <motion.span
@@ -207,7 +217,7 @@ export default function ProfileName({
                     custom={delay}
                     variants={prefersReducedMotion ? letterRise : letterReveal}
                     style={letterMargin(kerning)}
-                    className={`inline-block bg-linear-to-b from-cv-ink to-cv-muted bg-clip-text text-transparent print:bg-none print:text-cv-ink forced-colors:bg-none forced-colors:text-[CanvasText] ${bleed}`}
+                    className={`inline-block bg-linear-to-b from-cv-ink to-cv-muted bg-clip-text text-transparent print:bg-none print:text-cv-ink print:filter-none! forced-colors:bg-none forced-colors:text-[CanvasText] forced-colors:filter-none! ${bleed}`}
                   >
                     {letter}
                   </motion.span>
@@ -234,7 +244,7 @@ export default function ProfileName({
                     key={index}
                     ref={(element) => registerSheen(index, element)}
                     style={letterMargin(kerning)}
-                    className={`relative inline-block ${bleed}`}
+                    className={`inline-block ${bleed}`}
                   >
                     {letter}
                   </span>

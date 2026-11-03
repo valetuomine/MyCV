@@ -26,6 +26,9 @@
   --cv-accent: #047857;
   --cv-accent-strong: #065f46;
   --cv-accent-ink: #ffffff;
+  --cv-name-light: var(--cv-accent);
+  --cv-name-glow-strength: 30;
+  --cv-name-glow-spread: 0.07em;
   --cv-danger: #dc2626;
   --cv-wash: rgb(9 9 11 / 0.025);
   --cv-autofill: var(--cv-field-surface);
@@ -63,6 +66,9 @@
     --cv-accent: #4fd1a5;
     --cv-accent-strong: #7ee2bf;
     --cv-accent-ink: #04130d;
+    --cv-name-light: color-mix(in srgb, var(--cv-ink) 62%, var(--cv-accent));
+    --cv-name-glow-strength: 70;
+    --cv-name-glow-spread: 0.12em;
     --cv-danger: #f87171;
     --cv-wash: rgb(255 255 255 / 0.03);
     --cv-autofill: var(--cv-field-surface);
