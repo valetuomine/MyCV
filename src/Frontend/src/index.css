@@ -13,6 +13,12 @@
   --cv-surface: #ffffff;
   --cv-line: #e4e4e7;
   --cv-field-line: #8a8a93;
+  --cv-field-surface: color-mix(
+    in srgb,
+    var(--cv-accent) 8%,
+    var(--cv-surface)
+  );
+  --cv-field-border: color-mix(in srgb, var(--cv-accent) 38%, var(--cv-line));
   --cv-ink: #09090b;
   --cv-copy: #3f3f46;
   --cv-muted: #56565f;
@@ -22,7 +28,7 @@
   --cv-accent-ink: #ffffff;
   --cv-danger: #dc2626;
   --cv-wash: rgb(9 9 11 / 0.025);
-  --cv-autofill: var(--cv-surface);
+  --cv-autofill: var(--cv-field-surface);
   --cv-overlay: rgb(9 9 11 / 0.05);
   --cv-dot: rgb(9 9 11 / 0.14);
   --cv-light: 16%;
@@ -44,6 +50,12 @@
     --cv-surface: #111113;
     --cv-line: #26262b;
     --cv-field-line: #6b6b74;
+    --cv-field-surface: color-mix(
+      in srgb,
+      var(--cv-accent) 8%,
+      var(--cv-surface)
+    );
+    --cv-field-border: color-mix(in srgb, var(--cv-accent) 38%, var(--cv-line));
     --cv-ink: #f4f4f5;
     --cv-copy: #b4b4bb;
     --cv-muted: #9e9ea6;
@@ -53,7 +65,7 @@
     --cv-accent-ink: #04130d;
     --cv-danger: #f87171;
     --cv-wash: rgb(255 255 255 / 0.03);
-    --cv-autofill: var(--cv-surface);
+    --cv-autofill: var(--cv-field-surface);
     --cv-overlay: rgb(255 255 255 / 0.06);
     --cv-dot: rgb(255 255 255 / 0.11);
     --cv-light-rest: 11.2%;
@@ -73,6 +85,8 @@
   --color-cv-surface: var(--cv-surface);
   --color-cv-line: var(--cv-line);
   --color-cv-field: var(--cv-field-line);
+  --color-cv-field-surface: var(--cv-field-surface);
+  --color-cv-field-border: var(--cv-field-border);
   --color-cv-ink: var(--cv-ink);
   --color-cv-copy: var(--cv-copy);
   --color-cv-muted: var(--cv-muted);
@@ -467,7 +481,7 @@
     closest-side,
     color-mix(
       in srgb,
-      var(--spot, var(--cv-accent)) var(--drift-strength, 14%),
+      var(--spot, var(--cv-accent)) var(--drift-strength, 22%),
       transparent
     ),
     transparent

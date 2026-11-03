@@ -181,7 +181,7 @@ export default function FormField({
           data-field-frame
           onPointerEnter={trackPointer}
           onPointerMove={trackPointer}
-          className="group/frame relative isolate min-w-0 flex-1 rounded-lg bg-cv-surface group-data-invalid/field:[--spot:var(--cv-danger)] has-disabled:opacity-60"
+          className="group/frame relative isolate min-w-0 flex-1 rounded-lg bg-cv-field-surface transition-colors duration-200 group-data-invalid/field:bg-cv-surface group-data-invalid/field:[--cv-autofill:var(--cv-surface)] group-data-invalid/field:[--spot:var(--cv-danger)] has-disabled:opacity-60"
         >
           <span
             aria-hidden="true"

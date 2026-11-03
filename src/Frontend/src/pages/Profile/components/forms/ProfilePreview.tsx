@@ -54,13 +54,13 @@ export default function ProfilePreview(): JSX.Element {
       <div
         onPointerEnter={trackPointer}
         onPointerMove={trackPointer}
-        className="group/preview relative mt-5 overflow-hidden rounded-3xl bg-cv-line p-0.5 shadow-cv-panel"
+        className="group/preview relative mt-5 overflow-hidden rounded-3xl bg-cv-field-border p-0.5 shadow-cv-panel"
       >
         <div className="pointer-events-none absolute top-1/2 left-1/2 aspect-square w-[200%] -translate-1/2 bg-cv-sweep animate-cv-sweep motion-reduce:hidden" />
         <div className="pointer-events-none absolute inset-0 bg-cv-field-edge opacity-0 transition-opacity duration-200 group-hover/preview:opacity-100 motion-reduce:hidden" />
-        <div className="relative isolate grid justify-items-start rounded-[calc(1.5rem-2px)] bg-cv-surface p-8">
+        <div className="relative isolate grid justify-items-start rounded-[calc(1.5rem-2px)] bg-cv-field-surface p-8">
           <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden rounded-[inherit] opacity-0 transition-opacity duration-300 group-hover/preview:opacity-100 group-has-[[data-field-frame]:focus-within]/edit:opacity-100 motion-reduce:hidden">
-            <div className="absolute inset-y-0 left-0 w-1/2 bg-cv-field-drift animate-cv-drift [--drift-strength:10%] [animation-play-state:paused] group-hover/preview:[animation-play-state:running] group-has-[[data-field-frame]:focus-within]/edit:[animation-play-state:running]" />
+            <div className="absolute inset-y-0 left-0 w-1/2 bg-cv-field-drift animate-cv-drift [--drift-strength:16%] [animation-play-state:paused] group-hover/preview:[animation-play-state:running] group-has-[[data-field-frame]:focus-within]/edit:[animation-play-state:running]" />
           </div>
           <div className="pointer-events-none absolute inset-0 -z-10 rounded-[inherit] bg-cv-field-glow opacity-0 transition-opacity duration-200 group-hover/preview:opacity-100 motion-reduce:hidden" />
           <p

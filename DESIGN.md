@@ -12,6 +12,8 @@ colors:
   surface: "#ffffff"
   line: "#e4e4e7"
   field-line: "#8a8a93"
+  field-surface: "#ebf4f2"
+  field-border: "#8fbbb0"
   ink: "#09090b"
   copy: "#3f3f46"
   muted: "#56565f"
@@ -22,6 +24,8 @@ colors:
   surface-dark: "#111113"
   line-dark: "#26262b"
   field-line-dark: "#6b6b74"
+  field-surface-dark: "#16201f"
+  field-border-dark: "#36675a"
   ink-dark: "#f4f4f5"
   copy-dark: "#b4b4bb"
   muted-dark: "#9e9ea6"
@@ -77,7 +81,7 @@ components:
     rounded: "{rounded.pill}"
     padding: "0.625rem 1.25rem"
   input:
-    backgroundColor: "{colors.surface}"
+    backgroundColor: "{colors.field-surface}"
     textColor: "{colors.ink}"
     rounded: "{rounded.input}"
     padding: "0.625rem 0.875rem"
@@ -119,7 +123,8 @@ A restrained zinc palette with one emerald accent. Components use only the seman
 - **Paper** (#fafafa / dark #09090b): page background.
 - **Surface** (#ffffff / dark #111113): panels and the portrait card.
 - **Hairline** (#e4e4e7 / dark #26262b): decorative borders and dividers.
-- **Field Line** (#8a8a93 / dark #6b6b74): a grey at least 3:1 against the page, for the loading spinner's track. Form fields use Hairline instead, see Inputs / Fields.
+- **Field Line** (#8a8a93 / dark #6b6b74): a grey at least 3:1 against the page, for the loading spinner's track. Form fields use Field Border instead, see Inputs / Fields.
+- **Field Surface** (≈ #ebf4f2 / dark ≈ #16201f) and **Field Border** (≈ #8fbbb0 / dark ≈ #36675a): the resting fill and border of form fields and the profile preview, an accent tint over Surface (8%) and over Hairline (38%). The tint is capped at 8% because Meta must stay at 4.5:1 or more on the fill.
 - **Ink** (#09090b / dark #f4f4f5): headings and primary text.
 - **Copy** (#3f3f46 / dark #b4b4bb): body text.
 - **Muted** (#56565f / dark #9e9ea6) and **Meta** (#6e6e77 / dark #85858e): secondary info and placeholders; both at least 4.5:1 on page and surface. Small text in the background's lit area, such as the CV's update date and the PDF view's eyebrow, uses Muted, because Meta falls below 4.5:1 on the light, and small accent text there, such as the CV's job title and the form fields' labels, uses Accent Strong for the same reason. Meta stays in the PDF, which has no background light.
@@ -127,7 +132,7 @@ A restrained zinc palette with one emerald accent. Components use only the seman
 
 ### Named Rules
 
-**The One Voice Rule.** The accent marks identity, action and focus only. It never fills large areas. Glows stay at or below 10% opacity; the background's directed light is the one exception, 16% at its peak in the top-left corner and carried past the first screen, and one band of it rests across the page at about 11% in the dark theme and 20% in the light theme, where the same accent shows far less. Both fade out with no visible end, so they read as light rather than as a coloured area.
+**The One Voice Rule.** The accent marks identity, action and focus only. It never fills large areas. Glows stay at or below 10% opacity; the background's directed light is the one exception, 16% at its peak in the top-left corner and carried past the first screen, and one band of it rests across the page at about 11% in the dark theme and 20% in the light theme, where the same accent shows far less. Both fade out with no visible end, so they read as light rather than as a coloured area. A second exception is the resting surface of form fields and the profile preview, an 8% accent tint (its maximum), because they sit in that light and would otherwise show as black boxes.
 
 **The Semantic Token Rule.** Components use `cv-*` utilities, never raw hex or Tailwind palette colours, so both themes stay in sync.
 
@@ -195,17 +200,17 @@ Every button and button-styled link is the shared `Button` component (`src/Front
 
 Every field is `RHFInput` or `RHFTextarea`, framed by the shared `FormField` (`src/Frontend/src/pages/components/`). Floating labels are not used: the mono label above the field is the design.
 
-- **Style:** 0.5rem radius, 1px hairline border and an opaque surface fill, like the preview panel, so the fields and the preview read as one set and the page's dot grid doesn't show through. Mono uppercase label above with the character count at its right. The surface is drawn by the `FormField` frame and the field itself is transparent, so the hover tint sits between the surface and the text.
-- **Why no 3:1 border:** the hairline is deliberately below 3:1 against the page. A field is always identified by its visible label, and its hover border, focus ring and error ring all stand out clearly. Keeping the grey field-line border with only the fill changed was considered and rejected, because the fields would no longer match the preview panel.
+- **Style:** 0.5rem radius, 1px hairline border in an accent-tinted line colour (`--cv-field-border`, 38% accent over Line) and an opaque, accent-tinted surface fill (`--cv-field-surface`, 8% accent over Surface), like the preview panel, so the fields and the preview read as one set, belong to the background's emerald light, and the page's dot grid doesn't show through. An invalid field returns to the neutral Surface fill so the green doesn't mix with the error red. Mono uppercase label above with the character count at its right. The surface is drawn by the `FormField` frame and the field itself is transparent, so the hover tint sits between the surface and the text.
+- **Why no 3:1 border:** the field border is deliberately below 3:1 against the page in the light theme (about 3:1 in the dark theme). A field is always identified by its visible label, and its hover border, focus ring and error ring all stand out clearly. Keeping the grey field-line border with only the fill changed was considered and rejected, because the fields would no longer match the preview panel. The tint is capped at 8% accent: above that the placeholder (Meta) falls below 4.5:1.
 - **Hover (mouse):** the border darkens to Muted, and an accent light follows the pointer around the border (an 8rem radial gradient at 70% accent, masked to the field's outer 2px) with an 8% tint in the fill under it (a wider 10rem radial gradient). Its position goes to CSS variables once per animation frame. No light for touch, reduced motion or disabled fields; on an invalid field it is danger-coloured.
-- **Focus:** a 3px accent ring at 20%, the label turns accent, and an accent light travels around the border, one lap every 8s like the panels' sweep (a comet a fifth of the border long that brightens smoothly from tail to head, built from ten overlapping 6rem radial glows like the hover light, that follow the border on a CSS motion path (`offset-path: inset(0 round 0.5rem)`) a little apart; it shows on the field's outer 2px, the thickness of the orbiting light on the portrait panel). Browsers without shape motion paths show no travelling light. The border itself stays neutral so the light shows. Unlike the panels' angular sweep, the light follows the border, so it keeps its speed on the long and short edges of a wide field and its tail bends around the corners without pausing. It runs only on the focused field and is paused on the others.
-- **Drift (hover and focus):** a soft accent light, half the field wide (a radial gradient at 14% accent, a deliberate small exception to the 10% glow cap so the drift reads on the surface; it fades out from its centre and covers only part of a small field), sways slowly from side to side inside the field, 6s each way on an ease-in-out curve, on its own timing apart from the border lights. It fades in over 300ms, pauses where it is when the field is left, and resumes from there. It sits under the text like the hover tint, turns danger on an invalid field, and is off for reduced motion and disabled fields.
+- **Focus:** a 3px accent ring at 20%, the label turns accent, and an accent light travels around the border, one lap every 8s like the panels' sweep (a comet a fifth of the border long that brightens smoothly from tail to head, built from ten overlapping 6rem radial glows like the hover light, that follow the border on a CSS motion path (`offset-path: inset(0 round 0.5rem)`) a little apart; it shows on the field's outer 2px, the thickness of the orbiting light on the portrait panel). Browsers without shape motion paths show no travelling light. The border keeps its accent-tinted resting colour, so the travelling light reads as the brighter accent on it. Unlike the panels' angular sweep, the light follows the border, so it keeps its speed on the long and short edges of a wide field and its tail bends around the corners without pausing. It runs only on the focused field and is paused on the others.
+- **Drift (hover and focus):** a soft accent light, half the field wide (a radial gradient at 22% accent, a deliberate small exception to the 10% glow cap so the drift reads on the accent-tinted surface, where its peak lowers the placeholder contrast to about 3:1 for as long as it passes; it fades out from its centre and covers only part of a small field), sways slowly from side to side inside the field, 6s each way on an ease-in-out curve, on its own timing apart from the border lights. It fades in over 300ms, pauses where it is when the field is left, and resumes from there. It sits under the text like the hover tint, turns danger on an invalid field, and is off for reduced motion and disabled fields.
 - **Error:** danger border and 3px danger ring at 20%, with or without focus, and no travelling light. The message opens below the field (`grid-template-rows` 0fr to 1fr with a fade, 200ms) in a `role="alert"` element, and keeps its text while closing. When a submit leaves the field invalid it shakes once sideways (±4px, settling, 300ms); typing never shakes it.
 - **Character count:** on every field with `maxLength`, in mono `tabular-nums` (`12 / 100`). Muted and shown only while the field has focus, then always visible from 90% of the limit in accent, and danger at the limit. It is part of the field's `aria-describedby`, never a live region, so screen readers don't read it on every keystroke.
 - **Description:** an optional hint below the field and its message, in muted 0.875rem text, that is also part of the field's `aria-describedby`, such as the CV link preview in the create view.
 - **Action:** an optional control in the field's row, such as the home page's Open CV button, as tall as the field and level with it however the label wraps. Focusing it doesn't light the label or the count.
 - **Textarea:** grows with its text (`field-sizing: content`, at least 4 lines, at most 70dvh, then it scrolls); browsers without `field-sizing` fall back to fitting the height in script.
-- **Autofill:** an opaque inset shadow in the surface colour and an ink text fill keep autofilled fields on theme in both themes.
+- **Autofill:** an opaque inset shadow in the field surface colour and an ink text fill keep autofilled fields on theme in both themes.
 - **Disabled:** 60% opacity on the whole field, surface included, and a not-allowed cursor.
 - **Reduced motion:** no pointer light, travelling light, drifting light, shake or height animation; a focused border turns accent instead, and the colour, ring and message still change, so every state stays distinct.
 - **Placeholders:** realistic examples (`https://github.com/username`, `Helsinki, Suomi`) or none, never "Enter …"; the label already says what goes in.
@@ -215,7 +220,7 @@ Every field is `RHFInput` or `RHFTextarea`, framed by the shared `FormField` (`s
 
 - Same two-column grid as the CV: the form on the left, a sticky **live preview** on the right from `lg` up. The preview is a portrait-style panel with the orbiting border highlight that shows the Finnish CV (name, title, location, summary, link pills) updating as the fields change. It repeats the form, so it is `aria-hidden`.
 - **Width:** from `2xl` (1536px) up the edit view widens past `max-w-7xl` to 84.6rem, and only the edit view: the CV keeps `max-w-7xl`. The form column keeps the 45.6rem it has at 80rem, so all the extra room goes to the preview, which grows from about 30rem to 35rem. That fits a long name such as "Valtteri Tuominen Azure" on one row with a little room to its right; a wider card left too much empty space beside the text.
-- **Preview lights:** the preview card lights up like the fields. With a mouse, a light follows the pointer around its border and tints the surface beneath the text (the fields' hover light, on the panel's 2px border). While the card is hovered or any field has focus, the fields' drift light sways slowly from side to side inside the card, under the text, and pauses where it is otherwise, so the card wakes while the profile is edited rather than moving all the time. On the card's larger surface the drift is 10% accent, within the glow cap, because the fields' 14% reads as a heavy blob there. Touch gets no pointer light, and reduced motion neither light.
+- **Preview lights:** the preview card lights up like the fields. With a mouse, a light follows the pointer around its border and tints the surface beneath the text (the fields' hover light, on the panel's 2px border). While the card is hovered or any field has focus, the fields' drift light sways slowly from side to side inside the card, under the text, and pauses where it is otherwise, so the card wakes while the profile is edited rather than moving all the time. On the card's larger surface the drift is 16% accent, because the fields' 22% reads as a heavy blob there. Touch gets no pointer light, and reduced motion neither light.
 - Header: accent-dot mono eyebrow "Editing" above the "Edit profile" title. The CV link is shown as the full address with a Copy link button, not as a disabled field.
 - **Profile picture:** a section between the CV link and the fields, at every width (not in the preview), set off by hairlines above and below. Its heading matches the language sections, with a mono "Saved right away" tag, because each picture change is saved at once through its own request and Save and Cancel leave it alone; the hint says so. A 6.5 × 8rem portrait tile (1.5rem radius) shows the picture, or the initials over the accent wash. Small buttons: Choose picture (Change picture once there is one), which opens the device's picker (camera or gallery on a phone), Use Google picture for a Google sign-in only, and Remove picture, which asks in place with a danger Remove and Keep. The busy button shows its spinner while the others are disabled. The outcome shows below as a status or, for failures, an alert in the danger colour, worded by the status code: too large, wrong file type, no permission, changed elsewhere at the same time, a service not answering, storage not set up.
 - Basic details: full name on its own row, GitHub and LinkedIn side by side from `sm` up.
