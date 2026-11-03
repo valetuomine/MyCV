@@ -53,12 +53,12 @@ npm run lint
 Pop-Location
 ```
 
-Start the local preview with:
+Check the ports first, as described in *Servers* in `references/checks.md` of `/create-pull-request`, and start the local preview only when port 3000 is free:
 
 ```powershell
 Push-Location src/Frontend
-npm run dev -- --host 0.0.0.0 --port 3000
+npm run dev -- --host 0.0.0.0 --port 3000 --open false
 Pop-Location
 ```
 
-The expected local URL is `http://localhost:3000/`.
+The expected local URL is `http://localhost:3000/`. If you started the preview yourself, stop it afterwards as *Servers* describes.

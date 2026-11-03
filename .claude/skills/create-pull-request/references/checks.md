@@ -29,7 +29,18 @@ npm --prefix src/Frontend run lint
 npm --prefix src/Frontend run build
 ```
 
-**Frontend UI** (any change to what the user sees: components, styles, layout, motion or text): check it in a real browser with the `playwright` MCP server before committing. Lint and build do not show how a change looks or behaves. Start the API and `npm --prefix src/Frontend run dev` if they are not running, open each affected view at `http://localhost:3000/<cv-address>`, and confirm:
+**Frontend UI** (any change to what the user sees: components, styles, layout, motion or text): check it in a real browser with the `playwright` MCP server before committing. Lint and build do not show how a change looks or behaves. Follow *Servers* below, open each affected view at `http://localhost:3000/<cv-address>` (use port 3100 instead when you opened the extra frontend), and confirm:
+
+*Servers* (the same rules apply wherever a step needs the API or the frontend running):
+
+- Check the ports first: `Get-NetTCPConnection -State Listen -LocalPort 3000,5062 -ErrorAction SilentlyContinue` (3000 is the frontend, 5062 the API; add `Get-Process -Id <OwningProcess>` to see the process). A port that is not listed is free. If 3000 listens, also confirm that `http://localhost:3000/` answers and that `/api` reaches the backend.
+- Any server that listens on the port and that you did not start in this chat (you hold no background task or PID of it) is the user's. Use it, and never stop or restart it. If it does not work (for example the backend has crashed), tell the user instead of stopping the process.
+- Start only a missing server, as a background command (`run_in_background`), and note that you started it: `dotnet run --project src/Backend/CV.WebApi --launch-profile http` for the API, `npm --prefix src/Frontend run dev -- --open false` for the frontend (`vite.config.ts` has `open: true`, which would open a stray browser window).
+- Open an extra frontend next to the user's only when the check needs it (for example Vite serves stale CSS for a changed `@utility` class): `npm --prefix src/Frontend run dev -- --port 3100 --strictPort --open false`. It is yours to stop. Use it for public views only: its origin is not registered for the Microsoft sign-in. Never open an extra backend: the Vite proxy always points to port 5062.
+- Stop the servers you started yourself as soon as they are no longer needed, and at the latest before the commit step: stop the background task with `TaskStop`, or use the PID you saved. Never stop a process by port or name (for example `Stop-Process -Name node` or `dotnet`). Then run the port check again to confirm the port is free, because stopping a wrapper can leave its child process listening.
+- State under *Tarkistukset* in the reviewer comment whether the check used the user's servers or ones you started, and whether the extra frontend on port 3100 was used.
+
+Then confirm:
 
 - It looks right on desktop (1440×900) and mobile (390×844), in both the light and the dark theme, with no horizontal scroll.
 - The changed interactions work: clicks, typing, keyboard focus and animations. Every usable button changes visibly on hover, in both themes (a shadow alone doesn't show).
