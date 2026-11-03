@@ -9,7 +9,7 @@ The prompt points to the work item instead of repeating the `Toteutusohje`, so t
 ```text
 Act as <role>.
 Implement User Story <id>: <title>.
-Read the work item in Azure DevOps and follow the Toteutusohje at the end of its description. Ask its Avoimet kysymykset before you start.
+Read the work item in Azure DevOps and follow the Toteutusohje at the end of its description. Ask its Avoimet kysymykset before you start. Check its Predecessor links: if a predecessor is not done yet, tell me before you start.
 Branch: feat/US-<id>_<Title_slug>
 Skills: <the skills its Lähtötilanne names>
 When every Valmis, kun criterion holds, ship the change with /create-pull-request.
@@ -18,7 +18,7 @@ When every Valmis, kun criterion holds, ship the change with /create-pull-reques
 - Start with the role line, chosen with [roles.md](roles.md), for example `Act as a UI designer and front-end developer.` for a UI story. Every kickoff prompt has one, including the Task form.
 - Build the branch name with the slug rules in `references/branch.md` of the `create-pull-request` skill.
 - For a Task, after the role line start with `Implement Task <id>: <title> (part of User Story <parent id>: <parent title>).` and use the Task branch pattern `feat/<id>_<Title_slug>`.
-- Leave out the `Skills:` line when the `Toteutusohje` names no skill, and the `Avoimet kysymykset` sentence when it has none.
+- Leave out the `Skills:` line when the `Toteutusohje` names no skill, the `Avoimet kysymykset` sentence when it has none, and the Predecessor sentence when the work item has no Predecessor link.
 - **The work item comment is mandatory.** Post it for every story and every Task with its own `Toteutusohje`, also when the story was created for work that is already done, as when `create-pull-request` calls this skill. Do not decide that it is pointless: a later chat, or the user, copies it from Azure DevOps. Only the report's closing prompt is skipped in that case, because `create-pull-request` gives its own follow-up prompts.
 - When the comment is posted for work that is already in the working tree (not when the work is done in a later chat), add one line to the prompt in the comment: `The changes may already be in the working tree: compare them with the Toteutus steps and finish whatever is missing.`
 - Give the kickoff prompt even when the work continues in the same chat, so the work item carries it for a later chat.

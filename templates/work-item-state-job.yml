@@ -16,6 +16,11 @@ jobs:
   # in progress until its last Task is merged. User Stories are also skipped when the pull
   # request has the "Jatkuu" label, which marks a follow-up pull request for a story that
   # is still in progress.
+  #
+  # Finally, the work items that were actually moved release their Successors: a User Story in
+  # "Waiting for Predecessor" leaves that state when all of its Predecessors are
+  # "Waiting for Deployment", "Closed" or "Removed". It moves to "New" if its description
+  # mentions "Avoimet kysymykset" and to "Ready for Development" otherwise.
   - bash: |
       set -euo pipefail
 
@@ -59,6 +64,13 @@ jobs:
           -d "[{\"op\":\"add\",\"path\":\"/fields/System.State\",\"value\":\"$2\"}]" > /dev/null
       }
 
+      # Ids in one link direction of a work item fetched with relations expanded.
+      link_ids() {
+        echo "$1" | jq -r --arg rel "$2" '[.relations[]? | select(.rel == $rel) | .url | split("/") | last] | join(" ")'
+      }
+
+      moved_ids=""
+
       ids_csv=$(echo "$work_item_ids" | paste -sd, -)
       items=$(curl -sS --fail-with-body -H "$auth" \
         "$api/wit/workitems?ids=$ids_csv&fields=System.State,System.WorkItemType&api-version=7.1")
@@ -68,6 +80,7 @@ jobs:
         state=$(echo "$items" | jq -r --argjson id "$id" '.value[] | select(.id == $id) | .fields["System.State"]')
         if is_open "$state"; then
           set_state "$id" "Closed"
+          moved_ids="$moved_ids $id"
           echo "Task #$id moved from '$state' to 'Closed'."
         else
           echo "Task #$id stays in state '$state'."
@@ -88,7 +101,7 @@ jobs:
           continue
         fi
 
-        child_ids=$(echo "$story" | jq -r '[.relations[]? | select(.rel == "System.LinkTypes.Hierarchy-Forward") | .url | split("/") | last] | join(",")')
+        child_ids=$(link_ids "$story" "System.LinkTypes.Hierarchy-Forward" | tr ' ' ',')
         if [ -n "$child_ids" ]; then
           open_tasks=$(curl -sS --fail-with-body -H "$auth" \
             "$api/wit/workitems?ids=$child_ids&fields=System.State,System.WorkItemType&errorPolicy=omit&api-version=7.1" \
@@ -102,6 +115,7 @@ jobs:
         fi
 
         set_state "$id" "Waiting for Deployment"
+        moved_ids="$moved_ids $id"
         echo "User Story #$id moved from '$state' to 'Waiting for Deployment'."
       done
 
@@ -109,6 +123,48 @@ jobs:
       if [ -n "$other" ]; then
         echo "Not changed (other work item types): $other"
       fi
+
+      # Releases one Successor if it waits for a Predecessor and all its Predecessors are done.
+      release_successor() {
+        local sid="$1" successor state predecessors pending target
+        successor=$(curl -sS --fail-with-body -H "$auth" "$api/wit/workitems/$sid?\$expand=relations&api-version=7.1") || return 1
+        state=$(echo "$successor" | jq -r '.fields["System.State"]')
+        if [ "$state" != "Waiting for Predecessor" ]; then
+          return 0
+        fi
+
+        predecessors=$(link_ids "$successor" "System.LinkTypes.Dependency-Reverse" | tr ' ' ',')
+        [ -n "$predecessors" ] || return 0
+        pending=$(curl -sS --fail-with-body -H "$auth" \
+          "$api/wit/workitems?ids=$predecessors&fields=System.State&errorPolicy=omit&api-version=7.1" \
+          | jq -r '[.value[] | select(. != null)
+              | select(.fields["System.State"] | IN("Waiting for Deployment", "Closed", "Removed") | not)
+              | "#\(.id)"] | join(", ")') || return 1
+        if [ -n "$pending" ]; then
+          echo "User Story #$sid stays in state '$state': Predecessors still open ($pending)."
+          return 0
+        fi
+
+        if echo "$successor" | jq -e '(.fields["System.Description"] // "") | contains("Avoimet kysymykset")' > /dev/null; then
+          target="New"
+        else
+          target="Ready for Development"
+        fi
+        set_state "$sid" "$target" || return 1
+        echo "User Story #$sid released from '$state' to '$target': all Predecessors are done."
+      }
+
+      # A failure for one Successor must not stop the others, so it only logs a warning. Inside
+      # release_successor, set -e is off because of the || below, hence the explicit return 1.
+      for id in $moved_ids; do
+        merged=$(curl -sS --fail-with-body -H "$auth" "$api/wit/workitems/$id?\$expand=relations&api-version=7.1") || {
+          echo "##vso[task.logissue type=warning]Could not read the Successors of #$id."
+          continue
+        }
+        for sid in $(link_ids "$merged" "System.LinkTypes.Dependency-Forward"); do
+          release_successor "$sid" || echo "##vso[task.logissue type=warning]Could not release Successor #$sid."
+        done
+      done
     displayName: Move linked work items forward
     env:
       SYSTEM_ACCESSTOKEN: $(System.AccessToken)
