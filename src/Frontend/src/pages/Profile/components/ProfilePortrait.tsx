@@ -58,13 +58,15 @@ const sweepDelay = { monogram: 0.9, photo: 0.5 }
  * motion shows the filled initials at rest, without the sweep or the tilt.
  *
  * With a photo the card is the photo's height from the start, so nothing
- * moves when it arrives: the surface pulses softly while it loads, then the
- * photo fades in, sharpening from a slight blur and settling from a slight
- * zoom, and the sweep crosses it once it is in. The border lights stay in
- * the accent, which marks the CV, but the glare and the foil turn to neutral
- * light over the photo, so its colours stay true. Reduced motion shows the
- * photo as soon as it loads, at rest. A photo that fails to load gives way
- * to the monogram.
+ * moves when it arrives. While it loads, the card is see-through, showing the
+ * page's background under a light wash, and the skeleton's shimmer crosses
+ * it. Then the photo fades in, sharpening from a slight blur and settling
+ * from a slight zoom, and the sweep crosses it once it is in. The border
+ * lights stay in the accent, which marks the CV, but the glare and the foil
+ * turn to neutral light over the photo, so its colours stay true. The border
+ * and its lights sit in a layer masked to the 2px ring, so they never show
+ * through the card. Reduced motion shows the photo as soon as it loads, at
+ * rest. A photo that fails to load gives way to the monogram.
  *
  * @param props - The component props.
  * @param props.fullName - The candidate's name, for the photo's alt text.
@@ -171,25 +173,26 @@ export default function ProfilePortrait({
         style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
         className="relative rounded-3xl shadow-cv-panel will-change-transform"
       >
-        <div className="relative overflow-hidden rounded-3xl bg-cv-line p-0.5">
+        <div className="relative rounded-3xl p-0.5">
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute top-1/2 left-1/2 aspect-square w-[200%] -translate-1/2 bg-cv-sweep animate-cv-sweep motion-reduce:hidden print:hidden"
-          />
-          <motion.div
-            aria-hidden="true"
-            style={{ backgroundImage: edgeLight, opacity: hover }}
-            className="pointer-events-none absolute inset-0 print:hidden"
-          />
+            className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl bg-cv-line p-0.5 mask-cv-ring"
+          >
+            <div className="absolute top-1/2 left-1/2 aspect-square w-[200%] -translate-1/2 bg-cv-sweep animate-cv-sweep motion-reduce:hidden print:hidden" />
+            <motion.div
+              style={{ backgroundImage: edgeLight, opacity: hover }}
+              className="absolute inset-0 print:hidden"
+            />
+          </div>
           <div
-            className={`relative w-full overflow-hidden rounded-[calc(1.5rem-2px)] bg-cv-surface ${showImage ? "h-[clamp(20rem,68dvh,40rem)]" : "h-44 lg:h-[clamp(16rem,46dvh,26rem)]"}`}
+            className={`relative w-full overflow-hidden rounded-[calc(1.5rem-2px)] ${showImage ? "h-[clamp(20rem,68dvh,40rem)] bg-cv-wash" : "h-44 bg-cv-surface lg:h-[clamp(16rem,46dvh,26rem)]"}`}
           >
             {showImage ? (
               <>
                 {!isImageLoaded && (
                   <div
                     aria-hidden="true"
-                    className="absolute inset-0 bg-cv-overlay motion-safe:animate-pulse"
+                    className="absolute inset-0 cv-skeleton"
                   />
                 )}
                 <motion.img

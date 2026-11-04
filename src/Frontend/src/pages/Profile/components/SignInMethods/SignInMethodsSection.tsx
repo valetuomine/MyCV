@@ -28,6 +28,7 @@ import {
 import { LinkOutcome, SignInFailure, SignInMethod } from "../../../../types"
 import Button from "../../../components/Button"
 import LinkPopupMessage from "./LinkPopupMessage"
+import SignInMethodsSkeleton from "./SignInMethodsSkeleton"
 import type { ProfileSchema } from "../../schemas/profile-form-schema"
 import SignInMethodRow from "./SignInMethodRow"
 
@@ -362,15 +363,7 @@ export default function SignInMethodsSection({
         </p>
       )}
       {loginsQuery.isLoading ? (
-        <div aria-busy="true" className="grid gap-3">
-          <span className="sr-only">{t("signInMethods.loading")}</span>
-          {[0, 1].map((row) => (
-            <div
-              key={row}
-              className="h-14 rounded-lg bg-cv-overlay motion-safe:animate-pulse"
-            />
-          ))}
-        </div>
+        <SignInMethodsSkeleton />
       ) : loginsQuery.isError ? (
         <div className="flex flex-wrap items-center gap-3">
           <p role="alert" className="m-0 text-sm text-cv-danger">

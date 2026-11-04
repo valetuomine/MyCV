@@ -15,8 +15,10 @@ interface ProfilePdfFrameProps {
  * The frame of the PDF: an indicator while the PDF loads, the browser's viewer
  * once it has, and a message with a retry if it fails. The indicator stays
  * under the transparent `<object>` until the viewer paints over it, which
- * takes a round trip on a slow connection. The viewer gets the server's URL
- * rather than a blob URL, so its own save keeps the server's file name.
+ * takes a round trip on a slow connection. The frame itself is a see-through
+ * wash over the page's background, never a solid panel. The viewer gets the
+ * server's URL rather than a blob URL, so its own save keeps the server's
+ * file name.
  *
  * The status region sits outside the busy frame, because screen readers may
  * hold back changes inside a busy element, and it keeps announcing through
@@ -69,7 +71,7 @@ export default function ProfilePdfFrame({
         ref={frameRef}
         tabIndex={-1}
         aria-busy={isLoading || undefined}
-        className="relative h-[min(80dvh,70rem)] w-full overflow-hidden rounded-3xl border border-cv-line bg-cv-surface shadow-cv-panel outline-none"
+        className="relative h-[min(80dvh,70rem)] w-full overflow-hidden rounded-3xl border border-cv-line bg-cv-wash shadow-cv-panel outline-none"
       >
         {status === PdfLoadStatus.Error ? (
           <div className="grid h-full place-content-center justify-items-center gap-4 p-8 text-center">
@@ -84,7 +86,7 @@ export default function ProfilePdfFrame({
             </Button>
           </div>
         ) : (
-          <ProfilePdfSkeleton pulsing={isLoading} />
+          <ProfilePdfSkeleton shimmering={isLoading} />
         )}
         {showsObject && (
           <object

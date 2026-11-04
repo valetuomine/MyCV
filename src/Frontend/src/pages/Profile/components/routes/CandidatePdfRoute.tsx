@@ -9,15 +9,15 @@ import { languageAtom } from "../../../../state/languageAtoms"
 import { Tone } from "../../../../types"
 import { describeRouteError } from "../../utils/describeRouteError"
 import ProfilePdfPage from "../ProfilePdfPage"
-import ProfileSkeleton from "../ProfileSkeleton"
+import ProfilePdfRouteSkeleton from "../ProfilePdfRouteSkeleton"
 import RouteMessage from "../RouteMessage"
 
 /**
  * The CV as a PDF. Looks up the candidate by its public URL segment and loads
  * the profile in the UI language for the heading, then shows the PDF in that
- * language, with a skeleton while loading and a message for a missing profile
- * or a failed request. After a language change, the page stays on screen
- * while the new PDF loads.
+ * language, with a placeholder in its layout while loading and a message for
+ * a missing profile or a failed request. After a language change, the page
+ * stays on screen while the new PDF loads.
  *
  * @returns The PDF page, its skeleton, or a message.
  */
@@ -34,7 +34,7 @@ export default function CandidatePdfRoute(): JSX.Element {
   )
 
   if (candidateQuery.isLoading) {
-    return <ProfileSkeleton />
+    return <ProfilePdfRouteSkeleton />
   }
 
   if (candidateQuery.isError) {
@@ -54,7 +54,7 @@ export default function CandidatePdfRoute(): JSX.Element {
   }
 
   if (profileQuery.isLoading) {
-    return <ProfileSkeleton />
+    return <ProfilePdfRouteSkeleton />
   }
 
   if (profileQuery.isError || !profileQuery.data) {

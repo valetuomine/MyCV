@@ -239,6 +239,59 @@
   }
 }
 
+/* Keeps only the element's padding ring, so a frame's border lights can sit
+   behind a see-through card without showing through it. The content box is
+   clipped to the inner corner curve (the outer radius minus the padding), so
+   the ring keeps its rounded inside edge. */
+@utility mask-cv-ring {
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+
+/* A skeleton shape: the overlay fill with one band of the background's light
+   at the portrait foil's 105deg angle. Every shape paints the band against the
+   viewport (background-attachment: fixed), so a single light crosses the whole
+   skeleton instead of one per shape. It moves from left to right in 2.4s
+   rounds, 70% of them on the foil's curve and then a rest, starting with the
+   skeleton's 300ms fade-in. --cv-loading-elapsed (set by useSkeletonTiming)
+   keeps its phase when one skeleton replaces another during a load. Under
+   reduced motion the band stays off-screen and the shapes stand still. */
+@utility cv-skeleton {
+  background-color: var(--cv-overlay);
+  background-image: linear-gradient(
+    105deg,
+    transparent 44%,
+    color-mix(
+        in srgb,
+        var(--cv-accent) calc(var(--cv-light) * 0.6),
+        transparent
+      )
+      50%,
+    transparent 56%
+  );
+  background-size: 300% 100%;
+  background-position: 100% 0;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: cv-shimmer 2.4s cubic-bezier(0.45, 0, 0.2, 1)
+      calc(300ms - var(--cv-loading-elapsed, 0ms)) infinite;
+  }
+}
+
+@keyframes cv-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  70%,
+  100% {
+    background-position: 0% 0;
+  }
+}
+
 /* Dot matrix; bg-cv-dots-lit is the accent copy revealed under the pointer.
    Both share the same 24px cell so the lit dots sit exactly on the base ones. */
 @utility bg-cv-dots {

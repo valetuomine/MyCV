@@ -3,6 +3,7 @@ import { LazyMotion, MotionConfig, domAnimation } from "framer-motion"
 import { Outlet, Route, Routes } from "react-router-dom"
 import Background from "./components/Background"
 import Home from "./Profile/components/routes/Home"
+import ProfilePdfRouteSkeleton from "./Profile/components/ProfilePdfRouteSkeleton"
 import ProfileSkeleton from "./Profile/components/ProfileSkeleton"
 import UnknownRoute from "./Profile/components/routes/UnknownRoute"
 import SignInRouteFallback from "../auth/SignInRouteFallback"
@@ -114,7 +115,7 @@ export default function App(): JSX.Element {
             <Route
               path={RoutePaths.CandidatePdfPattern}
               element={
-                <Suspense fallback={<ProfileSkeleton />}>
+                <Suspense fallback={<ProfilePdfRouteSkeleton />}>
                   <CandidatePdfRoute />
                 </Suspense>
               }
