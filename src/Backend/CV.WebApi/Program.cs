@@ -33,6 +33,9 @@ builder.Services.AddControllers();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
+// Liveness only: /api/health answers 200 while the API runs, with no database or Blob check.
+builder.Services.AddHealthChecks();
+
 var tenantId = builder.Configuration["AzureAd:TenantId"];
 var apiClientId = builder.Configuration["AzureAd:ApiClientId"];
 var audience = builder.Configuration["AzureAd:Audience"];
@@ -179,5 +182,6 @@ if (allowedOrigins.Length > 0)
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHealthChecks("/api/health").AllowAnonymous();
 
 app.Run();

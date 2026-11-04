@@ -33,13 +33,15 @@ npm --prefix src/Frontend run build
 
 *Servers* (the same rules apply wherever a step needs the API or the frontend running):
 
-- Check the servers over HTTP first (3000 is the frontend, 5062 the API). The Vite dev server proxies `/api` to port 5062, so one request through port 3000 shows both. Run it with the Bash tool, because in Windows PowerShell 5 `curl` is an alias of `Invoke-WebRequest`: `curl -s -D - -o /dev/null http://localhost:3000/api/`.
+- Check the servers over HTTP first (3000 is the frontend, 5062 the API). The Vite dev server proxies `/api` to port 5062, so one request through port 3000 shows both. Run it with the Bash tool, because in Windows PowerShell 5 `curl` is an alias of `Invoke-WebRequest`: `curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/health`.
 
   | Result | Meaning |
   |---|---|
-  | Any status (even 404) with a `server: Kestrel` header | Both the frontend and the API run |
-  | A 500 without `server: Kestrel` (Vite's proxy got `ECONNREFUSED`) | The frontend runs, the API does not |
-  | Connection refused (no output, curl exit code 7) | The frontend does not run; request `http://localhost:5062/` to check the API on its own (any HTTP answer means it runs) |
+  | `200` | Both the frontend and the API run |
+  | `307` (the API runs with the `https` launch profile and redirects to HTTPS) | Both the frontend and the API run |
+  | `500` (Vite's proxy got `ECONNREFUSED`) | The frontend runs, the API probably does not: confirm with `curl -s -o /dev/null -w "%{http_code}" http://localhost:5062/api/health`, because the API itself can also answer 500 |
+  | Connection refused (curl exit code 7) | The frontend does not run; request `http://localhost:5062/api/health` to check the API on its own |
+  | Any other status, for example `404` | Ask the user: the API may run a build without the `/api/health` endpoint |
 
   If the result fits no row, for example a timeout or an answer that is not from Vite, ask the user instead of starting a server. Do not use `Get-NetTCPConnection` or `netstat` to tell whether a port is free: on the user's machine both list no listening socket for 3000 or 5062 even while the servers run. If Vite says "Port 3000 is in use, trying another one", the user's server was there: stop yours at once and use theirs.
 - Any server that listens on the port and that you did not start in this chat (you hold no background task or PID of it) is the user's. Use it, and never stop or restart it. If it does not work (for example the backend has crashed), tell the user instead of stopping the process.
