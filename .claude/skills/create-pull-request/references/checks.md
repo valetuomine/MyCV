@@ -33,11 +33,19 @@ npm --prefix src/Frontend run build
 
 *Servers* (the same rules apply wherever a step needs the API or the frontend running):
 
-- Check the ports first: `Get-NetTCPConnection -State Listen -LocalPort 3000,5062 -ErrorAction SilentlyContinue` (3000 is the frontend, 5062 the API; add `Get-Process -Id <OwningProcess>` to see the process). An empty result is not proof that a port is free: on some machines the cmdlet lists nothing even while the servers run (and `netstat` prints its states in the system language). So before starting anything, also request `http://localhost:3000/` and `http://localhost:5062/` (any HTTP answer, even a 404, means a server is there). If 3000 answers, also confirm that `/api` reaches the backend. If Vite says "Port 3000 is in use, trying another one", the user's server was there: stop yours at once and use theirs.
+- Check the servers over HTTP first (3000 is the frontend, 5062 the API). The Vite dev server proxies `/api` to port 5062, so one request through port 3000 shows both. Run it with the Bash tool, because in Windows PowerShell 5 `curl` is an alias of `Invoke-WebRequest`: `curl -s -D - -o /dev/null http://localhost:3000/api/`.
+
+  | Result | Meaning |
+  |---|---|
+  | Any status (even 404) with a `server: Kestrel` header | Both the frontend and the API run |
+  | A 500 without `server: Kestrel` (Vite's proxy got `ECONNREFUSED`) | The frontend runs, the API does not |
+  | Connection refused (no output, curl exit code 7) | The frontend does not run; request `http://localhost:5062/` to check the API on its own (any HTTP answer means it runs) |
+
+  If the result fits no row, for example a timeout or an answer that is not from Vite, ask the user instead of starting a server. Do not use `Get-NetTCPConnection` or `netstat` to tell whether a port is free: on the user's machine both list no listening socket for 3000 or 5062 even while the servers run. If Vite says "Port 3000 is in use, trying another one", the user's server was there: stop yours at once and use theirs.
 - Any server that listens on the port and that you did not start in this chat (you hold no background task or PID of it) is the user's. Use it, and never stop or restart it. If it does not work (for example the backend has crashed), tell the user instead of stopping the process.
 - Start only a missing server, as a background command (`run_in_background`), and note that you started it: `dotnet run --project src/Backend/CV.WebApi --launch-profile http` for the API, `npm --prefix src/Frontend run dev -- --open false` for the frontend (`vite.config.ts` has `open: true`, which would open a stray browser window).
 - Open an extra frontend next to the user's only when the check needs it (for example Vite serves stale CSS for a changed `@utility` class): `npm --prefix src/Frontend run dev -- --port 3100 --strictPort --open false`. It is yours to stop. Use it for public views only: its origin is not registered for the Microsoft sign-in. Never open an extra backend: the Vite proxy always points to port 5062.
-- Stop the servers you started yourself as soon as they are no longer needed, and at the latest before the commit step: stop the background task with `TaskStop`, or use the PID you saved. Never stop a process by port or name (for example `Stop-Process -Name node` or `dotnet`). Then run the port check again to confirm the port is free, because stopping a wrapper can leave its child process listening.
+- Stop the servers you started yourself as soon as they are no longer needed, and at the latest before the commit step: stop the background task with `TaskStop`, or use the PID you saved. Never stop a process by port or name (for example `Stop-Process -Name node` or `dotnet`). Then run the HTTP check again to confirm the server no longer answers, because stopping a wrapper can leave its child process listening.
 - State under *Tarkistukset* in the reviewer comment whether the check used the user's servers or ones you started, and whether the extra frontend on port 3100 was used.
 
 Then confirm:
@@ -59,7 +67,7 @@ Run it with `browser_run_code_unsafe`, and again after the browser restarts. Nev
 
 **Screenshots** (only for a Frontend UI change): while checking the changed view, take one screenshot of it on desktop (1440×900) and one on mobile (390×844) with `browser_take_screenshot`, after setting the size with `browser_resize`, and pass an ASCII `filename` such as `us-<id>-<view>-desktop.png`. One theme is enough, and at most two images per changed view, so pick the views that show the change best. They are saved in the git-ignored `.playwright-mcp/` folder, and step 8 uploads them to the pull request ([pull-request.md](pull-request.md)). Never copy them into the repository. Take no screenshots for backend, pipeline or skill changes.
 
-A screenshot must not show secrets or personal data, such as tokens, email addresses, tenant or client IDs, or real data from a signed-in view. Look at every screenshot of a signed-in view (`/<cv-address>/admin`) before it is uploaded, and leave out any image that shows something suspicious, naming the view under *Huomioitavaa*.
+A screenshot must not show secrets or personal data, such as tokens, email addresses, tenant or client IDs, or real data from a signed-in view. Look at every screenshot of a signed-in view (`/<cv-address>/admin`) with the Read tool before it is uploaded, and leave out any image that shows something suspicious, naming the view under *Huomioitavaa*. Read only the screenshots you took; do not open snapshots or logs from signed-in views.
 
 **Formatting:** format the changed files the same way as User Story 32. Use `dotnet format` for C# and `npx prettier --write <files>` (from `src/Frontend`) for frontend files.
 

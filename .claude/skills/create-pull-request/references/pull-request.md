@@ -52,7 +52,7 @@ curl -sS -X POST \
   "$project/_apis/git/repositories/MyCV/pullRequests/<pr id>/attachments/<file>.png?api-version=7.1"
 ```
 
-`AZURE_DEVOPS_MCP` is the base64 token that `.mcp.json` passes to the Azure DevOps MCP server. Use its value as it is, without encoding it again, and never print it or run `curl` with `-v`, because the token would end up in the transcript. In a cloud session, leave out the `Authorization` header, because the network secret adds the token to requests to `dev.azure.com`. The Read tool is blocked in `.playwright-mcp/`, but `curl --data-binary` reads the file there.
+`AZURE_DEVOPS_MCP` is the base64 token that `.mcp.json` passes to the Azure DevOps MCP server. Use its value as it is, without encoding it again, and never print it or run `curl` with `-v`, because the token would end up in the transcript. In a cloud session, leave out the `Authorization` header, because the network secret adds the token to requests to `dev.azure.com`.
 
 The response is JSON with a `url`. Use it as returned, and build the *Kuvakaappaukset* section from the URLs, desktop first:
 

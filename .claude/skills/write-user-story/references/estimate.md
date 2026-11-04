@@ -15,7 +15,7 @@ The implementation chat runs from the kickoff prompt to an open pull request, `/
 | Browser checks | The largest single cost of a UI story. Every Playwright snapshot or screenshot adds thousands of tokens, and the checklist repeats them for desktop and mobile, both themes and reduced motion. A signed-in view also waits for the user to sign in. |
 | Open decisions | Every `Avoimet kysymykset` item, and every choice the `Toteutus` leaves to the agent, costs a round trip with the full context. |
 | Iteration risk | Animation tuning, unfamiliar libraries, migrations and flaky tests tend to need several rounds. |
-| Fixed overhead | `CLAUDE.md`, the named skills and `/create-pull-request` (work item, review subagent, commits, pull request) cost about the same in every chat. |
+| Fixed overhead | `CLAUDE.md`, the named skills and `/create-pull-request` (work item, review subagent and `code-review` pass, commits, pull request) cost about the same in every chat. |
 
 ## Size Classes
 

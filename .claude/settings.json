@@ -3,8 +3,7 @@
     "deny": [
       "Read(./src/Frontend/package-lock.json)",
       "Read(./src/Frontend/src/generated/**)",
-      "Read(./src/Frontend/dist/**)",
-      "Read(./.playwright-mcp/**)"
+      "Read(./src/Frontend/dist/**)"
     ]
   },
   "statusLine": {

@@ -27,9 +27,16 @@ Tell the subagent to:
 
 The lint and build results are already known, so the review does not re-run them or report what they enforce.
 
+In the same step, also run the built-in `code-review` skill yourself as a second pass that hunts for correctness bugs, on the same diff as the subagent. Call it as `Skill` with `skill: code-review` and `args: "<level> <target>"`, for example `args: "medium origin/main"`:
+
+- `<level>` comes from the same size class: `medium` for XS and S, `high` for M, L and XL. Always pass it, because without it the skill reuses the level of its previous run. Never pass `max` or `ultra`, nor `--comment` or `--fix`: the user picks the fixes, and nothing is posted before the pull request exists.
+- `<target>` is `origin/main`, or `origin/<branch>` on a follow-up push, as above. Run `git add -N <files>` on untracked files first, so that the diff includes them.
+
+Start the subagent first (it runs in the background), then run the skill while it works. Treat the skill's findings as input to *Report The Findings* below, not as the report to the user, even if the skill shows them through `ReportFindings`. Do not start *Report The Findings* until the subagent's completion notice has arrived, and never write or guess its result yourself. If the skill fails or is unavailable, continue with the subagent's findings alone and say so under `Huomioitavaa`.
+
 ## Report The Findings
 
-Check each finding the subagent returns against the code and drop the ones that do not hold; a few real findings beat a long list. Sort the rest into these categories, in this order, numbered in one sequence across all of them so the user can answer with numbers:
+Merge the findings of the subagent and of the `code-review` skill, keeping one entry when both report the same problem. Check each finding against the code and drop the ones that do not hold; a few real findings beat a long list. Sort the rest into these categories, in this order, numbered in one sequence across all of them so the user can answer with numbers:
 
 | Category | What goes here | `code-review-and-quality` label |
 |---|---|---|
