@@ -11,11 +11,10 @@ const languages = [LanguageCode.Finnish, LanguageCode.English]
 
 /**
  * Switches the UI between Finnish and English: one segment per language
- * with its flag and code, the active one marked with `aria-pressed`. Each
- * segment is named in its own language after its visible code ("FI –
- * Suomeksi", "EN – In English"), so speech control finds it by the code it
- * shows, and carries that `lang`, so a screen reader pronounces it right
- * whichever language is active. An effect keeps i18next on the chosen language, also
+ * showing only its flag, the active one marked with `aria-pressed`. Each
+ * segment is named in its own language ("Suomeksi", "In English"), and
+ * carries that `lang`, so a screen reader pronounces it right whichever
+ * language is active. An effect keeps i18next on the chosen language, also
  * when another tab changes it. It skips a language i18next already has, so
  * the first render doesn't reset the page title a CV has set.
  *
@@ -47,7 +46,6 @@ export default function LanguageToggle(): JSX.Element {
           onClick={() => setLanguage(code)}
         >
           <LanguageFlag language={code} />
-          {code.toUpperCase()}
         </Button>
       ))}
     </div>

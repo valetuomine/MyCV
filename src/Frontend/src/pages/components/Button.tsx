@@ -111,10 +111,12 @@ const variantClasses: Record<
 
 /**
  * A segment's size, the same at every `ButtonSize`: 36 px inside its 44 px
- * track, reaching the track's edges with an invisible `::before`.
+ * track, reaching the track's edges with an invisible `::before`. It is at
+ * least 44 px wide, so a segment holding only an icon still has a full touch
+ * target.
  */
 const segmentSize =
-  "h-9 px-2 text-xs before:absolute before:inset-x-0 before:-inset-y-1"
+  "h-9 min-w-11 px-3.5 before:absolute before:inset-x-0 before:-inset-y-1"
 
 /**
  * Each size per shape. Small buttons look smaller but keep a 44 px touch
@@ -138,15 +140,14 @@ const sizeClasses: Record<ButtonSize, Record<ButtonShape, string>> = {
 /**
  * How each shape lays out its content. Icons stack theirs in one cell. Text
  * buttons pad their sides for the focus ring and pull back by the same
- * amount, so the label still lines up with the text around it. Segments set
- * their label as a mono code beside an icon.
+ * amount, so the label still lines up with the text around it. Segments
+ * centre their content, such as a flag.
  */
 const shapeClasses: Record<ButtonShape, string> = {
   pill: "inline-flex items-center justify-center gap-2 text-center",
   icon: "inline-grid place-items-center",
   text: "-mx-1.5 inline-flex items-center gap-2 px-1.5",
-  segment:
-    "inline-flex items-center justify-center gap-1.5 font-cv-mono tracking-wide",
+  segment: "inline-flex items-center justify-center",
 }
 
 const baseClassName =

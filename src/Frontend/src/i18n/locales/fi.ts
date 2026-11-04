@@ -20,8 +20,8 @@ export const fi: Translation = {
   },
   language: {
     label: "Kieli",
-    fi: "FI – Suomeksi",
-    en: "EN – In English",
+    fi: "Suomeksi",
+    en: "In English",
   },
   theme: {
     toLight: "Vaihda vaaleaan teemaan",

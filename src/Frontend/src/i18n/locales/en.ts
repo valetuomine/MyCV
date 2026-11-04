@@ -18,8 +18,8 @@ export const en = {
   },
   language: {
     label: "Language",
-    fi: "FI – Suomeksi",
-    en: "EN – In English",
+    fi: "Suomeksi",
+    en: "In English",
   },
   theme: {
     toLight: "Switch to light theme",
