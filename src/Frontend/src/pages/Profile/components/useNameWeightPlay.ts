@@ -27,6 +27,14 @@ interface NameWeightPlay {
 
 /** The name heading's weight; every letter keeps the width it has at it. */
 export const restWeight = 600
+/**
+ * The step the heading's weight moves in, in the reveal and in the wave. Each
+ * weight of a variable font is its own font instance, which the browser builds
+ * during layout the first time the weight is used, so whole steps keep the
+ * weights to a bounded set of cached instances instead of a new one for nearly
+ * every letter on every frame.
+ */
+export const weightStep = 10
 const thinWeight = 540
 const boldWeight = 800
 const waveMs = 1500
@@ -106,6 +114,7 @@ export default function useNameWeightPlay(
     }
 
     const weights = letters.map(() => restWeight)
+    const paintedWeights = letters.map(() => "")
     const glows = letters.map(() => 0)
     let centers = letters.map(() => ({ x: 0, y: 0 }))
     let radius = 0
@@ -162,21 +171,28 @@ export default function useNameWeightPlay(
 
     /**
      * Writes each letter's current weight and accent halo to it, and the
-     * weight to its sheen copy. The halo's strength and spread come from the
+     * weight to its sheen copy. The weight is snapped to `weightStep`, and
+     * written only when the step changed, so a frame that stays within a step
+     * changes no font instance and no text layout. The halo's strength and spread come from the
      * theme's `--cv-name-glow-*` tokens, so a theme change updates it at once.
      */
     const paint = (): void => {
       letters.forEach((letter, index) => {
         const glow = glows[index]
-        const weight = String(Math.round(weights[index]))
-        letter.style.fontWeight = weight
+        const weight = String(
+          Math.round(weights[index] / weightStep) * weightStep,
+        )
+        if (weight !== paintedWeights[index]) {
+          paintedWeights[index] = weight
+          letter.style.fontWeight = weight
+          if (sheens[index]) {
+            sheens[index].style.fontWeight = weight
+          }
+        }
         letter.style.filter =
           glow > 0.01
             ? `drop-shadow(0 0 var(--cv-name-glow-spread) color-mix(in srgb, var(--cv-accent) calc(${glow.toFixed(3)} * var(--cv-name-glow-strength) * 1%), transparent))`
             : ""
-        if (sheens[index]) {
-          sheens[index].style.fontWeight = weight
-        }
       })
     }
 

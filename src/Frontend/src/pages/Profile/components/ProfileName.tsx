@@ -10,7 +10,7 @@ import { Fragment, useMemo, type JSX } from "react"
 import useFontLoaded from "../../components/useFontLoaded"
 import { kerningFont, measureKerning } from "../utils/nameKerning"
 import { splitGraphemes } from "../utils/profileFormUtils"
-import useNameWeightPlay, { restWeight } from "./useNameWeightPlay"
+import useNameWeightPlay, { restWeight, weightStep } from "./useNameWeightPlay"
 
 interface ProfileNameProps {
   fullName: string
@@ -29,25 +29,26 @@ const maxLetterStagger = 0.035
 const revealDuration = 0.9
 const revealEase = [0.22, 1, 0.36, 1] as const
 const startWeight = 200
-const weightStep = 10
 const sheenSpring = { stiffness: 100, damping: 20 }
 
 /**
  * How many weight steps the reveal takes. The span from `startWeight` to
  * `restWeight` must divide evenly by `weightStep`, or the last step would
- * overshoot the heading's weight.
+ * overshoot the heading's weight, so a span that doesn't throws when the
+ * module loads.
  */
 const weightSteps = (restWeight - startWeight) / weightStep
+if (!Number.isInteger(weightSteps)) {
+  throw new Error("The reveal's weight span must divide evenly by weightStep.")
+}
 
 /** The reveal's curve as a function, for easing the weight in steps. */
 const revealCurve = cubicBezier(...revealEase)
 
 /**
- * The reveal's curve, snapped so the weight moves in `weightStep` steps. Each
- * weight of a variable font is its own font instance, which the browser builds
- * during layout the first time the weight is used. Snapping keeps the weights
- * to a few cached instances instead of a new one for nearly every letter on
- * every frame.
+ * The reveal's curve, snapped so the weight moves in `weightStep` steps, which
+ * keeps the weights to a bounded set of cached font instances (see
+ * `weightStep` for why).
  *
  * @param progress - The animation's progress, from 0 to 1.
  * @returns The eased progress, snapped to a whole weight step.
