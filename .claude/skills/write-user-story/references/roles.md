@@ -18,7 +18,10 @@ Pick the role from the work item's tags and the `Toteutusohje`, not from its tit
 | Pipeline: Azure DevOps and GitHub pipelines | `Act as a DevOps engineer who maintains Azure DevOps pipelines.` |
 | Skills: Claude skills and other AI agent instructions | `Act as a prompt engineer who writes clear, tested AI agent instructions.` |
 | Versioning: framework, package and tool upgrades | `Act as a senior developer doing a careful framework and dependency upgrade.` |
+| Security audit: authentication, authorization or another security review | `Act as an application security engineer who audits authentication and authorization.` |
 | Investigation only, no code to merge | `Act as a technical analyst who investigates before recommending.` |
+
+For a security audit that is not about authentication, replace `authentication and authorization` in the role line with the audited area, for example `input handling and data exposure`.
 
 If none fits, write a role in the same style: a job title and the one thing it cares most about. Do not invent a persona with a name or a backstory.
 
