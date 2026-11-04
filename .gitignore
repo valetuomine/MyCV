@@ -55,3 +55,7 @@ agent/skills/
 !.claude/skills/write-user-story/
 !.claude/skills/create-pull-request/
 !.claude/skills/check-ideas-artifact/
+!.claude/skills/record-demo-video/
+# The demo video scripts are used rarely and stay local; SKILL.md is tracked.
+.claude/skills/record-demo-video/scripts/*.js
+.claude/skills/record-demo-video/scripts/*.mjs
