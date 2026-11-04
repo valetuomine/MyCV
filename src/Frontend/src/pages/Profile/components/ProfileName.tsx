@@ -1,4 +1,5 @@
 import {
+  cubicBezier,
   m as motion,
   useMotionTemplate,
   useReducedMotion,
@@ -27,27 +28,69 @@ const revealSpread = 0.6
 const maxLetterStagger = 0.035
 const revealDuration = 0.9
 const revealEase = [0.22, 1, 0.36, 1] as const
+const startWeight = 200
+const weightStep = 10
 const sheenSpring = { stiffness: 100, damping: 20 }
+
+/**
+ * How many weight steps the reveal takes. The span from `startWeight` to
+ * `restWeight` must divide evenly by `weightStep`, or the last step would
+ * overshoot the heading's weight.
+ */
+const weightSteps = (restWeight - startWeight) / weightStep
+
+/** The reveal's curve as a function, for easing the weight in steps. */
+const revealCurve = cubicBezier(...revealEase)
+
+/**
+ * The reveal's curve, snapped so the weight moves in `weightStep` steps. Each
+ * weight of a variable font is its own font instance, which the browser builds
+ * during layout the first time the weight is used. Snapping keeps the weights
+ * to a few cached instances instead of a new one for nearly every letter on
+ * every frame.
+ *
+ * @param progress - The animation's progress, from 0 to 1.
+ * @returns The eased progress, snapped to a whole weight step.
+ */
+function steppedRevealEase(progress: number): number {
+  return Math.round(revealCurve(progress) * weightSteps) / weightSteps
+}
 
 /**
  * Each letter rises from behind its word's clipped bottom edge, after its own
  * delay, sharpening from a thin blur into the heading's weight on the way.
+ * The rise is a `transform` string and the sharpening a `filter`, so the
+ * browser runs both, and the fade, off the main thread. Only the weight runs
+ * on it, in steps (`steppedRevealEase`).
  */
 const letterReveal: Variants = {
-  hidden: { y: "110%", opacity: 0, filter: "blur(14px)", fontWeight: 200 },
+  hidden: {
+    transform: "translateY(110%)",
+    opacity: 0,
+    filter: "blur(14px)",
+    fontWeight: startWeight,
+  },
   visible: (delay: number) => ({
-    y: "0%",
+    transform: "translateY(0%)",
     opacity: 1,
     filter: "blur(0px)",
     fontWeight: restWeight,
-    transition: { duration: revealDuration, ease: revealEase, delay },
-    transitionEnd: { filter: "none" },
+    transition: {
+      duration: revealDuration,
+      ease: revealEase,
+      delay,
+      fontWeight: { inherit: true, ease: steppedRevealEase },
+    },
+    transitionEnd: { transform: "none", filter: "none" },
   }),
 }
 
 /**
  * The reveal for reduced motion: the rise alone, which `MotionConfig` then
- * skips, so the letters show straight away at the heading's weight.
+ * skips, so the letters show straight away at the heading's weight. It must
+ * animate `y`, not a `transform` string as `letterReveal` does: `MotionConfig`
+ * skips only positional values such as `y`, so a `transform` string would play
+ * the whole rise.
  */
 const letterRise: Variants = {
   hidden: { y: "110%" },
