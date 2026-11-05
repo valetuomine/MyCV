@@ -20,6 +20,19 @@ const readStdin = async () => {
 const isNumber = (value) => typeof value === 'number' && Number.isFinite(value);
 
 /**
+ * Formats the reset time of the five-hour window as a local 24-hour HH:MM time.
+ * @param {unknown} resetsAt The reset time as a Unix timestamp in seconds.
+ * @returns {string} The time, or an empty string when it is missing, past or more than five hours ahead.
+ */
+const formatResetTime = (resetsAt) => {
+  if (!isNumber(resetsAt)) return '';
+  const msAhead = resetsAt * 1000 - Date.now();
+  if (msAhead <= 0 || msAhead > 5 * 60 * 60 * 1000) return '';
+  const date = new Date(resetsAt * 1000);
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+};
+
+/**
  * Builds the status line text from the rate limit fields; absent windows are left out.
  * @returns {Promise<string>} The status line, or an empty string when there is nothing to show.
  */
@@ -37,7 +50,10 @@ const buildLine = async () => {
     }
     parts.push(text);
   }
-  if (isNumber(fiveHour?.used_percentage)) parts.push(`5 h ${Math.round(fiveHour.used_percentage)} %`);
+  if (isNumber(fiveHour?.used_percentage)) {
+    const resetTime = formatResetTime(fiveHour.resets_at);
+    parts.push(`5 h ${Math.round(fiveHour.used_percentage)} %${resetTime ? ` (nollautuu ${resetTime})` : ''}`);
+  }
   return parts.join(' · ');
 };
 
