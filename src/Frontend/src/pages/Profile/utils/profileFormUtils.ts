@@ -68,6 +68,64 @@ export function toExternalUrl(value: string): string {
   return /^https?:\/\//i.test(value) ? value : `https://${value}`
 }
 
+/** Matches a leading URL scheme such as `https:` or `javascript:`. */
+const urlScheme = /^[a-z][a-z0-9+.-]*:/i
+
+/**
+ * Matches a host with a port and no scheme, such as `github.com:443/user`.
+ * The host must contain a dot or be `localhost`, so `javascript:1/alert(1)`
+ * still counts as a scheme.
+ */
+const hostAndPort =
+  /^(?:[a-z0-9-]+(?:\.[a-z0-9-]+)+|localhost):[0-9]+(?:[/?#]|$)/i
+
+/** Matches an `http` or `https` address with a host. */
+const httpAddress = /^https?:\/\/[^/\\?#]/i
+
+/**
+ * Trims the C0 controls and spaces that browsers drop from both ends of a
+ * link before they read its scheme.
+ *
+ * @param value - The link.
+ * @returns The link without leading or trailing controls and spaces.
+ */
+function trimControls(value: string): string {
+  let start = 0
+  let end = value.length
+  while (start < end && value.charCodeAt(start) <= 0x20) {
+    start++
+  }
+  while (end > start && value.charCodeAt(end - 1) <= 0x20) {
+    end--
+  }
+
+  return value.slice(start, end)
+}
+
+/**
+ * Tells whether a profile link may be saved, by the same rule as the API's
+ * `ProfileLinkUri`: an `http` or `https` address, or a link without a
+ * scheme, such as `github.com/user`. Browsers ignore tabs and line breaks
+ * and trim controls and spaces before they read the scheme, so the check
+ * does too.
+ *
+ * @param value - The link as typed; empty means no link.
+ * @returns Whether the link may be saved.
+ */
+export function isAllowedProfileLink(value: string | null): boolean {
+  const normalized = trimControls((value ?? "").replace(/[\t\n\r]/g, ""))
+
+  if (
+    !normalized ||
+    !urlScheme.test(normalized) ||
+    hostAndPort.test(normalized)
+  ) {
+    return true
+  }
+
+  return httpAddress.test(normalized) && URL.canParse(normalized)
+}
+
 /**
  * Accepts a bare public URL segment or a full CV link and returns the segment.
  *

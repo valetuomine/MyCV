@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { validationMessage } from "../../../i18n/validationMessage"
 import { LanguageCode } from "../../../types"
+import { isAllowedProfileLink } from "../utils/profileFormUtils"
 
 /** One language's title, summary and location, with their length limits. */
 const profileTranslationSchema = z.object({
@@ -10,8 +11,15 @@ const profileTranslationSchema = z.object({
   location: z.string().max(100, validationMessage("locationMax")).nullable(),
 })
 
-/** An optional profile link of at most 500 characters. */
-const urlSchema = z.string().max(500, validationMessage("linkMax")).nullable()
+/**
+ * An optional profile link of at most 500 characters, either an `http` or
+ * `https` address or one without a scheme, as the API requires.
+ */
+const urlSchema = z
+  .string()
+  .max(500, validationMessage("linkMax"))
+  .refine(isAllowedProfileLink, validationMessage("linkScheme"))
+  .nullable()
 
 /**
  * The profile form. Requires a full name and a Finnish translation with a

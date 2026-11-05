@@ -9,20 +9,7 @@
       name="description"
       content="MyCV shows a developer's CV at its own link: title, summary, location and profile links."
     />
-    <script>
-      // Apply the saved or OS theme before first paint to avoid a flash.
-      try {
-        var saved = JSON.parse(localStorage.getItem("cv-theme"));
-        var dark =
-          saved === "dark" ||
-          (saved !== "light" &&
-            matchMedia("(prefers-color-scheme: dark)").matches);
-        document.documentElement.dataset.theme = dark ? "dark" : "light";
-        document
-          .querySelector('meta[name="theme-color"]')
-          .setAttribute("content", dark ? "#09090b" : "#fafafa");
-      } catch (e) {}
-    </script>
+    <script src="/theme-init.js"></script>
     <title>MyCV</title>
   </head>
   <body>

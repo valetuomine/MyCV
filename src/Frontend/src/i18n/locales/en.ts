@@ -197,6 +197,8 @@ export const en = {
     summaryMax: "Summary must be 2500 characters or fewer",
     locationMax: "Location must be 100 characters or fewer",
     linkMax: "Link must be 500 characters or fewer",
+    linkScheme:
+      "Link must start with http:// or https://, or have no prefix, such as github.com/name",
     duplicateTranslation: "Each language can have only one translation",
     titleRequired: "A title is required when translation content is provided",
     finnishRequired: "A Finnish translation is required",

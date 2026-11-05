@@ -3,6 +3,7 @@ using CV.DataAccess;
 using CV.DataAccess.Entity;
 using CV.Logic.Extensions;
 using CV.Logic.Mappers;
+using CV.Logic.Validation;
 using CV.LogicInterface.Authentication;
 using CV.LogicInterface.Dto.Profile;
 using CV.LogicInterface.ServiceInterfaces;
@@ -34,7 +35,7 @@ namespace CV.Logic.Services
             bool canManageAny,
             CancellationToken cancellationToken = default)
         {
-            ValidateRequest(request.FullName, request.Translations);
+            ValidateRequest(request.FullName, request.Translations, request.LinkedInUrl, request.GitHubUrl);
 
             var dbProfile = request.MapRequestToEntity();
             Candidate? dbCandidate = null;
@@ -200,7 +201,7 @@ namespace CV.Logic.Services
 
             var isOwner = await EnsureCanManageProfile(profileId, actor, canManageAny, cancellationToken);
 
-            ValidateRequest(request.FullName, request.Translations);
+            ValidateRequest(request.FullName, request.Translations, request.LinkedInUrl, request.GitHubUrl);
 
             var dbProfile = await _dataContext.Profile
                 .Include(profile => profile.Translations)
@@ -223,11 +224,25 @@ namespace CV.Logic.Services
             return result;
         }
 
-        private static void ValidateRequest(string fullName, IReadOnlyCollection<ProfileTranslationRequest> translations)
+        private static void ValidateRequest(
+            string fullName,
+            IReadOnlyCollection<ProfileTranslationRequest> translations,
+            string? linkedInUrl,
+            string? gitHubUrl)
         {
             if (string.IsNullOrWhiteSpace(fullName))
             {
                 throw new BadRequestException("FullName is required.");
+            }
+
+            if (!ProfileLinkUri.IsAllowed(linkedInUrl))
+            {
+                throw new BadRequestException("LinkedInUrl must be an http or https link.");
+            }
+
+            if (!ProfileLinkUri.IsAllowed(gitHubUrl))
+            {
+                throw new BadRequestException("GitHubUrl must be an http or https link.");
             }
 
             if (translations is null || translations.Count == 0)

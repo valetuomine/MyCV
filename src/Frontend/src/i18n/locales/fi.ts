@@ -201,6 +201,8 @@ export const fi: Translation = {
     summaryMax: "Tiivistelmä voi olla enintään 2500 merkkiä",
     locationMax: "Sijainti voi olla enintään 100 merkkiä",
     linkMax: "Linkki voi olla enintään 500 merkkiä",
+    linkScheme:
+      "Linkin pitää alkaa http:// tai https://, tai olla ilman alkua, kuten github.com/nimi",
     duplicateTranslation: "Kullakin kielellä voi olla vain yksi käännös",
     titleRequired: "Nimike on pakollinen, kun käännöksellä on sisältöä",
     finnishRequired: "Suomenkielinen käännös on pakollinen",

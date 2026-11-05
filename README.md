@@ -90,6 +90,19 @@ In a deployment, install Chromium when deploying instead of at runtime:
 
 Public CV pages are readable without signing in. Creating and editing profiles is limited to the site administrator, who signs in with Microsoft Entra ID; that setup is not part of this README.
 
+## Security headers
+
+The frontend's Content Security Policy, `X-Content-Type-Options` and `Referrer-Policy` are set in `globalHeaders` of `src/Frontend/public/staticwebapp.config.json`, which Azure Static Web Apps sends with every response. The policy runs only the app's own script files, so inline scripts never run, and lets the app connect only to itself, its API and Microsoft sign-in. `object-src` allows the app and its API, because the PDF page shows the API's PDF in an `<object>`. When `VITE_API_BASE_URL` is set, the build adds the API's origin to the copy in `dist`, so the production address stays out of the repository.
+
+`npm run dev` sends no policy, because Vite's dev server needs inline scripts. To test the policy, build and preview the production build, which sends the same headers:
+
+```powershell
+npm --prefix src/Frontend run build
+npm --prefix src/Frontend run preview -- --port 3000 --strictPort
+```
+
+The preview proxies `/api` to the local API like the dev server. Port 3000, in place of the preview's default 4173, keeps the sign-in redirect addresses and the API's default `PdfPrinter:FrontendBaseUrl` working, so stop the dev server first.
+
 ## Configuration and secrets
 
 - `src/Backend/CV.WebApi/appsettings.json` is for non-secret defaults only. Local overrides such as `appsettings.Development.json` are ignored by Git.

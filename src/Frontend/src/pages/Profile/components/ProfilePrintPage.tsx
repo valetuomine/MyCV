@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState, type JSX } from "react"
+import { Fragment, useEffect, useLayoutEffect, useState, type JSX } from "react"
 import { useTranslation } from "react-i18next"
 import { getProfilePictureUrl, type Profile } from "../../../api/profileQueries"
 import type { LanguageCode } from "../../../types"
@@ -33,7 +33,8 @@ function toCssString(value: string): string {
  * The page setup: A4 with the margins the API prints with, and a footer on
  * every page in the bottom margin: when the CV was updated on the left and the
  * page number out of the page count on the right. Chromium prints `@page`
- * margin boxes with the document's fonts.
+ * margin boxes with the document's fonts. The page adds it as a constructed
+ * stylesheet, because the Content Security Policy refuses inline `<style>`.
  *
  * @param updatedText - The translated "Updated" line, or "" for none.
  * @returns The `@page` rule.
@@ -105,6 +106,21 @@ export default function ProfilePrintPage({
     { label: "LinkedIn", url: values.linkedInUrl },
     { label: "GitHub", url: values.gitHubUrl },
   ].filter((link): link is ProfileLink => Boolean(link.url))
+  /** The page setup and footer, in the print's language. */
+  const pageCss = pageFooterCss(
+    updatedAt ? t("cv.updated", { date: updatedAt }) : "",
+  )
+
+  useLayoutEffect(() => {
+    const sheet = new CSSStyleSheet()
+    sheet.replaceSync(pageCss)
+    document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet]
+    return () => {
+      document.adoptedStyleSheets = document.adoptedStyleSheets.filter(
+        (adopted) => adopted !== sheet,
+      )
+    }
+  }, [pageCss])
 
   useEffect(() => {
     let active = true
@@ -123,9 +139,6 @@ export default function ProfilePrintPage({
       data-print-ready={ready ? "" : undefined}
       className="grid gap-8 text-sm leading-relaxed text-cv-copy"
     >
-      <style>
-        {pageFooterCss(updatedAt ? t("cv.updated", { date: updatedAt }) : "")}
-      </style>
       <header className="flex items-center gap-8 border-b border-cv-line pb-6">
         <div className="grid min-w-0 flex-1 gap-2">
           <p className="m-0 font-cv-mono text-[0.6875rem] tracking-widest text-cv-accent uppercase">

@@ -25,6 +25,32 @@ export default defineConfig(
         "warn",
         { allowConstantExport: true },
       ],
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "JSXAttribute[name.name='dangerouslySetInnerHTML']",
+          message:
+            "Render text through JSX, which escapes it. Raw HTML can run injected markup.",
+        },
+        {
+          selector:
+            "AssignmentExpression > MemberExpression.left[property.name=/^(innerHTML|outerHTML)$/]",
+          message:
+            "Set textContent or render through JSX. Assigned HTML can run injected markup.",
+        },
+        {
+          selector:
+            "AssignmentExpression > MemberExpression.left[computed=true][property.value=/^(innerHTML|outerHTML)$/]",
+          message:
+            "Set textContent or render through JSX. Assigned HTML can run injected markup.",
+        },
+        {
+          selector:
+            "CallExpression[callee.property.name='insertAdjacentHTML'], CallExpression[callee.object.name='document'][callee.property.name=/^(write|writeln)$/]",
+          message:
+            "Build elements through JSX or the DOM API. insertAdjacentHTML and document.write can run injected markup.",
+        },
+      ],
     },
   },
   {
