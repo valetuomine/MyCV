@@ -74,3 +74,11 @@ A screenshot must not show secrets or personal data, such as tokens, email addre
 **Formatting:** format the changed files the same way as User Story 32. Use `dotnet format` for C# and `npx prettier --write <files>` (from `src/Frontend`) for frontend files.
 
 If a check fails, fix the cause and run it again. Never push code that fails a check, and never skip, disable or weaken a check to make it pass. If you cannot fix a failure, stop and report it with the error output.
+
+**Code graph** (any change to code under `src`): this is not a pipeline check, so the rule above about failing checks does not apply to it. Run it in step 6, after the review fixes and right before committing, so the graph matches the final code. If `graphify-out/graph.json` exists, refresh the local graph so the next session's queries match the merged code. It is git-ignored, needs no LLM and is usually quick:
+
+```powershell
+python -m graphify update .
+```
+
+Skip it silently when `graphify-out/` does not exist, as in cloud sessions. If it warns that the graph would shrink, find out why (deleted files are fine) before re-running with `--force`. A failing update never blocks the PR; report it.

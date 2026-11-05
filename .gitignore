@@ -59,3 +59,6 @@ agent/skills/
 # The demo video scripts are used rarely and stay local; SKILL.md is tracked.
 .claude/skills/record-demo-video/scripts/*.js
 .claude/skills/record-demo-video/scripts/*.mjs
+
+# Graphify output (local knowledge graph)
+graphify-out/
