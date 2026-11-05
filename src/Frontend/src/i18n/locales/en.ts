@@ -16,6 +16,9 @@ export const en = {
     opensInNewTab: " (opens in a new tab)",
     characters: " characters",
   },
+  controls: {
+    label: "Page settings",
+  },
   language: {
     label: "Language",
     fi: "Suomeksi",

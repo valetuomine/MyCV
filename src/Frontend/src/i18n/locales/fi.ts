@@ -18,6 +18,9 @@ export const fi: Translation = {
     opensInNewTab: " (avautuu uuteen välilehteen)",
     characters: " merkkiä",
   },
+  controls: {
+    label: "Sivun asetukset",
+  },
   language: {
     label: "Kieli",
     fi: "Suomeksi",

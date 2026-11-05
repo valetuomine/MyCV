@@ -7,15 +7,13 @@ import {
 } from "framer-motion"
 import type { JSX, PointerEvent, ReactNode } from "react"
 import SignedOutNotice from "../../auth/SignedOutNotice"
-import SignOutButton from "../../auth/SignOutButton"
 import SignOutMessage from "../../auth/SignOutMessage"
 import useIdleSignOut from "../../auth/useIdleSignOut"
 import useSigningOutReason from "../../auth/useSigningOutReason"
 import DotEcho from "./DotEcho"
-import LanguageToggle from "./LanguageToggle"
 import LightEcho from "./LightEcho"
 import LightSweep from "./LightSweep"
-import ThemeToggle from "./ThemeToggle"
+import PageControls from "./PageControls"
 
 interface BackgroundProps {
   children: ReactNode
@@ -140,11 +138,7 @@ export default function Background({ children }: BackgroundProps): JSX.Element {
         <div className="absolute inset-0 bg-cv-grain opacity-[0.06]" />
       </div>
       <div className="relative z-10 min-h-dvh px-6 sm:px-[clamp(1.5rem,5vw,5.5rem)] print:min-h-0 print:px-0">
-        <div className="absolute top-5 right-6 z-20 flex max-w-[calc(100%-3rem)] flex-wrap items-start justify-end gap-2 sm:right-[clamp(1.5rem,5vw,5.5rem)] print:hidden">
-          <SignOutButton />
-          <LanguageToggle />
-          <ThemeToggle />
-        </div>
+        <PageControls />
         {signingOutReason ? (
           <div className="print:hidden">
             <SignOutMessage reason={signingOutReason} />
