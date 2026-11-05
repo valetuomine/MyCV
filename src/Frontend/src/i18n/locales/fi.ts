@@ -259,6 +259,14 @@ export const fi: Translation = {
     idleNotice: "Sinut kirjattiin ulos 5 minuutin käyttämättömyyden jälkeen",
     userNotice: "Olet kirjautunut ulos",
   },
+  idleWarning: {
+    title: "Oletko vielä paikalla?",
+    description:
+      "Sovellusta ei ole käytetty hetkeen, joten sinut kirjataan pian ulos.",
+    timeLeft_one: "Sinut kirjataan ulos {{count}} sekunnin kuluttua.",
+    timeLeft_other: "Sinut kirjataan ulos {{count}} sekunnin kuluttua.",
+    continue: "Jatka istuntoa",
+  },
   linkCallback: {
     pendingTitle: "Lisätään {{provider}}-kirjautumista",
     pendingDescription: "Palaat CV:hesi hetken kuluttua.",

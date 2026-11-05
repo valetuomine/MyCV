@@ -6,9 +6,9 @@ import {
   useTransform,
 } from "framer-motion"
 import type { JSX, PointerEvent, ReactNode } from "react"
+import IdleSignOutWarning from "../../auth/IdleSignOutWarning"
 import SignedOutNotice from "../../auth/SignedOutNotice"
 import SignOutMessage from "../../auth/SignOutMessage"
-import useIdleSignOut from "../../auth/useIdleSignOut"
 import useSigningOutReason from "../../auth/useSigningOutReason"
 import DotEcho from "./DotEcho"
 import LightEcho from "./LightEcho"
@@ -34,8 +34,9 @@ const maxBeamLean = 9
  * the sign-out notice. None of them are printed, and the frame leaves no
  * padding or minimum height on paper. The controls share one row, which wraps
  * only on screens too narrow for it, such as 320 px with the Finnish Sign out.
- * It also signs an idle user out on every page, and shows the sign-out screen
- * instead of the page while a sign-out is under way. The light falls as a
+ * It also signs an idle user out on every page, with a warning for the last
+ * minute (`IdleSignOutWarning`), and shows the sign-out screen instead of the
+ * page while a sign-out is under way. The light falls as a
  * diagonal wash and a beam past the first screen, one band of it rests across
  * the page with no dots under it, and the light theme fades into a faint shade
  * in the far corner. With a mouse, a spotlight follows the pointer on a spring
@@ -50,7 +51,6 @@ const maxBeamLean = 9
  * @returns The framed page.
  */
 export default function Background({ children }: BackgroundProps): JSX.Element {
-  useIdleSignOut()
   const signingOutReason = useSigningOutReason()
 
   const pointerX = useMotionValue(-1000)
@@ -149,6 +149,7 @@ export default function Background({ children }: BackgroundProps): JSX.Element {
       </div>
       <div className="print:hidden">
         <SignedOutNotice />
+        <IdleSignOutWarning />
       </div>
     </div>
   )

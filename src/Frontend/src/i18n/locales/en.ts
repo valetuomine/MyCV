@@ -251,6 +251,14 @@ export const en = {
     idleNotice: "You were signed out after 5 minutes of inactivity",
     userNotice: "You've signed out",
   },
+  idleWarning: {
+    title: "Still there?",
+    description:
+      "The app hasn't been used for a while, so you'll be signed out soon.",
+    timeLeft_one: "You'll be signed out in {{count}} second.",
+    timeLeft_other: "You'll be signed out in {{count}} seconds.",
+    continue: "Continue session",
+  },
   linkCallback: {
     pendingTitle: "Adding {{provider}} sign-in",
     pendingDescription: "Taking you back to your CV in a moment.",
