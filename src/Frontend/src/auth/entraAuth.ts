@@ -1,6 +1,7 @@
 import {
   AuthError,
   BrowserAuthErrorCodes,
+  BrowserCacheLocation,
   EventType,
   InteractionRequiredAuthError,
   InteractionType,
@@ -16,6 +17,7 @@ import {
   readLinkSignInMarker,
   storeLastSignInMethod,
 } from "./adminLoginStorage"
+import { isLocalAuthStorage } from "./authStorage"
 import { microsoftSignInParameters } from "./signInLanguage"
 import { isLinkPopupState } from "./signInPopupState"
 import { RoutePaths } from "../routePaths"
@@ -44,7 +46,9 @@ export const signInPopupTimeoutMs = 10 * 60 * 1000
 /**
  * The app's MSAL client. Without configuration it falls back to a placeholder
  * client ID and the multi-tenant authority, so the app still loads and the
- * sign-in routes explain that sign-in isn't set up.
+ * sign-in routes explain that sign-in isn't set up. The cache stays in
+ * session storage unless the Playwright tests' dev server moves it to local
+ * storage (`isLocalAuthStorage`).
  */
 export const msalInstance = new PublicClientApplication({
   auth: {
@@ -53,6 +57,11 @@ export const msalInstance = new PublicClientApplication({
       ? `https://login.microsoftonline.com/${tenantId}`
       : "https://login.microsoftonline.com/organizations",
     redirectUri,
+  },
+  cache: {
+    cacheLocation: isLocalAuthStorage
+      ? BrowserCacheLocation.LocalStorage
+      : BrowserCacheLocation.SessionStorage,
   },
   system: { popupBridgeTimeout: signInPopupTimeoutMs },
 })

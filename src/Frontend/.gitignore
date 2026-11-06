@@ -11,6 +11,10 @@ node_modules
 dist
 dist-ssr
 *.local
+
+# Playwright: saved sessions, reports and traces
+e2e/.auth/
+e2e/.output/
 .env
 .env.*
 !.env.example

@@ -2,6 +2,7 @@ import {
   clearSignInPromptRequired,
   storeLastSignInMethod,
 } from "./adminLoginStorage"
+import { getAuthSessionStorage } from "./authStorage"
 import { signInLanguage } from "./signInLanguage"
 import { RoutePaths } from "../routePaths"
 import { SignInFailure, SignInMethod } from "../types"
@@ -22,8 +23,9 @@ const tokenExpiryMarginMs = 60 * 1000
 /** Session-storage key for the sign-in request waiting for Google's response. */
 const pendingRequestKey = "mycv-google-sign-in-request"
 /**
- * Session-storage key for the signed-in Google session. Session storage, like
- * MSAL's default cache, so the token never outlives the tab.
+ * Storage key for the signed-in Google session. Session storage, like MSAL's
+ * cache, so the token never outlives the tab, except on the Playwright tests'
+ * dev server, which keeps both in local storage (`getAuthSessionStorage`).
  */
 const sessionKey = "mycv-google-session"
 
@@ -96,14 +98,18 @@ export interface GooglePopupSignIn {
 }
 
 /**
- * Parses a JSON value from session storage.
+ * Parses a JSON value from storage.
  *
- * @param key - The session-storage key.
+ * @param key - The storage key.
+ * @param storage - The storage to read, session storage by default.
  * @returns The parsed value, or null when it is missing or invalid.
  */
-function readSessionJson<T>(key: string): T | null {
+function readSessionJson<T>(
+  key: string,
+  storage: Storage = sessionStorage,
+): T | null {
   try {
-    const value = sessionStorage.getItem(key)
+    const value = storage.getItem(key)
     return value ? (JSON.parse(value) as T) : null
   } catch {
     return null
@@ -111,7 +117,10 @@ function readSessionJson<T>(key: string): T | null {
 }
 
 /** The signed-in Google session, or null. */
-let googleSession = readSessionJson<GoogleSession>(sessionKey)
+let googleSession = readSessionJson<GoogleSession>(
+  sessionKey,
+  getAuthSessionStorage(),
+)
 /** Components subscribed to `googleSession` through `useSyncExternalStore`. */
 const googleSessionListeners = new Set<() => void>()
 
@@ -123,9 +132,9 @@ const googleSessionListeners = new Set<() => void>()
 function setGoogleSession(session: GoogleSession | null): void {
   googleSession = session
   if (session) {
-    sessionStorage.setItem(sessionKey, JSON.stringify(session))
+    getAuthSessionStorage().setItem(sessionKey, JSON.stringify(session))
   } else {
-    sessionStorage.removeItem(sessionKey)
+    getAuthSessionStorage().removeItem(sessionKey)
   }
   googleSessionListeners.forEach((listener) => listener())
 }

@@ -12,7 +12,7 @@ The implementation chat runs from the kickoff prompt to an open pull request, `/
 |---|---|
 | Exploring the code | Every file the agent reads stays in the context for the rest of the chat. A `Lähtötilanne` that names the exact files keeps this small. |
 | Areas touched | Each area adds its checks from `/create-pull-request`: .NET build and tests, the migration check, lint and build. Their output lands in the context. |
-| Browser checks | The largest single cost of a UI story. Every Playwright snapshot or screenshot adds thousands of tokens, and the checklist repeats them for desktop and mobile, both themes and reduced motion. A signed-in view also waits for the user to sign in. In large checks (two or more views, or a signed-in view, in M and larger work) the snapshots stay in a background browser subagent's context and only its short report reaches the chat. |
+| Browser checks | The largest single cost of a UI story. Every Playwright snapshot or screenshot adds thousands of tokens, and the checklist repeats them for desktop and mobile, both themes and reduced motion. A signed-in view runs as the Playwright test users with their saved sessions, so it waits for the user only when a session has lapsed or the view needs `CvAdmin`. In large checks (two or more views, or a signed-in view, in M and larger work) the snapshots stay in a background browser subagent's context and only its short report reaches the chat. |
 | Open decisions | Every `Avoimet kysymykset` item, and every choice the `Toteutus` leaves to the agent, costs a round trip with the full context. |
 | Iteration risk | Animation tuning, unfamiliar libraries, migrations and flaky tests tend to need several rounds. |
 | Fixed overhead | `CLAUDE.md`, the named skills and `/create-pull-request` (work item, review subagent, browser subagent for large UI checks, `code-review` pass, commits, pull request) cost about the same in every chat. |
@@ -67,7 +67,7 @@ The `Toteutusohje` gets a `Tokenien säästö` part (see [implementation-prompt.
 
 - **What to read.** Which `Lähtötilanne` files are enough to start from, and which areas need no reading because they do not change ("Backendiä ei tarvitse avata: rajapinta ei muutu."). For a large file, name the component or function; for a large skill, the section.
 - **Which checks.** The check areas that apply and the ones that do not, as `CLAUDE.md` already scopes them by area ("Backend ei muutu, joten aja vain frontend-tarkistukset.").
-- **What to check in the browser.** The exact views, states and interactions, and whether a signed-in view is needed. Ask for all UI changes to be done before the browser check, so the views are gone through once.
+- **What to check in the browser.** The exact views, states and interactions, and whether a signed-in view is needed. A signed-in view is checked on the test users' CVs (`/playwright-microsoft` and `/playwright-google`); name any view that needs `CvAdmin`, because only it needs the user's own sign-in. Ask for all UI changes to be done before the browser check, so the views are gone through once.
 - **What is already known.** A fact that the agent would otherwise spend turns finding out, such as a command that is blocked in a cloud session, or a file that looks relevant but is not.
 
 Never drop or weaken a check that `Valmis, kun` or `CLAUDE.md` requires. The browser checklist still covers both viewports, both themes, reduced motion and the console for every view it names; the saving comes from not exploring and from not browsing views that did not change.
