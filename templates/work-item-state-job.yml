@@ -17,8 +17,8 @@ jobs:
   # request has the "Jatkuu" label, which marks a follow-up pull request for a story that
   # is still in progress.
   #
-  # Finally, the work items that were actually moved release their Successors: a User Story in
-  # "Waiting for Predecessor" leaves that state when all of its Predecessors are
+  # Finally, the work items that were actually moved release their Successors: a User Story or
+  # Task in "Waiting for Predecessor" leaves that state when all of its Predecessors are
   # "Waiting for Deployment", "Closed" or "Removed". It moves to "New" if its description
   # mentions "Avoimet kysymykset" and to "Ready for Development" otherwise.
   - bash: |
@@ -126,9 +126,10 @@ jobs:
 
       # Releases one Successor if it waits for a Predecessor and all its Predecessors are done.
       release_successor() {
-        local sid="$1" successor state predecessors pending target
+        local sid="$1" successor state type predecessors pending target
         successor=$(curl -sS --fail-with-body -H "$auth" "$api/wit/workitems/$sid?\$expand=relations&api-version=7.1") || return 1
         state=$(echo "$successor" | jq -r '.fields["System.State"]')
+        type=$(echo "$successor" | jq -r '.fields["System.WorkItemType"]')
         if [ "$state" != "Waiting for Predecessor" ]; then
           return 0
         fi
@@ -141,7 +142,7 @@ jobs:
               | select(.fields["System.State"] | IN("Waiting for Deployment", "Closed", "Removed") | not)
               | "#\(.id)"] | join(", ")') || return 1
         if [ -n "$pending" ]; then
-          echo "User Story #$sid stays in state '$state': Predecessors still open ($pending)."
+          echo "#$sid ($type) stays in state '$state': Predecessors still open ($pending)."
           return 0
         fi
 
@@ -151,7 +152,7 @@ jobs:
           target="Ready for Development"
         fi
         set_state "$sid" "$target" || return 1
-        echo "User Story #$sid released from '$state' to '$target': all Predecessors are done."
+        echo "#$sid ($type) released from '$state' to '$target': all Predecessors are done."
       }
 
       # A failure for one Successor must not stop the others, so it only logs a warning. Inside
