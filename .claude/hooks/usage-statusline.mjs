@@ -1,5 +1,5 @@
-// Status line: shows the weekly usage, today's cumulative limit and the five-hour window usage,
-// and stores the weekly usage for usage-budget.mjs. Prints nothing on any failure.
+// Status line: shows the weekly usage, today's cumulative limit, the five-hour window usage and the
+// context size, and stores the weekly usage for usage-budget.mjs. Prints nothing on any failure.
 import { computeLimit, loadConfig, saveSnapshot } from './usage-budget-core.mjs';
 
 /**
@@ -33,11 +33,12 @@ const formatResetTime = (resetsAt) => {
 };
 
 /**
- * Builds the status line text from the rate limit fields; absent windows are left out.
+ * Builds the status line text from the rate limit and context window fields; absent parts are left out.
  * @returns {Promise<string>} The status line, or an empty string when there is nothing to show.
  */
 const buildLine = async () => {
-  const limits = JSON.parse(await readStdin())?.rate_limits;
+  const data = JSON.parse(await readStdin());
+  const limits = data?.rate_limits;
   const week = limits?.seven_day;
   const fiveHour = limits?.five_hour;
   const parts = [];
@@ -54,6 +55,8 @@ const buildLine = async () => {
     const resetTime = formatResetTime(fiveHour.resets_at);
     parts.push(`5 h ${Math.round(fiveHour.used_percentage)} %${resetTime ? ` (nollautuu ${resetTime})` : ''}`);
   }
+  const contextTokens = data?.context_window?.total_input_tokens;
+  if (isNumber(contextTokens)) parts.push(`Konteksti ${Math.round(contextTokens / 1000)}k`);
   return parts.join(' · ');
 };
 

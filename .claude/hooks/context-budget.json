@@ -1,0 +1,5 @@
+{
+  "warnTokens": 150000,
+  "stopTokens": 200000,
+  "repeatEveryTokens": 25000
+}
