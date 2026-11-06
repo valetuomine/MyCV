@@ -32,11 +32,11 @@ In the same step, also run the built-in `code-review` skill yourself as a second
 - `<level>` comes from the same size class: `medium` for XS and S, `high` for M, L and XL. Always pass it, because without it the skill reuses the level of its previous run. Never pass `max` or `ultra`, nor `--comment` or `--fix`: the user picks the fixes, and nothing is posted before the pull request exists.
 - `<target>` is `origin/main`, or `origin/<branch>` on a follow-up push, as above. Run `git add -N <files>` on untracked files first, so that the diff includes them.
 
-Start the subagent first (it runs in the background), then run the skill while it works. Treat the skill's findings as input to *Report The Findings* below, not as the report to the user, even if the skill shows them through `ReportFindings`. Do not start *Report The Findings* until the subagent's completion notice has arrived, and never write or guess its result yourself. If the skill fails or is unavailable, continue with the subagent's findings alone and say so under `Huomioitavaa`.
+Start the subagent first (it runs in the background), then run the skill while it works. Treat the skill's findings as input to *Report The Findings* below, not as the report to the user, even if the skill shows them through `ReportFindings`. Do not start *Report The Findings* until the review subagent's completion notice has arrived, and until the completion notice of the browser subagent has arrived too if one is running (*Browser subagent* in [checks.md](checks.md)). Never write or guess either result yourself. If the skill fails or is unavailable, continue with the subagent's findings alone and say so under `Huomioitavaa`.
 
 ## Report The Findings
 
-Merge the findings of the subagent and of the `code-review` skill, keeping one entry when both report the same problem. Check each finding against the code and drop the ones that do not hold; a few real findings beat a long list. Sort the rest into these categories, in this order, numbered in one sequence across all of them so the user can answer with numbers:
+Merge the findings of the subagent and of the `code-review` skill, and the deviations that the browser subagent reported, keeping one entry when both report the same problem. Check each finding against the code and drop the ones that do not hold; a few real findings beat a long list. Sort the rest into these categories, in this order, numbered in one sequence across all of them so the user can answer with numbers:
 
 | Category | What goes here | `code-review-and-quality` label |
 |---|---|---|
@@ -63,7 +63,7 @@ If the answer leaves a Must fix finding as it is, confirm that once before conti
 After the answer:
 
 1. Fix the chosen findings, and only those.
-2. Run the checks of `checks.md` again for the areas the fixes touched, including the browser check for UI changes.
+2. Run the checks of `checks.md` again for the areas the fixes touched, including the browser check for UI changes (in the main chat or in a browser subagent, by the rule in *Browser subagent* in [checks.md](checks.md)).
 3. Re-read the fixes in `git diff` and confirm each one addresses its finding and changes nothing else. Do not run a second full review.
 4. Continue to the commits. Fold the fixes into the commits they belong to instead of adding a separate "review fixes" commit.
 

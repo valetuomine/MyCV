@@ -29,7 +29,7 @@ npm --prefix src/Frontend run lint
 npm --prefix src/Frontend run build
 ```
 
-**Frontend UI** (any change to what the user sees: components, styles, layout, motion or text): check it in a real browser with the `playwright` MCP server before committing. Lint and build do not show how a change looks or behaves. Follow *Servers* below, open each affected view at `http://localhost:3000/<cv-address>` (use port 3100 instead when you opened the extra frontend), and confirm:
+**Frontend UI** (any change to what the user sees: components, styles, layout, motion or text): check it in a real browser with the `playwright` MCP server before committing (a large check runs in a subagent, see *Browser subagent* below). Lint and build do not show how a change looks or behaves. Follow *Servers* below, open each affected view at `http://localhost:3000/<cv-address>` (use port 3100 instead when you opened the extra frontend), and confirm:
 
 *Servers* (the same rules apply wherever a step needs the API or the frontend running):
 
@@ -66,6 +66,20 @@ await page.route("**/api/**", (route) =>
 ```
 
 Run it with `browser_run_code_unsafe`, and again after the browser restarts. Never assume a submit will fail validation: an optional field left empty is valid and saves. Screenshots and snapshots go to the git-ignored `.playwright-mcp/` folder. List what you checked under *Tarkistukset* in the reviewer comment, and anything you could not check under *Huomioitavaa*.
+
+**Browser subagent** (Frontend UI only): the checklist above is the same wherever it runs, but a large check fills the main chat with Playwright snapshots that are sent again on every turn. Run it in a background subagent when the work item is size M or larger **and** at least two views need checking or one of them needs a sign-in. Read the size as [code-review.md](code-review.md) does (`Effort` 3 or more, or the `Työmäärä` line, otherwise size the diff). A view is a page or a state of it; a viewport size or a theme is not another view. Otherwise (XS–S work, or one view without sign-in) check in the main chat as above, because the subagent's start-up cost would exceed the saving. In a cloud session the browser is headless: signed-in views do not count towards the rule, and the main chat only lists them under *Huomioitavaa*.
+
+1. **Before the subagent, the main chat prepares the environment.** It checks the servers over HTTP and starts the missing ones by *Servers* above, and for signed-in views asks the user to sign in in the visible Playwright window and waits for the confirmation. The main chat keeps every background task. Keep the servers running until the report has arrived and every re-check after review fixes is done, then stop them by *Servers*. The subagent never starts or stops a server and never asks for a sign-in.
+2. **Start it in the background:** `Agent` with `subagent_type: general-purpose`, `model: sonnet`, `effort: medium` and `run_in_background: true`. The subagent cannot see this file, so paste into the prompt verbatim:
+   - each view with its address, and the changed interactions and states to try;
+   - the "Then confirm" bullets of the checklist above (both sizes, both themes, interactions and hover, reduced motion, console), and the `page.route` block, to run before any form or error state and again after a browser restart; leave out *Servers*;
+   - the rules of *Screenshots*, with the names `us-<id>-<view>-desktop.png` and `us-<id>-<view>-mobile.png` (a Task uses `task-<id>`), and the privacy check of every signed-in screenshot with the Read tool;
+   - the privacy rule of the signed-in paragraph: it opens no snapshots or logs of signed-in views beyond what the check itself needs, and its report holds no content from them;
+   - a ban on changing real data and on editing files, and the headless rules of [cloud-session.md](cloud-session.md) when it is a cloud session.
+3. **The report is short and holds no snapshot content:** each view × size × theme as ok or deviation; findings by severity; new console errors and warnings; the file names of the screenshots that passed the privacy check; images left out and why; and what could not be checked. Only the screenshots named in the report are uploaded, so the leftovers of a failed run are never uploaded.
+4. **While it runs,** the main chat uses no `playwright` tool, because the browser is shared, and edits no UI file, because Vite would reload the page under the check. It may continue to the review in [code-review.md](code-review.md), which waits for the report and merges its findings. Never guess the result in advance. If the report shows the sign-in lapsed, ask the user to sign in again and start the check again. If the subagent fails or the `playwright` tools are missing, run the check in the main chat, or list it under *Huomioitavaa*.
+5. **After review fixes,** re-check the changed views by the same rule as above.
+6. Put the report under *Tarkistukset* in the reviewer comment, with the server note that *Servers* requires (including port 3100 if used).
 
 **Screenshots** (only for a Frontend UI change): while checking the changed view, take one screenshot of it on desktop (1440×900) and one on mobile (390×844) with `browser_take_screenshot`, after setting the size with `browser_resize`, and pass an ASCII `filename` such as `us-<id>-<view>-desktop.png`. One theme is enough, and at most two images per changed view, so pick the views that show the change best. They are saved in the git-ignored `.playwright-mcp/` folder, and step 8 uploads them to the pull request ([pull-request.md](pull-request.md)). Never copy them into the repository. Take no screenshots for backend, pipeline or skill changes.
 

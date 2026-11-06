@@ -12,10 +12,10 @@ The implementation chat runs from the kickoff prompt to an open pull request, `/
 |---|---|
 | Exploring the code | Every file the agent reads stays in the context for the rest of the chat. A `Lähtötilanne` that names the exact files keeps this small. |
 | Areas touched | Each area adds its checks from `/create-pull-request`: .NET build and tests, the migration check, lint and build. Their output lands in the context. |
-| Browser checks | The largest single cost of a UI story. Every Playwright snapshot or screenshot adds thousands of tokens, and the checklist repeats them for desktop and mobile, both themes and reduced motion. A signed-in view also waits for the user to sign in. |
+| Browser checks | The largest single cost of a UI story. Every Playwright snapshot or screenshot adds thousands of tokens, and the checklist repeats them for desktop and mobile, both themes and reduced motion. A signed-in view also waits for the user to sign in. In large checks (two or more views, or a signed-in view, in M and larger work) the snapshots stay in a background browser subagent's context and only its short report reaches the chat. |
 | Open decisions | Every `Avoimet kysymykset` item, and every choice the `Toteutus` leaves to the agent, costs a round trip with the full context. |
 | Iteration risk | Animation tuning, unfamiliar libraries, migrations and flaky tests tend to need several rounds. |
-| Fixed overhead | `CLAUDE.md`, the named skills and `/create-pull-request` (work item, review subagent and `code-review` pass, commits, pull request) cost about the same in every chat. |
+| Fixed overhead | `CLAUDE.md`, the named skills and `/create-pull-request` (work item, review subagent, browser subagent for large UI checks, `code-review` pass, commits, pull request) cost about the same in every chat. |
 
 ## Size Classes
 
