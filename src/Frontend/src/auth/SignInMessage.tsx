@@ -97,11 +97,18 @@ export default function SignInMessage({
   const { t } = useTranslation()
   const [lastUsedMethod] = useState(readLastSignInMethod)
   const cancelledNoteId = useId()
-  const backButton = (
-    <Button key="back" onClick={onBack}>
+  /**
+   * The button that leaves the sign-in view.
+   *
+   * @param className - Extra classes, such as `w-full` to fill a column.
+   * @returns The back button.
+   */
+  const renderBackButton = (className?: string): JSX.Element => (
+    <Button onClick={onBack} className={className}>
       {backLabel}
     </Button>
   )
+  const backButton = renderBackButton()
 
   if (!isSignInConfigured) {
     return (
@@ -221,39 +228,33 @@ export default function SignInMessage({
       delayed={!cancelledMethod}
       description={description}
       actions={
-        <>
-          <div className="grid basis-full gap-4">
-            {cancelledMethod && (
-              <p
-                id={cancelledNoteId}
-                role="status"
-                className="m-0 text-cv-copy"
-              >
-                {t("signIn.cancelledNote")}
-                {isCancelledInPopup &&
-                  cancelledMethod === SignInMethod.Microsoft &&
-                  t("signIn.microsoftWindowHint")}
-              </p>
-            )}
-            <div className="grid gap-4 sm:max-w-80">
-              {Object.values(SignInMethod)
-                .filter(isSignInMethodConfigured)
-                .map((method) => (
-                  <SignInMethodButton
-                    key={method}
-                    method={method}
-                    isLastUsed={hasSignInChoice && method === lastUsedMethod}
-                    autoFocus={method === cancelledMethod}
-                    describedBy={
-                      method === cancelledMethod ? cancelledNoteId : undefined
-                    }
-                    onSelect={startSignIn}
-                  />
-                ))}
-            </div>
+        <div className="grid basis-full gap-4">
+          {cancelledMethod && (
+            <p id={cancelledNoteId} role="status" className="m-0 text-cv-copy">
+              {t("signIn.cancelledNote")}
+              {isCancelledInPopup &&
+                cancelledMethod === SignInMethod.Microsoft &&
+                t("signIn.microsoftWindowHint")}
+            </p>
+          )}
+          <div className="grid w-[min(20rem,calc(100vw-3rem))] gap-4">
+            {Object.values(SignInMethod)
+              .filter(isSignInMethodConfigured)
+              .map((method) => (
+                <SignInMethodButton
+                  key={method}
+                  method={method}
+                  isLastUsed={hasSignInChoice && method === lastUsedMethod}
+                  autoFocus={method === cancelledMethod}
+                  describedBy={
+                    method === cancelledMethod ? cancelledNoteId : undefined
+                  }
+                  onSelect={startSignIn}
+                />
+              ))}
+            {renderBackButton("w-full")}
           </div>
-          {backButton}
-        </>
+        </div>
       }
     >
       {title}

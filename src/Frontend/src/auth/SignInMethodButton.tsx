@@ -6,18 +6,24 @@ import Button from "../pages/components/Button"
 import { signInMethodNames } from "./authSession"
 import { ButtonVariant, SignInMethod } from "../types"
 
-/** Each method's logo and brand colours, from Google's and Microsoft's sign-in button guidelines. */
+/**
+ * Each method's logo and brand colours, from Google's and Microsoft's sign-in
+ * button guidelines: the light variant in the light theme, the dark variant in
+ * the dark theme (the `--cv-*` tokens switch). A faint inner hairline keeps the
+ * edge visible, and the dark Microsoft button gets a lighter border because
+ * its guideline has none and it would vanish into the dark background.
+ */
 const methodStyles: Record<SignInMethod, { logo: string; className: string }> =
   {
     [SignInMethod.Microsoft]: {
       logo: microsoftLogo,
       className:
-        "border-cv-microsoft-line bg-cv-microsoft-surface text-cv-microsoft-ink",
+        "border-cv-microsoft-line bg-cv-microsoft-surface text-cv-microsoft-ink ring-1 ring-black/5 ring-inset [[data-theme=dark]_&]:ring-white/10",
     },
     [SignInMethod.Google]: {
       logo: googleLogo,
       className:
-        "border-cv-google-line bg-cv-google-surface text-cv-google-ink",
+        "border-cv-google-line bg-cv-google-surface text-cv-google-ink ring-1 ring-black/5 ring-inset [[data-theme=dark]_&]:ring-white/10",
     },
   }
 
@@ -81,7 +87,7 @@ export default function SignInMethodButton({
       {isLastUsed && (
         <span
           id={badgeId}
-          className="pointer-events-none absolute -top-2.5 right-5 rounded-full bg-cv-accent px-2 py-0.5 font-cv-mono text-[0.625rem] tracking-wide text-cv-accent-ink uppercase"
+          className="pointer-events-none absolute -top-2.5 right-5 z-10 rounded-full bg-cv-accent px-2.5 py-0.5 font-cv-mono text-[0.6875rem] leading-4 tracking-wide text-cv-accent-ink uppercase ring-2 ring-cv-background"
         >
           {t("signIn.lastUsed")}
         </span>
