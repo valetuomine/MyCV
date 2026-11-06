@@ -21,6 +21,10 @@ jobs:
   # Task in "Waiting for Predecessor" leaves that state when all of its Predecessors are
   # "Waiting for Deployment", "Closed" or "Removed". It moves to "New" if its description
   # mentions "Avoimet kysymykset" and to "Ready for Development" otherwise.
+  #
+  # Every move also rewrites the first description line, "Tila: <state>: <reason>", in the same
+  # PATCH call as the state, and a story that stays "In Progress" gets a reason too. If the
+  # description update fails, a warning is logged and the state is set alone.
   - bash: |
       set -euo pipefail
 
@@ -58,7 +62,35 @@ jobs:
         [ "$1" != "Closed" ] && [ "$1" != "Removed" ]
       }
 
+      # Builds the JSON Patch that sets the state and rewrites the first description line,
+      # "Tila: <state>: <reason>". A Tila line at the very start of the description (Azure
+      # DevOps adds spaces when it saves HTML, so whitespace is allowed) and its blank line
+      # are dropped and the new ones are put first; an empty description gets the line alone.
+      # The "test" operation on the revision makes the PATCH fail if the work item changed
+      # after it was read, so a concurrent edit of the description is never overwritten.
+      tila_patch() {
+        jq -cn --arg state "$1" --arg reason "$2" --arg desc "$3" --argjson rev "$4" '
+          "<div><b>Tila:</b> \($state): \($reason)</div>" as $line
+          | ($desc | sub("^\\s*<div>\\s*<b>\\s*Tila:\\s*</b>[^<]*</div>\\s*(<div>\\s*<br\\s*/?>\\s*</div>)?\\s*"; "")) as $rest
+          | [{op: "test", path: "/rev", value: $rev},
+             {op: "add", path: "/fields/System.State", value: $state},
+             {op: "add", path: "/fields/System.Description",
+              value: (if $rest == "" then $line else $line + "<div><br></div>" + $rest end)}]'
+      }
+
+      # Sets the state and the Tila line in one PATCH. If that PATCH fails (for example because
+      # the description changed meanwhile), it logs the server's answer as a warning and sets
+      # the state alone, so the move is never blocked by the description.
+      # Arguments: work item id, new state, reason, current description, current revision.
       set_state() {
+        local patch out
+        patch=$(tila_patch "$2" "$3" "$4" "$5") || patch=""
+        if [ -n "$patch" ] && out=$(curl -sS --fail-with-body -X PATCH -H "$auth" \
+          -H "Content-Type: application/json-patch+json" \
+          "$api/wit/workitems/$1?api-version=7.1" -d "$patch" 2>&1); then
+          return 0
+        fi
+        echo "##vso[task.logissue type=warning]PATCH with the Tila line failed for #$1, setting the state alone: ${out:-no answer}"
         curl -sS --fail-with-body -X PATCH -H "$auth" -H "Content-Type: application/json-patch+json" \
           "$api/wit/workitems/$1?api-version=7.1" \
           -d "[{\"op\":\"add\",\"path\":\"/fields/System.State\",\"value\":\"$2\"}]" > /dev/null
@@ -73,13 +105,15 @@ jobs:
 
       ids_csv=$(echo "$work_item_ids" | paste -sd, -)
       items=$(curl -sS --fail-with-body -H "$auth" \
-        "$api/wit/workitems?ids=$ids_csv&fields=System.State,System.WorkItemType&api-version=7.1")
+        "$api/wit/workitems?ids=$ids_csv&fields=System.State,System.WorkItemType,System.Description&api-version=7.1")
 
       # Tasks first, so that a story's open-Task check below sees them as closed.
       for id in $(echo "$items" | jq -r '.value[] | select(.fields["System.WorkItemType"] == "Task") | .id'); do
         state=$(echo "$items" | jq -r --argjson id "$id" '.value[] | select(.id == $id) | .fields["System.State"]')
         if is_open "$state"; then
-          set_state "$id" "Closed"
+          description=$(echo "$items" | jq -r --argjson id "$id" '.value[] | select(.id == $id) | .fields["System.Description"] // ""')
+          rev=$(echo "$items" | jq -r --argjson id "$id" '.value[] | select(.id == $id) | .rev')
+          set_state "$id" "Closed" "Pull request $pr_id on yhdistetty." "$description" "$rev"
           moved_ids="$moved_ids $id"
           echo "Task #$id moved from '$state' to 'Closed'."
         else
@@ -92,8 +126,14 @@ jobs:
           "$api/wit/workitems/$id?\$expand=relations&api-version=7.1")
         state=$(echo "$story" | jq -r '.fields["System.State"]')
 
+        description=$(echo "$story" | jq -r '.fields["System.Description"] // ""')
+        rev=$(echo "$story" | jq -r '.rev')
+
         if [ "$skip_stories" = true ]; then
           echo "User Story #$id stays in state '$state' (Jatkuu label)."
+          if [ "$state" = "In Progress" ]; then
+            set_state "$id" "In Progress" "Pull request $pr_id on yhdistetty, mutta työ jatkuu (Jatkuu-label)." "$description" "$rev"
+          fi
           continue
         fi
         if [ "$state" = "Waiting for Deployment" ] || ! is_open "$state"; then
@@ -110,11 +150,14 @@ jobs:
                 | "#\(.id)"] | join(", ")')
           if [ -n "$open_tasks" ]; then
             echo "User Story #$id stays in state '$state': child Tasks still open ($open_tasks)."
+            if [ "$state" = "In Progress" ]; then
+              set_state "$id" "In Progress" "Pull request $pr_id on yhdistetty, mutta kesken olevat Taskit: $open_tasks." "$description" "$rev"
+            fi
             continue
           fi
         fi
 
-        set_state "$id" "Waiting for Deployment"
+        set_state "$id" "Waiting for Deployment" "Pull request $pr_id on yhdistetty, odottaa julkaisua." "$description" "$rev"
         moved_ids="$moved_ids $id"
         echo "User Story #$id moved from '$state' to 'Waiting for Deployment'."
       done
@@ -126,7 +169,7 @@ jobs:
 
       # Releases one Successor if it waits for a Predecessor and all its Predecessors are done.
       release_successor() {
-        local sid="$1" successor state type predecessors pending target
+        local sid="$1" successor state type predecessors pending target reason description rev
         successor=$(curl -sS --fail-with-body -H "$auth" "$api/wit/workitems/$sid?\$expand=relations&api-version=7.1") || return 1
         state=$(echo "$successor" | jq -r '.fields["System.State"]')
         type=$(echo "$successor" | jq -r '.fields["System.WorkItemType"]')
@@ -148,10 +191,14 @@ jobs:
 
         if echo "$successor" | jq -e '(.fields["System.Description"] // "") | contains("Avoimet kysymykset")' > /dev/null; then
           target="New"
+          reason="Kaikki edeltäjät on tehty, mutta kysymyksiin odotetaan vastausta."
         else
           target="Ready for Development"
+          reason="Kaikki edeltäjät on tehty, työn voi aloittaa."
         fi
-        set_state "$sid" "$target" || return 1
+        description=$(echo "$successor" | jq -r '.fields["System.Description"] // ""')
+        rev=$(echo "$successor" | jq -r '.rev')
+        set_state "$sid" "$target" "$reason" "$description" "$rev" || return 1
         echo "#$sid ($type) released from '$state' to '$target': all Predecessors are done."
       }
 

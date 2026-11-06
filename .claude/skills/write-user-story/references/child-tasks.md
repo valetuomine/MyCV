@@ -7,7 +7,7 @@ Part of the `write-user-story` skill. Read it only when the story splits into ch
 Add Tasks only when the story splits into clearly separate pieces of work, such as one per endpoint or one per table.
 
 - **Title:** `<Toimenpide> - <Kohde>` or `<Kohde> - <Toimenpide>`, for example `GET - Profile - REST API`, `Tietokantataulun luonti - Profile`, `Profile - Queries`.
-- **Description:** optional. Use a field list, an endpoint in a code block, or one sentence:
+- **Description:** optional, except its first line: every Task starts with the `Tila` line (`Tila: New: <reason>`, see *Tila line* in [description.md](description.md)). After it, use a field list, an endpoint in a code block, or one sentence:
 
 ```html
 <div>Kentät:</div><div><ul><li>Id</li><li>FullName</li><li>CreatedAt</li></ul></div>

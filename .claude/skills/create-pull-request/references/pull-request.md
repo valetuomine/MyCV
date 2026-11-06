@@ -37,6 +37,10 @@ Get each full SHA with `git log --reverse --format='%H %s' origin/main..HEAD` af
 
 Labels: when the PR is a follow-up for a story that is still being worked on (like User Story 38, which had several PRs), pass `labels: ["Jatkuu"]`. The pipeline then leaves the story `In Progress` after the merge. See [after-merge.md](after-merge.md).
 
+### Work Item State
+
+Right after creating the PR, move every linked work item that `work-item.md` says moves (`New`, `Ready for Development`, `Waiting for Predecessor`, and for a User Story `On Hold` or `Waiting for Deployment`) to `In Progress` with `wit_work_item_write` (`action: update`), and write the `Tila` line in the same update: `<div><b>Tila:</b> In Progress: Pull request <n> on auki.</div>` with the real PR number. Replace an existing `Tila` line, or insert it first followed by `<div><br></div>`; the format is in `references/description.md` of `write-user-story`. Items that are already `In Progress` keep their state and line.
+
 ### Screenshots
 
 Only when the change is a Frontend UI change and [checks.md](checks.md) produced screenshots. Otherwise skip this part and leave the *Kuvakaappaukset* section out of the comment. Do it right after creating the PR, because the upload needs the PR ID.

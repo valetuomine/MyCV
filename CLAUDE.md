@@ -13,6 +13,8 @@ Every change is tied to an Azure DevOps work item and reaches `main` through a p
 
 When a story or Task turns out to be investigation only, with nothing worth merging, skip the PR. Once the user agrees, discard the code, add the findings and the decision to the end of the work item's description, and move it to `Removed`. The pipeline releases successors only after a merge, so release its `Waiting for Predecessor` successors yourself when all of their predecessors are done: `New` if the successor has `Avoimet kysymykset`, otherwise `Ready for Development`.
 
+The first line of every work item description is `Tila: <state>: <reason>` (`references/description.md` of `/write-user-story`). Every state move writes it in the same update: the pipelines do it for their moves, and you do it whenever you move an item yourself (`Removed`, `On Hold`, a released successor, or `Closed` when the user asks you to). This sentence does not allow moving items to `Waiting for Deployment` or `Closed` by hand: see *Never*.
+
 When the user corrects how a step was done, update the skill or this file so the correction lasts, and say which file changed.
 
 ## Never

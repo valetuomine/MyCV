@@ -98,6 +98,8 @@ When `create-pull-request` called this skill, skip this step: that skill moves t
 | It has `Avoimet kysymykset`, or the user said it still needs refining | Leave it `New`, and say in the report what keeps it there |
 | It has an unfinished predecessor, whatever the rows above say | `Waiting for Predecessor`, and say in the report which story or Task it waits for |
 
+Write the `Tila` line (see [references/description.md](references/description.md)) in the same update as `System.State`, in every move this skill makes: the first state, `On Hold`, `Removed`, and the release of `Waiting for Predecessor` successors. Do the same when you create a new Feature or Epic (`Parent Features`): its first line is `Tila: New: ...` and describes its children. When the line exists already, replace it. After creating a story, also refresh the `Tila` line of its parent Feature and that Feature's Epic, so that it names the new story among the children (see the Epic and Feature reasons in `description.md`).
+
 Whenever you update the description of a `New` story, or of a `New` Task with its own `Toteutusohje`, so that its `Avoimet kysymykset` are answered and its `Toteutusohje` is complete, move it to `Ready for Development` in the same update.
 
 ## Tags
