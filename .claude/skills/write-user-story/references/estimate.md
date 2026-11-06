@@ -53,11 +53,11 @@ The story's estimate then covers all its Tasks, and each Task with its own `Tote
 
    The `.claude/hooks/model-hint.mjs` hook reads this line when a chat starts, so keep the wording `malli <Sonnet|Opus>, effort-taso <level>` exactly.
 
-2. **`Microsoft.VSTS.Scheduling.Effort`** on a User Story: the class number from the table. It makes the size queryable and can be shown on the board cards. Tasks have no `Effort` field, so a Task's estimate lives only in its description.
+2. **`Microsoft.VSTS.Scheduling.Effort`** on a User Story and on a Task: the class number from the table. It makes the size queryable and can be shown on the board cards. The field was added to the Task type in the `CustomWorkflow` process, so one `Effort` column sorts stories and Tasks together. The description's `Työmäärä` line stays the full estimate.
 3. **Draft preview and report:** the `Työmäärä` line, see *Draft Preview* in `SKILL.md`.
 4. **Kickoff prompt comment:** the same line above the prompt, with the model and effort level to start the chat with. See [kickoff-prompt.md](kickoff-prompt.md).
 
-When an update changes the scope of a story, update its `Työmäärä` line and `Effort` in the same update.
+When an update changes the scope of a story or Task, update its `Työmäärä` line and `Effort` in the same update.
 
 When `create-pull-request` calls this skill, the work is already done: set the class from the actual diff and the checks that ran, and leave out the `Tokenien säästö` part.
 
@@ -77,20 +77,20 @@ The writing chat saves tokens for the next chat too:
 - Ask the user the questions you can while writing the story, and leave in `Avoimet kysymykset` only what the user wants to decide later.
 - Recommend starting the work in a new chat with the recommended model and effort level, since a new chat carries none of the context of writing the story.
 
-## Finding Small Stories
+## Finding Small Stories And Tasks
 
-When the user asks for small stories to work on, for example because their usage limit is running low, run this query with `wit_query` (`action: wiql`), and read the titles, tags and descriptions of the results with `wit_work_item` (`action: get_batch`):
+When the user asks for small stories or Tasks to work on, for example because their usage limit is running low, run this query with `wit_query` (`action: wiql`), and read the titles, tags and descriptions of the results with `wit_work_item` (`action: get_batch`):
 
 ```sql
 SELECT [System.Id] FROM WorkItems
 WHERE [System.TeamProject] = 'MyCV'
-  AND [System.WorkItemType] = 'User Story'
+  AND [System.WorkItemType] IN ('User Story', 'Task')
   AND [System.State] = 'Ready for Development'
   AND [Microsoft.VSTS.Scheduling.Effort] <= 2
 ORDER BY [Microsoft.VSTS.Scheduling.Effort]
 ```
 
 - Raise the limit to `3` when the user also wants medium ones.
-- Tasks have no `Effort`: also list the `Ready for Development` Tasks with the same query without the `Effort` condition and with `[System.WorkItemType] = 'Task'`, and read their size from the `Työmäärä` line.
+- Tasks have `Effort` too, so the query lists stories and Tasks together. A Task with its own `Työmäärä` line but no `Effort` is not in the result, because an empty `Effort` never matches `<= 2`: find those with the same query without the `Effort` condition and read their size from the `Työmäärä` line.
 - Stories written before this estimate have no `Effort`. List them separately and offer to estimate them; with the user's approval, add the `Työmäärä` line, `Effort` and a `Tokenien säästö` part in one update each.
-- Show each story with its ID, title, size, model and effort level, smallest first, and point to the kickoff prompt in its discussion.
+- Show each story or Task with its ID, title, size, model and effort level, smallest first, and point to the kickoff prompt in its discussion.

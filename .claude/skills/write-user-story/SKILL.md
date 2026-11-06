@@ -21,7 +21,7 @@ Act as a product owner and technical analyst: clarify the goal, read the code be
 5. **Study the code the story touches.** When `graphify-out/graph.json` exists, first ask the code graph where the change lands (`python -m graphify query "<question>" --budget 1500`; see *Code graph (Graphify)* in `CLAUDE.md`), then read the relevant files, components, endpoints and skills it points to (otherwise use Grep and Glob), so that the *Toteutusohje* names real paths and builds on how the code works today. See [references/implementation-prompt.md](references/implementation-prompt.md). Then choose the skills for the work; see [references/choosing-skills.md](references/choosing-skills.md).
 6. **Estimate the work:** the size class, tokens, model and effort level, and the `Tokenien säästö` part of the `Toteutusohje`. See [references/estimate.md](references/estimate.md).
 7. **Show the draft** to the user in the format under *Draft preview*. Do not create anything before the user approves it. Exception: when the `create-pull-request` skill calls this skill, create the story directly, because the user reviews it as part of the pull request.
-8. **Create** the story with `wit_work_item_write` (`action: create`), with `Effort` set as under *Fields*, then link it to the parent Feature with `wit_work_item_link_write` (`type: parent`). Create any child Tasks with `wit_work_item_write` (`action: add_child`). Attach any screenshot the user gave with the request; see *Screenshots*. Then install any new skill the draft named; see [references/choosing-skills.md](references/choosing-skills.md). If the Azure DevOps tools are unavailable, as in a cloud session outside the `MyCV` environment, save the approved draft to the ideas page with status `luonnos` instead, and stop there.
+8. **Create** the story with `wit_work_item_write` (`action: create`), with `Effort` set as under *Fields*, then link it to the parent Feature with `wit_work_item_link_write` (`type: parent`). Create any child Tasks with `wit_work_item_write` (`action: add_child`), then set `Effort` on each Task that has its own estimate with `action: update`, because `add_child` cannot set it. Attach any screenshot the user gave with the request; see *Screenshots*. Then install any new skill the draft named; see [references/choosing-skills.md](references/choosing-skills.md). If the Azure DevOps tools are unavailable, as in a cloud session outside the `MyCV` environment, save the approved draft to the ideas page with status `luonnos` instead, and stop there.
 9. **Delete the idea** from the ideas page when the story came from one. See *Ideas page*.
 10. **Always post the kickoff prompt** to the work item's discussion once the work item exists, for every story and every Task with its own `Toteutusohje`, with no exception: also when the work is already done, when `create-pull-request` called this skill, and when the work continues in the same chat. A story without the comment is unfinished. See [references/kickoff-prompt.md](references/kickoff-prompt.md).
 11. **Set the state** as described under *State*.
@@ -76,7 +76,7 @@ When an improvement concerns an existing area that has no Feature under Epic #43
 | `System.IterationPath` | `MyCV\Backlog\Work Items` |
 | `System.AssignedTo` | Copy the `uniqueName` of the parent Feature's `System.AssignedTo` |
 | `System.Tags` | See *Tags* |
-| `Microsoft.VSTS.Scheduling.Effort` | The size class number, see [references/estimate.md](references/estimate.md). User Stories only; Tasks have no such field |
+| `Microsoft.VSTS.Scheduling.Effort` | The size class number, see [references/estimate.md](references/estimate.md). User Stories, and Tasks that have their own estimate |
 
 Read the assignee from the parent Feature instead of writing an email address into this skill, because the repository is mirrored to a public GitHub repository. If the Feature has no assignee, ask the user who the story should be assigned to.
 
@@ -171,7 +171,7 @@ Tasks:
 
 ## Small Stories
 
-When the user asks for small stories to work on, for example because their usage limit is running low, query them by `Effort` as described under *Finding Small Stories* in [references/estimate.md](references/estimate.md).
+When the user asks for small stories to work on, for example because their usage limit is running low, query the stories and Tasks by `Effort` as described under *Finding Small Stories And Tasks* in [references/estimate.md](references/estimate.md).
 
 ## After Creation
 

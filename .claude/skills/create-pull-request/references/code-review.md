@@ -15,7 +15,7 @@ Run the review in a fresh-context subagent (`Agent`, `subagent_type: general-pur
 | XS, S | `sonnet` | `medium` | A small change; Sonnet finds its problems at a lower cost |
 | M, L, XL | `opus` | `high` | The review is the step where a stronger model that thinks longer catches the bugs the writer missed, and it is one call with a fresh context, so the extra cost stays bounded |
 
-Read the size from the story's `Effort` field (1–2 is XS–S, 3 or more is M or larger), or from the `Työmäärä` line of a Task or of a story that has no `Effort`. If the work item has neither, size the diff with the table in `estimate.md`, and take `opus` and `high` when in doubt.
+Read the size from the work item's `Effort` field (1–2 is XS–S, 3 or more is M or larger), or from the `Työmäärä` line of a Task or story that has no `Effort`. If the work item has neither, size the diff with the table in `estimate.md`, and take `opus` and `high` when in doubt.
 
 Tell the subagent to:
 
