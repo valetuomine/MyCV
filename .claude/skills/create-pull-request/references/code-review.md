@@ -11,7 +11,7 @@ Read the work item yourself and copy its acceptance criteria (`Valmis, kun`) and
 Run the review in a fresh-context subagent (`Agent`, `subagent_type: general-purpose`), because the session that wrote the code is blind to its own assumptions. Pick its `model` and `effort` from the work item's size class (see `references/estimate.md` in `write-user-story`) and pass both to `Agent`:
 
 | Size | `model` | `effort` | Why |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | XS, S | `sonnet` | `medium` | A small change; Sonnet finds its problems at a lower cost |
 | M, L, XL | `opus` | `high` | The review is the step where a stronger model that thinks longer catches the bugs the writer missed, and it is one call with a fresh context, so the extra cost stays bounded |
 
@@ -22,10 +22,11 @@ Tell the subagent to:
 - Follow the `code-review-and-quality` skill: the five axes, change sizing, dead code and dependency discipline.
 - Check the change against the acceptance criteria and the `Toteutusohje` you copied in, and against the decisions already made with the user, so it does not reopen them.
 - Check the MyCV rules in `CLAUDE.md`: the *Never* list (secrets, personal data, real tenant and client IDs, links to local-only files) and the *Conventions* table, such as JSDoc-only frontend comments and English code and docs. For backend and client integration changes, also the patterns in `create-cv-skills`; for frontend UI, `DESIGN.md` and `setup-frontend`.
+- Check the changed C# against the SonarLint rules that the build does not enforce and that earlier pull requests got flagged for (US-149): S3776, a method with cognitive complexity over 15 (split nested loops and chains of `if` into private methods); S6960, a controller with more than one responsibility (for example a controller whose endpoints use a separate set of services belongs in its own controller, with unchanged routes); S6932, request data read by hand through `Request.Form`, `Request.ReadFormAsync` or similar instead of model binding (a deliberate exception gets `[SuppressMessage]` with a `Justification`, never a silent suppression). Report each as **Should fix**, with the rule ID in the title.
 - Report in the categories and format of *Report The Findings* below; give it the table and the format.
 - Not edit any file.
 
-The lint and build results are already known, so the review does not re-run them or report what they enforce.
+The lint and build results are already known, so the review does not re-run them or report what they enforce. The SonarLint rules above are not among them.
 
 In the same step, also run the built-in `code-review` skill yourself as a second pass that hunts for correctness bugs, on the same diff as the subagent. Call it as `Skill` with `skill: code-review` and `args: "<level> <target>"`, for example `args: "medium origin/main"`:
 
@@ -39,7 +40,7 @@ Start the subagent first (it runs in the background), then run the skill while i
 Merge the findings of the subagent and of the `code-review` skill, and the deviations that the browser subagent reported, keeping one entry when both report the same problem. Check each finding against the code and drop the ones that do not hold; a few real findings beat a long list. Sort the rest into these categories, in this order, numbered in one sequence across all of them so the user can answer with numbers:
 
 | Category | What goes here | `code-review-and-quality` label |
-|---|---|---|
+| --- | --- | --- |
 | **Must fix** | Bugs, security problems, data loss, broken behavior, anything on the `CLAUDE.md` *Never* list | Critical |
 | **Should fix** | Unmet acceptance criteria or `Toteutusohje`, convention violations, missing tests, structural problems, missed simplifications | Required (no prefix) |
 | **Could fix** | Optional improvements; the change is fine without them | Optional, Consider, Nit |

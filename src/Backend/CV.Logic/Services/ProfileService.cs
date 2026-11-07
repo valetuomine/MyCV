@@ -250,6 +250,11 @@ namespace CV.Logic.Services
                 throw new BadRequestException("At least one profile translation is required.");
             }
 
+            ValidateTranslations(translations);
+        }
+
+        private static void ValidateTranslations(IReadOnlyCollection<ProfileTranslationRequest> translations)
+        {
             var normalizedLanguageCodes = new HashSet<string>(StringComparer.Ordinal);
             foreach (var translation in translations)
             {
