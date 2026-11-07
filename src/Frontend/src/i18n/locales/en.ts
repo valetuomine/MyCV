@@ -29,11 +29,16 @@ export const en = {
     toDark: "Switch to dark theme",
   },
   home: {
-    heading: "Open a CV",
+    heading: "A CV that lives at its own address",
     intro:
-      "Every CV has its own link. Paste a CV link or public address to view it.",
+      "MyCV publishes a CV as a web page with its own link, and as a PDF for printing. Its owner signs in to keep it up to date.",
+    featuredLabel: "Featured CV",
+    featuredLoading: "Loading the featured CV…",
+    viewCv: "View CV",
+    openHeading: "Open a CV by its link",
     inputLabel: "CV link or address",
     submit: "Open CV",
+    opening: "Opening…",
   },
   notFound: {
     heading: "We couldn't find that page.",
@@ -208,6 +213,10 @@ export const en = {
     cvLinkFormat: "Use letters and numbers separated by single hyphens",
     cvLinkReserved: "This CV link is reserved",
     cvAddressRequired: "Enter a CV link or public address",
+    cvNotFound: "There's no CV at this address. Check it and try again.",
+    cvLookupUnreachable:
+      "Can't reach the server. Check your connection and try again.",
+    cvLookupFailed: "Something went wrong while looking up this CV. Try again.",
   },
   signIn: {
     googleAccount: "Google account",

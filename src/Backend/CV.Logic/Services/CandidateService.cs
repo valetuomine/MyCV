@@ -3,18 +3,22 @@ using CV.DataAccess;
 using CV.Logic.Extensions;
 using CV.Logic.Mappers;
 using CV.LogicInterface.Authentication;
+using CV.LogicInterface.Candidates;
 using CV.LogicInterface.Dto.Candidate;
 using CV.LogicInterface.ServiceInterfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace CV.Logic.Services
 {
     public class CandidateService(
         CvContext dataContext,
-        IProfilePictureStore pictureStore) : BaseService(dataContext), ICandidateService
+        IProfilePictureStore pictureStore,
+        IOptions<FeaturedCandidateOptions> featuredOptions) : BaseService(dataContext), ICandidateService
     {
         private readonly CvContext _dataContext = dataContext;
         private readonly IProfilePictureStore _pictureStore = pictureStore;
+        private readonly FeaturedCandidateOptions _featuredOptions = featuredOptions.Value;
 
         public async Task<CandidateDto> GetCandidateByPublicUrlSegment(
             string publicUrlSegment,
@@ -35,6 +39,16 @@ namespace CV.Logic.Services
             return dbCandidate?.MapEntityToDto()
                 ?? throw new NotFoundException(
                     $"Candidate not found with public URL segment: {normalizedPublicUrlSegment}");
+        }
+
+        public async Task<CandidateDto> GetFeaturedCandidate(CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(_featuredOptions.PublicUrlSegment))
+            {
+                throw new NotFoundException("No candidate is featured.");
+            }
+
+            return await GetCandidateByPublicUrlSegment(_featuredOptions.PublicUrlSegment, cancellationToken);
         }
 
         public async Task DeleteCandidate(

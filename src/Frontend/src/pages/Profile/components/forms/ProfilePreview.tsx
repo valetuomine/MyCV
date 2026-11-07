@@ -1,7 +1,7 @@
 import type { JSX } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
-import usePointerLight from "../../../components/usePointerLight"
+import LitCard from "../../../components/LitCard"
 import type { ProfileSchema } from "../../schemas/profile-form-schema"
 
 const pill =
@@ -11,19 +11,14 @@ const pill =
  * Shows the Finnish CV as it will look while the form is being filled in. It
  * repeats what the fields already say, so it is hidden from assistive tech.
  *
- * The card lights up like the form's fields. With a mouse, a light follows
- * the pointer around its border and faintly tints the surface beneath the
- * text. While the card is hovered or any field of the edit form (the
- * `group/edit` around it) has focus, a soft light drifts slowly from side to
- * side inside it, and pauses where it is otherwise, so the card wakes while
- * the profile is edited. Touch gets no pointer light, and reduced motion
- * neither light.
+ * The card is a `LitCard`, so it lights up like the form's fields, and its
+ * drifting light also runs while any field of the edit form has focus, so
+ * the card wakes while the profile is edited.
  *
  * @returns The preview card, shown on large screens.
  */
 export default function ProfilePreview(): JSX.Element {
   const { t } = useTranslation()
-  const trackPointer = usePointerLight()
   const { control } = useFormContext<ProfileSchema>()
   const [fullName, title, location, summary, gitHubUrl, linkedInUrl] = useWatch(
     {
@@ -51,61 +46,53 @@ export default function ProfilePreview(): JSX.Element {
           {t("profileForm.previewLanguage")}
         </span>
       </p>
-      <div
-        onPointerEnter={trackPointer}
-        onPointerMove={trackPointer}
-        className="group/preview relative mt-5 overflow-hidden rounded-3xl bg-cv-field-border p-0.5 shadow-cv-panel"
+      <LitCard
+        className="mt-5"
+        contentClassName="grid justify-items-start p-8"
+        wakesWithEditForm
       >
-        <div className="pointer-events-none absolute top-1/2 left-1/2 aspect-square w-[200%] -translate-1/2 bg-cv-sweep animate-cv-sweep motion-reduce:hidden" />
-        <div className="pointer-events-none absolute inset-0 bg-cv-field-edge opacity-0 transition-opacity duration-200 group-hover/preview:opacity-100 motion-reduce:hidden" />
-        <div className="relative isolate grid justify-items-start rounded-[calc(1.5rem-2px)] bg-cv-field-surface p-8">
-          <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden rounded-[inherit] opacity-0 transition-opacity duration-300 group-hover/preview:opacity-100 group-has-[[data-field-frame]:focus-within]/edit:opacity-100 motion-reduce:hidden">
-            <div className="absolute inset-y-0 left-0 w-1/2 bg-cv-field-drift animate-cv-drift [--drift-strength:16%] [animation-play-state:paused] group-hover/preview:[animation-play-state:running] group-has-[[data-field-frame]:focus-within]/edit:[animation-play-state:running]" />
-          </div>
-          <div className="pointer-events-none absolute inset-0 -z-10 rounded-[inherit] bg-cv-field-glow opacity-0 transition-opacity duration-200 group-hover/preview:opacity-100 motion-reduce:hidden" />
+        <p
+          dir="auto"
+          className={`m-0 font-cv-display text-[2.75rem] leading-[0.95] font-semibold tracking-tighter text-balance wrap-anywhere ${fullName?.trim() ? "bg-linear-to-b from-cv-ink to-cv-muted bg-clip-text pt-[0.15em] pb-[0.08em] text-transparent" : "text-cv-meta"}`}
+        >
+          {fullName?.trim() || t("profileForm.previewName")}
+        </p>
+        {title?.trim() && (
           <p
             dir="auto"
-            className={`m-0 font-cv-display text-[2.75rem] leading-[0.95] font-semibold tracking-tighter text-balance wrap-anywhere ${fullName?.trim() ? "bg-linear-to-b from-cv-ink to-cv-muted bg-clip-text pt-[0.15em] pb-[0.08em] text-transparent" : "text-cv-meta"}`}
+            className="mt-4 mb-0 font-cv-display text-lg font-medium tracking-tight text-cv-accent"
           >
-            {fullName?.trim() || t("profileForm.previewName")}
+            {title}
           </p>
-          {title?.trim() && (
-            <p
-              dir="auto"
-              className="mt-4 mb-0 font-cv-display text-lg font-medium tracking-tight text-cv-accent"
-            >
-              {title}
-            </p>
-          )}
-          {location?.trim() && (
-            <p dir="auto" className="mt-1 mb-0 text-sm text-cv-muted">
-              {location}
-            </p>
-          )}
-          {summary?.trim() && (
-            <p
-              dir="auto"
-              className="mt-4 mb-0 line-clamp-5 text-sm leading-relaxed whitespace-pre-line text-pretty text-cv-copy wrap-anywhere"
-            >
-              {summary}
-            </p>
-          )}
-          {(gitHubUrl?.trim() || linkedInUrl?.trim()) && (
-            <div className="mt-6 flex flex-wrap gap-2">
-              {gitHubUrl?.trim() && (
-                <span className={`${pill} bg-cv-accent text-cv-accent-ink`}>
-                  GitHub ↗
-                </span>
-              )}
-              {linkedInUrl?.trim() && (
-                <span className={`${pill} border border-cv-line text-cv-ink`}>
-                  LinkedIn ↗
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+        )}
+        {location?.trim() && (
+          <p dir="auto" className="mt-1 mb-0 text-sm text-cv-muted">
+            {location}
+          </p>
+        )}
+        {summary?.trim() && (
+          <p
+            dir="auto"
+            className="mt-4 mb-0 line-clamp-5 text-sm leading-relaxed whitespace-pre-line text-pretty text-cv-copy wrap-anywhere"
+          >
+            {summary}
+          </p>
+        )}
+        {(gitHubUrl?.trim() || linkedInUrl?.trim()) && (
+          <div className="mt-6 flex flex-wrap gap-2">
+            {gitHubUrl?.trim() && (
+              <span className={`${pill} bg-cv-accent text-cv-accent-ink`}>
+                GitHub ↗
+              </span>
+            )}
+            {linkedInUrl?.trim() && (
+              <span className={`${pill} border border-cv-line text-cv-ink`}>
+                LinkedIn ↗
+              </span>
+            )}
+          </div>
+        )}
+      </LitCard>
     </aside>
   )
 }

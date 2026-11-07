@@ -19,6 +19,17 @@ namespace CV.LogicInterface.ServiceInterfaces
             CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Retrieves the candidate featured on the home page, named by the
+        /// <c>FeaturedCandidate:PublicUrlSegment</c> setting.
+        /// </summary>
+        /// <param name="cancellationToken">The token used to cancel the operation.</param>
+        /// <returns>The featured candidate.</returns>
+        /// <exception cref="CV.Common.Exceptions.NotFoundException">
+        /// No candidate is featured, or the featured candidate does not exist.
+        /// </exception>
+        Task<CandidateDto> GetFeaturedCandidate(CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Deletes a candidate and its related rows.
         /// </summary>
         /// <param name="candidateId">The identifier of the candidate to delete.</param>

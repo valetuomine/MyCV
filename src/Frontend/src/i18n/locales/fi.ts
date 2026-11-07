@@ -31,11 +31,16 @@ export const fi: Translation = {
     toDark: "Vaihda tummaan teemaan",
   },
   home: {
-    heading: "Avaa CV",
+    heading: "CV, jolla on oma osoite",
     intro:
-      "Jokaisella CV:llä on oma linkkinsä. Liitä CV:n linkki tai julkinen osoite nähdäksesi sen.",
+      "MyCV julkaisee CV:n verkkosivuna, jolla on oma linkki, ja PDF:nä tulostamista varten. Omistaja kirjautuu sisään ja pitää sen ajan tasalla.",
+    featuredLabel: "Esittelyssä",
+    featuredLoading: "Ladataan esittelyssä olevaa CV:tä…",
+    viewCv: "Näytä CV",
+    openHeading: "Avaa CV sen linkillä",
     inputLabel: "CV:n linkki tai osoite",
     submit: "Avaa CV",
+    opening: "Avataan…",
   },
   notFound: {
     heading: "Sivua ei löytynyt.",
@@ -213,6 +218,11 @@ export const fi: Translation = {
       "Käytä kirjaimia ja numeroita, jotka on erotettu yksittäisillä yhdysmerkeillä",
     cvLinkReserved: "Tämä CV:n linkki on varattu",
     cvAddressRequired: "Anna CV:n linkki tai julkinen osoite",
+    cvNotFound:
+      "Tällä osoitteella ei löydy CV:tä. Tarkista osoite ja yritä uudelleen.",
+    cvLookupUnreachable:
+      "Palvelimeen ei saada yhteyttä. Tarkista verkkoyhteys ja yritä uudelleen.",
+    cvLookupFailed: "CV:n haussa tapahtui virhe. Yritä uudelleen.",
   },
   signIn: {
     googleAccount: "Google-tili",

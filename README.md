@@ -106,6 +106,7 @@ The preview proxies `/api` to the local API like the dev server. Port 3000, in p
 ## Configuration and secrets
 
 - `src/Backend/CV.WebApi/appsettings.json` is for non-secret defaults only. Local overrides such as `appsettings.Development.json` are ignored by Git.
+- `FeaturedCandidate:PublicUrlSegment` names the CV featured on the home page by its public address. It is empty in `appsettings.json`, which hides the card; set it in User Secrets locally or as the `FeaturedCandidate__PublicUrlSegment` app setting in a deployment, where changing it needs no new build.
 - Backend secrets belong in .NET User Secrets for local development and a secret manager/environment variables in deployments.
 - Frontend `.env.local` files are ignored by Git. `VITE_*` values are still included in the built JavaScript and are public configuration only—never put passwords, API keys, or tokens there.
 - The repository ignores `.env*` and environment-specific `appsettings.*.json` files, with `.env.example` as the safe tracked template. Check `git status` before committing local configuration.

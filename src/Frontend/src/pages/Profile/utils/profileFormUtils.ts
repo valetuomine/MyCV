@@ -1,4 +1,5 @@
 import type { TFunction } from "i18next"
+import { errorStatus } from "./describeRouteError"
 
 type GraphemeSegmenter = new (
   locales?: string,
@@ -186,10 +187,7 @@ export function getProfilePictureError(
   change: PictureChange,
   t: TFunction,
 ): string {
-  const status =
-    typeof error === "object" && error !== null && "status" in error
-      ? error.status
-      : undefined
+  const status = errorStatus(error)
   const action = t(`profilePicture.actions.${change}`)
 
   switch (status) {

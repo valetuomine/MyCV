@@ -14,6 +14,7 @@ import {
   getInitials,
   toExternalUrl,
 } from "../../utils/profileFormUtils"
+import LocationIcon from "../LocationIcon"
 import ProfileName from "../ProfileName"
 import ProfilePortrait from "../ProfilePortrait"
 
@@ -152,19 +153,7 @@ export default function ReadOnlyProfileForm({
             dir="auto"
             className="mt-2 flex items-start gap-2 text-base text-cv-muted"
           >
-            <svg
-              aria-hidden="true"
-              viewBox="0 0 24 24"
-              className="mt-1 size-4 shrink-0"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.75"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21Z" />
-              <circle cx="12" cy="9.5" r="2.5" />
-            </svg>
+            <LocationIcon className="mt-1 size-4 shrink-0" />
             {values.location}
           </motion.p>
         )}

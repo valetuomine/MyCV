@@ -3,6 +3,7 @@ using CV.Logic.Pdf;
 using CV.Logic.Services;
 using CV.Logic.Storage;
 using CV.LogicInterface.Authentication;
+using CV.LogicInterface.Candidates;
 using CV.LogicInterface.Pdf;
 using CV.LogicInterface.ServiceInterfaces;
 using CV.LogicInterface.Storage;
@@ -156,6 +157,9 @@ if (builder.Environment.IsDevelopment())
 builder.Services.AddHttpClient<IProfilePictureService, ProfilePictureService>(client =>
         client.Timeout = TimeSpan.FromSeconds(10))
     .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler { AllowAutoRedirect = false });
+
+builder.Services.Configure<FeaturedCandidateOptions>(
+    builder.Configuration.GetSection(FeaturedCandidateOptions.SectionName));
 
 builder.Services.AddTransient<IProfileService, ProfileService>();
 builder.Services.AddTransient<ICandidateService, CandidateService>();

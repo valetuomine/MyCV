@@ -14,7 +14,24 @@ export const candidateQueries = baseApi.injectEndpoints({
         { type: "Candidate", id: publicUrlSegment },
       ],
     }),
+    /**
+     * Fetches the CV featured on the home page, which the API's settings
+     * choose. Answers 404 when none is featured. It carries the same
+     * Candidate tag as `getCandidate` for its CV, so whatever refetches that
+     * candidate refetches the featured one too.
+     */
+    getFeaturedCandidate: builder.query<Candidate, void>({
+      query: () => "/api/FeaturedCandidate",
+      providesTags: (result) =>
+        result?.publicUrlSegment
+          ? [{ type: "Candidate", id: result.publicUrlSegment }]
+          : [],
+    }),
   }),
 })
 
-export const { useGetCandidateQuery } = candidateQueries
+export const {
+  useGetCandidateQuery,
+  useGetFeaturedCandidateQuery,
+  useLazyGetCandidateQuery,
+} = candidateQueries
