@@ -1,0 +1,3 @@
+# Playwright MCP runs these files as one function expression and fails on the
+# leading semicolon that Prettier adds without semicolons elsewhere.
+e2e/mcp/

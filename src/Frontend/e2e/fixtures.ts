@@ -31,6 +31,14 @@ export const test = base.extend<TestOptions>({
 
 export { expect }
 
+/**
+ * Thrown when a saved session no longer signs in, so the session setup can
+ * tell a lapsed session from any other failure and renew it.
+ */
+export class SessionLapsedError extends Error {
+  override name = "SessionLapsedError"
+}
+
 /** The app's origin; any other origin is a provider's sign-in page. */
 const appOrigin = new URL(baseURL).origin
 
@@ -56,8 +64,8 @@ const signedOutGraceMs = 3_000
  * Waits until a view that needs a signed-in user shows, and fails with the
  * fix instead of a bare timeout when the saved session no longer signs in:
  * the sign-in buttons keep showing, or the browser stays on a provider's
- * sign-in page. A silent token renewal that leaves the app and comes back
- * counts as signed in.
+ * sign-in page. Those two throw a `SessionLapsedError`. A silent token
+ * renewal that leaves the app and comes back counts as signed in.
  *
  * @param page - The page that opened the view.
  * @param ready - What shows once the view is signed in.
@@ -94,8 +102,13 @@ export async function expectSignedIn(
     .toMatch(/^(ready|signed-out)$/)
     .catch(() => undefined)
 
-  if (state !== "ready") {
+  if (state === "pending") {
     throw new Error(
+      `The saved session doesn't sign in: ${failureReasons[state]}. ${renewSessionHint}`,
+    )
+  }
+  if (state !== "ready") {
+    throw new SessionLapsedError(
       `The saved session doesn't sign in: ${failureReasons[state]}. ${renewSessionHint}`,
     )
   }

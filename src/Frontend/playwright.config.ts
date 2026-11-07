@@ -39,15 +39,22 @@ export default defineConfig<TestOptions>({
     /** The project's browser, session and test CV. */
     const use = {
       ...devices["Desktop Chrome"],
-      storageState: existsSync(provider.authFile)
-        ? provider.authFile
-        : undefined,
+      storageState: provider.authFile,
       testCv: provider.testCv,
       authFile: provider.authFile,
     }
 
     return [
-      { name: `${provider.name}-setup`, testMatch: /session\.setup\.ts/, use },
+      {
+        name: `${provider.name}-setup`,
+        testMatch: /session\.setup\.ts/,
+        use: {
+          ...use,
+          storageState: existsSync(provider.authFile)
+            ? provider.authFile
+            : undefined,
+        },
+      },
       {
         name: provider.name,
         testMatch: /.*\.spec\.ts/,

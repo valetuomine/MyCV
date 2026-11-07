@@ -16,7 +16,15 @@ The Playwright tests in `e2e/` check the signed-in views as two test users, one 
 
 ### Recording the sessions
 
-With the frontend running, run `npm run e2e:auth`, or `npm run e2e:auth -- microsoft` or `-- google` for one of them. A browser opens for each sign-in method: sign in with its test user yourself, MFA included. The session is saved in `e2e/.auth/` (git-ignored). No password is stored anywhere, and the script refuses to save a session that is not a test user's.
+With the frontend running, run `npm run e2e:auth`, or `npm run e2e:auth -- microsoft` or `-- google` for one of them. A browser opens for each sign-in method: sign in with its test user yourself, MFA included, and answer **Yes** to "Stay signed in?", which lets the app renew the session silently for longer. The session is saved in `e2e/.auth/` (git-ignored), and the script refuses to save a session that is not a test user's.
+
+The Microsoft session can also be recorded without you. Save the test user once in Windows Credential Manager; `cmdkey` asks for the password, so it stays out of the command history:
+
+```powershell
+cmdkey /generic:MyCV-e2e-microsoft /user:<test user's sign-in name> /pass
+```
+
+Then `npm run e2e:auth -- microsoft --auto` signs in by itself, without a window (`--headed` shows one), answers Yes to "Stay signed in?" and saves the session. Only this script reads the credentials, through the Windows CredRead API in a child PowerShell; nothing prints, logs or saves them, and they are never retried after a rejection. MFA, a captcha, a rejected password or any other unexpected step stops it with a message, and you sign in by hand as above. It refuses to run in CI, which uses a mock identity provider instead. Google has no automatic sign-in yet.
 
 ### Running the tests
 
@@ -30,8 +38,8 @@ Start the API and its database, then run `npm run e2e`. The API check before the
 
 ### When a session lapses
 
-Microsoft's refresh token for a single-page app lasts 24 hours. Because every run saves the renewed session, tests run regularly can keep a session alive longer, but Microsoft or Google can ask for a new sign-in, or MFA, at any time. The setup project then stops with a message: run `npm run e2e:auth` again. Unattended runs in a pipeline need a mock identity provider instead, which is left to a later story.
+Microsoft's refresh token for a single-page app lasts 24 hours. Because every run saves the renewed session, tests run regularly can keep a session alive longer, but Microsoft or Google can ask for a new sign-in, or MFA, at any time. When the Microsoft test user is saved in Credential Manager, the setup project then signs in again by itself (`e2e:auth -- microsoft --auto` in a child process, so the credentials never reach Playwright's traces or reports) and runs the tests with the new session. Otherwise, or when the automatic sign-in stops, it stops with a message: save the credentials, or run `npm run e2e:auth` again. Unattended runs in a pipeline need a mock identity provider instead, which is left to a later story.
 
 ### Browser checks with Claude Code
 
-The local `.mcp.json` can add two Playwright MCP servers that open an isolated browser with a test user's saved session: `@playwright/mcp` with `--isolated --storage-state src/Frontend/e2e/.auth/microsoft.json` (and `google.json` for the other). Approve them when Claude Code asks, or add them to `enabledMcpjsonServers` in `.claude/settings.local.json`, and restart Claude Code. They read the file when they start, so reconnect them with `/mcp` after recording the sessions again.
+The local `.mcp.json` can add two Playwright MCP servers that open an isolated browser with a test user's saved session: `@playwright/mcp` with `--isolated --storage-state src/Frontend/e2e/.auth/microsoft.json` (and `google.json` for the other). Approve them when Claude Code asks, or add them to `enabledMcpjsonServers` in `.claude/settings.local.json`, and restart Claude Code. They read the file only when they start. Claude Code loads a renewed Microsoft session into the running `playwright-microsoft` browser with its `browser_run_code_unsafe` tool and the file `src/Frontend/e2e/mcp/load-microsoft-session.js`, and saves the browser's renewed session back with `save-microsoft-session.js`, so it needs no restart; Playwright reads and writes the session file itself, so no token passes through the chat. The `.mcp.json` arguments stay as above. Reconnect `playwright-google` with `/mcp` after recording its session again.
