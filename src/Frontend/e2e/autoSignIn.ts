@@ -78,32 +78,47 @@ async function describeStep(page: Page): Promise<string> {
 }
 
 /**
- * Waits until one of the given locators shows and tells which one did. The
+ * Tells which of the given locators shows right now, checking each once. The
  * locators may be on different pages, such as the app and the sign-in window
- * that it opened, so it checks each in turn.
+ * that it opened.
+ *
+ * @param candidates - The locators to check, by name.
+ * @returns The name of the first candidate that shows, or null when none does.
+ */
+async function firstShown<Name extends string>(
+  candidates: Record<Name, Locator>,
+): Promise<Name | null> {
+  for (const name of Object.keys(candidates) as Name[]) {
+    /** False also when the candidate's page has closed, as a sign-in window does. */
+    const isShown = await candidates[name]
+      .first()
+      .isVisible()
+      .catch(() => false)
+    if (isShown) {
+      return name
+    }
+  }
+  return null
+}
+
+/**
+ * Waits until one of the given locators shows and tells which one did.
  *
  * @param candidates - The locators to wait for, by name.
  * @param timeout - How long to wait, in milliseconds.
  * @returns The name of the first candidate that shows, or null on timeout.
  */
-async function waitForFirst<Name extends string>(
+export async function waitForFirst<Name extends string>(
   candidates: Record<Name, Locator>,
   timeout: number,
 ): Promise<Name | null> {
-  /** The candidates' names, in the order they are checked. */
-  const names = Object.keys(candidates) as Name[]
   /** When to stop waiting, as a timestamp in milliseconds. */
   const deadline = Date.now() + timeout
   while (Date.now() < deadline) {
-    for (const name of names) {
-      /** False also when the candidate's page has closed, as a sign-in window does. */
-      const isShown = await candidates[name]
-        .first()
-        .isVisible()
-        .catch(() => false)
-      if (isShown) {
-        return name
-      }
+    /** The candidate that shows now, if any. */
+    const shown = await firstShown(candidates)
+    if (shown) {
+      return shown
     }
     await new Promise((resolve) => setTimeout(resolve, pollIntervalMs))
   }
@@ -206,19 +221,202 @@ async function signInToMicrosoft(
   }
 }
 
-/** The sign-in steps of each sign-in method that can sign in by itself. */
+/** The sign-in steps of each sign-in method that signs in with credentials. */
 const providerSteps: Partial<Record<E2EProvider["name"], SignInSteps>> = {
   microsoft: signInToMicrosoft,
 }
 
 /**
- * Tells whether a sign-in method can sign in by itself.
+ * Tells whether a sign-in method can sign in by itself: with credentials, or
+ * by reopening its persistent browser profile.
  *
  * @param provider - The sign-in method.
- * @returns True when it has automatic sign-in steps.
+ * @returns True when it has automatic sign-in steps or a persistent profile.
  */
 export function supportsAutoSignIn(provider: E2EProvider): boolean {
-  return provider.name in providerSteps
+  return (
+    provider.name in providerSteps ||
+    (Boolean(provider.profileDir) && provider.name in profileRenewals)
+  )
+}
+
+/** The app's states that the Google profile renewal waits for. */
+type AppStep = "signedIn" | "signInButton"
+
+/**
+ * How long a Google page may stay open before the renewal stops, in
+ * milliseconds. Google's own pages forward a working sign-in back to the app
+ * within a moment; one that stays waits for a person.
+ */
+const googlePageSettleMs = 5_000
+
+/**
+ * Matches what Google writes when it refuses the browser or wants proof of
+ * the person, such as "This browser or app may not be secure".
+ */
+const googleBlockedText =
+  /may not be secure|couldn't sign you in|unusual traffic|verify it's you|confirm it's you|not a robot/i
+
+/**
+ * Tells whether a page shows one of Google's own sign-in pages.
+ *
+ * @param page - The page to check.
+ * @returns True on a `google.com` host.
+ */
+function isOnGooglePage(page: Page): boolean {
+  return (
+    URL.canParse(page.url()) &&
+    /(^|\.)google\.com$/.test(new URL(page.url()).hostname)
+  )
+}
+
+/**
+ * Waits until the app shows the signed-in view or its Google sign-in button.
+ * It watches every page of the browser context: the silent renewal leaves the
+ * app's page for Google, while the app's Google button opens Google in a
+ * window of its own on a desktop browser. A Google page that stays open
+ * longer than `googlePageSettleMs` waits for a person, so it stops the
+ * renewal at once.
+ *
+ * @param app - The app's page.
+ * @param candidates - The app's signed-in view and, when it may show, its sign-in button.
+ * @param timeout - How long to wait, in milliseconds.
+ * @returns What the app shows, or null on timeout.
+ */
+async function waitForGoogleStep<Name extends AppStep>(
+  app: Page,
+  candidates: Record<Name, Locator>,
+  timeout: number,
+): Promise<Name | null> {
+  /** When to stop waiting, as a timestamp in milliseconds. */
+  const deadline = Date.now() + timeout
+  /** When a page came to Google, or null while no page is on Google. */
+  let onGoogleSince: number | null = null
+  while (Date.now() < deadline) {
+    /** The app's step that shows now, if any. */
+    const step = await firstShown(candidates)
+    if (step) {
+      return step
+    }
+    /** The page that shows one of Google's pages, if any. */
+    const googlePage = app.context().pages().find(isOnGooglePage)
+    if (googlePage) {
+      onGoogleSince ??= Date.now()
+      if (Date.now() - onGoogleSince > googlePageSettleMs) {
+        await stopOnGooglePage(googlePage)
+      }
+    } else {
+      onGoogleSince = null
+    }
+    await new Promise((resolve) => setTimeout(resolve, pollIntervalMs))
+  }
+  return null
+}
+
+/**
+ * Stops the renewal on a Google page that waits for a person. The renewal
+ * never answers Google's pages, so a refused browser, an account chooser or
+ * any verification ends here with what the page shows.
+ *
+ * @param page - The page that stayed on Google.
+ */
+async function stopOnGooglePage(page: Page): Promise<never> {
+  /** True when Google refused the browser or asked to verify the person. */
+  const isBlocked = await page
+    .getByText(googleBlockedText)
+    .first()
+    .isVisible()
+    .catch(() => false)
+  throw new SignInStoppedError(
+    isBlocked
+      ? `Google refused the automatic renewal: ${await describeStep(page)}.`
+      : `Google asked for a person: ${await describeStep(page)}.`,
+  )
+}
+
+/**
+ * Renews the app's Google session in the persistent Chrome profile, which
+ * keeps the test user signed in to Google. It opens `/admin`, where the app
+ * renews an expired token silently with `prompt=none`, and opens it once
+ * more when the app shows neither the signed-in view nor its sign-in button
+ * in time. When the app shows its "Sign in with Google" button, it clicks it
+ * once; the Google window that opens comes straight back while Google still
+ * knows the account. It never types or clicks anything on Google's pages:
+ * one that stays open, such as a refused browser or an account chooser,
+ * stops it at once.
+ *
+ * @param page - The app's page in the persistent profile.
+ * @param adminUrl - The app's `/admin` address.
+ * @param signedIn - What the app shows once it is signed in.
+ * @param signInButton - The app's "Sign in with Google" button.
+ */
+async function renewInGoogleProfile(
+  page: Page,
+  adminUrl: string,
+  signedIn: Locator,
+  signInButton: Locator,
+): Promise<void> {
+  await page.goto(adminUrl)
+  let step = await waitForGoogleStep(
+    page,
+    { signedIn, signInButton },
+    stepTimeoutMs,
+  )
+  if (step === null) {
+    await page.goto(adminUrl)
+    step = await waitForGoogleStep(
+      page,
+      { signedIn, signInButton },
+      stepTimeoutMs,
+    )
+  }
+  if (step === "signInButton") {
+    await signInButton.first().click()
+    step = await waitForGoogleStep(page, { signedIn }, returnTimeoutMs)
+  }
+  if (step !== "signedIn") {
+    throw new SignInStoppedError(
+      `The renewal didn't come back to the app: ${await describeStep(page)}.`,
+    )
+  }
+}
+
+/** Renews the app's session in a sign-in method's persistent browser profile. */
+type ProfileRenewal = (
+  page: Page,
+  adminUrl: string,
+  signedIn: Locator,
+  signInButton: Locator,
+) => Promise<void>
+
+/** The renewal of each sign-in method that keeps a persistent profile. */
+const profileRenewals: Partial<Record<E2EProvider["name"], ProfileRenewal>> = {
+  google: renewInGoogleProfile,
+}
+
+/**
+ * Renews the app's session in the sign-in method's persistent browser
+ * profile, without credentials.
+ *
+ * @param provider - The sign-in method, which has a persistent profile.
+ * @param page - The app's page in the profile.
+ * @param adminUrl - The app's `/admin` address.
+ * @param signedIn - What the app shows once it is signed in.
+ * @param signInButton - The app's sign-in button for this method.
+ */
+export async function renewInProfile(
+  provider: E2EProvider,
+  page: Page,
+  adminUrl: string,
+  signedIn: Locator,
+  signInButton: Locator,
+): Promise<void> {
+  /** The method's own renewal, if it has one. */
+  const renew = profileRenewals[provider.name]
+  if (!renew) {
+    throw new Error(`The ${provider.label} sign-in has no profile renewal.`)
+  }
+  await renew(page, adminUrl, signedIn, signInButton)
 }
 
 /**

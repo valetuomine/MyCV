@@ -1,3 +1,4 @@
+import { homedir } from "node:os"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 
@@ -74,13 +75,33 @@ export interface E2EProvider {
   channel?: string
   /** Matches the local-storage key that holds this method's signed-in session. */
   sessionKeyPattern: string
+  /**
+   * A persistent Chrome profile that keeps the provider's own sign-in. When
+   * set, sessions are recorded in it, and the automatic renewal reopens it
+   * instead of typing credentials.
+   */
+  profileDir?: string
 }
+
+/**
+ * The folder for this machine's local e2e data outside the repository:
+ * `%LOCALAPPDATA%\MyCV\e2e` on Windows, elsewhere under `~/.local/share`,
+ * which cleanup tools leave alone, unlike a cache folder. Vite watches the
+ * repository, and a file that Chrome locks there crashes the dev server.
+ */
+const localDataDir = path.join(
+  process.env.LOCALAPPDATA?.trim() || path.join(homedir(), ".local", "share"),
+  "MyCV",
+  "e2e",
+)
 
 /**
  * The sign-in methods. Each one's saved session lives in `e2e/.auth`
  * (git-ignored), and its test CV address can be changed with an environment
  * variable. Google's sign-in page refuses Playwright's own Chromium, so the
- * session is recorded in Chrome.
+ * session is recorded in Chrome, in a persistent profile: copied Google
+ * cookies stop renewing the app's one-hour token once their short-lived
+ * session cookies expire, while Chrome renews those in the profile itself.
  */
 export const providers: E2EProvider[] = [
   {
@@ -97,6 +118,7 @@ export const providers: E2EProvider[] = [
     authFile: path.join(e2eDir, ".auth", "google.json"),
     channel: "chrome",
     sessionKeyPattern: "^mycv-google-session$",
+    profileDir: path.join(localDataDir, "google-profile"),
   },
 ]
 

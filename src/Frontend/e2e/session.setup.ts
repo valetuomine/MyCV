@@ -42,12 +42,13 @@ async function findLapse(page: Page): Promise<string | null> {
 }
 
 /**
- * Signs in again with the test user from Windows Credential Manager, by
- * running `record-sessions.ts --auto` in a child process. The child reads
- * and types the credentials, so they never pass through this test: they
+ * Signs in again by running `record-sessions.ts --auto` in a child process:
+ * with the test user from Windows Credential Manager, or for a sign-in method
+ * with a persistent Chrome profile, by renewing the session there. The child
+ * reads and types any credentials, so they never pass through this test: they
  * can't reach its trace, report or output. Without saved credentials, outside
- * Windows, in CI, or when the sign-in method has no automatic sign-in, it
- * fails with how to renew the session.
+ * Windows (unless the method has a profile), in CI, or when the sign-in
+ * method has no automatic sign-in, it fails with how to renew the session.
  *
  * @param provider - The sign-in method whose session lapsed.
  * @param reason - Why the session needs renewing, for the error message.
@@ -61,7 +62,7 @@ async function renewSession(
   if (!supportsAutoSignIn(provider) || isCI) {
     throw new Error(reason)
   }
-  if (process.platform !== "win32") {
+  if (!provider.profileDir && process.platform !== "win32") {
     throw new Error(
       `${reason} The automatic renewal reads the test user from Windows Credential Manager, so it runs only on Windows.`,
     )
@@ -122,9 +123,10 @@ async function renewAndLoad(
  * Runs before each sign-in method's tests: checks on `/admin` that its saved
  * session signs in and belongs to a test user, then on the test CV, where the
  * app renews the tokens, that the session still signs in. When the session
- * is missing or lapses on either page, it signs in again automatically with
- * the test user saved in Windows Credential Manager and loads the new session
- * into the page, at most once. It creates the method's own test CV when it is
+ * is missing or lapses on either page, it signs in again automatically (with
+ * the test user saved in Windows Credential Manager, or from the method's
+ * persistent Chrome profile) and loads the new session into the page, at
+ * most once. It creates the method's own test CV when it is
  * missing, so the tests never depend on data that already exists. It then
  * saves the session again, with the tokens and provider cookies that the app
  * renewed silently, so a session used regularly lasts longer than its first
