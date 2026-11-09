@@ -64,7 +64,7 @@ export default defineConfig<TestOptions>({
     ]
   }),
   webServer: {
-    command: `npm run dev -- --port ${basePort} --strictPort --open false`,
+    command: `npm run dev -- --port ${basePort} --strictPort --no-open`,
     url: baseURL,
     reuseExistingServer: !isCI,
     env: { VITE_AUTH_STORAGE: "local" },

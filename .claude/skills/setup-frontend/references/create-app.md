@@ -57,7 +57,7 @@ Check the ports first, as described in *Servers* in `references/checks.md` of `/
 
 ```powershell
 Push-Location src/Frontend
-npm run dev -- --host 0.0.0.0 --port 3000 --open false
+npm run dev -- --host 0.0.0.0 --port 3000 --no-open
 Pop-Location
 ```
 
