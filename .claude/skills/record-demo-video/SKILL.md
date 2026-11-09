@@ -84,6 +84,7 @@ The three scripts in `scripts/` (`recv.mjs`, `build.mjs`, `record.template.js`) 
    ```bash
    "$S/ff/node_modules/ffmpeg-static/ffmpeg.exe" -ss <s> -i .playwright-mcp/demo.mp4 -frames:v 1 -vf scale=1280:-2 "$S/frame.png"
    ```
+
 7. **Clean up:** stop the receiver (find it with `netstat -ano | grep :5599`, then `taskkill //F //PID <pid>`), and delete the frames, `concat.txt` and the probe images. Leave the ffmpeg in the scratchpad.
 
 ## Flow notes for this app

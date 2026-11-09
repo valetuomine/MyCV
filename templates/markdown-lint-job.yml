@@ -1,0 +1,21 @@
+parameters:
+- name: pool
+  type: object
+
+jobs:
+- job: MarkdownLint
+  displayName: Lint Markdown
+  pool: ${{ parameters.pool }}
+  steps:
+  - checkout: self
+
+  - task: UseNode@1
+    displayName: Install Node.js
+    inputs:
+      version: 22.x
+
+  # The rules and ignores are in .markdownlint-cli2.jsonc. When you change the pinned version, change
+  # it in the same commit in CLAUDE.md and .claude/skills/create-pull-request/references/checks.md, so
+  # that the local run and the pipeline lint the same way.
+  - script: npx --yes markdownlint-cli2@0.24.0
+    displayName: Lint Markdown

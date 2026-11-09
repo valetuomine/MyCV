@@ -30,7 +30,7 @@ The first line of every Epic, Feature, User Story and Task description tells the
 Typical reasons by state:
 
 | State | Typical reason |
-|---|---|
+| --- | --- |
 | `New` | `Toteutusohjeen kysymyksiin odotetaan vastausta.` / `Toteutusohje on vielä tarkentamatta.` / after a release: `Kaikki edeltäjät on tehty, mutta kysymyksiin odotetaan vastausta.` |
 | `Ready for Development` | `Toteutusohje on valmis ja työn voi aloittaa.` / after a release: `Kaikki edeltäjät on tehty, työn voi aloittaa.` |
 | `In Progress` | `Pull request <n> on auki.` / `Pull request <n> on yhdistetty, mutta työ jatkuu (Jatkuu-label).` / `Pull request <n> on yhdistetty, mutta kesken olevat Taskit: #<id>.` |

@@ -62,7 +62,7 @@ To look at the stored pictures, open [Azure Storage Explorer](https://azure.micr
 Settings, in the `BlobStorage` section or as a connection string:
 
 | Key | Purpose |
-|---|---|
+| --- | --- |
 | `BlobStorage:ServiceUri` | The account's blob endpoint, such as `https://<account>.blob.core.windows.net`. The API signs in with `DefaultAzureCredential`, the App Service's managed identity in production, which needs the `Storage Blob Data Contributor` role. No connection string or account key is used in production. It takes precedence over the connection string. |
 | `ConnectionStrings:BlobStorage` | A connection string, for Azurite in local development. The `http` and `https` launch profiles set it to `UseDevelopmentStorage=true`. |
 
@@ -75,7 +75,7 @@ The API prints a CV's PDF (`GET /api/Profile/{profileId}/pdf`) by opening the fr
 Settings in the `PdfPrinter` configuration section:
 
 | Key | Default | Purpose |
-|---|---|---|
+| --- | --- | --- |
 | `FrontendBaseUrl` | The first `Cors:AllowedOrigins` entry, or `http://localhost:3000` in Development | The frontend origin whose print route is printed. Set it when `Cors:AllowedOrigins` lists several origins. |
 | `ExecutablePath` | Empty | An installed Chrome or Chromium. When empty, the API installs Playwright's Chromium (about 150 MB) in the background at startup, into the folder named by `PLAYWRIGHT_BROWSERS_PATH` or Playwright's default. |
 | `LaunchArgs` | Empty | Extra Chromium arguments, such as `--no-sandbox` in a container that runs as root. |

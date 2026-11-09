@@ -33,6 +33,14 @@ While a dev server runs on port 3000 (see *Servers* below), run `npm --prefix sr
 
 When the change touches sign-in or a signed-in view and the test users' sessions exist (`src/Frontend/e2e/.auth/`), also run the Playwright tests, which need the API running: `npm --prefix src/Frontend run e2e`. The pipelines do not run them yet. Do not run them with `CI=true` while the user's frontend runs on port 3000: that mode always starts its own frontend and fails on the busy port.
 
+**Markdown** (any changed `.md` file, skills and docs included):
+
+```powershell
+npx --yes markdownlint-cli2@0.24.0
+```
+
+It lints every tracked Markdown file with the rules in `.markdownlint-cli2.jsonc`, such as tables in the `| --- |` style. Fix what it reports instead of disabling a rule. The PR pipeline runs it too (`templates/markdown-lint-job.yml`).
+
 **Frontend UI** (any change to what the user sees: components, styles, layout, motion or text): check it in a real browser with the Playwright MCP servers before committing (`playwright`, and for signed-in views `playwright-microsoft` and `playwright-google`, see *Signed-in views* below) (a large check runs in a subagent, see *Browser subagent* below). Lint and build do not show how a change looks or behaves. Follow *Servers* below, open each affected view at `http://localhost:3000/<cv-address>` (use port 3100 instead when you opened the extra frontend), and confirm:
 
 *Servers* (the same rules apply wherever a step needs the API or the frontend running):
@@ -40,7 +48,7 @@ When the change touches sign-in or a signed-in view and the test users' sessions
 - Check the servers over HTTP first (3000 is the frontend, 5062 the API). The Vite dev server proxies `/api` to port 5062, so one request through port 3000 shows both. Run it with the Bash tool, because in Windows PowerShell 5 `curl` is an alias of `Invoke-WebRequest`: `curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/health`.
 
   | Result | Meaning |
-  |---|---|
+  | --- | --- |
   | `200` | Both the frontend and the API run |
   | `307` (the API runs with the `https` launch profile and redirects to HTTPS) | Both the frontend and the API run |
   | `500` (Vite's proxy got `ECONNREFUSED`) | The frontend runs, the API probably does not: confirm with `curl -s -o /dev/null -w "%{http_code}" http://localhost:5062/api/health`, because the API itself can also answer 500 |

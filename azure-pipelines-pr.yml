@@ -70,3 +70,13 @@ stages:
   - template: templates/frontend-build-jobs.yml
     parameters:
       agentPool: ${{ parameters.agentPool }}
+
+- stage: MarkdownLint
+  displayName: Lint Markdown
+  dependsOn: Changes
+  condition: and(succeeded(), eq(dependencies.Changes.outputs['DetectChanges.paths.markdown'], 'true'))
+  jobs:
+  - template: templates/markdown-lint-job.yml
+    parameters:
+      pool:
+        vmImage: ubuntu-latest

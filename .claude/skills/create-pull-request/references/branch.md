@@ -21,7 +21,7 @@ Stop and tell the user if:
 Branch names:
 
 | Work item | Pattern | Example |
-|---|---|---|
+| --- | --- | --- |
 | User Story | `feat/US-<id>_<Title_slug>` | `feat/US-46_Sisaan_ja_uloskirjautumisen_UI_parannukset` |
 | Several stories | `feat/US-<id>_US-<id>_<Title_slug>` | `feat/US-41_US-42_Autentikaatio` |
 | Task | `feat/<id>_<Title_slug>` | `feat/37_Profile_queries` |

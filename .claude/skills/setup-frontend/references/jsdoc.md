@@ -16,5 +16,6 @@ Part of the `setup-frontend` skill. Read it before documenting frontend code.
      * @returns The encoded `/:publicUrlSegment` path.
      */
     ```
+
   - `eslint-plugin-jsdoc` enforces these rules in `npm run lint` (see `eslint.config.js`): JSDoc on every function declaration and every function assigned to a variable, `@param` and `@returns` tags, `//` comments placed where JSDoc belongs, and the tag format. It can't tell which non-function `const` values have logic, so that part still depends on review.
   - Effects and JSX can't carry JSDoc, so describe what an effect does or why the markup is built that way in the enclosing component's summary. When an inline JSX handler has a branch or more than one statement, move it into a named `const` with its own summary.

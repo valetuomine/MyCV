@@ -38,7 +38,7 @@ An older idea may still carry the retired status `viety`, or have a `workItemId`
 ## Which Ideas Need A Story
 
 | Idea | Action |
-|---|---|
+| --- | --- |
 | Status `uusi` or `luonnos`, no `workItemId` | Create a story |
 | Also has a `handoffUrl` | Also read the linked patch artifact, so that the `Toteutusohje` mentions it |
 | Has a `parent` | It names the parent Feature, as in `write-user-story`: use it in the draft and confirm the Feature still exists |

@@ -73,6 +73,6 @@ After the answer:
 Keep the outcome for the reviewer: which findings were fixed and which were left as they are.
 
 - **New pull request:** it goes in the `Koodikatselmointi` section of the reviewer comment (`pull-request.md`).
-- **Follow-up push to an active pull request:** no new reviewer comment is posted, so post the outcome after the push as a new Finnish PR comment with `repo_pull_request_thread_write` (`action: create`), with the same `## Koodikatselmointi` section and a `## Huomioitavaa` section when it has something to say.
+- **Follow-up push to an active pull request:** no new reviewer comment is posted, so post the outcome after the push as a new Finnish PR comment with `repo_pull_request_thread_write` (`action: create`, `status: Closed`), with the same `## Koodikatselmointi` section and a `## Huomioitavaa` section when it has something to say.
 
 In both, a Must fix finding that the user chose to leave also goes under `Huomioitavaa`.

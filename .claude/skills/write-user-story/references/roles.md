@@ -9,7 +9,7 @@ A fresh chat knows nothing about the kind of work ahead. A one-line role at the 
 Pick the role from the work item's tags and the `Toteutusohje`, not from its title. Name the role that fits most of the work. When a story spans areas, join at most two roles with "and" and let the larger part come first.
 
 | Work | Role line |
-|---|---|
+| --- | --- |
 | Frontend UI: layout, styling, motion, accessibility, theme | `Act as a UI designer and front-end developer.` |
 | Frontend logic: RTK Query, Jotai state, routing, API calls from the UI | `Act as a senior front-end developer (React, TypeScript).` |
 | Backend: controllers, services, DTOs, validation | `Act as a senior .NET backend developer.` |
@@ -30,7 +30,7 @@ If none fits, write a role in the same style: a job title and the one thing it c
 The chat that runs a skill also acts in a role. The full wording lives only in that skill's `SKILL.md`, so it cannot drift:
 
 | Skill | Role |
-|---|---|
+| --- | --- |
 | `write-user-story` | Product owner and technical analyst. See the top of its `SKILL.md`. |
 | `create-pull-request` | Senior developer, code reviewer and release engineer. See its *Role* section. |
 

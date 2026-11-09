@@ -7,7 +7,7 @@ The description ends with a `Toteutusohje` section: a prompt for an AI agent. Th
 Write it in Finnish, in these parts:
 
 | Part | Content |
-|---|---|
+| --- | --- |
 | `Tavoite` | What the finished work achieves and why, as the user or developer experiences it. One short paragraph. |
 | `Lähtötilanne` | How the code works today where the change lands: the real files, components, hooks, endpoints, entities and settings involved, with paths. Name the patterns the change should follow and the skills to use, chosen as in [choosing-skills.md](choosing-skills.md), with what each one is for. |
 | `Toteutus` | The approach as numbered steps, in the order the work should go. Record every decision already made with the user and the alternatives that were ruled out, with the reason, so the agent does not reopen them. Describe the behaviour and structure, not line-by-line code, and leave the rest to the agent's judgment. |

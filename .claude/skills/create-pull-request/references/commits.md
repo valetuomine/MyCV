@@ -17,7 +17,7 @@ Merge steps that only make sense together into one commit, and leave out steps t
 Commit message format, in English, with an imperative summary:
 
 | Work item | Format | Example |
-|---|---|---|
+| --- | --- | --- |
 | User Story | `US-<id>: <summary>` | `US-46: Improve Microsoft sign-in and sign-out experience` |
 | Several stories | `US-<id> && US-<id>: <summary>` | `US-41 && US-42: Implement authentication and admin login features` |
 | Task | `<id>: <summary>` | `37: Refactor profile queries and forms` |

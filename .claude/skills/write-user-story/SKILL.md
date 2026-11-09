@@ -47,7 +47,7 @@ If the upload fails, the story is still valid: say in the report that the image 
 First decide which Epic the work belongs to. The Epic depends on whether the story builds something new or improves something that already exists:
 
 | Epic | ID | Use for |
-|---|---|---|
+| --- | --- | --- |
 | Backend & Data | 1 | Building **new** backend or database functionality, such as new REST APIs, services or entities |
 | Frontend | 24 | Building **new** frontend functionality, such as new pages, components or API calls from the UI |
 | Kokonaisuuksien parantelut | 43 | **Updating or improving** an existing feature area, such as authentication |
@@ -56,7 +56,7 @@ First decide which Epic the work belongs to. The Epic depends on whether the sto
 Then pick the Feature under that Epic:
 
 | Feature | ID | Epic | Use for |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Backend Core & Architecture | 2 | 1 | New Web API projects, services, controllers, REST APIs, error handling, backend multi-language |
 | Data Model & Database Foundation | 5 | 1 | New entities, migrations, DbContext, database identifiers |
 | Pohjatyöt ja komponentit | 25 | 24 | New frontend setup, npm packages, components, UI and API calls from the UI |
@@ -68,7 +68,7 @@ When an improvement concerns an existing area that has no Feature under Epic #43
 ## Fields
 
 | Field | Value |
-|---|---|
+| --- | --- |
 | `System.WorkItemType` | `User Story` |
 | `System.Title` | See *Title* |
 | `System.Description` | See [references/description.md](references/description.md), HTML format |
@@ -93,7 +93,7 @@ A User Story can also be `On Hold`: it is valid work that is deliberately not sc
 When `create-pull-request` called this skill, skip this step: that skill moves the story to `In Progress`. Otherwise, once the story is complete (parent link, child Tasks and the kickoff prompt comment), update `System.State` with `wit_work_item_write` (`action: update`) on the story and on each Task that has its own `Toteutusohje`:
 
 | Story or Task | State |
-|---|---|
+| --- | --- |
 | Its `Toteutusohje` is complete and has no `Avoimet kysymykset` | `Ready for Development`: the next chat can start from the kickoff prompt right away |
 | It has `Avoimet kysymykset`, or the user said it still needs refining | Leave it `New`, and say in the report what keeps it there |
 | It has an unfinished predecessor, whatever the rows above say | `Waiting for Predecessor`, and say in the report which story or Task it waits for |
@@ -142,7 +142,7 @@ Examples from the backlog:
 The rules and examples for these live in reference files. Read each one when the workflow reaches it:
 
 | File | Read when |
-|---|---|
+| --- | --- |
 | [references/description.md](references/description.md) | Writing or updating the description: opening paragraph, `Muutokset:`, `Lisäksi`, `Työmäärä` |
 | [references/implementation-prompt.md](references/implementation-prompt.md) | Writing or updating the `Toteutusohje` |
 | [references/estimate.md](references/estimate.md) | Estimating the size, tokens, model and effort level, writing the `Tokenien säästö` part, and finding small stories |
@@ -156,7 +156,7 @@ The rules and examples for these live in reference files. Read each one when the
 
 Show the draft to the user like this before creating anything:
 
-```
+```text
 User Story: <title>
 Parent:     #<feature id> <feature title>
 Tags:       <tags, or "(ei tageja)">

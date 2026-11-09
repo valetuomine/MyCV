@@ -31,7 +31,7 @@ When the user corrects how a step was done, update the skill or this file so the
 ## Conventions
 
 | What | Language and format |
-|---|---|
+| --- | --- |
 | Work item titles and descriptions | Finnish, see `/write-user-story` |
 | Work item tags | `Frontend`, `Backend`, `Database`, `Pipeline`, `Skills`, `Versioning` |
 | Branches | `feat/US-<id>_<Title_slug>` or `feat/<task id>_<Title_slug>` |
@@ -51,7 +51,10 @@ dotnet test src/MyCV.sln --configuration Release --no-build
 dotnet ef migrations has-pending-model-changes --project src/Backend/CV.DataAccess/CV.DataAccess.csproj --startup-project src/Backend/CV.WebApi/CV.WebApi.csproj
 npm --prefix src/Frontend run lint
 npm --prefix src/Frontend run build
+npx --yes markdownlint-cli2@0.24.0
 ```
+
+The last one lints the tracked Markdown files (`.markdownlint-cli2.jsonc` holds the rules and ignores); run it when a `.md` file changed. The PR pipeline runs it too (`templates/markdown-lint-job.yml`).
 
 Format changed C# with `dotnet format` and changed frontend files with Prettier.
 

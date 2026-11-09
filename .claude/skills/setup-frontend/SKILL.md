@@ -68,7 +68,7 @@ Theme variables, `ThemeToggle` and the first-paint script are in [references/the
 ## More References
 
 | File | Read when |
-|---|---|
+| --- | --- |
 | [references/states.md](references/states.md) | Loading, error, empty and not-found screens, sign-in and sign-out states, skeletons, form errors, the profile photo |
 | [references/layout.md](references/layout.md) | Changing the CV background, the name's echo in it, or the CV page's layout |
 | [references/create-app.md](references/create-app.md) | Recreating the app, installing packages, or running the build and the local preview |

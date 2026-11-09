@@ -14,15 +14,18 @@ jobs:
   - checkout: self
     fetchDepth: 2
 
-  # Sets the output variables "backend" and "frontend" to true when the change touches files
-  # that the .NET or frontend checks cover. Changes to the pipelines themselves, and runs that
-  # are neither a pull request build nor a push to main (a manual run, for example), run every
-  # check.
+  # Sets the output variables "backend", "frontend" and "markdown" to true when the change
+  # touches files that the .NET, frontend or Markdown checks cover. Changes to the pipelines
+  # themselves (azure-pipelines.yml, azure-pipelines-pr.yml and this template), and runs that are
+  # neither a pull request build nor a push to main (a manual run, for example), run every check.
+  # The Markdown check is detected apart from the other two, so a Markdown file under src/ also
+  # runs that area's checks.
   - bash: |
       set -euo pipefail
 
       backend=true
       frontend=true
+      markdown=true
 
       if { [ "$BUILD_REASON" = "PullRequest" ] || [ "$BUILD_REASON" = "IndividualCI" ]; } \
         && git rev-parse -q --verify 'HEAD^1' > /dev/null; then
@@ -32,17 +35,25 @@ jobs:
 
         backend=false
         frontend=false
+        markdown=false
         while read -r file; do
           case "$file" in
             azure-pipelines.yml | azure-pipelines-pr.yml | templates/detect-changes-job.yml)
               backend=true
               frontend=true
+              markdown=true
               ;;
             src/Backend/* | src/MyCV.sln | templates/dotnet-build-job.yml)
               backend=true
               ;;
             src/Frontend/* | templates/frontend-build-job.yml | templates/frontend-build-jobs.yml | templates/pick-agent-job.yml)
               frontend=true
+              ;;
+          esac
+
+          case "$file" in
+            *.md | .markdownlint-cli2.jsonc | templates/markdown-lint-job.yml)
+              markdown=true
               ;;
           esac
         done <<< "$changed"
@@ -52,8 +63,10 @@ jobs:
 
       echo "Backend checks: $backend"
       echo "Frontend checks: $frontend"
+      echo "Markdown checks: $markdown"
       echo "##vso[task.setvariable variable=backend;isOutput=true]$backend"
       echo "##vso[task.setvariable variable=frontend;isOutput=true]$frontend"
+      echo "##vso[task.setvariable variable=markdown;isOutput=true]$markdown"
     name: paths
     displayName: Detect changed areas
     env:
