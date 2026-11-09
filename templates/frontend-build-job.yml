@@ -1,10 +1,20 @@
 parameters:
 - name: pool
   type: object
+- name: jobName
+  type: string
+  default: FrontendBuild
+- name: displayName
+  type: string
+  default: Build frontend
+- name: condition
+  type: string
+  default: succeeded()
 
 jobs:
-- job: FrontendBuild
-  displayName: Build frontend
+- job: ${{ parameters.jobName }}
+  displayName: ${{ parameters.displayName }}
+  condition: ${{ parameters.condition }}
   pool: ${{ parameters.pool }}
   steps:
   - checkout: self

@@ -6,11 +6,16 @@ pr:
       - main
 
 parameters:
+# auto: the frontend build runs on the self-hosted agent when one in the Default pool is online
+# and idle (templates/pick-agent-job.yml), and on a Microsoft-hosted agent otherwise. The backend
+# build always runs on a Microsoft-hosted agent, so the two builds use separate parallel jobs and
+# run side by side. The other two values force the pool for both builds.
 - name: agentPool
   displayName: Build agent pool
   type: string
-  default: microsoft-hosted
+  default: auto
   values:
+  - auto
   - microsoft-hosted
   - self-hosted
 
@@ -33,6 +38,11 @@ stages:
     parameters:
       pool:
         vmImage: ubuntu-latest
+  - ${{ if eq(parameters.agentPool, 'auto') }}:
+    - template: templates/pick-agent-job.yml
+      parameters:
+        pool:
+          vmImage: ubuntu-latest
 
 # The build stages run only when the pull request changes files their checks cover
 # (templates/detect-changes-job.yml). A skipped stage does not fail the pull request.
@@ -57,13 +67,6 @@ stages:
   dependsOn: Changes
   condition: and(succeeded(), eq(dependencies.Changes.outputs['DetectChanges.paths.frontend'], 'true'))
   jobs:
-  - ${{ if eq(parameters.agentPool, 'self-hosted') }}:
-    - template: templates/frontend-build-job.yml
-      parameters:
-        pool:
-          name: Default
-  - ${{ else }}:
-    - template: templates/frontend-build-job.yml
-      parameters:
-        pool:
-          vmImage: ubuntu-latest
+  - template: templates/frontend-build-jobs.yml
+    parameters:
+      agentPool: ${{ parameters.agentPool }}

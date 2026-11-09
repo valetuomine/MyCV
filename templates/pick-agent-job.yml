@@ -1,0 +1,68 @@
+parameters:
+- name: pool
+  type: object
+
+jobs:
+- job: PickAgent
+  displayName: Pick frontend build agent
+  # Runs only when the change needs the frontend build. A skipped job leaves its output empty,
+  # which selects the Microsoft-hosted agent.
+  dependsOn: DetectChanges
+  condition: and(succeeded(), eq(dependencies.DetectChanges.outputs['paths.frontend'], 'true'))
+  pool: ${{ parameters.pool }}
+  steps:
+  - checkout: none
+
+  # Sets the output variable "selfHosted" to true only when the Default pool has an agent that
+  # is online, enabled and idle. Any failure to find that out (a missing permission, a network
+  # error) sets it to false and logs the reason as a warning, so the frontend build falls back
+  # to the Microsoft-hosted agent. The script never fails the job, and it never marks the job as
+  # succeeded with issues, because the main pipeline requires the Changes stage to be Succeeded.
+  #
+  # A 401 or 403 means the project's Build Service lacks the Reader role on the pool: in
+  # Organization settings, open Agent pools, Default, Security and add the project's Build
+  # Service to the Reader role.
+  - bash: |
+      set -uo pipefail
+
+      self_hosted=false
+
+      pools_url="${SYSTEM_COLLECTIONURI}_apis/distributedtask/pools?poolName=Default&api-version=7.1"
+      pools_code=$(curl -sS --connect-timeout 10 --max-time 30 -o pools.json -w '%{http_code}' \
+        -H "Authorization: Bearer ${SYSTEM_ACCESSTOKEN}" "$pools_url") || pools_code=000
+
+      if [ "$pools_code" != "200" ]; then
+        echo "##vso[task.logissue type=warning]Could not list agent pools (HTTP $pools_code)."
+        if [ "$pools_code" = "401" ] || [ "$pools_code" = "403" ]; then
+          echo "The project's Build Service needs the Reader role on the Default pool."
+        fi
+      else
+        pool_id=$(jq -r '.value[0].id // empty' pools.json 2>/dev/null || true)
+        if [ -z "$pool_id" ]; then
+          echo "##vso[task.logissue type=warning]The Default pool was not found or the response was not readable."
+        else
+          agents_url="${SYSTEM_COLLECTIONURI}_apis/distributedtask/pools/${pool_id}/agents?includeAssignedRequest=true&api-version=7.1"
+          agents_code=$(curl -sS --connect-timeout 10 --max-time 30 -o agents.json -w '%{http_code}' \
+            -H "Authorization: Bearer ${SYSTEM_ACCESSTOKEN}" "$agents_url") || agents_code=000
+
+          if [ "$agents_code" != "200" ]; then
+            echo "##vso[task.logissue type=warning]Could not list agents (HTTP $agents_code)."
+          else
+            jq -r '.value[] | "  \(.name): status=\(.status), enabled=\(.enabled), busy=\(.assignedRequest != null)"' \
+              agents.json 2>/dev/null || echo "##vso[task.logissue type=warning]Could not read the agent list."
+            free=$(jq '[.value[] | select(.status == "online" and .enabled == true and .assignedRequest == null)] | length' \
+              agents.json 2>/dev/null || echo 0)
+            if [ "${free:-0}" -gt 0 ]; then
+              self_hosted=true
+            fi
+          fi
+        fi
+      fi
+
+      rm -f pools.json agents.json
+      echo "Self-hosted agent available: $self_hosted"
+      echo "##vso[task.setvariable variable=selfHosted;isOutput=true]$self_hosted"
+    name: agent
+    displayName: Check the self-hosted agent
+    env:
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken)

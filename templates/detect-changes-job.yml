@@ -41,7 +41,7 @@ jobs:
             src/Backend/* | src/MyCV.sln | templates/dotnet-build-job.yml)
               backend=true
               ;;
-            src/Frontend/* | templates/frontend-build-job.yml)
+            src/Frontend/* | templates/frontend-build-job.yml | templates/frontend-build-jobs.yml | templates/pick-agent-job.yml)
               frontend=true
               ;;
           esac

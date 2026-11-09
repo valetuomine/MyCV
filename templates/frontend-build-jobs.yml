@@ -1,0 +1,33 @@
+parameters:
+- name: agentPool
+  type: string
+
+# auto: FrontendSelfHosted runs when PickAgent (templates/pick-agent-job.yml) found an idle
+# self-hosted agent, otherwise FrontendHosted does. An empty PickAgent output counts as no agent.
+# The other two values force the pool and use the default job name.
+jobs:
+- ${{ if eq(parameters.agentPool, 'auto') }}:
+  - template: frontend-build-job.yml
+    parameters:
+      jobName: FrontendSelfHosted
+      displayName: Build frontend (self-hosted)
+      condition: and(succeeded(), eq(stageDependencies.Changes.PickAgent.outputs['agent.selfHosted'], 'true'))
+      pool:
+        name: Default
+  - template: frontend-build-job.yml
+    parameters:
+      jobName: FrontendHosted
+      displayName: Build frontend (Microsoft-hosted)
+      condition: and(succeeded(), ne(stageDependencies.Changes.PickAgent.outputs['agent.selfHosted'], 'true'))
+      pool:
+        vmImage: ubuntu-latest
+- ${{ elseif eq(parameters.agentPool, 'self-hosted') }}:
+  - template: frontend-build-job.yml
+    parameters:
+      pool:
+        name: Default
+- ${{ else }}:
+  - template: frontend-build-job.yml
+    parameters:
+      pool:
+        vmImage: ubuntu-latest
