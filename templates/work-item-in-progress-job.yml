@@ -16,6 +16,7 @@ jobs:
   # pull request.
   # The move also rewrites the first description line, "Tila: In Progress: <reason>", in the
   # same PATCH call as the state.
+  # A linked Task also brings in its parent work item, so its story moves too.
   # After the merge, the main pipeline moves them forward again
   # (templates/work-item-state-job.yml). Closed and Removed items are left as
   # they are.
@@ -67,6 +68,18 @@ jobs:
         echo "Pull request $PULL_REQUEST_ID has no linked work items."
         exit 0
       fi
+
+      # A linked Task also brings in its parent. One batched read with errorPolicy=omit, so a
+      # deleted item cannot abort the step; if the read fails altogether, a warning is logged and
+      # only the linked items are handled.
+      linked_csv=$(echo "$work_item_ids" | paste -sd, -)
+      parent_ids=$(curl -sS --fail-with-body -H "$auth" \
+        "$api/wit/workitems?ids=$linked_csv&fields=System.WorkItemType,System.Parent&errorPolicy=omit&api-version=7.1" \
+        | jq -r '.value[] | select(. != null) | select(.fields["System.WorkItemType"] == "Task") | .fields["System.Parent"] // empty') || {
+        echo "##vso[task.logissue type=warning]Could not read the parents of the linked Tasks."
+        parent_ids=""
+      }
+      work_item_ids=$(printf '%s\n' $work_item_ids $parent_ids | sort -un)
 
       ids_csv=$(echo "$work_item_ids" | paste -sd, -)
       items=$(curl -sS --fail-with-body -H "$auth" \

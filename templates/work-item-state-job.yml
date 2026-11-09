@@ -58,6 +58,19 @@ jobs:
         exit 0
       fi
 
+      # A linked Task also brings in its parent work item, so a story split into Tasks needs no
+      # link of its own: it moves once its last Task is merged (open-Task check below).
+      # One batched read with errorPolicy=omit, so a deleted item cannot abort the step; if the
+      # read fails altogether, a warning is logged and only the linked items are handled.
+      linked_csv=$(echo "$work_item_ids" | paste -sd, -)
+      parent_ids=$(curl -sS --fail-with-body -H "$auth" \
+        "$api/wit/workitems?ids=$linked_csv&fields=System.WorkItemType,System.Parent&errorPolicy=omit&api-version=7.1" \
+        | jq -r '.value[] | select(. != null) | select(.fields["System.WorkItemType"] == "Task") | .fields["System.Parent"] // empty') || {
+        echo "##vso[task.logissue type=warning]Could not read the parents of the linked Tasks."
+        parent_ids=""
+      }
+      work_item_ids=$(printf '%s\n' $work_item_ids $parent_ids | sort -un)
+
       is_open() {
         [ "$1" != "Closed" ] && [ "$1" != "Removed" ]
       }
