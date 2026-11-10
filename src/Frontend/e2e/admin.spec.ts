@@ -15,6 +15,31 @@ test.describe("signed-in user", () => {
     await expect(page).toHaveURL(new RegExp(`/${encodeURIComponent(testCv)}$`))
   })
 
+  test("loads a signed-in page without an MSAL initialisation error", async ({
+    page,
+    testCv,
+  }) => {
+    const consoleErrors: string[] = []
+    page.on("console", (message) => {
+      if (message.type() === "error") {
+        consoleErrors.push(message.text())
+      }
+    })
+    page.on("pageerror", (error) => consoleErrors.push(error.message))
+
+    await page.goto(`/${encodeURIComponent(testCv)}`)
+    await expectSignedIn(
+      page,
+      page.getByRole("button", { name: "Edit profile" }),
+    )
+
+    expect(
+      consoleErrors.filter((text) =>
+        text.includes("uninitialized_public_client_application"),
+      ),
+    ).toEqual([])
+  })
+
   test("shows the create-profile form on /admin without a CV", async ({
     page,
   }) => {

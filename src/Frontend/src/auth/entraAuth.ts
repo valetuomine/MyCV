@@ -252,6 +252,10 @@ export async function acquireApiAuthenticationResult(
     msalInstance.setActiveAccount(result.account)
     return result
   } catch (error) {
+    if (!(error instanceof InteractionRequiredAuthError)) {
+      console.error("Acquiring the API token failed", error)
+    }
+
     if (
       error instanceof InteractionRequiredAuthError &&
       !isTokenRedirectInProgress
