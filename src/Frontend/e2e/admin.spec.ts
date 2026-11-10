@@ -15,6 +15,62 @@ test.describe("signed-in user", () => {
     await expect(page).toHaveURL(new RegExp(`/${encodeURIComponent(testCv)}$`))
   })
 
+  test("shows the create-profile form on /admin without a CV", async ({
+    page,
+  }) => {
+    await page.route("**/api/me/candidate", (route) =>
+      route.fulfill({
+        status: 404,
+        contentType: "application/problem+json",
+        json: { status: 404, title: "No CV is linked to this sign-in." },
+      }),
+    )
+
+    await page.goto("/admin")
+    await expectSignedIn(
+      page,
+      page.getByRole("heading", { name: "Create profile" }),
+    )
+    await expect(page.getByLabel("Your CV link")).toBeVisible()
+    await expect(
+      page.getByRole("button", { name: "Create profile" }),
+    ).toBeVisible()
+  })
+
+  test("offers to retry on /admin when the CV look-up fails", async ({
+    page,
+  }) => {
+    await page.route("**/api/me/candidate", (route) =>
+      route.fulfill({ status: 500 }),
+    )
+
+    await page.goto("/admin")
+    await expectSignedIn(
+      page,
+      page.getByText("We couldn't check whether you already have a CV."),
+    )
+    await expect(page.getByRole("button", { name: "Try again" })).toBeVisible()
+    await expect(
+      page.getByRole("button", { name: "Sign in again" }),
+    ).toBeHidden()
+  })
+
+  test("offers to sign in again on /admin when the API refuses the session", async ({
+    page,
+  }) => {
+    await page.route("**/api/me/candidate", (route) =>
+      route.fulfill({ status: 401 }),
+    )
+
+    await page.goto("/admin")
+    await expectSignedIn(page, page.getByText("Your sign-in has expired"))
+    await expect(page.getByRole("button", { name: "Try again" })).toBeHidden()
+    await page.getByRole("button", { name: "Sign in again" }).click()
+    await expect(
+      page.getByRole("button", { name: /^Sign in with / }).first(),
+    ).toBeVisible()
+  })
+
   test("goes from the home page link to managing the test CV", async ({
     page,
     testCv,

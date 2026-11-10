@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next"
 import {
   clearLinkSignInMarker,
   isSignInPromptRequired,
+  markExpiredSessionCleared,
   storeSignOutReturn,
 } from "./adminLoginStorage"
 import {
@@ -192,6 +193,35 @@ export async function acquireApiToken(): Promise<string | null> {
 
   const result = await acquireApiAuthenticationResult()
   return result?.accessToken ?? null
+}
+
+/**
+ * Tells whether a silent Google renewal has started. The page is about to
+ * leave for Google, so a request sent without a token meanwhile is refused
+ * only because the renewal hasn't finished.
+ *
+ * @returns True while the renewal redirect is starting.
+ */
+export function isGoogleRenewalPending(): boolean {
+  return isGoogleRenewalInProgress
+}
+
+/**
+ * Drops a session the API no longer accepts and reloads the page, so the
+ * sign-in screen takes over and returns to the same page. It clears MSAL's
+ * accounts and tokens and the Google session without the post-sign-out
+ * prompt, so the provider can sign the same account in again without
+ * asking. Like `signOutInApp`, the reload drops the data cached for the old
+ * identity, so another account signing in never sees it. It also marks the
+ * session as cleared (`markExpiredSessionCleared`).
+ *
+ * @returns A promise that rejects, leaving the session as it was, when the cache can't be cleared.
+ */
+export async function clearExpiredSession(): Promise<void> {
+  await msalInstance.clearCache()
+  clearGoogleSession()
+  markExpiredSessionCleared()
+  window.location.reload()
 }
 
 /** How long the sign-out message shows before the page reloads, like the sign-in hold. */

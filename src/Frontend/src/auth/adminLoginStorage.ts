@@ -28,6 +28,12 @@ export const linkSignInKey = "mycv-link-sign-in"
  */
 export const signInRedirectMethodKey = "mycv-sign-in-redirect-method"
 /**
+ * Session-storage key set when Sign in again drops a session the API refused,
+ * so a new sign-in that the API refuses too shows an error instead of the
+ * same offer again.
+ */
+export const expiredSessionClearedKey = "mycv-expired-session-cleared"
+/**
  * Local-storage key for the sign-in popups cancelled in the app. Local
  * storage, because a popup still shares it after Microsoft's sign-in page
  * has cut the popup off from the tab that opened it.
@@ -53,6 +59,26 @@ export function clearAuthReturnPaths(): void {
   sessionStorage.removeItem(signOutReasonKey)
   sessionStorage.removeItem(linkSignInKey)
   sessionStorage.removeItem(signInRedirectMethodKey)
+}
+
+/** Remembers that Sign in again dropped a session the API refused. */
+export function markExpiredSessionCleared(): void {
+  sessionStorage.setItem(expiredSessionClearedKey, "true")
+}
+
+/**
+ * Tells whether Sign in again has already dropped a refused session in this
+ * tab since the API last accepted a sign-in.
+ *
+ * @returns True when the expired session was cleared once already.
+ */
+export function wasExpiredSessionCleared(): boolean {
+  return sessionStorage.getItem(expiredSessionClearedKey) !== null
+}
+
+/** Forgets the cleared expired session, once the API accepts a sign-in again. */
+export function clearExpiredSessionMarker(): void {
+  sessionStorage.removeItem(expiredSessionClearedKey)
 }
 
 /**
@@ -159,8 +185,8 @@ export function isSignInPopupCancelled(attemptId: string): boolean {
 
 /**
  * Stores where Home sends the user after a sign-out, and why they were
- * signed out, replacing any other return markers. Also requires the next
- * sign-in to ask for credentials.
+ * signed out, replacing any other return markers and the cleared expired
+ * session. Also requires the next sign-in to ask for credentials.
  *
  * @param publicUrlSegment - The CV to return to, or undefined to stay on Home.
  * @param reason - Whether the user signed out or was signed out when idle.
@@ -170,6 +196,7 @@ export function storeSignOutReturn(
   reason: SignOutReason,
 ): void {
   clearAuthReturnPaths()
+  clearExpiredSessionMarker()
   sessionStorage.setItem(
     logoutReturnPublicUrlSegmentKey,
     publicUrlSegment ?? "",

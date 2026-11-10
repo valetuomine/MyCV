@@ -17,7 +17,10 @@ import {
   logoutReturnPublicUrlSegmentKey,
   readSignOutReason,
 } from "../../../../auth/adminLoginStorage"
-import { useAuthSession } from "../../../../auth/authSession"
+import {
+  isSignInConfigured,
+  useAuthSession,
+} from "../../../../auth/authSession"
 import { signedOutLocationState } from "../../../../auth/signedOutState"
 import Button from "../../../components/Button"
 import RHFInput from "../../../components/RHFInput"
@@ -54,7 +57,11 @@ const item: Variants = {
  * the request fails. The form looks the CV up before leaving, so a wrong
  * address shows its error under the field instead of an error page. Under
  * the form, a quiet link takes a CV's owner to sign in and manage it, or
- * straight to managing it when they are signed in already.
+ * straight to managing it when they are signed in already. While MSAL is
+ * busy, for example starting up or handling a redirect, the link stays
+ * hidden in its place, so its wording never switches before the eyes and
+ * the form doesn't shift when it appears. Without any sign-in method set up
+ * it isn't shown at all.
  *
  * It is also where a sign-out lands: it returns to the CV the user
  * signed out from, or stays here, and flags the sign-out for the notice.
@@ -75,7 +82,7 @@ export default function Home(): JSX.Element {
   } = form
   const openHeadingId = useId()
   const [lookUpCandidate] = useLazyGetCandidateQuery()
-  const { isSignedIn } = useAuthSession()
+  const { isSignedIn, isBusy } = useAuthSession()
 
   /**
    * Set before a sign-out lands here: the CV to return to, or "" to stay on
@@ -205,15 +212,19 @@ export default function Home(): JSX.Element {
               />
             </form>
           </FormProvider>
-          <p className="m-0 flex flex-wrap items-center gap-x-3.5 text-sm text-cv-copy">
-            {!isSignedIn && t("home.ownerPrompt")}
-            <Button
-              to={RoutePaths.AdminCreateProfile}
-              variant={ButtonVariant.Text}
+          {isSignInConfigured && (
+            <p
+              className={`m-0 flex flex-wrap items-center gap-x-3.5 text-sm text-cv-copy transition-[opacity,visibility] duration-200 ease-out motion-reduce:transition-none ${isBusy ? "invisible opacity-0" : "visible opacity-100"}`}
             >
-              {isSignedIn ? t("home.ownerManage") : t("home.ownerSignIn")}
-            </Button>
-          </p>
+              {!isSignedIn && t("home.ownerPrompt")}
+              <Button
+                to={RoutePaths.AdminCreateProfile}
+                variant={ButtonVariant.Text}
+              >
+                {isSignedIn ? t("home.ownerManage") : t("home.ownerSignIn")}
+              </Button>
+            </p>
+          )}
         </motion.section>
       </motion.div>
     </main>

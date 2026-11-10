@@ -146,6 +146,13 @@ export const en = {
       "Choose how you sign in. You'll use the same method to edit your CV later.",
     signInPending: "Signing in to create a profile",
     ownCvFailed: "We couldn't check whether you already have a CV.",
+    sessionExpiredTitle: "Your sign-in has expired",
+    sessionExpiredDescription:
+      "Sign in again to continue to your CV. You'll come back here once you're signed in.",
+    signInAgain: "Sign in again",
+    signInAgainFailed: "We couldn't clear the expired sign-in. Try again.",
+    sessionRefused:
+      "Your sign-in still isn't accepted. Try again later, or sign in another way.",
   },
   profilePicture: {
     heading: "Profile picture",
