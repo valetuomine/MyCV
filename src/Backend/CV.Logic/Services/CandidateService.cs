@@ -51,6 +51,22 @@ namespace CV.Logic.Services
             return await GetCandidateByPublicUrlSegment(_featuredOptions.PublicUrlSegment, cancellationToken);
         }
 
+        public async Task<CandidateDto> GetOwnCandidate(
+            ExternalIdentity owner,
+            CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(owner);
+
+            var dbCandidate = await _dataContext.CandidateLogin
+                .AsNoTracking()
+                .ForIdentity(owner)
+                .Select(login => login.Candidate)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            return dbCandidate?.MapEntityToDto()
+                ?? throw new NotFoundException("No CV is linked to this sign-in.");
+        }
+
         public async Task DeleteCandidate(
             Guid candidateId,
             ExternalIdentity? actor,

@@ -30,6 +30,20 @@ namespace CV.LogicInterface.ServiceInterfaces
         Task<CandidateDto> GetFeaturedCandidate(CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Retrieves the candidate that the sign-in identity is one of the logins of.
+        /// <c>CvAdmin</c> gets no extra rights here.
+        /// </summary>
+        /// <param name="owner">The caller's validated sign-in identity.</param>
+        /// <param name="cancellationToken">The token used to cancel the operation.</param>
+        /// <returns>The caller's own candidate.</returns>
+        /// <exception cref="CV.Common.Exceptions.NotFoundException">
+        /// No candidate is linked to the sign-in identity.
+        /// </exception>
+        Task<CandidateDto> GetOwnCandidate(
+            ExternalIdentity owner,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Deletes a candidate and its related rows.
         /// </summary>
         /// <param name="candidateId">The identifier of the candidate to delete.</param>

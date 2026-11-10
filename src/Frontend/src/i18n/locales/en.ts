@@ -39,6 +39,9 @@ export const en = {
     inputLabel: "CV link or address",
     submit: "Open CV",
     opening: "Opening…",
+    ownerPrompt: "Your CV?",
+    ownerSignIn: "Sign in to manage it",
+    ownerManage: "Manage your CV",
   },
   notFound: {
     heading: "We couldn't find that page.",
@@ -142,6 +145,7 @@ export const en = {
     signInDescription:
       "Choose how you sign in. You'll use the same method to edit your CV later.",
     signInPending: "Signing in to create a profile",
+    ownCvFailed: "We couldn't check whether you already have a CV.",
   },
   profilePicture: {
     heading: "Profile picture",

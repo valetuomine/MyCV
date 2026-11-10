@@ -3,6 +3,7 @@ import { execFile } from "node:child_process"
 import { existsSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 import { promisify } from "node:util"
+import { adminSignedInButton } from "./adminSignedIn"
 import { supportsAutoSignIn } from "./autoSignIn"
 import { expectSignedIn, SessionLapsedError, test as setup } from "./fixtures"
 import { isCI, providers, renewSessionHint, type E2EProvider } from "./settings"
@@ -20,7 +21,8 @@ const recordSessionsScript = fileURLToPath(
 const renewalTimeoutMs = 3 * 60 * 1000
 
 /**
- * Tells whether the page's saved session still signs in on `/admin`.
+ * Tells whether the page's saved session still signs in on `/admin`, which
+ * shows the create form, or sends a user who has a CV on to managing it.
  *
  * @param page - The setup's page, with the saved session loaded.
  * @returns Null when it signs in, otherwise why it doesn't.
@@ -28,10 +30,7 @@ const renewalTimeoutMs = 3 * 60 * 1000
 async function findLapse(page: Page): Promise<string | null> {
   await page.goto("/admin")
   try {
-    await expectSignedIn(
-      page,
-      page.getByRole("button", { name: "Create profile" }),
-    )
+    await expectSignedIn(page, adminSignedInButton(page))
     return null
   } catch (error) {
     if (error instanceof SessionLapsedError) {

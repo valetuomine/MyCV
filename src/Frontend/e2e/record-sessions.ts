@@ -26,6 +26,7 @@ import {
   providers,
   type E2EProvider,
 } from "./settings.ts"
+import { adminSignedInButton } from "./adminSignedIn.ts"
 import { assertTestAccount } from "./testAccount.ts"
 
 /** How long the user has to sign in, MFA included. */
@@ -158,16 +159,6 @@ async function startSignIn(
 }
 
 /**
- * Finds the button that shows once the app is signed in on `/admin`.
- *
- * @param page - The app's page.
- * @returns The "Create profile" button.
- */
-function createProfileButton(page: Page): Locator {
-  return page.getByRole("button", { name: "Create profile" })
-}
-
-/**
  * Saves a signed-in page's cookies and local storage to the sign-in method's
  * session file, but only when the app kept the session in local storage and
  * the account is a Playwright test user.
@@ -210,14 +201,14 @@ async function recordByHand(provider: E2EProvider): Promise<void> {
     const { app: page, provider: signInPage } = await startSignIn(
       context,
       provider,
-      createProfileButton,
+      adminSignedInButton,
     )
     console.log(
       signInPage
         ? `Sign in with the ${provider.label} Playwright test user in the browser window${provider.profileDir ? "" : ', and answer Yes to "Stay signed in?"'}.`
         : `The ${provider.label} profile is already signed in.`,
     )
-    await createProfileButton(page).waitFor({ timeout: signInTimeoutMs })
+    await adminSignedInButton(page).waitFor({ timeout: signInTimeoutMs })
     await saveSession(page, provider)
   } finally {
     await close()
@@ -246,7 +237,7 @@ async function renewFromProfile(
       provider,
       page,
       new URL("/admin", baseURL).toString(),
-      createProfileButton(page),
+      adminSignedInButton(page),
       page.getByRole("button", { name: `Sign in with ${provider.label}` }),
     )
     await saveSession(page, provider)
@@ -291,13 +282,13 @@ async function recordAutomatically(
   /** What stopped the sign-in, if anything. It is rethrown without its original, which may quote a credential. */
   let failure: unknown = null
   try {
-    const pages = await startSignIn(context, provider, createProfileButton)
+    const pages = await startSignIn(context, provider, adminSignedInButton)
     if (pages.provider) {
       await signInAutomatically(
         pages.provider,
         provider,
         credentials,
-        createProfileButton(pages.app),
+        adminSignedInButton(pages.app),
       )
     }
     await saveSession(pages.app, provider)

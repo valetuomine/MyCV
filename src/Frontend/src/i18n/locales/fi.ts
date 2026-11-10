@@ -41,6 +41,9 @@ export const fi: Translation = {
     inputLabel: "CV:n linkki tai osoite",
     submit: "Avaa CV",
     opening: "Avataan…",
+    ownerPrompt: "Oma CV?",
+    ownerSignIn: "Kirjaudu hallitsemaan sitä",
+    ownerManage: "Hallitse CV:täsi",
   },
   notFound: {
     heading: "Sivua ei löytynyt.",
@@ -146,6 +149,7 @@ export const fi: Translation = {
     signInDescription:
       "Valitse kirjautumistapa. Käytät samaa tapaa myöhemmin, kun muokkaat CV:täsi.",
     signInPending: "Kirjaudutaan profiilin luomista varten",
+    ownCvFailed: "Emme pystyneet tarkistamaan, onko sinulla jo CV.",
   },
   profilePicture: {
     heading: "Profiilikuva",

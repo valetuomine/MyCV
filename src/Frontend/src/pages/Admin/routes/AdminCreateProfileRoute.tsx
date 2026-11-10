@@ -2,17 +2,21 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useState, type JSX } from "react"
 import { FormProvider, useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
-import { useNavigate } from "react-router-dom"
+import type { TFunction } from "i18next"
+import { Navigate, useNavigate } from "react-router-dom"
+import { useGetOwnCandidateQuery } from "../../../api/candidateQueries"
 import { useCreateProfileMutation } from "../../../api/profileQueries"
 import { returnAdminPathKey } from "../../../auth/adminLoginStorage"
 import { isSignInConfigured, useAuthSession } from "../../../auth/authSession"
 import SignInMessage from "../../../auth/SignInMessage"
+import SignInRouteFallback from "../../../auth/SignInRouteFallback"
 import useLoginRedirect from "../../../auth/useLoginRedirect"
 import { RoutePaths } from "../../../routePaths"
-import { ButtonVariant } from "../../../types"
+import { ButtonVariant, Tone } from "../../../types"
 import Button from "../../components/Button"
 import RHFInput from "../../components/RHFInput"
 import ProfileFields from "../../Profile/components/forms/ProfileFields"
+import RouteMessage from "../../Profile/components/RouteMessage"
 import {
   createProfileSchema,
   createProfileDefaultValues,
@@ -20,6 +24,7 @@ import {
 } from "../../Profile/schemas/profile-form-schema"
 import { toCreateProfileRequest } from "../../Profile/mappers/profileFormMapper"
 import { getProfileFormError } from "../../Profile/utils/profileFormUtils"
+import { errorStatus } from "../../Profile/utils/describeRouteError"
 
 /**
  * Why the last creation failed: no public URL came back, or the request
@@ -29,12 +34,33 @@ type SubmitFailure =
   { reason: "noPublicUrl" } | { reason: "request"; error: unknown }
 
 /**
+ * Turns a failed look-up of the user's own CV into a message. Every failure
+ * here is worth retrying, because a missing CV (404) never reaches it.
+ *
+ * @param error - The RTK Query error.
+ * @param t - The translation function.
+ * @returns The message.
+ */
+function describeOwnCvError(error: unknown, t: TFunction): string {
+  const status = errorStatus(error)
+
+  return status === "FETCH_ERROR" || status === "TIMEOUT_ERROR"
+    ? t("cv.unreachable")
+    : t("createProfile.ownCvFailed")
+}
+
+/**
  * The `/admin` route for creating a profile. Lets the user choose a sign-in
- * method and signs them in first, then shows the form with a preview of the CV link, and opens the new CV once it
- * is created. A failed creation is kept as its cause and worded at render,
+ * method and signs them in first. Once signed in, it looks up the user's own
+ * CV and sends an owner straight on to managing it; only a user without a CV
+ * sees the form, with a preview of the CV link, and the new CV opens once it
+ * is created. The form stays hidden during the look-up, so it never flashes
+ * before the redirect. A failed creation is kept as its cause and worded at render,
  * so its message follows a language change.
  *
- * @returns The sign-in screen until signed in, then the create-profile form.
+ * @returns The sign-in screen until signed in, a loader during the look-up,
+ *   a redirect to the user's own CV, an error message when the look-up
+ *   fails, otherwise the create-profile form.
  */
 export default function AdminCreateProfileRoute(): JSX.Element {
   const { t } = useTranslation()
@@ -42,6 +68,12 @@ export default function AdminCreateProfileRoute(): JSX.Element {
   const navigate = useNavigate()
   const [submitFailure, setSubmitFailure] = useState<SubmitFailure | null>(null)
   const [createProfile, createState] = useCreateProfileMutation()
+  /** Whether the user is signed in and settled, so their own CV can be looked up. */
+  const canLookUpOwnCv = isSignInConfigured && isSignedIn && !isBusy
+  const ownCandidate = useGetOwnCandidateQuery(undefined, {
+    skip: !canLookUpOwnCv,
+    refetchOnMountOrArgChange: true,
+  })
   const loginRedirect = useLoginRedirect({
     enabled: true,
     redirectPath: RoutePaths.AdminCreateProfile,
@@ -91,7 +123,7 @@ export default function AdminCreateProfileRoute(): JSX.Element {
         ? t("createProfile.noPublicUrl")
         : getProfileFormError(submitFailure.error, t("formErrors.creation"), t)
 
-  if (!isSignInConfigured || !isSignedIn || isBusy) {
+  if (!canLookUpOwnCv) {
     return (
       <SignInMessage
         {...loginRedirect}
@@ -101,6 +133,32 @@ export default function AdminCreateProfileRoute(): JSX.Element {
         backLabel={t("common.openCv")}
         onBack={() => navigate(RoutePaths.Home)}
       />
+    )
+  }
+
+  if (ownCandidate.isFetching || ownCandidate.isUninitialized) {
+    return <SignInRouteFallback />
+  }
+
+  if (ownCandidate.currentData?.publicUrlSegment) {
+    return (
+      <Navigate
+        to={RoutePaths.CandidateAdmin(
+          ownCandidate.currentData.publicUrlSegment,
+        )}
+        replace
+      />
+    )
+  }
+
+  if (ownCandidate.isError && errorStatus(ownCandidate.error) !== 404) {
+    return (
+      <RouteMessage
+        tone={Tone.Error}
+        onRetry={() => void ownCandidate.refetch()}
+      >
+        {describeOwnCvError(ownCandidate.error, t)}
+      </RouteMessage>
     )
   }
 

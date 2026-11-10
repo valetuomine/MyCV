@@ -6,12 +6,26 @@ import { expect, expectSignedIn, test } from "./fixtures"
  * for the next one.
  */
 test.describe("signed-in user", () => {
-  test("opens the create-profile view", async ({ page }) => {
+  test("goes from /admin to managing the test CV", async ({ page, testCv }) => {
     await page.goto("/admin")
     await expectSignedIn(
       page,
-      page.getByRole("heading", { name: "Create profile" }),
+      page.getByRole("button", { name: "Edit profile" }),
     )
+    await expect(page).toHaveURL(new RegExp(`/${encodeURIComponent(testCv)}$`))
+  })
+
+  test("goes from the home page link to managing the test CV", async ({
+    page,
+    testCv,
+  }) => {
+    await page.goto("/")
+    await page.getByRole("link", { name: "Manage your CV" }).click()
+    await expectSignedIn(
+      page,
+      page.getByRole("button", { name: "Edit profile" }),
+    )
+    await expect(page).toHaveURL(new RegExp(`/${encodeURIComponent(testCv)}$`))
   })
 
   test("edits and saves the test CV", async ({ page, testCv }) => {
