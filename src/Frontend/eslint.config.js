@@ -14,6 +14,10 @@ export default defineConfig(
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
     },
     plugins: {
       "react-hooks": reactHooks,
@@ -21,6 +25,7 @@ export default defineConfig(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
+      "@typescript-eslint/no-deprecated": "error",
       "react-refresh/only-export-components": [
         "warn",
         { allowConstantExport: true },
@@ -76,5 +81,9 @@ export default defineConfig(
       "jsdoc/convert-to-jsdoc-comments": "error",
       "jsdoc/no-bad-blocks": "error",
     },
+  },
+  {
+    files: ["src/generated/**", "e2e/**"],
+    rules: { "@typescript-eslint/no-deprecated": "off" },
   },
 )

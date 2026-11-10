@@ -38,9 +38,8 @@
 
 ## Deprecated APIs
 
-- Never use a type, function or prop marked `@deprecated`, in new code or in code you change. The editor strikes it through, but neither ESLint nor `tsc` fails on it, so check the hover or the declaration before using an unfamiliar type. Use the replacement its JSDoc names.
+- Never use a type, function or prop marked `@deprecated`, in new code or in code you change. `npm run lint` enforces this with `@typescript-eslint/no-deprecated` (type-aware through `parserOptions.projectService` in `eslint.config.js`), locally and in every pipeline run that touches the frontend, so a deprecated use fails the lint run. The rule is off for `src/generated/**` and `e2e/**`. Use the replacement its JSDoc names, and never silence the rule with `eslint-disable`.
 - React event types: `FormEvent` and `FormEventHandler` are deprecated in `@types/react`. Type a form's `onSubmit` handler with `SubmitEvent<HTMLFormElement>` (or `SubmitEventHandler`), a field's `onChange` with `ChangeEvent`, an `onInput` with `InputEvent`, and an event of no particular kind with `SyntheticEvent`.
-- When a change touches a file that already uses a deprecated API, replace it in the same change.
 
 ## Form component conventions
 
