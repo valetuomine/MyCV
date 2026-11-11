@@ -74,8 +74,9 @@ export function hasOwnAuthorization(args: string | FetchArgs): boolean {
  * checking the token, proves nothing. A request with its own
  * `Authorization` header reports nothing, because it handles its own 401,
  * and neither does one sent before the session was last refused or signed
- * in again (`getSessionGeneration`). The result always goes back to the
- * caller unchanged.
+ * in again (`getSessionGeneration`). The endpoint's options go on to the
+ * wrapped base query, so its `prepareHeaders` can read them, and the result
+ * always goes back to the caller unchanged.
  *
  * @param baseQuery - The base query to wrap.
  * @param handlers - The session callbacks.
@@ -93,7 +94,7 @@ export function createSessionAwareBaseQuery(
 > {
   return async (args, api, extraOptions) => {
     const generation = handlers.currentGeneration()
-    const result = await baseQuery(args, api, {})
+    const result = await baseQuery(args, api, extraOptions ?? {})
     if (
       hasOwnAuthorization(args) ||
       generation !== handlers.currentGeneration()

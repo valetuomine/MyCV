@@ -110,6 +110,14 @@ export const SessionRefusal = {
 export type SessionRefusal =
   (typeof SessionRefusal)[keyof typeof SessionRefusal]
 
+/** Whether an RTK Query request reads data or changes it. */
+export const RequestType = {
+  Query: "query",
+  Mutation: "mutation",
+} as const
+
+export type RequestType = (typeof RequestType)[keyof typeof RequestType]
+
 export const ActivityEvent = {
   PointerDown: "pointerdown",
   PointerMove: "pointermove",

@@ -97,6 +97,9 @@ export const profileQueries = baseApi.injectEndpoints({
     /**
      * Fetches the profile with every translation for editing. Succeeds only
      * for users allowed to edit it, so it also answers whether they can.
+     * The result also fills `getProfileAccess`, which fetches the same URL,
+     * so the CV page that `/:publicUrlSegment/admin` opens next doesn't
+     * fetch it again.
      */
     getProfileAdmin: builder.query<ProfileAdmin, string>({
       query: (profileId) =>
@@ -106,6 +109,27 @@ export const profileQueries = baseApi.injectEndpoints({
         { type: "Profile", id: profileId },
         "Session",
       ],
+      /**
+       * Copies a successful result into the `getProfileAccess` cache. A
+       * failed request is left to the query's own error state.
+       *
+       * @param profileId - The profile that was fetched.
+       * @param api - RTK Query's lifecycle helpers.
+       * @param api.dispatch - Dispatches the cache update.
+       * @param api.queryFulfilled - Settles when the request finishes.
+       */
+      async onQueryStarted(profileId, { dispatch, queryFulfilled }) {
+        const result = await queryFulfilled.catch(() => null)
+        if (result) {
+          void dispatch(
+            profileQueries.util.upsertQueryData(
+              "getProfileAccess",
+              profileId,
+              result.data,
+            ),
+          )
+        }
+      },
     }),
     /**
      * Fetches the same admin view only to tell whether the signed-in user

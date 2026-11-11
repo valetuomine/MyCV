@@ -15,6 +15,7 @@ import {
 import {
   apiScope,
   isSignInCancelled,
+  isTimedOut,
   msalInstance,
   redirectUri,
   signInPopupTimeoutMs,
@@ -238,9 +239,7 @@ function outcomeForMsalError(error: unknown): SignInPopupOutcome {
     return SignInPopupOutcome.Blocked
   }
 
-  return isSignInCancelled(error) ||
-    (error instanceof AuthError &&
-      error.errorCode === BrowserAuthErrorCodes.timedOut)
+  return isSignInCancelled(error) || isTimedOut(error)
     ? SignInPopupOutcome.Cancelled
     : SignInPopupOutcome.Failed
 }

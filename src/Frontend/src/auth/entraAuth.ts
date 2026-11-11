@@ -36,6 +36,15 @@ export const isEntraConfigured = Boolean(clientId && tenantId && apiScope)
 export const redirectUri = `${window.location.origin}/auth/callback`
 /** Set while a token redirect is starting, so parallel requests start only one. */
 let isTokenRedirectInProgress = false
+/** Components subscribed to `isTokenRedirectInProgress` through `useSyncExternalStore`. */
+const tokenRedirectListeners = new Set<() => void>()
+/**
+ * The account whose silent renewal last timed out, or null. Its later
+ * requests skip the renewal instead of waiting for the same timeout again:
+ * they go without a token, or start the redirect when they may. Any
+ * successful sign-in or token acquisition clears it.
+ */
+let timedOutRenewalAccountId: string | null = null
 /**
  * How long a sign-in popup waits for its response before it counts as
  * cancelled. MSAL's default of 60 seconds cuts off a normal sign-in with a
@@ -79,6 +88,16 @@ const redirectSignInErrorListeners = new Set<() => void>()
 function setRedirectSignInError(error: EventError): void {
   redirectSignInError = error
   redirectSignInErrorListeners.forEach((listener) => listener())
+}
+
+/**
+ * Stores whether a token redirect is starting and notifies every subscriber.
+ *
+ * @param isInProgress - True when the redirect starts, false when it failed to start.
+ */
+function setTokenRedirectInProgress(isInProgress: boolean): void {
+  isTokenRedirectInProgress = isInProgress
+  tokenRedirectListeners.forEach((listener) => listener())
 }
 
 /**
@@ -128,12 +147,20 @@ function isLinkLogin(correlationId: string): boolean {
  * a sign-out required. A redirect or popup that adds a sign-in method is
  * kept apart instead, so the account being added never becomes the session:
  * the redirect by the linking marker's ID in `state`, the popup by its
- * linking state. Records the error when a redirect sign-in fails.
+ * linking state. Records the error when a redirect sign-in fails, and
+ * forgets a timed-out silent renewal once a sign-in or token succeeds.
  *
  * @param message - The MSAL event. `LOGIN_SUCCESS` carries the account, and
  *   `ACQUIRE_TOKEN_SUCCESS`, which comes first, the full result.
  */
 function handleMsalEvent(message: EventMessage): void {
+  if (
+    message.eventType === EventType.LOGIN_SUCCESS ||
+    message.eventType === EventType.ACQUIRE_TOKEN_SUCCESS
+  ) {
+    timedOutRenewalAccountId = null
+  }
+
   if (
     message.eventType === EventType.ACQUIRE_TOKEN_SUCCESS &&
     message.payload
@@ -220,6 +247,20 @@ export function isSignInCancelled(error: unknown): boolean {
 }
 
 /**
+ * Tells whether MSAL gave up waiting for a response from its popup or
+ * hidden iframe.
+ *
+ * @param error - The error from MSAL.
+ * @returns True for MSAL's timeout error.
+ */
+export function isTimedOut(error: unknown): boolean {
+  return (
+    error instanceof AuthError &&
+    error.errorCode === BrowserAuthErrorCodes.timedOut
+  )
+}
+
+/**
  * Tells whether a token redirect to Microsoft has started. The page is about
  * to leave, so a request sent without a token meanwhile is refused only
  * because the redirect hasn't finished.
@@ -231,17 +272,93 @@ export function isTokenRedirectPending(): boolean {
 }
 
 /**
+ * Subscribes to a token redirect starting or failing to start.
+ *
+ * @param listener - Called whenever `isTokenRedirectPending` changes.
+ * @returns A function that unsubscribes the listener.
+ */
+export function subscribeTokenRedirect(listener: () => void): () => void {
+  tokenRedirectListeners.add(listener)
+  return () => tokenRedirectListeners.delete(listener)
+}
+
+/**
+ * Tells whether a failed silent token renewal needs the user to sign in
+ * with Microsoft again. Besides MSAL's `InteractionRequiredAuthError`, this
+ * covers a hidden-iframe renewal that timed out: when Microsoft's session
+ * has ended, its sign-in page in the iframe tries to take over the whole
+ * tab, the iframe's sandbox blocks it, and MSAL only sees a timeout.
+ *
+ * @param error - The error from `acquireTokenSilent`.
+ * @returns True when the token needs an interactive sign-in.
+ */
+function isInteractionNeeded(error: unknown): boolean {
+  return error instanceof InteractionRequiredAuthError || isTimedOut(error)
+}
+
+/** Whether acquiring an API token may leave the page for Microsoft. */
+export interface ApiTokenRedirectOptions {
+  /**
+   * Whether a token that needs interaction may start a redirect to
+   * Microsoft. False for a background check or a save, which must not leave
+   * the page; the request then goes without a token and the API's 401 is
+   * handled as an expired session. Defaults to true.
+   */
+  allowRedirect?: boolean
+}
+
+/** How `acquireApiAuthenticationResult` acquires the token. */
+export interface ApiTokenOptions extends ApiTokenRedirectOptions {
+  /** The account to acquire the token for, when not the active one. */
+  account?: AccountInfo
+}
+
+/**
+ * Starts one token redirect to Microsoft for the account, unless one is
+ * already starting. Subscribers learn when it starts, and again if it fails
+ * to start, so a view waiting for it doesn't wait forever.
+ *
+ * @param account - The account to renew the token for.
+ */
+function startTokenRedirect(account: AccountInfo): void {
+  if (isTokenRedirectInProgress) {
+    return
+  }
+
+  setTokenRedirectInProgress(true)
+  msalInstance
+    .acquireTokenRedirect({
+      account,
+      scopes: [apiScope],
+      redirectUri,
+      redirectStartPage: window.location.href,
+      extraQueryParameters: microsoftSignInParameters(),
+    })
+    .catch((error: unknown) => {
+      console.error("Starting the Microsoft token redirect failed", error)
+      setTokenRedirectInProgress(false)
+    })
+}
+
+/**
  * Acquires an API access token silently for the given account, the active
  * account or the first signed-in account. Returns null when sign-in isn't
  * configured, nobody is signed in or the token needs interaction; in the last
- * case it also starts one token redirect.
+ * case it also starts one token redirect, unless `allowRedirect` is false.
+ * After a silent renewal of the account has timed out, it skips the renewal
+ * until a sign-in or token succeeds: a request that may not redirect goes
+ * without a token at once, and one that may redirect starts the redirect
+ * without waiting for another timeout.
  *
- * @param account - The account to acquire the token for, when not the active one.
+ * @param options - The account and whether a redirect may start.
+ * @param options.account - The account to acquire the token for, when not the active one.
+ * @param options.allowRedirect - Whether a token that needs interaction may start a redirect.
  * @returns The authentication result with the access token, or null.
  */
-export async function acquireApiAuthenticationResult(
-  account?: AccountInfo,
-): Promise<AuthenticationResult | null> {
+export async function acquireApiAuthenticationResult({
+  account,
+  allowRedirect = true,
+}: ApiTokenOptions = {}): Promise<AuthenticationResult | null> {
   if (!isEntraConfigured || !apiScope) {
     return null
   }
@@ -255,6 +372,13 @@ export async function acquireApiAuthenticationResult(
     return null
   }
 
+  if (timedOutRenewalAccountId === selectedAccount.homeAccountId) {
+    if (allowRedirect) {
+      startTokenRedirect(selectedAccount)
+    }
+    return null
+  }
+
   try {
     const result = await msalInstance.acquireTokenSilent({
       account: selectedAccount,
@@ -263,26 +387,23 @@ export async function acquireApiAuthenticationResult(
     msalInstance.setActiveAccount(result.account)
     return result
   } catch (error) {
-    if (!(error instanceof InteractionRequiredAuthError)) {
+    if (!isInteractionNeeded(error)) {
       console.error("Acquiring the API token failed", error)
+      return null
     }
 
-    if (
-      error instanceof InteractionRequiredAuthError &&
-      !isTokenRedirectInProgress
-    ) {
-      isTokenRedirectInProgress = true
-      void msalInstance
-        .acquireTokenRedirect({
-          account: selectedAccount,
-          scopes: [apiScope],
-          redirectUri,
-          redirectStartPage: window.location.href,
-          extraQueryParameters: microsoftSignInParameters(),
-        })
-        .catch(() => {
-          isTokenRedirectInProgress = false
-        })
+    if (isTimedOut(error)) {
+      timedOutRenewalAccountId = selectedAccount.homeAccountId
+      console.warn(
+        allowRedirect
+          ? "The silent Microsoft token renewal timed out, so the app signs in again with a redirect"
+          : "The silent Microsoft token renewal timed out, so requests go without a token until the user signs in again",
+        error,
+      )
+    }
+
+    if (allowRedirect) {
+      startTokenRedirect(selectedAccount)
     }
 
     return null

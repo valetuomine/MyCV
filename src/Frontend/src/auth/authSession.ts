@@ -12,8 +12,11 @@ import {
   acquireApiAuthenticationResult,
   apiScope,
   isEntraConfigured,
+  isTokenRedirectPending,
   msalInstance,
   redirectUri,
+  subscribeTokenRedirect,
+  type ApiTokenRedirectOptions,
 } from "./entraAuth"
 import {
   clearGoogleSession,
@@ -171,11 +174,16 @@ let isGoogleRenewalInProgress = false
  * ID token. A Google session counts while no Microsoft account is active,
  * so a Microsoft account being added to its CV is never used. When the
  * Google token has expired, it starts one silent redirect to Google that
- * returns to the current page.
+ * returns to the current page. When the Entra token needs interaction, it
+ * starts a redirect to Microsoft only if `allowRedirect` allows it.
  *
+ * @param options - How the Entra token is acquired.
+ * @param options.allowRedirect - Whether an Entra token that needs interaction may start a redirect to Microsoft. Defaults to true.
  * @returns The token, or null when nobody is signed in or a renewal is needed.
  */
-export async function acquireApiToken(): Promise<string | null> {
+export async function acquireApiToken({
+  allowRedirect = true,
+}: ApiTokenRedirectOptions = {}): Promise<string | null> {
   const googleSession = getGoogleSession()
   if (googleSession && !msalInstance.getActiveAccount()) {
     const idToken = getGoogleIdToken()
@@ -191,8 +199,19 @@ export async function acquireApiToken(): Promise<string | null> {
     return idToken
   }
 
-  const result = await acquireApiAuthenticationResult()
+  const result = await acquireApiAuthenticationResult({ allowRedirect })
   return result?.accessToken ?? null
+}
+
+/**
+ * Tells whether a token redirect to Microsoft has started, and renders the
+ * component again when it starts or fails to start, so a view that waits
+ * for the redirect never stays on its loader.
+ *
+ * @returns True while the token redirect is starting.
+ */
+export function useTokenRedirectPending(): boolean {
+  return useSyncExternalStore(subscribeTokenRedirect, isTokenRedirectPending)
 }
 
 /**
