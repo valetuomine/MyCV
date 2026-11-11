@@ -220,6 +220,17 @@ export function isSignInCancelled(error: unknown): boolean {
 }
 
 /**
+ * Tells whether a token redirect to Microsoft has started. The page is about
+ * to leave, so a request sent without a token meanwhile is refused only
+ * because the redirect hasn't finished.
+ *
+ * @returns True while the token redirect is starting.
+ */
+export function isTokenRedirectPending(): boolean {
+  return isTokenRedirectInProgress
+}
+
+/**
  * Acquires an API access token silently for the given account, the active
  * account or the first signed-in account. Returns null when sign-in isn't
  * configured, nobody is signed in or the token needs interaction; in the last

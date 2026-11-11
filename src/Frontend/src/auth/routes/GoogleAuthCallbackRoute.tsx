@@ -1,38 +1,12 @@
 import { useState, type JSX } from "react"
-import { matchPath, Navigate } from "react-router-dom"
+import { Navigate } from "react-router-dom"
 import { readLinkSignInMarker } from "../adminLoginStorage"
 import { useAuthSession } from "../authSession"
 import { completeGoogleSignIn } from "../googleAuth"
 import LinkSignInCallback from "../LinkSignInCallback"
 import SignInCallback from "../SignInCallback"
-import { RoutePaths } from "../../routePaths"
+import { signInPathFor } from "../signInPath"
 import { SignInMethod } from "../../types"
-
-/**
- * Finds the sign-in route for the page a silent renewal started on.
- *
- * @param path - The page the renewal started on.
- * @returns The page's sign-in route, or Home when it has none.
- */
-function signInPathFor(path: string | null): string {
-  if (!path) {
-    return RoutePaths.Home
-  }
-
-  if (path === RoutePaths.AdminCreateProfile) {
-    return RoutePaths.AdminCreateProfile
-  }
-
-  /** The CV the page belongs to, whether it was viewed or being signed in to. */
-  const publicUrlSegment = (
-    matchPath(RoutePaths.CandidateAdminPattern, path) ??
-    matchPath(RoutePaths.CandidateProfilePattern, path)
-  )?.params.publicUrlSegment
-
-  return publicUrlSegment
-    ? RoutePaths.CandidateAdmin(publicUrlSegment)
-    : RoutePaths.Home
-}
 
 /**
  * The `/auth/callback/google` route that Google redirects back to. It reads

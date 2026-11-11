@@ -89,6 +89,27 @@ export const SignOutReason = {
 
 export type SignOutReason = (typeof SignOutReason)[keyof typeof SignOutReason]
 
+/** Why creating a profile failed: no public URL came back, or the request failed. */
+export const SubmitFailureReason = {
+  NoPublicUrl: "no-public-url",
+  Request: "request",
+} as const
+
+export type SubmitFailureReason =
+  (typeof SubmitFailureReason)[keyof typeof SubmitFailureReason]
+
+/**
+ * Why the API refused the signed-in session: it expired, so signing in
+ * again may help, or it was refused again right after signing in again.
+ */
+export const SessionRefusal = {
+  Expired: "expired",
+  RefusedAgain: "refusedAgain",
+} as const
+
+export type SessionRefusal =
+  (typeof SessionRefusal)[keyof typeof SessionRefusal]
+
 export const ActivityEvent = {
   PointerDown: "pointerdown",
   PointerMove: "pointermove",
@@ -124,6 +145,24 @@ export const SignInPopupOutcome = {
 
 export type SignInPopupOutcome =
   (typeof SignInPopupOutcome)[keyof typeof SignInPopupOutcome]
+
+/**
+ * Where signing in again over a refused session has got: not started, the
+ * popup open, how the popup ended, leaving for the sign-in route, or
+ * failing to drop the session before leaving.
+ */
+export const SignInAgainStep = {
+  Idle: "idle",
+  Popup: "popup",
+  Cancelled: "cancelled",
+  Failed: "failed",
+  Blocked: "blocked",
+  Leaving: "leaving",
+  ClearFailed: "clear-failed",
+} as const
+
+export type SignInAgainStep =
+  (typeof SignInAgainStep)[keyof typeof SignInAgainStep]
 
 export const LinkOutcome = {
   Linked: "linked",

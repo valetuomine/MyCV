@@ -150,13 +150,21 @@ export const fi: Translation = {
       "Valitse kirjautumistapa. Käytät samaa tapaa myöhemmin, kun muokkaat CV:täsi.",
     signInPending: "Kirjaudutaan profiilin luomista varten",
     ownCvFailed: "Emme pystyneet tarkistamaan, onko sinulla jo CV.",
-    sessionExpiredTitle: "Kirjautumisesi on vanhentunut",
-    sessionExpiredDescription:
-      "Kirjaudu uudelleen jatkaaksesi CV:si pariin. Palaat tänne, kun olet kirjautunut.",
+  },
+  sessionExpired: {
+    title: "Kirjautumisesi on vanhentunut",
+    description: "Kirjaudu uudelleen jatkaaksesi siitä, mihin jäit.",
     signInAgain: "Kirjaudu uudelleen",
     signInAgainFailed:
       "Vanhentunutta kirjautumista ei voitu tyhjentää. Yritä uudelleen.",
-    sessionRefused:
+    redirectWarning:
+      "Uudelleenkirjautuminen lataa sivun uudelleen, joten tallentamattomat muutokset häviävät.",
+    popupBlocked:
+      "Selain esti kirjautumisikkunan. Kirjautuminen tällä sivulla lataa sen uudelleen, joten tallentamattomat muutokset häviävät.",
+    popupCancelled: "Kirjautuminen peruttiin. Muutoksesi ovat yhä tallessa.",
+    popupFailed: "Kirjautuminen ei onnistunut. Yritä uudelleen.",
+    notNow: "Ei nyt",
+    refusedAgain:
       "Kirjautumistasi ei vieläkään hyväksytä. Yritä myöhemmin uudelleen tai kirjaudu toisella tavalla.",
   },
   profilePicture: {

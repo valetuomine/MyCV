@@ -146,12 +146,20 @@ export const en = {
       "Choose how you sign in. You'll use the same method to edit your CV later.",
     signInPending: "Signing in to create a profile",
     ownCvFailed: "We couldn't check whether you already have a CV.",
-    sessionExpiredTitle: "Your sign-in has expired",
-    sessionExpiredDescription:
-      "Sign in again to continue to your CV. You'll come back here once you're signed in.",
+  },
+  sessionExpired: {
+    title: "Your sign-in has expired",
+    description: "Sign in again to continue where you left off.",
     signInAgain: "Sign in again",
     signInAgainFailed: "We couldn't clear the expired sign-in. Try again.",
-    sessionRefused:
+    redirectWarning:
+      "Signing in again reloads the page, so any changes you haven't saved are lost.",
+    popupBlocked:
+      "The browser blocked the sign-in window. Signing in on this page reloads it, so any changes you haven't saved are lost.",
+    popupCancelled: "Sign-in was cancelled. Your changes are still here.",
+    popupFailed: "Signing in didn't work. Try again.",
+    notNow: "Not now",
+    refusedAgain:
       "Your sign-in still isn't accepted. Try again later, or sign in another way.",
   },
   profilePicture: {

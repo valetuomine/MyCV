@@ -1,5 +1,5 @@
 import { skipToken } from "@reduxjs/toolkit/query"
-import { useGetProfileAdminQuery } from "../api/profileQueries"
+import { useGetProfileAccessQuery } from "../api/profileQueries"
 import { useAuthSession } from "./authSession"
 
 interface EditableProfileAccess {
@@ -9,7 +9,8 @@ interface EditableProfileAccess {
 
 /**
  * Tells whether the signed-in user may edit a profile, by fetching its admin
- * view once someone is signed in and MSAL is idle. Only hides or shows edit controls; the API enforces
+ * view once someone is signed in and MSAL is idle, without the
+ * sign-in-again message on a 401 (`getProfileAccess`). Only hides or shows edit controls; the API enforces
  * who may edit.
  *
  * @param profileId - The profile to check, once it is known.
@@ -20,7 +21,7 @@ export default function useCanEditProfile(
 ): EditableProfileAccess {
   const { isSignedIn, isBusy } = useAuthSession()
   const canCheckAccess = Boolean(isSignedIn && profileId && !isBusy)
-  const profileQuery = useGetProfileAdminQuery(
+  const profileQuery = useGetProfileAccessQuery(
     canCheckAccess && profileId ? profileId : skipToken,
   )
 

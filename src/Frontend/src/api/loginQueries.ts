@@ -37,7 +37,8 @@ export const loginQueries = baseApi.injectEndpoints({
     /** Fetches the sign-in methods of the signed-in user's CV, oldest first. */
     getLogins: builder.query<Login[], void>({
       query: () => "/api/me/logins",
-      providesTags: ["Login"],
+      extraOptions: { requiresSignIn: true },
+      providesTags: ["Login", "Session"],
     }),
     /**
      * Links a new method. Sends the session token itself, read without any
@@ -63,6 +64,7 @@ export const loginQueries = baseApi.injectEndpoints({
         url: `/api/me/logins/${encodeURIComponent(loginId)}`,
         method: "DELETE",
       }),
+      extraOptions: { requiresSignIn: true },
       invalidatesTags: (_result, error) => (error ? [] : ["Login"]),
     }),
   }),

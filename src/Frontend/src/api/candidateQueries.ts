@@ -29,14 +29,17 @@ export const candidateQueries = baseApi.injectEndpoints({
     }),
     /**
      * Fetches the signed-in user's own CV. Answers 401 without a sign-in and
-     * 404 when no CV is linked to it. It provides no tags, so creating a CV
-     * on the create form doesn't refetch it and redirect in the middle of
-     * the form's own navigation; the route refetches it on mount instead. Its
+     * 404 when no CV is linked to it. It provides only the `Session` tag,
+     * which only signing in again invalidates, so creating a CV on the
+     * create form doesn't refetch it and redirect in the middle of the
+     * form's own navigation; the route refetches it on mount instead. Its
      * result is dropped as soon as the route unmounts, so opening the route
      * again never shows a cached 404's create form before the new answer.
      */
     getOwnCandidate: builder.query<Candidate, void>({
       query: () => "/api/me/candidate",
+      extraOptions: { requiresSignIn: true },
+      providesTags: ["Session"],
       keepUnusedDataFor: 0,
     }),
   }),

@@ -34,6 +34,13 @@ export const signInRedirectMethodKey = "mycv-sign-in-redirect-method"
  */
 export const expiredSessionClearedKey = "mycv-expired-session-cleared"
 /**
+ * How long after signing in again a refusal still counts as refused again.
+ * It covers the redirect to the provider and back, and keeps a sign-in
+ * whose acceptance no request ever confirmed from turning a later, normal
+ * expiry into a dead end.
+ */
+const expiredSessionClearedLifetimeMs = 10 * 60 * 1000
+/**
  * Local-storage key for the sign-in popups cancelled in the app. Local
  * storage, because a popup still shares it after Microsoft's sign-in page
  * has cut the popup off from the tab that opened it.
@@ -61,22 +68,27 @@ export function clearAuthReturnPaths(): void {
   sessionStorage.removeItem(signInRedirectMethodKey)
 }
 
-/** Remembers that Sign in again dropped a session the API refused. */
+/**
+ * Remembers when the user signed in again after the API refused the
+ * session, by dropping it or in a popup, until the API accepts a sign-in.
+ */
 export function markExpiredSessionCleared(): void {
-  sessionStorage.setItem(expiredSessionClearedKey, "true")
+  sessionStorage.setItem(expiredSessionClearedKey, String(Date.now()))
 }
 
 /**
- * Tells whether Sign in again has already dropped a refused session in this
- * tab since the API last accepted a sign-in.
+ * Tells whether the user signed in again after a refusal in this tab
+ * within `expiredSessionClearedLifetimeMs`, and the API has not accepted a
+ * sign-in since. An older or unreadable mark no longer counts.
  *
- * @returns True when the expired session was cleared once already.
+ * @returns True when a recent sign-in again awaits the API's acceptance.
  */
 export function wasExpiredSessionCleared(): boolean {
-  return sessionStorage.getItem(expiredSessionClearedKey) !== null
+  const markedAt = Number(sessionStorage.getItem(expiredSessionClearedKey))
+  return markedAt > 0 && Date.now() - markedAt < expiredSessionClearedLifetimeMs
 }
 
-/** Forgets the cleared expired session, once the API accepts a sign-in again. */
+/** Forgets the sign-in again, once the API accepts a sign-in. */
 export function clearExpiredSessionMarker(): void {
   sessionStorage.removeItem(expiredSessionClearedKey)
 }

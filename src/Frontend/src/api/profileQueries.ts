@@ -101,8 +101,26 @@ export const profileQueries = baseApi.injectEndpoints({
     getProfileAdmin: builder.query<ProfileAdmin, string>({
       query: (profileId) =>
         `/api/Profile/${encodeURIComponent(profileId)}/admin`,
+      extraOptions: { requiresSignIn: true },
       providesTags: (_result, _error, profileId) => [
         { type: "Profile", id: profileId },
+        "Session",
+      ],
+    }),
+    /**
+     * Fetches the same admin view only to tell whether the signed-in user
+     * may edit the profile, in the background of a public CV page. A 401
+     * hides the edit controls without the sign-in-again message, because
+     * the user only reads the page; editing then asks through
+     * `getProfileAdmin`.
+     */
+    getProfileAccess: builder.query<ProfileAdmin, string>({
+      query: (profileId) =>
+        `/api/Profile/${encodeURIComponent(profileId)}/admin`,
+      extraOptions: { requiresSignIn: true, reportsRefusal: false },
+      providesTags: (_result, _error, profileId) => [
+        { type: "Profile", id: profileId },
+        "Session",
       ],
     }),
     /**
@@ -115,6 +133,7 @@ export const profileQueries = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
+      extraOptions: { requiresSignIn: true },
       invalidatesTags: (result) =>
         result?.publicUrlSegment
           ? [{ type: "Candidate", id: result.publicUrlSegment }]
@@ -130,6 +149,7 @@ export const profileQueries = baseApi.injectEndpoints({
         method: "PUT",
         body,
       }),
+      extraOptions: { requiresSignIn: true },
       invalidatesTags: (_result, error, { profileId }) =>
         profileTagsAfter(error, profileId),
     }),
@@ -150,6 +170,7 @@ export const profileQueries = baseApi.injectEndpoints({
           body,
         }
       },
+      extraOptions: { requiresSignIn: true },
       invalidatesTags: (_result, error, { profileId }) =>
         profileTagsAfter(error, profileId),
     }),
@@ -162,6 +183,7 @@ export const profileQueries = baseApi.injectEndpoints({
         url: `/api/Profile/${encodeURIComponent(profileId)}/picture/google`,
         method: "PUT",
       }),
+      extraOptions: { requiresSignIn: true },
       invalidatesTags: (_result, error, profileId) =>
         profileTagsAfter(error, profileId),
     }),
@@ -171,6 +193,7 @@ export const profileQueries = baseApi.injectEndpoints({
         url: `/api/Profile/${encodeURIComponent(profileId)}/picture`,
         method: "DELETE",
       }),
+      extraOptions: { requiresSignIn: true },
       invalidatesTags: (_result, error, profileId) =>
         profileTagsAfter(error, profileId),
     }),
@@ -180,6 +203,7 @@ export const profileQueries = baseApi.injectEndpoints({
 export const {
   useGetProfileQuery,
   useGetProfileAdminQuery,
+  useGetProfileAccessQuery,
   useCreateProfileMutation,
   useUpdateProfileMutation,
   useSaveProfilePictureMutation,

@@ -207,21 +207,28 @@ export function isGoogleRenewalPending(): boolean {
 }
 
 /**
- * Drops a session the API no longer accepts and reloads the page, so the
- * sign-in screen takes over and returns to the same page. It clears MSAL's
+ * Drops a session the API no longer accepts and opens the page's sign-in
+ * route, which returns to the same page once signed in. It clears MSAL's
  * accounts and tokens and the Google session without the post-sign-out
  * prompt, so the provider can sign the same account in again without
- * asking. Like `signOutInApp`, the reload drops the data cached for the old
- * identity, so another account signing in never sees it. It also marks the
- * session as cleared (`markExpiredSessionCleared`).
+ * asking. Like `signOutInApp`, the full page load drops the data cached for
+ * the old identity and any unsaved changes, so another account signing in
+ * never sees them. It also marks the session as cleared
+ * (`markExpiredSessionCleared`), so a sign-in the API refuses again shows
+ * an error instead of looping.
  *
+ * @param signInPath - The page's sign-in route.
  * @returns A promise that rejects, leaving the session as it was, when the cache can't be cleared.
  */
-export async function clearExpiredSession(): Promise<void> {
+export async function clearExpiredSession(signInPath: string): Promise<void> {
   await msalInstance.clearCache()
   clearGoogleSession()
   markExpiredSessionCleared()
-  window.location.reload()
+  if (signInPath === window.location.pathname) {
+    window.location.reload()
+  } else {
+    window.location.replace(signInPath)
+  }
 }
 
 /** How long the sign-out message shows before the page reloads, like the sign-in hold. */

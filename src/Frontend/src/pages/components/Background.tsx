@@ -5,8 +5,18 @@ import {
   useSpring,
   useTransform,
 } from "framer-motion"
-import type { JSX, PointerEvent, ReactNode } from "react"
+import {
+  useSyncExternalStore,
+  type JSX,
+  type PointerEvent,
+  type ReactNode,
+} from "react"
 import IdleSignOutWarning from "../../auth/IdleSignOutWarning"
+import SessionExpiredMessage from "../../auth/SessionExpiredMessage"
+import {
+  getSessionRefusal,
+  subscribeSessionRefusal,
+} from "../../auth/sessionRefusal"
 import SignedOutNotice from "../../auth/SignedOutNotice"
 import SignOutMessage from "../../auth/SignOutMessage"
 import useSigningOutReason from "../../auth/useSigningOutReason"
@@ -36,7 +46,10 @@ const maxBeamLean = 9
  * only on screens too narrow for it, such as 320 px with the Finnish Sign out.
  * It also signs an idle user out on every page, with a warning for the last
  * minute (`IdleSignOutWarning`), and shows the sign-out screen instead of the
- * page while a sign-out is under way. The light falls as a
+ * page while a sign-out is under way. When the API refuses the session, it
+ * shows `SessionExpiredMessage` and keeps the page mounted but hidden on
+ * screen, so an edit form keeps its unsaved changes while the user signs in
+ * again, and a printout still shows the page. The light falls as a
  * diagonal wash and a beam past the first screen, one band of it rests across
  * the page with no dots under it, and the light theme fades into a faint shade
  * in the far corner. With a mouse, a spotlight follows the pointer on a spring
@@ -52,6 +65,10 @@ const maxBeamLean = 9
  */
 export default function Background({ children }: BackgroundProps): JSX.Element {
   const signingOutReason = useSigningOutReason()
+  const sessionRefusal = useSyncExternalStore(
+    subscribeSessionRefusal,
+    getSessionRefusal,
+  )
 
   const pointerX = useMotionValue(-1000)
   const pointerY = useMotionValue(-1000)
@@ -144,7 +161,20 @@ export default function Background({ children }: BackgroundProps): JSX.Element {
             <SignOutMessage reason={signingOutReason} />
           </div>
         ) : (
-          children
+          <>
+            {sessionRefusal && (
+              <div className="print:hidden">
+                <SessionExpiredMessage refusal={sessionRefusal} />
+              </div>
+            )}
+            <div
+              className={
+                sessionRefusal === null ? "contents" : "hidden print:contents"
+              }
+            >
+              {children}
+            </div>
+          </>
         )}
       </div>
       <div className="print:hidden">
