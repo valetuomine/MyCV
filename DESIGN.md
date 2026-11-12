@@ -2,18 +2,24 @@
 name: MyCV
 description: A quiet, dark-first CV page where the candidate's name is the artwork and one emerald accent does all the signalling.
 colors:
-  accent: "#047857"
-  accent-strong: "#065f46"
+  accent: "#007761"
+  accent-strong: "#035e4e"
   accent-ink: "#ffffff"
-  accent-dark: "#4fd1a5"
-  accent-strong-dark: "#7ee2bf"
-  accent-ink-dark: "#04130d"
+  accent-core: "#044e42"
+  accent-deep: "#2dd4b0"
+  beam: "#94a61a"
+  accent-dark: "#3dd1b2"
+  accent-strong-dark: "#75e2ca"
+  accent-ink-dark: "#03130f"
+  accent-core-dark: "#b1f7e4"
+  accent-deep-dark: "#063d2f"
+  beam-dark: "#c9dc4a"
   paper: "#fafafa"
   surface: "#ffffff"
   line: "#e4e4e7"
   field-line: "#8a8a93"
   field-surface: "#ebf4f2"
-  field-border: "#8fbbb0"
+  field-border: "#8dbbb4"
   ink: "#09090b"
   copy: "#3f3f46"
   muted: "#56565f"
@@ -24,8 +30,8 @@ colors:
   surface-dark: "#111113"
   line-dark: "#26262b"
   field-line-dark: "#6b6b74"
-  field-surface-dark: "#16201f"
-  field-border-dark: "#36675a"
+  field-surface-dark: "#152020"
+  field-border-dark: "#2f675e"
   ink-dark: "#f4f4f5"
   copy-dark: "#b4b4bb"
   muted-dark: "#9e9ea6"
@@ -102,7 +108,7 @@ Atmosphere comes from one directed emerald light that falls in from the top-left
 
 **Key Characteristics:**
 
-- One accent colour on a zinc neutral scale; no second hue.
+- One accent colour on a zinc neutral scale. Its light has depth, from a deep haze to a hot core, and the only second hue is a muted yellow in thin rays of light.
 - Oversized display name (up to 7rem) with tight tracking, set against small mono labels.
 - Pill-shaped actions, soft rounded panels, hairline borders.
 - Flat surfaces; depth from ambient background, not stacked cards.
@@ -114,9 +120,17 @@ A restrained zinc palette with one emerald accent. Components use only the seman
 
 ### Primary
 
-- **Deep Emerald** (#047857, light theme): accent for the primary button, job title line and focus outlines.
-- **Mint Signal** (#4fd1a5, dark theme): the same role on dark; its ink colour is **Near-Black Green** (#04130d).
-- **Accent Strong** (#065f46 / dark #7ee2bf): the primary button's hover fill, and accent text on the background's light, such as the text button, the CV's job title and the form fields' labels; deeper than the accent in light, brighter in dark.
+- **Deep Emerald** (#007761, light theme): accent for the primary button, job title line and focus outlines. It leans a little toward cyan, the colour of green light in haze, with white ink on it at 5.5:1.
+- **Mint Signal** (#3dd1b2, dark theme): the same role on dark; its ink colour is **Near-Black Green** (#03130f).
+- **Accent Strong** (#035e4e / dark #75e2ca): the primary button's hover fill, and accent text on the background's light, such as the text button, the CV's job title and the form fields' labels; deeper than the accent in light, brighter in dark.
+
+### Light
+
+The background's light is the accent at three depths, as real light in haze has: a deep haze around it, the accent as its surface and a hot core in its brightest points. Only the background's light uses these; text, buttons, fields and surfaces never do.
+
+- **Hot Core** (`--cv-accent-core`, #044e42 / dark #b1f7e4): the middle of a lit dot and the dots nearest the spotlight. A pale, nearly white mint in the dark theme. On the light theme's paper, light shows as saturation rather than brightness, so there the core is the deepest emerald.
+- **Deep Haze** (`--cv-accent-deep`, #2dd4b0 / dark #063d2f): the haze that the light's tail and edges fade through, so they end in a dark green rather than in a grey see-through accent. A dark green in the dark theme and a fresh, bright one in the light theme. `--cv-haze` sets its strength (16% / dark 30%).
+- **Beam** (`--cv-beam`, #94a61a / dark #c9dc4a): a muted yellow-lime for thin rays and lines of light only, see the One Voice Rule.
 
 ### Neutral
 
@@ -124,7 +138,7 @@ A restrained zinc palette with one emerald accent. Components use only the seman
 - **Surface** (#ffffff / dark #111113): panels and the portrait card.
 - **Hairline** (#e4e4e7 / dark #26262b): decorative borders and dividers.
 - **Field Line** (#8a8a93 / dark #6b6b74): a grey at least 3:1 against the page, for the loading spinner's track. Form fields use Field Border instead, see Inputs / Fields.
-- **Field Surface** (≈ #ebf4f2 / dark ≈ #16201f) and **Field Border** (≈ #8fbbb0 / dark ≈ #36675a): the resting fill and border of form fields and the profile preview, an accent tint over Surface (8%) and over Hairline (38%). The tint is capped at 8% because Meta must stay at 4.5:1 or more on the fill.
+- **Field Surface** (≈ #ebf4f2 / dark ≈ #152020) and **Field Border** (≈ #8dbbb4 / dark ≈ #2f675e): the resting fill and border of form fields and the profile preview, an accent tint over Surface (8%) and over Hairline (38%). The tint is capped at 8% because Meta must stay at 4.5:1 or more on the fill.
 - **Ink** (#09090b / dark #f4f4f5): headings and primary text.
 - **Copy** (#3f3f46 / dark #b4b4bb): body text.
 - **Muted** (#56565f / dark #9e9ea6) and **Meta** (#6e6e77 / dark #85858e): secondary info and placeholders; both at least 4.5:1 on page and surface. Small text in the background's lit area, such as the CV's update date and the PDF view's eyebrow, uses Muted, because Meta falls below 4.5:1 on the light, and small accent text there, such as the CV's job title and the form fields' labels, uses Accent Strong for the same reason. Meta stays in the PDF, which has no background light.
@@ -133,6 +147,8 @@ A restrained zinc palette with one emerald accent. Components use only the seman
 ### Named Rules
 
 **The One Voice Rule.** The accent marks identity, action and focus only. It never fills large areas. Glows stay at or below 10% opacity; the background's directed light is the one exception, 16% at its peak in the top-left corner and carried past the first screen, and one band of it rests across the page at about 11% in the dark theme and 20% in the light theme, where the same accent shows far less. Both fade out with no visible end, so they read as light rather than as a coloured area. The name's halo is a further exception: a thin drop-shadow around the letters nearest a mouse pointer, up to 70% accent in the dark theme and 30% in the light theme, because it has to show against the page's own light. A second exception is the resting surface of form fields and the profile preview, an 8% accent tint (its maximum), because they sit in that light and would otherwise show as black boxes.
+
+The light's Deep Haze and Hot Core are the same voice at other depths, not further colours. The one second hue is Beam, a muted yellow-lime, and only as light: thin rays and lines in the background, never text, buttons, fields, surfaces or fills, and never a wide glow. It sits next to the accent on the colour wheel, so it reads as the same light running hotter. Orange was rejected: it lies far enough from the green to read as a second brand colour, it sits beside Danger red, where it would look like a warning, and with green it turns the light into flames, which is a different picture from light in haze.
 
 **The Semantic Token Rule.** Components use `cv-*` utilities, never raw hex or Tailwind palette colours, so both themes stay in sync.
 
@@ -278,16 +294,17 @@ Every field is `RHFInput` or `RHFTextarea`, framed by the shared `FormField` (`s
 
 ### Background
 
-- Non-interactive layer behind the content, as tall as the page, on every framed page, carrying on the portrait card's look: one light from the top-left corner, emerald fading into the dark. From the bottom: a faint shade in the far corner of the light theme (`--cv-shade`, 3.5% zinc; none in the dark theme, where near-black has so few steps that a shade showed as diagonal stripes), the directed light in a box one screen tall (at least 48rem), a 24px dot grid (1px dots in `--cv-dot`) masked toward the light (`radial-gradient(78% 72% at 20% 12%, #000 18%, transparent 100%)`) and out under the resting band, a spring-following accent spotlight moved by transform (mouse pointers only, disabled for reduced motion) that also lights the dots under it to 75% accent and lights the name (see Name), and 6% grain. No blur filter anywhere.
-- **Directed light:** a diagonal wash, the card's own gradient at page scale, at 16% accent (`--cv-light`) with eased stops that run out at the corners of a box 130% of the screen's size, so the light reaches past the first screen with no edge, and a soft conic beam at 55% of that strength from a source 8rem outside the corner, whose sides and end are eased too, because a straight ramp's corners show as edges on near-black. The beam's box reaches 35% below the screen, so the beam runs out before the box ends on a page taller than the screen. Forced colours leave the light and the shade out.
+- Non-interactive layer behind the content, as tall as the page, on every framed page, carrying on the portrait card's look: one light from the top-left corner, emerald fading into the dark. From the bottom: a faint shade in the far corner of the light theme (`--cv-shade`, 3.5% zinc; none in the dark theme, where near-black has so few steps that a shade showed as diagonal stripes), the directed light in a box one screen tall (at least 48rem), a 24px dot grid (1px dots in `--cv-dot`) masked toward the light (`radial-gradient(78% 72% at 20% 12%, #000 18%, transparent 100%)`) and out under the resting band, a spring-following accent spotlight moved by transform (mouse pointers only, disabled for reduced motion) that also lights the dots under it to 75% accent, hottest in the middle, where the light runs from Hot Core to the accent over the first 45% of its radius, and lights the name (see Name), and 6% grain. No blur filter anywhere.
+- **Directed light:** a diagonal wash, the card's own gradient at page scale, at 16% accent (`--cv-light`) with eased stops that run out at four fifths of the way to the other two corners of a box 162.5% of the screen's size, so the light reaches past the first screen with no edge, and a soft conic beam at 55% of that strength from a source 8rem outside the corner, whose sides and end are eased too, because a straight ramp's corners show as edges on near-black. The beam's box reaches 35% below the screen, so the beam runs out before the box ends on a page taller than the screen. Forced colours leave the light and the shade out.
+- **Haze:** every light has a second layer under it in Deep Haze, at `--cv-haze` (30% in the dark theme, 16% in the light theme) times the layer's own share. It lies where the accent fades out and leaves at most a faint trace under a light's peak (a tenth of the layer's haze under the sweep's middle, a fiftieth under the beam's): in the wash's tail (from where the accent has fallen to about half, strongest at half of `--cv-haze` where the accent is nearly out, ending a little past it), on the two sides of the beam and of the sweep, and under the two skirts of the resting band and the echo, with nothing under their middle. The rule is that the light's brightness falls steadily outward: the haze fills the accent's tail and never makes a peak or a band of its own. A haze beside the resting band showed as a second, parallel band, and a haze that reached the box's corners put a second pool of light in the middle of the screen and tinted the whole first screen green; both were rejected, so the far parts of the first screen stay clear of it. The haze also stays out from under the small text, because the date line there has almost no contrast to spare (about 4.6:1 in the dark theme at 1440px, as before the haze).
 - **Resting band:** one band of light stays across the page at all times, as if a passing echo had stopped with its middle 55% down the box, at the same tilt, at 70% of the light's strength in the dark theme and at 20% accent in the light theme (`--cv-light-rest`), where a band as weak as the running one barely showed. Only the reflection stays: the static dots fade out under the band over an eased edge, which leaves the name and the small text with nothing but light behind them. A passing sweep, echo or spotlight still lights the dots there for as long as it passes. It is plain CSS, so the canvas stays empty at rest. It doesn't move, so reduced motion keeps it; forced colours and print leave it out.
-- **Sweep:** when the name's reveal starts, one band of light at the foil's 105° angle crosses the page, 70vw wide at 70% of the light's strength, in 1.8s on the foil's `cubic-bezier(0.45, 0, 0.2, 1)`, moved by transform and opacity. It reaches the portrait about when the card's foil sweep starts, so they read as one light rather than two effects. The name's echo crosses the page at the same time from the bottom. The dots under the band light up in the accent, never past the lit dots' 75%, and grow to about 2.4px without moving. It runs once per reveal, only on the CV, also on touch screens. Off for reduced motion.
+- **Sweep:** when the name's reveal starts, one band of light at the foil's 105° angle crosses the page, 70vw wide at 70% of the light's strength, in 1.8s on the foil's `cubic-bezier(0.45, 0, 0.2, 1)`, moved by transform and opacity. It reaches the portrait about when the card's foil sweep starts, so they read as one light rather than two effects. The name's echo crosses the page at the same time from the bottom. The dots under the band light up in the accent, never past the lit dots' 75%, with a Hot Core in their middle (see Lit dots), and grow to about 2.4px without moving. It runs once per reveal, only on the CV, also on touch screens. Off for reduced motion.
 - **Beam lean:** a mouse pointer leans the beam around its source toward the pointer, by 35% of the pointer's angle from the beam's rest and at most 9°, on the spotlight's spring (stiffness 100, damping 20). It settles back when the pointer leaves the page. Off for touch and reduced motion.
-- **Name echo:** in the same frame as the sweep, and on every click or tap on the name, a copy of the sweep crosses the page from the bottom up (`LightEcho`): a band 70% of the screen tall, at the same strength, duration and curve, with the same closing fade, turned a quarter of a circle so it keeps the foil's tilt. The dots under it light up in the accent, never past the lit dots' 75%, and grow from 1px to about 2.4px without moving, as under the sweep. A quick second echo doesn't cut the first one off, and at most four run at once on the canvas. Off for reduced motion.
-- **Lit dots:** a canvas over the dots (`DotEcho`) that is transparent at rest and draws only the dots that the sweep, an echo or the spotlight reaches, on the same grid and through the dots' first mask, so they land on the static dots, and under the resting band, where no static dots show, they appear on their own.
+- **Name echo:** in the same frame as the sweep, and on every click or tap on the name, a copy of the sweep crosses the page from the bottom up (`LightEcho`): a band 70% of the screen tall, whose accent keeps to the middle four fifths of it so the haze fits under its skirts, at the same strength, duration and curve, with the same closing fade, turned a quarter of a circle so it keeps the foil's tilt. The dots under it light up in the accent, never past the lit dots' 75%, with a Hot Core in their middle, and grow from 1px to about 2.4px without moving, as under the sweep. A quick second echo doesn't cut the first one off, and at most four run at once on the canvas. Off for reduced motion.
+- **Lit dots:** a canvas over the dots (`DotEcho`) that is transparent at rest and draws only the dots that the sweep, an echo or the spotlight reaches, on the same grid and through the dots' first mask, so they land on the static dots, and under the resting band, where no static dots show, they appear on their own. Each dot under a band has a Hot Core over the accent, a smaller dot 60% of its radius, whose strength follows the square of the band's light, so it shows only near the band's crest and the dot's edge stays accent. At the crest the core is fully opaque, the one exception to the lit dots' 75%, because it is a pixel or two wide and has to read as the light's hottest point. Under the spotlight the swollen dots turn toward Hot Core the nearer they are to the pointer, like the CSS layer under them.
 - **Spotlight swelling:** while the CV shows, the dots under a mouse's spotlight grow from 1px to 1.6px in their own colours, with the lit dots' falloff and on the spotlight's spring, without moving.
 - **Budget:** the canvas draws only while an echo or the sweep runs or the spotlight moves, on Framer Motion's frame loop, which a hidden tab pauses. It is at most 2× the CSS pixels, and 1× on a page over 4 million CSS pixels. Other pages (sign-in, error pages, the PDF view) keep an empty 0×0 canvas. Reduced motion leaves the canvas out, and print and forced colours hide it.
-- **Rejected:** lit dots under the resting band, both as hard and bright as under a passing band and softened with a small core and a long edge, because they stayed right behind the small text all the time, and the band reads better as a plain reflection; a ring of light spreading from the name, and dots pushed outward by a wave, because the second light reads best as a copy of the first one from another direction, and a second light that starts when the reveal ends, because the two read as one moment when they cross together; a comet that circles the page without end, dots that dodge the pointer and ripple from clicks anywhere, and a depth layer that shifts against the pointer. The comet and the dodging dots compete with the name's weight play and the portrait's tilt, and the comet is an endless decorative loop; the depth layer was too faint to notice. For the directed light, compared in the real app in both themes: removing the dots, which keeps a cleaner surface but loses the echo and the material the sweep lights up; a 10% peak, which leaves the light too quiet in the dark theme; and a slow endless drift of the beam (±2.5° over 28s), which would make the background move on its own.
+- **Rejected:** lit dots under the resting band, both as hard and bright as under a passing band and softened with a small core and a long edge, because they stayed right behind the small text all the time, and the band reads better as a plain reflection; a ring of light spreading from the name, and dots pushed outward by a wave, because the second light reads best as a copy of the first one from another direction, and a second light that starts when the reveal ends, because the two read as one moment when they cross together; a comet that circles the page without end, dots that dodge the pointer and ripple from clicks anywhere, and a depth layer that shifts against the pointer. The comet and the dodging dots compete with the name's weight play and the portrait's tilt, and the comet is an endless decorative loop; the depth layer was too faint to notice. For the directed light, compared in the real app in both themes: removing the dots, which keeps a cleaner surface but loses the echo and the material the sweep lights up; a 10% peak, which leaves the light too quiet in the dark theme; and a slow endless drift of the beam (±2.5° over 28s), which would make the background move on its own. For the colours, compared in the real app in both themes: the earlier, less cyan accent (#047857 / dark #4fd1a5), and a black that leans toward green (#060b08) under either accent. The more cyan accent on the unchanged zinc black was chosen.
 
 ### Section Transitions (reserved; not in the UI while the CV has one section)
 
@@ -313,7 +330,9 @@ The CV once paged between full-viewport sections. That code was removed when the
 ### Don't:
 
 - **Don't** add a second accent colour or gradient fills beyond the name's ink-to-muted fade, the portrait placeholder's accent wash, the portrait foil and the background's directed light.
+- **Don't** use Beam yellow for anything but thin rays and lines of light: no yellow text, buttons, fields, surfaces or wide glows. No orange, no flames, and no green flood across the whole page: the far parts of the first screen stay clear of the light.
+- **Don't** use Hot Core or Deep Haze outside the background's light, and don't put more than a faint trace of haze under a light's peak, and none under small text that stays in the light.
 - **Don't** put shadows or cards on content by default.
 - **Don't** use mono type for body copy.
-- **Don't** let background effects exceed ~10% opacity or capture pointer events. There are three exceptions: the directed light peaks at 16% in the top-left corner, the resting band at about 11% in the dark theme and 20% in the light theme in its middle, and a lit dot, under the spotlight, the sweep or the echo, reaches 75% accent, because each is only a few pixels wide.
+- **Don't** let background effects exceed ~10% opacity or capture pointer events. There are three exceptions: the directed light peaks at 16% in the top-left corner, the resting band at about 11% in the dark theme and 20% in the light theme in its middle, and a lit dot, under the spotlight, the sweep or the echo, reaches 75% accent with a Hot Core in its middle, which is fully opaque at a band's crest, because each is only a few pixels wide.
 - **Don't** let the background move on its own or answer anything but the name and the pointer: no endless loops, no dots that dodge the pointer, no ripples from clicks elsewhere on the page. The sweep runs once per name reveal, the echo with it and once per click or tap on the name, and the beam only leans with a mouse.

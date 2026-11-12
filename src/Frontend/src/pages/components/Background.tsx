@@ -75,10 +75,13 @@ export default function Background({ children }: BackgroundProps): JSX.Element {
   const spotlightX = useSpring(pointerX, { stiffness: 100, damping: 20 })
   const spotlightY = useSpring(pointerY, { stiffness: 100, damping: 20 })
 
-  /** Shifts the lit dots against the spotlight, so they stay on the page grid. */
+  /**
+   * Shifts the lit dots' mask against the spotlight, so the dots stay on the
+   * page grid; the second position keeps the mask of the light's falloff still.
+   */
   const litDotsPosition = useTransform(
     [spotlightX, spotlightY],
-    ([x, y]) => `calc(14rem - ${x}px) calc(14rem - ${y}px)`,
+    ([x, y]) => `calc(14rem - ${x}px) calc(14rem - ${y}px), 0 0`,
   )
 
   const prefersReducedMotion = useReducedMotion()
@@ -129,7 +132,7 @@ export default function Background({ children }: BackgroundProps): JSX.Element {
       >
         <div className="absolute inset-0 bg-cv-light-falloff forced-colors:hidden" />
         <div className="absolute inset-x-0 top-0 h-[max(100dvh,48rem)] forced-colors:hidden">
-          <div className="absolute top-0 left-0 size-[130%] bg-cv-light-wash" />
+          <div className="absolute top-0 left-0 size-[162.5%] bg-cv-light-wash" />
           <motion.div
             style={{ rotate: beamLean }}
             className="absolute -top-32 right-0 -bottom-[35%] -left-32 origin-top-left bg-cv-light-beam motion-safe:pointer-fine:will-change-transform"
@@ -144,11 +147,11 @@ export default function Background({ children }: BackgroundProps): JSX.Element {
           style={{ x: spotlightX, y: spotlightY }}
         />
         <motion.div
-          className="absolute top-0 left-0 -mt-[14rem] -ml-[14rem] size-[28rem] bg-cv-dots bg-cv-dots-lit will-change-transform"
+          className="absolute top-0 left-0 -mt-[14rem] -ml-[14rem] size-[28rem] bg-cv-dots-lit will-change-transform"
           style={{
             x: spotlightX,
             y: spotlightY,
-            backgroundPosition: litDotsPosition,
+            maskPosition: litDotsPosition,
           }}
         />
         <DotEcho spotlightX={spotlightX} spotlightY={spotlightY} />

@@ -23,9 +23,12 @@
   --cv-copy: #3f3f46;
   --cv-muted: #56565f;
   --cv-meta: #6e6e77;
-  --cv-accent: #047857;
-  --cv-accent-strong: #065f46;
+  --cv-accent: #007761;
+  --cv-accent-strong: #035e4e;
   --cv-accent-ink: #ffffff;
+  --cv-accent-core: #044e42;
+  --cv-accent-deep: #2dd4b0;
+  --cv-beam: #94a61a;
   --cv-name-light: var(--cv-accent);
   --cv-name-glow-strength: 30;
   --cv-name-glow-spread: 0.07em;
@@ -36,6 +39,7 @@
   --cv-dot: rgb(9 9 11 / 0.14);
   --cv-light: 16%;
   --cv-light-rest: 20%;
+  --cv-haze: 16%;
   --cv-shade: rgb(24 24 27 / 0.035);
   --cv-shadow-panel: 0 2rem 4rem -2rem rgb(24 24 27 / 0.18);
   --cv-google-surface: #ffffff;
@@ -63,9 +67,12 @@
     --cv-copy: #b4b4bb;
     --cv-muted: #9e9ea6;
     --cv-meta: #85858e;
-    --cv-accent: #4fd1a5;
-    --cv-accent-strong: #7ee2bf;
-    --cv-accent-ink: #04130d;
+    --cv-accent: #3dd1b2;
+    --cv-accent-strong: #75e2ca;
+    --cv-accent-ink: #03130f;
+    --cv-accent-core: #b1f7e4;
+    --cv-accent-deep: #063d2f;
+    --cv-beam: #c9dc4a;
     --cv-name-light: color-mix(in srgb, var(--cv-ink) 62%, var(--cv-accent));
     --cv-name-glow-strength: 70;
     --cv-name-glow-spread: 0.12em;
@@ -75,6 +82,7 @@
     --cv-overlay: rgb(255 255 255 / 0.06);
     --cv-dot: rgb(255 255 255 / 0.11);
     --cv-light-rest: 11.2%;
+    --cv-haze: 30%;
     --cv-shade: transparent;
     --cv-shadow-panel: 0 2rem 4rem -2rem rgb(0 0 0 / 0.8);
     --cv-google-surface: #131314;
@@ -100,6 +108,9 @@
   --color-cv-accent: var(--cv-accent);
   --color-cv-accent-strong: var(--cv-accent-strong);
   --color-cv-accent-ink: var(--cv-accent-ink);
+  --color-cv-accent-core: var(--cv-accent-core);
+  --color-cv-accent-deep: var(--cv-accent-deep);
+  --color-cv-beam: var(--cv-beam);
   --color-cv-danger: var(--cv-danger);
   --color-cv-wash: var(--cv-wash);
   --color-cv-overlay: var(--cv-overlay);
@@ -292,12 +303,13 @@
   }
 }
 
-/* Dot matrix; bg-cv-dots-lit is the accent copy revealed under the pointer.
-   Both share the same 24px cell so the lit dots sit exactly on the base ones. */
+/* Dot matrix; bg-cv-dots-lit is the accent copy revealed under the pointer,
+   which repeats this dot as its mask. Both share the same 24px cell so the lit
+   dots sit exactly on the base ones. */
 @utility bg-cv-dots {
   background-image: radial-gradient(
     circle at center,
-    var(--dot, var(--cv-dot)) 1px,
+    var(--cv-dot) 1px,
     transparent 1.5px
   );
   background-size: 24px 24px;
@@ -330,87 +342,215 @@
 }
 
 /* The directed light, the portrait card's diagonal wash at page scale. Its
-   stops are eased so it has no visible end, and it runs out at the box's other
-   two corners, so the box has no edge either. The box is larger than the screen,
-   which carries the light past it. --cv-light sets its strength. */
+   stops are eased so it has no visible end. The box is larger than the screen,
+   which carries the light past it. --cv-light sets its strength. Under it lies
+   the haze, the same wash in the deep colour (--cv-accent-deep at --cv-haze):
+   it starts where the accent has fallen to about half, past the small text in
+   the corner, peaks at half its strength where the accent is fading out (28%)
+   and ends a little past the accent's end (44% against 40%). So it fills the
+   light's tail without a second peak of its own, the light's peak gets no
+   brighter and the far parts of the first screen stay clear. Both end before
+   the box's other two corners (50%), so the box has no edge. */
 @utility bg-cv-light-wash {
-  background-image: linear-gradient(
-    to bottom right,
-    color-mix(in srgb, var(--cv-accent) var(--cv-light), transparent) 0%,
-    color-mix(
-        in srgb,
-        var(--cv-accent) calc(var(--cv-light) * 0.62),
-        transparent
-      )
-      14%,
-    color-mix(
-        in srgb,
-        var(--cv-accent) calc(var(--cv-light) * 0.3),
-        transparent
-      )
-      29%,
-    color-mix(
-        in srgb,
-        var(--cv-accent) calc(var(--cv-light) * 0.08),
-        transparent
-      )
-      42%,
-    transparent 50%
-  );
+  background-image:
+    linear-gradient(
+      to bottom right,
+      color-mix(in srgb, var(--cv-accent) var(--cv-light), transparent) 0%,
+      color-mix(
+          in srgb,
+          var(--cv-accent) calc(var(--cv-light) * 0.62),
+          transparent
+        )
+        11.2%,
+      color-mix(
+          in srgb,
+          var(--cv-accent) calc(var(--cv-light) * 0.3),
+          transparent
+        )
+        23.2%,
+      color-mix(
+          in srgb,
+          var(--cv-accent) calc(var(--cv-light) * 0.08),
+          transparent
+        )
+        33.6%,
+      transparent 40%
+    ),
+    linear-gradient(
+      to bottom right,
+      transparent 16%,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.08),
+          transparent
+        )
+        19%,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.25),
+          transparent
+        )
+        22%,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.42),
+          transparent
+        )
+        25%,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.5),
+          transparent
+        )
+        28%,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.42),
+          transparent
+        )
+        32%,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.26),
+          transparent
+        )
+        36%,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.1),
+          transparent
+        )
+        40%,
+      transparent 44%
+    );
 }
 
 /* The beam from a source outside the top-left corner, which turns around that
    corner when the box rotates. Its sides and its end are eased, because a
    straight ramp's corners show as edges on the near-black page. The box reaches
-   below the screen, so the beam runs out before it on a page taller than that. */
+   below the screen, so the beam runs out before it on a page taller than that.
+   The haze under it is the deep colour on the beam's two sides, faint under its
+   middle, so the sides end in haze and the middle gets no brighter. */
 @utility bg-cv-light-beam {
-  background-image: conic-gradient(
-    from 90deg at 0 0,
-    transparent 6deg,
-    color-mix(
-        in srgb,
-        var(--cv-accent) calc(var(--cv-light) * 0.07),
-        transparent
-      )
-      14deg,
-    color-mix(
-        in srgb,
-        var(--cv-accent) calc(var(--cv-light) * 0.26),
-        transparent
-      )
-      20deg,
-    color-mix(
-        in srgb,
-        var(--cv-accent) calc(var(--cv-light) * 0.45),
-        transparent
-      )
-      24deg,
-    color-mix(
-        in srgb,
-        var(--cv-accent) calc(var(--cv-light) * 0.55),
-        transparent
-      )
-      28deg,
-    color-mix(
-        in srgb,
-        var(--cv-accent) calc(var(--cv-light) * 0.45),
-        transparent
-      )
-      32deg,
-    color-mix(
-        in srgb,
-        var(--cv-accent) calc(var(--cv-light) * 0.26),
-        transparent
-      )
-      38deg,
-    color-mix(
-        in srgb,
-        var(--cv-accent) calc(var(--cv-light) * 0.07),
-        transparent
-      )
-      48deg,
-    transparent 58deg
-  );
+  background-image:
+    conic-gradient(
+      from 90deg at 0 0,
+      transparent 6deg,
+      color-mix(
+          in srgb,
+          var(--cv-accent) calc(var(--cv-light) * 0.07),
+          transparent
+        )
+        14deg,
+      color-mix(
+          in srgb,
+          var(--cv-accent) calc(var(--cv-light) * 0.26),
+          transparent
+        )
+        20deg,
+      color-mix(
+          in srgb,
+          var(--cv-accent) calc(var(--cv-light) * 0.45),
+          transparent
+        )
+        24deg,
+      color-mix(
+          in srgb,
+          var(--cv-accent) calc(var(--cv-light) * 0.55),
+          transparent
+        )
+        28deg,
+      color-mix(
+          in srgb,
+          var(--cv-accent) calc(var(--cv-light) * 0.45),
+          transparent
+        )
+        32deg,
+      color-mix(
+          in srgb,
+          var(--cv-accent) calc(var(--cv-light) * 0.26),
+          transparent
+        )
+        38deg,
+      color-mix(
+          in srgb,
+          var(--cv-accent) calc(var(--cv-light) * 0.07),
+          transparent
+        )
+        48deg,
+      transparent 58deg
+    ),
+    conic-gradient(
+      from 90deg at 0 0,
+      transparent 0deg,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.14),
+          transparent
+        )
+        5deg,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.32),
+          transparent
+        )
+        10deg,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.36),
+          transparent
+        )
+        13deg,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.26),
+          transparent
+        )
+        18deg,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.06),
+          transparent
+        )
+        23deg,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.02),
+          transparent
+        )
+        28deg,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.05),
+          transparent
+        )
+        35deg,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.2),
+          transparent
+        )
+        42deg,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.36),
+          transparent
+        )
+        49deg,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.3),
+          transparent
+        )
+        55deg,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.12),
+          transparent
+        )
+        63deg,
+      transparent 70deg
+    );
   mask-image: radial-gradient(
     farthest-corner at 0 0,
     #000 10%,
@@ -425,19 +565,74 @@
 /* One wide band of light at the portrait foil's angle (moved by
    animate-cv-light-sweep). The gradient's length follows the box's height too,
    so on a narrow, tall screen its ends fall outside the box; the mask keeps the
-   box's sides and bottom from showing as edges. */
+   box's sides and bottom from showing as edges. The haze under it is the deep
+   colour on the band's two sides, so the band's edges end in haze. */
 @utility bg-cv-light-sweep {
-  background-image: linear-gradient(
-    105deg,
-    transparent 15%,
-    color-mix(
-        in srgb,
-        var(--cv-accent) calc(var(--cv-light) * 0.7),
-        transparent
-      )
-      50%,
-    transparent 85%
-  );
+  background-image:
+    linear-gradient(
+      105deg,
+      transparent 15%,
+      color-mix(
+          in srgb,
+          var(--cv-accent) calc(var(--cv-light) * 0.7),
+          transparent
+        )
+        50%,
+      transparent 85%
+    ),
+    linear-gradient(
+      105deg,
+      transparent 3%,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.3),
+          transparent
+        )
+        12%,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.5),
+          transparent
+        )
+        20%,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.3),
+          transparent
+        )
+        30%,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.1),
+          transparent
+        )
+        40%,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.1),
+          transparent
+        )
+        60%,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.3),
+          transparent
+        )
+        70%,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.5),
+          transparent
+        )
+        80%,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.3),
+          transparent
+        )
+        88%,
+      transparent 97%
+    );
   mask-image:
     linear-gradient(to right, transparent, #000 25% 75%, transparent),
     linear-gradient(to bottom, #000 70%, transparent);
@@ -449,19 +644,91 @@
    passing echo would be and sets --band-light to --cv-light-rest. Straight inside
    the box, it keeps its full strength from edge to edge, and it runs out at the
    box's top and bottom, so they don't show as edges. The box is wider than any
-   screen when tilted. */
+   screen when tilted. The accent keeps to the middle four fifths of the box and
+   the haze in the deep colour lies under the band's two skirts, where the
+   accent fades out (strongest at 12% and 88%, gone by 26% and 74%). None of it
+   is under the band's middle, where the small text sits, and none beside the
+   band, where it would show as a second band. */
 @utility bg-cv-light-echo {
-  background-image: linear-gradient(
-    to top,
-    transparent,
-    color-mix(
-        in srgb,
-        var(--cv-accent) var(--band-light, calc(var(--cv-light) * 0.7)),
-        transparent
-      )
-      50%,
-    transparent
-  );
+  background-image:
+    linear-gradient(
+      to top,
+      transparent 10%,
+      color-mix(
+          in srgb,
+          var(--cv-accent) var(--band-light, calc(var(--cv-light) * 0.7)),
+          transparent
+        )
+        50%,
+      transparent 90%
+    ),
+    linear-gradient(
+      to top,
+      transparent 0%,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.1),
+          transparent
+        )
+        4%,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.22),
+          transparent
+        )
+        8%,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.3),
+          transparent
+        )
+        12%,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.22),
+          transparent
+        )
+        17%,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.08),
+          transparent
+        )
+        22%,
+      transparent 26%,
+      transparent 74%,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.08),
+          transparent
+        )
+        78%,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.22),
+          transparent
+        )
+        83%,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.3),
+          transparent
+        )
+        88%,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.22),
+          transparent
+        )
+        92%,
+      color-mix(
+          in srgb,
+          var(--cv-accent-deep) calc(var(--cv-haze) * 0.1),
+          transparent
+        )
+        96%,
+      transparent 100%
+    );
 }
 
 /* The far corner, where the light has run out. Only the light theme has it:
@@ -474,9 +741,26 @@
   );
 }
 
+/* The lit dots under the spotlight: the dots are the mask (the cell of
+   bg-cv-dots, moved by Background through mask-position so they stay on the
+   page's grid) and the colour is a light that runs from the hot core in the
+   middle to the accent, so the dots nearest the pointer glow the hottest. */
 @utility bg-cv-dots-lit {
-  --dot: color-mix(in srgb, var(--cv-accent) 75%, transparent);
-  mask-image: radial-gradient(closest-side, #000 15%, transparent);
+  background-image: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--cv-accent-core) 75%, transparent),
+    color-mix(in srgb, var(--cv-accent) 75%, transparent) 45%
+  );
+  mask-image:
+    radial-gradient(circle at center, #000 1px, transparent 1.5px),
+    radial-gradient(closest-side, #000 15%, transparent);
+  mask-size:
+    24px 24px,
+    100% 100%;
+  mask-position:
+    0 0,
+    0 0;
+  mask-composite: intersect;
 }
 
 /* Comet-like highlight that orbits a card border (rotated by animate-cv-sweep). */

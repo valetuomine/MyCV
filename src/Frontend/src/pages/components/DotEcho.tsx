@@ -36,9 +36,18 @@ const bandSwell = 1.4
 const spotlightSwell = 0.6
 /**
  * The accent strength of `bg-cv-dots-lit`, the dots under the spotlight,
- * which no lit dot goes past.
+ * which no lit dot's accent goes past. The hot core of a dot under a band is
+ * the one exception: at the band's crest it is fully opaque, because it is
+ * only a pixel or two wide and has to read as the light's hottest point.
  */
 const litStrength = 0.75
+/**
+ * The share of the `bg-cv-dots-lit` layer's radius over which its light runs
+ * from the hot core to the accent.
+ */
+const coreReach = 0.45
+/** The hot core's radius in a dot under a band, as a share of the dot's. */
+const coreShare = 0.6
 /** Half the width of the 28rem `bg-cv-dots-lit` layer, in rem. */
 const litRadiusRem = 14
 /** Above this many CSS pixels the canvas draws at 1x, so it stays small. */
@@ -58,7 +67,7 @@ const sweepBandShare = 0.13
 /** The least height of the sweep's box, in rem. */
 const sweepBoxRem = 48
 /** The width of the echo's crest, as a share of the viewport's height. */
-const echoBandShare = 0.15
+const echoBandShare = 0.12
 /**
  * The way each band moves: the sweep at the card foil's 105°, and the echo up
  * the page, a quarter of a circle from it.
@@ -115,9 +124,10 @@ function litMask(distance: number, radius: number): number {
  * appear on their own. Every count in `lightSweepAtom` carries a band through the dots from
  * the left, in step with `LightSweep`, and every echo in `nameEchoAtom` carries
  * one from the bottom up, in step with `LightEcho`. The dots under a band
- * light up in the accent, at most as strongly as the lit dots, and grow without
- * moving. While the CV shows, the dots under a mouse's spotlight also grow from
- * 1px to 1.6px in their own colours, on the spotlight's spring, without moving.
+ * light up in the accent, at most as strongly as the lit dots, with a smaller
+ * hot core in their middle near the band's crest, and grow without moving. While the CV shows, the dots under a mouse's spotlight also grow from
+ * 1px to 1.6px in their own colours, on the spotlight's spring, without moving, and turn
+ * toward the hot core the nearer they are to the pointer.
  *
  * It draws on Framer Motion's frame loop, after the spring has moved, so the
  * dots keep up with the spotlight, and only while something moves. At rest
@@ -125,8 +135,8 @@ function litMask(distance: number, radius: number): number {
  * it. The canvas takes its size on the first draw, and again on the next
  * draw after a resize or a move to a screen with another pixel density, at
  * most twice the CSS pixels and once on a very large page, so other pages
- * keep an empty canvas. The colours come from `--cv-dot` and `--cv-accent`
- * and are read again when the theme changes. Reduced motion leaves the
+ * keep an empty canvas. The colours come from `--cv-dot`, `--cv-accent` and
+ * `--cv-accent-core` and are read again when the theme changes. Reduced motion leaves the
  * canvas out, and print and forced colours hide it.
  *
  * @param props - The component props.
@@ -157,6 +167,7 @@ export default function DotEcho({
     let dots = new Float32Array(0)
     let dotColor = ""
     let accent = ""
+    let core = ""
     let needsLayout = true
     let isPainted = false
     let layoutPixelRatio = 0
@@ -164,11 +175,12 @@ export default function DotEcho({
     let bands: Band[] = []
     let rootFontSize = 16
 
-    /** Reads the current theme's dot and accent colours. */
+    /** Reads the current theme's dot, accent and hot core colours. */
     const readColors = (): void => {
       const styles = getComputedStyle(document.documentElement)
       dotColor = styles.getPropertyValue("--cv-dot").trim()
       accent = styles.getPropertyValue("--cv-accent").trim()
+      core = styles.getPropertyValue("--cv-accent-core").trim()
     }
 
     /**
@@ -244,7 +256,8 @@ export default function DotEcho({
      * Draws one frame: clears the previous one, moves the bands, and draws the
      * dots under the spotlight and under the bands. A spotlight dot is a ring
      * around the static dot in the static and lit dots' colours, so the dot
-     * looks the same, only larger. Asks for another frame while a band runs;
+     * looks the same, only larger, with the hot core over it near the pointer.
+     * A dot under a band is the accent with a smaller hot core in its middle. Asks for another frame while a band runs;
      * the first frame without one clears the last band, and the spotlight's
      * spring asks for its own.
      *
@@ -277,10 +290,11 @@ export default function DotEcho({
         const fade = dots[index + 2]
 
         const spotSquared = (x - spotX) ** 2 + (y - spotY) ** 2
+        /** The dot's distance from the spotlight's middle. */
+        const spotDistance =
+          spotSquared < litRadiusSquared ? Math.sqrt(spotSquared) : 0
         const glow =
-          spotSquared < litRadiusSquared
-            ? litMask(Math.sqrt(spotSquared), litRadius)
-            : 0
+          spotSquared < litRadiusSquared ? litMask(spotDistance, litRadius) : 0
         if (glow > 0.01) {
           context.beginPath()
           context.arc(x, y, dotRadius + spotlightSwell * glow, 0, Math.PI * 2)
@@ -292,6 +306,13 @@ export default function DotEcho({
           context.fillStyle = accent
           context.globalAlpha = litStrength * glow
           context.fill()
+          /** How much of the hot core the spotlight's light holds at the dot. */
+          const heat = 1 - spotDistance / (litRadius * coreReach)
+          if (heat > 0) {
+            context.fillStyle = core
+            context.globalAlpha = litStrength * glow * heat
+            context.fill()
+          }
           isPainted = true
         }
 
@@ -309,6 +330,21 @@ export default function DotEcho({
           context.fillStyle = accent
           context.globalAlpha = litStrength * lit * fade
           context.fill()
+          /** The hot core's strength, which shows only near the band's crest. */
+          const coreStrength = lit * lit * fade
+          if (coreStrength > 0.01) {
+            context.beginPath()
+            context.arc(
+              x,
+              y,
+              (dotRadius + bandSwell * lit) * coreShare,
+              0,
+              Math.PI * 2,
+            )
+            context.fillStyle = core
+            context.globalAlpha = coreStrength
+            context.fill()
+          }
           isPainted = true
         }
       }
