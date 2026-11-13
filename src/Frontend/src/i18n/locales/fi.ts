@@ -187,10 +187,17 @@ export const fi: Translation = {
     removing: "Poistetaan…",
     saved: "Kuva tallennettu.",
     removed: "Kuva poistettu.",
+    showOnCv: "Näytä profiilikuva CV:ssä",
+    showOnCvHint:
+      "Pois päältä CV ja PDF eivät näytä kuvaa eivätkä nimikirjaimia. Tallennettu kuva säilyy.",
+    hiddenBadge: "Piilotettu CV:stä",
+    shown: "CV näyttää taas kuvaosion.",
+    hidden: "Kuvaosio on piilotettu CV:stä.",
     actions: {
       upload: "Kuvan lataus",
       google: "Google-kuvan käyttöönotto",
       remove: "Kuvan poisto",
+      visibility: "Kuvan näkyvyyden muutos",
     },
     errors: {
       tooLarge: "Kuva on liian suuri. Valitse enintään 10 Mt:n kuva.",

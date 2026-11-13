@@ -120,7 +120,8 @@ namespace CV.Logic.Mappers
                 Location = translation?.Location,
                 LinkedInUrl = dbProfile.LinkedInUrl,
                 GitHubUrl = dbProfile.GitHubUrl,
-                PictureUrl = ToPictureUrl(dbProfile.Id, dbProfile.PictureBlobName)
+                ShowPicture = dbProfile.ShowPicture,
+                PictureUrl = dbProfile.ShowPicture ? ToPictureUrl(dbProfile.Id, dbProfile.PictureBlobName) : null
             };
         }
 
@@ -139,6 +140,7 @@ namespace CV.Logic.Mappers
                 FullName = dbProfile.FullName,
                 LinkedInUrl = dbProfile.LinkedInUrl,
                 GitHubUrl = dbProfile.GitHubUrl,
+                ShowPicture = dbProfile.ShowPicture,
                 PictureUrl = ToPictureUrl(dbProfile.Id, dbProfile.PictureBlobName),
                 Translations = [.. dbProfile.Translations
                     .Select(translation => new ProfileTranslationDto

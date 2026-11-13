@@ -3,10 +3,11 @@ import { useId, useRef, useState, type ChangeEvent, type JSX } from "react"
 import { flushSync } from "react-dom"
 import { useTranslation } from "react-i18next"
 import {
-  getProfilePictureUrl,
   useDeleteProfilePictureMutation,
+  useGetProfilePicturePreviewQuery,
   useSaveGoogleProfilePictureMutation,
   useSaveProfilePictureMutation,
+  useSetProfilePictureVisibilityMutation,
 } from "../../../../api/profileQueries"
 import { useAuthSession } from "../../../../auth/authSession"
 import { ButtonSize, ButtonVariant, SignInMethod } from "../../../../types"
@@ -17,21 +18,25 @@ import {
   getProfilePictureError,
   type PictureChange,
 } from "../../utils/profileFormUtils"
+import PictureVisibilitySwitch from "./PictureVisibilitySwitch"
 
 interface ProfilePictureSectionProps {
   profileId: string
   pictureUrl?: string | null
+  showPicture: boolean
   fullName?: string | null
 }
 
 /**
  * How the last picture change ended. A failure keeps its cause and is worded
- * at render, so its message follows a language change.
+ * at render, so its message follows a language change. A visibility change
+ * keeps the value it saved, for its confirmation.
  */
 interface PictureOutcome {
   change: PictureChange
   error: unknown
   isError: boolean
+  isVisible?: boolean
 }
 
 /**
@@ -52,7 +57,11 @@ function firstBusyChange(
     return "google"
   }
 
-  return busy.remove ? "remove" : null
+  if (busy.remove) {
+    return "remove"
+  }
+
+  return busy.visibility ? "visibility" : null
 }
 
 /**
@@ -60,11 +69,17 @@ function firstBusyChange(
  *
  * @param outcome - How the change ended.
  * @param t - The translation function.
- * @returns The failure's message, or the confirmation of the saved or removed picture.
+ * @returns The failure's message, or the confirmation of the saved, removed, shown or hidden picture.
  */
 function describeOutcome(outcome: PictureOutcome, t: TFunction): string {
   if (outcome.isError) {
     return getProfilePictureError(outcome.error, outcome.change, t)
+  }
+
+  if (outcome.change === "visibility") {
+    return outcome.isVisible
+      ? t("profilePicture.shown")
+      : t("profilePicture.hidden")
   }
 
   return outcome.change === "remove"
@@ -81,17 +96,25 @@ function describeOutcome(outcome: PictureOutcome, t: TFunction): string {
  * Choosing a picture opens the device's picker, which on a phone also offers
  * the camera; the browser shrinks the photo before uploading it. Its outcome
  * shows below the actions, and after a removal focus moves to Choose picture,
- * because Remove is gone.
+ * because Remove is gone. The Show profile picture on CV switch hides or
+ * shows the whole section on the CV and its PDF, also saved at once; while it
+ * saves, it shows the value asked for. A hidden section keeps its picture,
+ * which the preview dims under a Hidden from CV badge, and uploading or using
+ * the Google picture leaves the switch as it is. The preview is fetched
+ * signed in, because the public picture URL is not found while hidden, and
+ * its frame stays empty while it loads.
  *
  * @param props - The component props.
  * @param props.profileId - The profile whose picture this is.
  * @param props.pictureUrl - The current picture's path from the API, if any.
+ * @param props.showPicture - Whether the CV shows the picture section.
  * @param props.fullName - The saved name, for the initials without a picture.
  * @returns The section.
  */
 export default function ProfilePictureSection({
   profileId,
   pictureUrl,
+  showPicture,
   fullName,
 }: Readonly<ProfilePictureSectionProps>): JSX.Element {
   const { t } = useTranslation()
@@ -106,19 +129,33 @@ export default function ProfilePictureSection({
   const [saveGoogleProfilePicture, googleState] =
     useSaveGoogleProfilePictureMutation()
   const [deleteProfilePicture, removeState] = useDeleteProfilePictureMutation()
+  const [setProfilePictureVisibility, visibilityState] =
+    useSetProfilePictureVisibilityMutation()
   const [isPreparing, setIsPreparing] = useState(false)
   const [isConfirmingRemove, setIsConfirmingRemove] = useState(false)
   const [outcome, setOutcome] = useState<PictureOutcome | null>(null)
   const [failedPreviewUrl, setFailedPreviewUrl] = useState<string | null>(null)
-  const previewUrl = getProfilePictureUrl(pictureUrl)
+  const preview = useGetProfilePicturePreviewQuery(
+    { profileId, pictureUrl: pictureUrl ?? "" },
+    { skip: !pictureUrl },
+  )
+  /** The loaded preview's object URL, kept only while it belongs to the current picture. */
+  const previewUrl = pictureUrl ? preview.currentData : undefined
   /** Shows the preview unless there is none or it failed to load. */
   const showPreview = Boolean(previewUrl && failedPreviewUrl !== previewUrl)
+  /** Leaves the frame empty while the preview loads, instead of flashing the initials. */
+  const isPreviewLoading = Boolean(pictureUrl) && preview.isFetching
   /** The change under way, which blocks the others. */
   const busyChange = firstBusyChange({
     upload: isPreparing || uploadState.isLoading,
     google: googleState.isLoading,
     remove: removeState.isLoading,
+    visibility: visibilityState.isLoading,
   })
+  /** The switch's value: the one being saved, otherwise the saved one. */
+  const isPictureShown = visibilityState.isLoading
+    ? (visibilityState.originalArgs?.body.isVisible ?? showPicture)
+    : showPicture
   /** Whether the session is a Google sign-in, which alone has a Google picture. */
   const canUseGoogle = session.method === SignInMethod.Google
 
@@ -127,21 +164,41 @@ export default function ProfilePictureSection({
    *
    * @param change - Which change this is.
    * @param run - Sends the change; rejects when it fails.
+   * @param isVisible - The visibility a visibility change saves.
    * @returns Whether the change succeeded.
    */
   const runChange = async (
     change: PictureChange,
     run: () => Promise<unknown>,
+    isVisible?: boolean,
   ): Promise<boolean> => {
     setOutcome(null)
     try {
       await run()
-      setOutcome({ change, error: null, isError: false })
+      setOutcome({ change, error: null, isError: false, isVisible })
       return true
     } catch (error: unknown) {
-      setOutcome({ change, error, isError: true })
+      setOutcome({ change, error, isError: true, isVisible })
       return false
     }
+  }
+
+  /**
+   * Saves whether the CV shows the picture section.
+   *
+   * @param isVisible - Whether to show it.
+   */
+  const changeVisibility = (isVisible: boolean): void => {
+    setIsConfirmingRemove(false)
+    void runChange(
+      "visibility",
+      () =>
+        setProfilePictureVisibility({
+          profileId,
+          body: { isVisible },
+        }).unwrap(),
+      isVisible,
+    )
   }
 
   /** Opens the device's file picker, which offers the camera on a phone. */
@@ -235,21 +292,31 @@ export default function ProfilePictureSection({
       </h2>
       <div className="flex flex-wrap items-start gap-x-6 gap-y-4">
         <div className="relative h-32 w-26 shrink-0 overflow-hidden rounded-3xl border border-cv-line bg-cv-surface">
-          {showPreview ? (
-            <img
-              key={previewUrl}
-              src={previewUrl}
-              alt={t("profilePicture.current")}
-              onError={() => setFailedPreviewUrl(previewUrl ?? null)}
-              className="size-full object-cover"
-            />
-          ) : (
-            <div
-              aria-hidden="true"
-              className="grid size-full place-items-center bg-linear-to-br from-cv-accent/20 via-transparent to-transparent font-cv-display text-3xl font-semibold tracking-tighter text-cv-accent select-none"
-            >
-              {getInitials(fullName)}
-            </div>
+          <div
+            className={`size-full transition-opacity duration-200 motion-reduce:transition-none ${isPictureShown ? "" : "opacity-40 grayscale"}`}
+          >
+            {showPreview && (
+              <img
+                key={previewUrl}
+                src={previewUrl}
+                alt={t("profilePicture.current")}
+                onError={() => setFailedPreviewUrl(previewUrl ?? null)}
+                className="size-full object-cover"
+              />
+            )}
+            {!showPreview && !isPreviewLoading && (
+              <div
+                aria-hidden="true"
+                className="grid size-full place-items-center bg-linear-to-br from-cv-accent/20 via-transparent to-transparent font-cv-display text-3xl font-semibold tracking-tighter text-cv-accent select-none"
+              >
+                {getInitials(fullName)}
+              </div>
+            )}
+          </div>
+          {!isPictureShown && (
+            <span className="absolute inset-x-1 bottom-1.5 rounded-full border border-cv-line bg-cv-surface px-1.5 py-1 text-center text-[0.6875rem] leading-tight font-medium whitespace-nowrap text-cv-ink">
+              {t("profilePicture.hiddenBadge")}
+            </span>
           )}
         </div>
         <div className="grid min-w-0 flex-1 basis-64 content-start gap-3">
@@ -257,7 +324,7 @@ export default function ProfilePictureSection({
             id={hintId}
             className="m-0 max-w-[56ch] text-sm text-pretty text-cv-copy"
           >
-            {!showPreview && (
+            {!showPreview && !isPreviewLoading && isPictureShown && (
               <span className="block text-cv-ink">
                 {t("profilePicture.none")}
               </span>
@@ -329,6 +396,14 @@ export default function ProfilePictureSection({
           <p className="m-0 text-xs text-cv-muted">
             {t("profilePicture.formats")}
           </p>
+          <div className="mt-2 border-t border-cv-line pt-4">
+            <PictureVisibilitySwitch
+              checked={isPictureShown}
+              busy={busyChange === "visibility"}
+              disabled={busyChange !== null && busyChange !== "visibility"}
+              onChange={changeVisibility}
+            />
+          </div>
           <input
             ref={inputRef}
             type="file"

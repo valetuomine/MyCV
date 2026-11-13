@@ -182,7 +182,7 @@ export function formatProfileDate(
 }
 
 /** A change to the profile picture, each saved at once. */
-export type PictureChange = "upload" | "google" | "remove"
+export type PictureChange = "upload" | "google" | "remove" | "visibility"
 
 /**
  * Turns a failed profile picture change into a message, by the status code

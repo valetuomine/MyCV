@@ -55,7 +55,24 @@ namespace CV.LogicInterface.ServiceInterfaces
             CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Opens the profile's picture for a public visitor.
+        /// Shows or hides the profile's picture section on the CV and its PDF. Hiding keeps the stored picture,
+        /// and works whether or not the profile has one, so the CV shows no initials either.
+        /// </summary>
+        /// <param name="profileId">The identifier of the profile.</param>
+        /// <param name="isVisible">Whether the CV shows the picture section.</param>
+        /// <param name="actor">The caller's sign-in identity, or null when the token carries none.</param>
+        /// <param name="canManageAny">Whether the caller has the <c>CvAdmin</c> role.</param>
+        /// <param name="cancellationToken">The token used to cancel the operation.</param>
+        /// <returns>The saved visibility.</returns>
+        Task<ProfilePictureVisibilityDto> SetPictureVisibility(
+            Guid profileId,
+            bool isVisible,
+            ExternalIdentity? actor,
+            bool canManageAny,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Opens the profile's picture for a public visitor. A hidden picture is not found.
         /// </summary>
         /// <param name="profileId">The identifier of the profile.</param>
         /// <param name="version">The version from the picture's URL, if the request has one.</param>
@@ -64,6 +81,20 @@ namespace CV.LogicInterface.ServiceInterfaces
         Task<ProfilePictureFileDto> GetPicture(
             Guid profileId,
             string? version,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Opens the profile's picture for the edit view's preview, whether or not the CV shows it.
+        /// </summary>
+        /// <param name="profileId">The identifier of the profile.</param>
+        /// <param name="actor">The caller's sign-in identity, or null when the token carries none.</param>
+        /// <param name="canManageAny">Whether the caller has the <c>CvAdmin</c> role.</param>
+        /// <param name="cancellationToken">The token used to cancel the operation.</param>
+        /// <returns>The picture, which the caller disposes.</returns>
+        Task<ProfilePictureFileDto> GetPicturePreview(
+            Guid profileId,
+            ExternalIdentity? actor,
+            bool canManageAny,
             CancellationToken cancellationToken = default);
     }
 }

@@ -527,6 +527,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Profile/{profileId}/admin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    profileId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProfileAdminDto"];
+                        "application/json": components["schemas"]["ProfileAdminDto"];
+                        "text/json": components["schemas"]["ProfileAdminDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Profile/{profileId}/pdf": {
         parameters: {
             query?: never;
@@ -588,45 +627,6 @@ export interface paths {
                 };
             };
         };
-        patch?: never;
-        trace?: never;
-    };
-    "/api/Profile/{profileId}/admin": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    profileId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["ProfileAdminDto"];
-                        "application/json": components["schemas"]["ProfileAdminDto"];
-                        "text/json": components["schemas"]["ProfileAdminDto"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
         patch?: never;
         trace?: never;
     };
@@ -711,6 +711,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Profile/{profileId}/picture/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    profileId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "image/webp": string;
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Profile/{profileId}/picture/google": {
         parameters: {
             query?: never;
@@ -739,6 +776,66 @@ export interface paths {
                         "text/plain": components["schemas"]["ProfilePictureDto"];
                         "application/json": components["schemas"]["ProfilePictureDto"];
                         "text/json": components["schemas"]["ProfilePictureDto"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Profile/{profileId}/picture/visibility": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    profileId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    /**
+                     * @example {
+                     *       "isVisible": false
+                     *     }
+                     */
+                    "application/json": components["schemas"]["UpdateProfilePictureVisibilityRequest"];
+                    /**
+                     * @example {
+                     *       "isVisible": false
+                     *     }
+                     */
+                    "text/json": components["schemas"]["UpdateProfilePictureVisibilityRequest"];
+                    /**
+                     * @example {
+                     *       "isVisible": false
+                     *     }
+                     */
+                    "application/*+json": components["schemas"]["UpdateProfilePictureVisibilityRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProfilePictureVisibilityDto"];
+                        "application/json": components["schemas"]["ProfilePictureVisibilityDto"];
+                        "text/json": components["schemas"]["ProfilePictureVisibilityDto"];
                     };
                 };
             };
@@ -801,6 +898,7 @@ export interface components {
             isOwner?: boolean;
             linkedInUrl?: string | null;
             gitHubUrl?: string | null;
+            showPicture?: boolean;
             pictureUrl?: string | null;
             translations?: components["schemas"]["ProfileTranslationDto"][] | null;
         };
@@ -818,10 +916,14 @@ export interface components {
             location?: string | null;
             linkedInUrl?: string | null;
             gitHubUrl?: string | null;
+            showPicture?: boolean;
             pictureUrl?: string | null;
         };
         ProfilePictureDto: {
             pictureUrl?: string | null;
+        };
+        ProfilePictureVisibilityDto: {
+            isVisible?: boolean;
         };
         ProfileTranslationDto: {
             languageCode?: string | null;
@@ -838,6 +940,9 @@ export interface components {
             title?: string | null;
             summary?: string | null;
             location?: string | null;
+        };
+        UpdateProfilePictureVisibilityRequest: {
+            isVisible: boolean;
         };
         UpdateProfileRequest: {
             fullName?: string | null;

@@ -56,8 +56,14 @@ namespace CV.LogicInterface.Dto.Profile
         public string? GitHubUrl { get; set; }
 
         /// <summary>
+        /// Gets or sets whether the CV shows the picture section. When false, the CV shows neither a picture
+        /// nor the initials that stand in for a missing one.
+        /// </summary>
+        public bool ShowPicture { get; set; }
+
+        /// <summary>
         /// Gets or sets the path of the profile picture, relative to the API's origin and the same in every
-        /// language, or null when the profile has none. Its version parameter changes with the picture.
+        /// language, or null when the profile has none or hides it. Its version parameter changes with the picture.
         /// </summary>
         public string? PictureUrl { get; set; }
     }

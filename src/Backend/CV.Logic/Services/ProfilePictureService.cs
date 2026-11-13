@@ -85,6 +85,29 @@ namespace CV.Logic.Services
             await _pictureStore.RemoveUnused(previousBlobName);
         }
 
+        public async Task<ProfilePictureVisibilityDto> SetPictureVisibility(
+            Guid profileId,
+            bool isVisible,
+            ExternalIdentity? actor,
+            bool canManageAny,
+            CancellationToken cancellationToken = default)
+        {
+            // No storage is touched, so this works without a configured storage account.
+            await EnsureCanManageProfile(profileId, actor, canManageAny, cancellationToken);
+
+            // Only a real change sets UpdatedAt, which reprints the cached PDF.
+            DateTime? updatedAt = DateTime.UtcNow;
+            await _dataContext.Profile
+                .Where(profile => profile.Id == profileId && profile.ShowPicture != isVisible)
+                .ExecuteUpdateAsync(
+                    setters => setters
+                        .SetProperty(profile => profile.ShowPicture, isVisible)
+                        .SetProperty(profile => profile.UpdatedAt, updatedAt),
+                    cancellationToken);
+
+            return new ProfilePictureVisibilityDto { IsVisible = isVisible };
+        }
+
         public async Task<ProfilePictureFileDto> GetPicture(
             Guid profileId,
             string? version,
@@ -95,8 +118,41 @@ namespace CV.Logic.Services
                 throw new BadRequestException($"Invalid profile ID: {profileId}");
             }
 
-            var blobName = await ReadPictureBlobName(profileId, cancellationToken)
-                ?? throw new NotFoundException($"Profile picture not found for profile Id: {profileId}");
+            // A hidden picture isn't shared, although it stays stored.
+            var blobName = await _dataContext.Profile
+                .AsNoTracking()
+                .Where(profile => profile.Id == profileId && profile.ShowPicture)
+                .Select(profile => profile.PictureBlobName)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            return await OpenPicture(profileId, blobName, version, cancellationToken);
+        }
+
+        public async Task<ProfilePictureFileDto> GetPicturePreview(
+            Guid profileId,
+            ExternalIdentity? actor,
+            bool canManageAny,
+            CancellationToken cancellationToken = default)
+        {
+            await EnsureCanManageProfile(profileId, actor, canManageAny, cancellationToken);
+
+            var blobName = await ReadPictureBlobName(profileId, cancellationToken);
+            return await OpenPicture(profileId, blobName, version: null, cancellationToken);
+        }
+
+        /// <summary>
+        /// Downloads the stored picture, or throws <see cref="NotFoundException"/> when there is none.
+        /// </summary>
+        private async Task<ProfilePictureFileDto> OpenPicture(
+            Guid profileId,
+            string? blobName,
+            string? version,
+            CancellationToken cancellationToken)
+        {
+            if (blobName is null)
+            {
+                throw new NotFoundException($"Profile picture not found for profile Id: {profileId}");
+            }
 
             var stored = await _pictureStore.Download(blobName, cancellationToken)
                 ?? throw new NotFoundException($"Profile picture not found for profile Id: {profileId}");
@@ -122,6 +178,24 @@ namespace CV.Logic.Services
             bool canManageAny,
             CancellationToken cancellationToken)
         {
+            await EnsureCanManageProfile(profileId, actor, canManageAny, cancellationToken);
+
+            if (!_pictureStore.IsConfigured)
+            {
+                throw new ServiceUnavailableException("Profile picture storage is not set up.");
+            }
+        }
+
+        /// <summary>
+        /// Lets the profile's owner, or any caller with <c>CvAdmin</c>, manage its picture section.
+        /// A non-owner gets 404, like the other profile changes.
+        /// </summary>
+        private async Task EnsureCanManageProfile(
+            Guid profileId,
+            ExternalIdentity? actor,
+            bool canManageAny,
+            CancellationToken cancellationToken)
+        {
             if (profileId == Guid.Empty)
             {
                 throw new BadRequestException($"Invalid profile ID: {profileId}");
@@ -132,11 +206,6 @@ namespace CV.Logic.Services
             if (!canChange)
             {
                 throw new NotFoundException($"Profile not found with Id: {profileId}");
-            }
-
-            if (!_pictureStore.IsConfigured)
-            {
-                throw new ServiceUnavailableException("Profile picture storage is not set up.");
             }
         }
 

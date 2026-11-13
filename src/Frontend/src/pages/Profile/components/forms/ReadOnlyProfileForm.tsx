@@ -81,6 +81,9 @@ function ExpandableSummary({ text }: Readonly<{ text: string }>): JSX.Element {
  * The CV: name, title, location, summary, links and portrait, entering one
  * after another. With a mouse, the actions lean toward the pointer. Coming
  * back from editing, focus returns to the Edit profile button that started it.
+ * When the owner hides the picture section, the portrait and its initials are
+ * left out and the text takes the whole width, capped so its lines stay
+ * readable.
  *
  * @param props - The component props.
  * @param props.values - The public profile.
@@ -107,6 +110,8 @@ export default function ReadOnlyProfileForm({
   )
   /** Whether there is a profile link or an edit action to show. */
   const hasActions = Boolean(values.gitHubUrl || values.linkedInUrl || onEdit)
+  /** Whether the owner shows the portrait; profiles from before the choice do. */
+  const showPortrait = values.showPicture !== false
 
   useEffect(() => {
     if (focusEdit) {
@@ -119,9 +124,11 @@ export default function ReadOnlyProfileForm({
       variants={container}
       initial="hidden"
       animate="visible"
-      className="grid w-full grid-cols-[minmax(0,1fr)] items-center gap-14 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-16"
+      className={`grid w-full grid-cols-[minmax(0,1fr)] items-center gap-14 lg:gap-16 ${showPortrait ? "lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]" : ""}`}
     >
-      <section className="grid min-w-0 grid-cols-[minmax(0,1fr)] content-center justify-items-start">
+      <section
+        className={`grid min-w-0 grid-cols-[minmax(0,1fr)] content-center justify-items-start ${showPortrait ? "" : "max-w-5xl"}`}
+      >
         <motion.p
           variants={item}
           className="flex items-center gap-3 font-cv-mono text-xs tracking-widest text-cv-copy uppercase"
@@ -206,16 +213,18 @@ export default function ReadOnlyProfileForm({
           )}
         </motion.div>
       </section>
-      <motion.div
-        variants={item}
-        className="w-full max-w-md lg:justify-self-end"
-      >
-        <ProfilePortrait
-          fullName={values.fullName}
-          initials={getInitials(values.fullName)}
-          imageUrl={getProfilePictureUrl(values.pictureUrl)}
-        />
-      </motion.div>
+      {showPortrait && (
+        <motion.div
+          variants={item}
+          className="w-full max-w-md lg:justify-self-end"
+        >
+          <ProfilePortrait
+            fullName={values.fullName}
+            initials={getInitials(values.fullName)}
+            imageUrl={getProfilePictureUrl(values.pictureUrl)}
+          />
+        </motion.div>
+      )}
     </motion.div>
   )
 }

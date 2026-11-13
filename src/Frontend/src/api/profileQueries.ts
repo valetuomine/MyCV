@@ -6,6 +6,10 @@ export type ProfileAdmin = components["schemas"]["ProfileAdminDto"]
 export type CreateProfileRequest = components["schemas"]["CreateProfileRequest"]
 export type UpdateProfileRequest = components["schemas"]["UpdateProfileRequest"]
 export type ProfilePicture = components["schemas"]["ProfilePictureDto"]
+export type ProfilePictureVisibility =
+  components["schemas"]["ProfilePictureVisibilityDto"]
+export type UpdateProfilePictureVisibilityRequest =
+  components["schemas"]["UpdateProfilePictureVisibilityRequest"]
 
 /**
  * Builds the URL of a profile picture from the API's `pictureUrl`, which is
@@ -58,6 +62,16 @@ export function getProfilePdfUrl({
 interface UpdateProfileArgs {
   profileId: string
   body: UpdateProfileRequest
+}
+
+interface SetProfilePictureVisibilityArgs {
+  profileId: string
+  body: UpdateProfilePictureVisibilityRequest
+}
+
+interface ProfilePicturePreviewArgs {
+  profileId: string
+  pictureUrl: string
 }
 
 interface SaveProfilePictureArgs {
@@ -148,6 +162,48 @@ export const profileQueries = baseApi.injectEndpoints({
       ],
     }),
     /**
+     * Fetches the picture for the edit view's preview, signed in, because the
+     * public picture URL is not found while the CV hides the picture. The
+     * result is an object URL of the image, which `<img>` shows and which is
+     * revoked when the cache entry goes. The picture's versioned
+     * `pictureUrl` is part of the key, so a new picture is a new entry and a
+     * loaded one is never fetched again; only a failed one refetches after
+     * signing in again.
+     */
+    getProfilePicturePreview: builder.query<string, ProfilePicturePreviewArgs>({
+      query: ({ profileId }) => ({
+        url: `/api/Profile/${encodeURIComponent(profileId)}/picture/preview`,
+        /**
+         * Turns the image into an object URL, so the cache holds a string
+         * rather than a Blob. A failure keeps its body as text.
+         *
+         * @param response - The API's response.
+         * @returns The image's object URL, or the failure's text.
+         */
+        responseHandler: async (response: Response) =>
+          response.ok
+            ? URL.createObjectURL(await response.blob())
+            : response.text(),
+      }),
+      extraOptions: { requiresSignIn: true },
+      providesTags: (_result, error) => (error ? ["Session"] : []),
+      /**
+       * Revokes the object URL once the cache entry is removed.
+       *
+       * @param _args - The preview's arguments.
+       * @param api - RTK Query's lifecycle helpers.
+       * @param api.cacheDataLoaded - Settles with the first loaded URL.
+       * @param api.cacheEntryRemoved - Settles when the entry is removed.
+       */
+      async onCacheEntryAdded(_args, { cacheDataLoaded, cacheEntryRemoved }) {
+        const loaded = await cacheDataLoaded.catch(() => null)
+        await cacheEntryRemoved
+        if (loaded) {
+          URL.revokeObjectURL(loaded.data)
+        }
+      },
+    }),
+    /**
      * Creates a profile and refetches the candidate at its new public URL
      * segment.
      */
@@ -211,6 +267,58 @@ export const profileQueries = baseApi.injectEndpoints({
       invalidatesTags: (_result, error, profileId) =>
         profileTagsAfter(error, profileId),
     }),
+    /**
+     * Shows or hides the picture section on the CV and its PDF, at once,
+     * apart from the profile's fields. Hiding keeps the stored picture.
+     * The asked value goes into the cached admin views at once, so the
+     * switch doesn't flip back while they refetch, and a failure restores
+     * the previous one.
+     */
+    setProfilePictureVisibility: builder.mutation<
+      ProfilePictureVisibility,
+      SetProfilePictureVisibilityArgs
+    >({
+      query: ({ profileId, body }) => ({
+        url: `/api/Profile/${encodeURIComponent(profileId)}/picture/visibility`,
+        method: "PUT",
+        body,
+      }),
+      extraOptions: { requiresSignIn: true },
+      invalidatesTags: (_result, error, { profileId }) =>
+        profileTagsAfter(error, profileId),
+      /**
+       * Writes the asked visibility into the cached admin views, and undoes
+       * it when the request fails.
+       *
+       * @param args - The mutation's arguments.
+       * @param args.profileId - The changed profile.
+       * @param args.body - The asked visibility.
+       * @param api - RTK Query's lifecycle helpers.
+       * @param api.dispatch - Dispatches the cache updates.
+       * @param api.queryFulfilled - Settles when the request finishes.
+       */
+      async onQueryStarted({ profileId, body }, { dispatch, queryFulfilled }) {
+        const patches = (["getProfileAdmin", "getProfileAccess"] as const).map(
+          (endpoint) =>
+            dispatch(
+              profileQueries.util.updateQueryData(
+                endpoint,
+                profileId,
+                (draft) => {
+                  draft.showPicture = body.isVisible
+                },
+              ),
+            ),
+        )
+        try {
+          await queryFulfilled
+        } catch {
+          for (const patch of patches) {
+            patch.undo()
+          }
+        }
+      },
+    }),
     /** Removes the profile picture, at once, and deletes it from storage. */
     deleteProfilePicture: builder.mutation<void, string>({
       query: (profileId) => ({
@@ -228,9 +336,11 @@ export const {
   useGetProfileQuery,
   useGetProfileAdminQuery,
   useGetProfileAccessQuery,
+  useGetProfilePicturePreviewQuery,
   useCreateProfileMutation,
   useUpdateProfileMutation,
   useSaveProfilePictureMutation,
   useSaveGoogleProfilePictureMutation,
+  useSetProfilePictureVisibilityMutation,
   useDeleteProfilePictureMutation,
 } = profileQueries

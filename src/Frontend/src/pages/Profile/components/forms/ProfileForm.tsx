@@ -133,6 +133,7 @@ function EditView({
         publicUrlSegment={publicUrlSegment}
         profileId={profileId}
         pictureUrl={adminProfile.pictureUrl}
+        showPicture={adminProfile.showPicture !== false}
         savedFullName={adminProfile.fullName}
       />
       {adminProfile.isOwner && (

@@ -3,9 +3,11 @@ using CV.Common.Exceptions;
 using CV.LogicInterface.Dto.Profile;
 using CV.LogicInterface.ServiceInterfaces;
 using CV.WebApi.Authentication;
+using CV.WebApi.Swagger.Examples;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
+using Swashbuckle.AspNetCore.Filters;
 using RouteAttribute = Microsoft.AspNetCore.Mvc.RouteAttribute;
 
 namespace CV.WebApi.Controllers
@@ -44,6 +46,25 @@ namespace CV.WebApi.Controllers
                 result.ContentType,
                 result.LastModified,
                 new EntityTagHeaderValue(result.ETag));
+        }
+
+        // For the edit view's preview, which shows the picture while the CV hides it. Signed in, so the
+        // response stays out of shared caches.
+        [HttpGet("{profileId:guid}/picture/preview")]
+        [Authorize]
+        [ProducesResponseType(typeof(FileStreamResult), StatusCodes.Status200OK, "image/webp")]
+        public async Task<IActionResult> GetProfilePicturePreview(Guid profileId, CancellationToken cancellationToken)
+        {
+            var result = await _profilePictureService.GetPicturePreview(
+                profileId,
+                _currentUser.Identity,
+                _currentUser.IsCvAdmin,
+                cancellationToken);
+
+            Response.Headers.CacheControl = "private, no-store";
+            Response.Headers.XContentTypeOptions = "nosniff";
+
+            return File(result.Content, result.ContentType);
         }
 
         // The form is read here rather than bound as an IFormFile, because model binding
@@ -104,6 +125,25 @@ namespace CV.WebApi.Controllers
         {
             var result = await _profilePictureService.SaveGooglePicture(
                 profileId,
+                _currentUser.Identity,
+                _currentUser.IsCvAdmin,
+                cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpPut("{profileId:guid}/picture/visibility")]
+        [Authorize]
+        [SwaggerRequestExample(
+            typeof(UpdateProfilePictureVisibilityRequest),
+            typeof(UpdateProfilePictureVisibilityRequestExample))]
+        public async Task<ActionResult<ProfilePictureVisibilityDto>> UpdateProfilePictureVisibility(
+            Guid profileId,
+            UpdateProfilePictureVisibilityRequest request,
+            CancellationToken cancellationToken)
+        {
+            var result = await _profilePictureService.SetPictureVisibility(
+                profileId,
+                request.IsVisible,
                 _currentUser.Identity,
                 _currentUser.IsCvAdmin,
                 cancellationToken);

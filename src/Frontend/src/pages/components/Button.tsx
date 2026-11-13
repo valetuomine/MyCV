@@ -46,7 +46,7 @@ interface ExternalLinkButtonProps
 type ButtonProps =
   NativeButtonProps | RouterLinkButtonProps | ExternalLinkButtonProps
 
-type ButtonShape = "pill" | "icon" | "text" | "segment"
+type ButtonShape = "pill" | "icon" | "text" | "segment" | "switch"
 
 /** Which shape, and so which size classes, each variant takes. */
 const variantShapes: Record<ButtonVariant, ButtonShape> = {
@@ -57,6 +57,7 @@ const variantShapes: Record<ButtonVariant, ButtonShape> = {
   [ButtonVariant.Icon]: "icon",
   [ButtonVariant.Text]: "text",
   [ButtonVariant.Segment]: "segment",
+  [ButtonVariant.Switch]: "switch",
 }
 
 /**
@@ -67,6 +68,8 @@ const variantShapes: Record<ButtonVariant, ButtonShape> = {
  * (`::after`, `bg-current`), which shows on any brand colours in both themes.
  * Segment is one option of a choice inside a pill track, such as the
  * language: `aria-pressed` marks the chosen one with the accent fill.
+ * Switch is the track of a `role="switch"` button, whose child is the thumb:
+ * `aria-checked` fills it with the accent.
  */
 const variantClasses: Record<
   ButtonVariant,
@@ -107,7 +110,21 @@ const variantClasses: Record<
     interactive:
       "hover:bg-cv-overlay hover:text-cv-ink aria-pressed:hover:bg-cv-accent-strong aria-pressed:hover:text-cv-accent-ink active:scale-[0.97]",
   },
+  [ButtonVariant.Switch]: {
+    rest: "rounded-full border border-cv-field-border bg-cv-field-surface aria-checked:border-cv-accent aria-checked:bg-cv-accent",
+    interactive:
+      "hover:border-cv-meta hover:bg-cv-overlay aria-checked:hover:border-cv-accent-strong aria-checked:hover:bg-cv-accent-strong",
+  },
 }
+
+/**
+ * A switch's track, the same at every `ButtonSize`: 24 px tall and 44 px
+ * wide, reaching a 44 × 44 px touch target with an invisible `::before`.
+ * The pseudo-element is placed from inside the 1 px border, so it reaches
+ * past the border on every side.
+ */
+const switchSize =
+  "h-6 w-11 before:absolute before:-inset-x-px before:-inset-y-2.75"
 
 /**
  * A segment's size, the same at every `ButtonSize`: 36 px inside its 44 px
@@ -128,12 +145,14 @@ const sizeClasses: Record<ButtonSize, Record<ButtonShape, string>> = {
     icon: "size-11",
     text: "min-h-11 min-w-11 text-sm",
     segment: segmentSize,
+    switch: switchSize,
   },
   [ButtonSize.Small]: {
     pill: "min-h-9 px-4 py-1.5 text-sm before:absolute before:inset-x-0 before:-inset-y-1",
     icon: "size-9 before:absolute before:-inset-1",
     text: "min-h-11 min-w-11 text-xs",
     segment: segmentSize,
+    switch: switchSize,
   },
 }
 
@@ -141,13 +160,15 @@ const sizeClasses: Record<ButtonSize, Record<ButtonShape, string>> = {
  * How each shape lays out its content. Icons stack theirs in one cell. Text
  * buttons pad their sides for the focus ring and pull back by the same
  * amount, so the label still lines up with the text around it. Segments
- * centre their content, such as a flag.
+ * centre their content, such as a flag. A switch lines its thumb up at the
+ * start of the track.
  */
 const shapeClasses: Record<ButtonShape, string> = {
   pill: "inline-flex items-center justify-center gap-2 text-center",
   icon: "inline-grid place-items-center",
   text: "-mx-1.5 inline-flex items-center gap-2 px-1.5",
   segment: "inline-flex items-center justify-center",
+  switch: "inline-flex shrink-0 items-center",
 }
 
 const baseClassName =
@@ -423,7 +444,7 @@ function NativeButton({
  * and that text. Both labels share one grid cell, so the width doesn't jump.
  *
  * @param props - The component props.
- * @param props.variant - The look: primary, secondary, danger, icon, text, segment, or brand, whose colours come from `className`.
+ * @param props.variant - The look: primary, secondary, danger, icon, text, segment, switch, or brand, whose colours come from `className`.
  * @param props.size - Medium (44 px) or small, which keeps a 44 px touch target.
  * @param props.className - Extra classes, such as `w-full`; they must not fight the variant's own.
  * @param props.children - The label; icon buttons also need an `aria-label`.

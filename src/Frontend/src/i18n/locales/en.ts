@@ -182,10 +182,17 @@ export const en = {
     removing: "Removing…",
     saved: "Picture saved.",
     removed: "Picture removed.",
+    showOnCv: "Show profile picture on CV",
+    showOnCvHint:
+      "When off, your CV and PDF show no picture or initials. A saved picture is kept.",
+    hiddenBadge: "Hidden from CV",
+    shown: "Your CV shows the picture section again.",
+    hidden: "The picture section is hidden from your CV.",
     actions: {
       upload: "Picture upload",
       google: "Using the Google picture",
       remove: "Removing the picture",
+      visibility: "Changing the picture's visibility",
     },
     errors: {
       tooLarge: "The picture is too large. Choose one of 10 MB or less.",

@@ -24,6 +24,7 @@ interface EditableProfileFormProps {
   publicUrlSegment?: string
   profileId: string
   pictureUrl?: string | null
+  showPicture: boolean
   savedFullName?: string | null
 }
 
@@ -50,6 +51,7 @@ interface EditableProfileFormProps {
  * @param props.publicUrlSegment - The CV's public URL segment, for its link.
  * @param props.profileId - The profile being edited, for its picture.
  * @param props.pictureUrl - The current picture's path from the API, if any.
+ * @param props.showPicture - Whether the CV shows the picture section.
  * @param props.savedFullName - The saved name, for the picture's initials.
  * @returns The edit form.
  */
@@ -61,6 +63,7 @@ export default function EditableProfileForm({
   publicUrlSegment,
   profileId,
   pictureUrl,
+  showPicture,
   savedFullName,
 }: Readonly<EditableProfileFormProps>): JSX.Element {
   const { t } = useTranslation()
@@ -165,6 +168,7 @@ export default function EditableProfileForm({
         <ProfilePictureSection
           profileId={profileId}
           pictureUrl={pictureUrl}
+          showPicture={showPicture}
           fullName={savedFullName}
         />
         <ProfileFields isDisabled={isSaving} />

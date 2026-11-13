@@ -6,6 +6,7 @@
         public string? LinkedInUrl { get; set; }
         public string? GitHubUrl { get; set; }
         public string? PictureBlobName { get; set; }
+        public bool ShowPicture { get; set; } = true;
 
         public ICollection<ProfileTranslation> Translations { get; set; } = [];
     }
