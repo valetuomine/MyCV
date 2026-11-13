@@ -29,7 +29,7 @@ export default function SignedOutNotice(): JSX.Element {
 
   useEffect(() => {
     if (signOutReason) {
-      navigate(`${location.pathname}${location.search}`, {
+      void navigate(`${location.pathname}${location.search}`, {
         replace: true,
         state: null,
       })

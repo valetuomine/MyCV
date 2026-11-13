@@ -93,17 +93,43 @@ async function describeStep(page: Page): Promise<string> {
 async function firstShown<Name extends string>(
   candidates: Record<Name, Locator>,
 ): Promise<Name | null> {
-  for (const name of Object.keys(candidates) as Name[]) {
-    /** False also when the candidate's page has closed, as a sign-in window does. */
-    const isShown = await candidates[name]
-      .first()
-      .isVisible()
-      .catch(() => false)
-    if (isShown) {
-      return name
-    }
+  /** The candidate names, in priority order. */
+  const names = Object.keys(candidates) as Name[]
+  /** Whether each candidate shows, in the same order. False also when its page has closed, as a sign-in window does. */
+  const shown = await Promise.all(
+    names.map((name) =>
+      candidates[name]
+        .first()
+        .isVisible()
+        .catch(() => false),
+    ),
+  )
+  return names.find((_name, index) => shown[index]) ?? null
+}
+
+/**
+ * Runs a check again and again until it returns something or the deadline
+ * passes. It is recursive because each check must finish before the next one
+ * starts, which a loop could only do with an await inside it.
+ *
+ * @param check - Looks once and returns what it found, or null when there is nothing yet.
+ * @param deadline - When to stop waiting, as a timestamp in milliseconds.
+ * @returns What the check found, or null when the deadline passed first.
+ */
+async function pollUntil<Result>(
+  check: () => Promise<Result | null>,
+  deadline: number,
+): Promise<Result | null> {
+  if (Date.now() >= deadline) {
+    return null
   }
-  return null
+  /** What the check found this time, if anything. */
+  const found = await check()
+  if (found) {
+    return found
+  }
+  await new Promise((resolve) => setTimeout(resolve, pollIntervalMs))
+  return pollUntil(check, deadline)
 }
 
 /**
@@ -117,17 +143,7 @@ export async function waitForFirst<Name extends string>(
   candidates: Record<Name, Locator>,
   timeout: number,
 ): Promise<Name | null> {
-  /** When to stop waiting, as a timestamp in milliseconds. */
-  const deadline = Date.now() + timeout
-  while (Date.now() < deadline) {
-    /** The candidate that shows now, if any. */
-    const shown = await firstShown(candidates)
-    if (shown) {
-      return shown
-    }
-    await new Promise((resolve) => setTimeout(resolve, pollIntervalMs))
-  }
-  return null
+  return pollUntil(() => firstShown(candidates), Date.now() + timeout)
 }
 
 /**
@@ -293,11 +309,15 @@ async function waitForGoogleStep<Name extends AppStep>(
   candidates: Record<Name, Locator>,
   timeout: number,
 ): Promise<Name | null> {
-  /** When to stop waiting, as a timestamp in milliseconds. */
-  const deadline = Date.now() + timeout
   /** When a page came to Google, or null while no page is on Google. */
   let onGoogleSince: number | null = null
-  while (Date.now() < deadline) {
+  /**
+   * Looks once for the app's step and, when there is none, for a Google page
+   * that stayed too long.
+   *
+   * @returns The app's step that shows now, or null.
+   */
+  const lookOnce = async (): Promise<Name | null> => {
     /** The app's step that shows now, if any. */
     const step = await firstShown(candidates)
     if (step) {
@@ -313,9 +333,9 @@ async function waitForGoogleStep<Name extends AppStep>(
     } else {
       onGoogleSince = null
     }
-    await new Promise((resolve) => setTimeout(resolve, pollIntervalMs))
+    return null
   }
-  return null
+  return pollUntil(lookOnce, Date.now() + timeout)
 }
 
 /**

@@ -61,7 +61,7 @@ export default function RouteMessage({
             )}
             <span className={`relative size-2 rounded-full ${dotColor}`} />
           </span>
-          MyCV
+          <span>MyCV</span>
         </p>
         {isPending && (
           <span

@@ -90,7 +90,7 @@ export default function LinkSignInCallback({
         return
       }
 
-      navigate(RoutePaths.CandidateProfile(marker.publicUrlSegment), {
+      void navigate(RoutePaths.CandidateProfile(marker.publicUrlSegment), {
         replace: true,
         state: linkSignInLocationState({ method, outcome: result }),
       })
@@ -111,7 +111,7 @@ export default function LinkSignInCallback({
   if (isSessionExpired && marker) {
     /** Returns to the CV, which renews or asks for the session's sign-in. */
     const backToCv = (): void => {
-      navigate(RoutePaths.CandidateProfile(marker.publicUrlSegment), {
+      void navigate(RoutePaths.CandidateProfile(marker.publicUrlSegment), {
         replace: true,
       })
     }

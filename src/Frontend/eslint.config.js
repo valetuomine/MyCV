@@ -6,6 +6,7 @@ import reactHooks from "eslint-plugin-react-hooks"
 import reactRefresh from "eslint-plugin-react-refresh"
 import sonarjs from "eslint-plugin-sonarjs"
 import tseslint from "typescript-eslint"
+import unicorn from "eslint-plugin-unicorn"
 
 export default defineConfig(
   globalIgnores(["dist"]),
@@ -27,6 +28,9 @@ export default defineConfig(
     rules: {
       ...reactHooks.configs.recommended.rules,
       "@typescript-eslint/no-deprecated": "error",
+      "no-await-in-loop": "error",
+      "@typescript-eslint/no-base-to-string": "error",
+      "@typescript-eslint/no-floating-promises": "error",
       "react-refresh/only-export-components": [
         "warn",
         { allowConstantExport: true },
@@ -87,6 +91,11 @@ export default defineConfig(
       "jsdoc/convert-to-jsdoc-comments": "error",
       "jsdoc/no-bad-blocks": "error",
     },
+  },
+  {
+    files: ["e2e/**/*.ts"],
+    plugins: { unicorn },
+    rules: { "unicorn/prefer-top-level-await": "error" },
   },
   {
     files: ["src/generated/**", "e2e/**"],

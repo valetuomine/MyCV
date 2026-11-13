@@ -206,7 +206,7 @@ export default function ProfileForm({
 
   useEffect(() => {
     if (getLinkSignInResult(location.state)) {
-      navigate(location.pathname, { replace: true, state: null })
+      void navigate(location.pathname, { replace: true, state: null })
     }
   }, [location.pathname, location.state, navigate])
 

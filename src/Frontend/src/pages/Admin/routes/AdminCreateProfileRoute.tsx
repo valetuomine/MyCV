@@ -138,7 +138,7 @@ export default function AdminCreateProfileRoute(): JSX.Element {
         return
       }
 
-      navigate(RoutePaths.CandidateProfile(result.publicUrlSegment), {
+      void navigate(RoutePaths.CandidateProfile(result.publicUrlSegment), {
         replace: true,
       })
     } catch (error: unknown) {

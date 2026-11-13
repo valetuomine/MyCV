@@ -106,7 +106,7 @@ export default function SignInCallback({
     const nextPath = isSignedIn
       ? signedInPath({ destination, isCreatingProfile, publicUrlSegment })
       : RoutePaths.Home
-    navigate(nextPath, { replace: true })
+    void navigate(nextPath, { replace: true })
     hasNavigated.current = true
   }, [
     destination,
@@ -138,12 +138,15 @@ export default function SignInCallback({
      */
     const retrySignIn = (path: string): void => {
       onLeave?.()
-      navigate(path, { replace: true, state: retrySignInLocationState(method) })
+      void navigate(path, {
+        replace: true,
+        state: retrySignInLocationState(method),
+      })
     }
 
     /** Returns to the CV the user came from, or Home. */
     const goBack = (): void => {
-      navigate(
+      void navigate(
         publicUrlSegment
           ? RoutePaths.CandidateProfile(publicUrlSegment)
           : RoutePaths.Home,

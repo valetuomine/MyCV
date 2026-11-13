@@ -284,7 +284,7 @@ async function recordAutomatically(
   console.log(`Signing in with the ${provider.label} test user automatically.`)
   const { context, close } = await openSignInContext(provider, headless)
   /** What stopped the sign-in, if anything. It is rethrown without its original, which may quote a credential. */
-  let failure: unknown = null
+  let failure: Error | null = null
   try {
     const pages = await startSignIn(context, provider, adminSignedInButton)
     if (pages.provider) {
@@ -297,16 +297,21 @@ async function recordAutomatically(
     }
     await saveSession(pages.app, provider)
   } catch (error) {
-    failure = error
+    if (error instanceof Error) {
+      failure = error
+    } else if (typeof error === "string") {
+      failure = new Error(error)
+    } else {
+      failure = new Error(
+        "The sign-in failed with something that isn't an Error.",
+      )
+    }
   } finally {
     await close()
   }
   if (failure) {
     /** The failure's message without the credentials, which a call log can quote. */
-    const message = redactCredentials(
-      failure instanceof Error ? failure.message : String(failure),
-      credentials,
-    )
+    const message = redactCredentials(failure.message, credentials)
     throw new Error(
       failure instanceof SignInStoppedError
         ? `The automatic ${provider.label} sign-in stopped. ${message} ${manualSignInHint(provider)}`
@@ -320,7 +325,9 @@ async function recordAutomatically(
  * the user signs in in a visible browser. With `--auto` the script signs in
  * by itself, without a window unless `--headed` is given: Microsoft with the
  * test user saved in Windows Credential Manager, Google by renewing the
- * session in its persistent Chrome profile. It refuses in CI, which uses a mock
+ * session in its persistent Chrome profile. The sign-in methods are recorded
+ * one after another on purpose: their sign-in windows must never be open at
+ * the same time, so the chain must not become a `Promise.all`. It refuses in CI, which uses a mock
  * identity provider instead. The frontend must already run on `baseURL` with
  * VITE_AUTH_STORAGE=local, which is checked before any browser opens, so a
  * sign-in is never lost to it.
@@ -379,14 +386,20 @@ async function main(): Promise<void> {
   }
   await assertTestDevServer()
 
-  for (const provider of selected) {
-    await (isAuto
-      ? recordAutomatically(provider, headless)
-      : recordByHand(provider))
-  }
+  await selected.reduce(
+    (previous, provider) =>
+      previous.then(() =>
+        isAuto
+          ? recordAutomatically(provider, headless)
+          : recordByHand(provider),
+      ),
+    Promise.resolve(),
+  )
 }
 
-main().catch((error: unknown) => {
+try {
+  await main()
+} catch (error: unknown) {
   console.error(error instanceof Error ? error.message : error)
   process.exitCode = 1
-})
+}

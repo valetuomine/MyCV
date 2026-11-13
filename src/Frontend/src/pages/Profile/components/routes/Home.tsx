@@ -100,7 +100,7 @@ export default function Home(): JSX.Element {
     clearAuthReturnPaths()
     if (logoutReturnSegment === "" && !hasHandledLogout.current) {
       hasHandledLogout.current = true
-      navigate(RoutePaths.Home, {
+      void navigate(RoutePaths.Home, {
         replace: true,
         state: signedOutLocationState(signOutReason),
       })
@@ -134,7 +134,7 @@ export default function Home(): JSX.Element {
       return
     }
 
-    navigate(RoutePaths.CandidateProfile(cvAddress))
+    void navigate(RoutePaths.CandidateProfile(cvAddress))
   })
 
   /**
