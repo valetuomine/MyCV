@@ -24,6 +24,7 @@ import DotEcho from "./DotEcho"
 import LightEcho from "./LightEcho"
 import LightSweep from "./LightSweep"
 import PageControls from "./PageControls"
+import useDirectedLight from "./useDirectedLight"
 
 interface BackgroundProps {
   children: ReactNode
@@ -37,6 +38,23 @@ const beamRestAngle = 32
 const beamLeanShare = 0.35
 /** The furthest the beam leans either way, in degrees. */
 const maxBeamLean = 9
+
+/**
+ * Picks the classes that keep the wash and the beam dark while the CV waits
+ * for its reveal and light them from dark once the last hold is let go. Pages
+ * that never hold the light, and reduced motion, show it at once.
+ *
+ * @param isHeld - Whether something holds the light dark now.
+ * @param hasBeenHeld - Whether anything has held the light on this visit.
+ * @returns The classes for the element that wraps the wash and the beam.
+ */
+function lightClass(isHeld: boolean, hasBeenHeld: boolean): string {
+  if (isHeld) {
+    return "motion-safe:opacity-0"
+  }
+
+  return hasBeenHeld ? "motion-safe:animate-cv-light-ignite" : ""
+}
 
 /**
  * The page frame: a background lit from the top-left corner like the portrait
@@ -54,10 +72,13 @@ const maxBeamLean = 9
  * the page with no dots under it, and the light theme fades into a faint shade
  * in the far corner. With a mouse, a spotlight follows the pointer on a spring
  * and lights up the dots beneath it, and the beam leans toward the pointer around
- * its source, as the card tilts. While the CV shows, `LightSweep` carries one
- * band of light across the page from the left, `LightEcho` carries another one
- * from the bottom up, and `DotEcho` lights the dots under both and swells the
- * dots under the spotlight. Forced colours leave the light out.
+ * its source, as the card tilts. On the CV, the wash and the beam stay dark
+ * while the page loads and come on as the name's reveal starts
+ * (`useDirectedLight`); other pages, and reduced motion, show them at once.
+ * While the CV shows, `LightSweep` carries one band of light across the page
+ * from the left, `LightEcho` carries another one from the bottom up, and
+ * `DotEcho` lights the dots under both and swells the dots under the
+ * spotlight. Forced colours leave the light out.
  *
  * @param props - The component props.
  * @param props.children - The page content.
@@ -85,6 +106,7 @@ export default function Background({ children }: BackgroundProps): JSX.Element {
   )
 
   const prefersReducedMotion = useReducedMotion()
+  const { isHeld, hasBeenHeld } = useDirectedLight()
   const beamLean = useSpring(0, { stiffness: 100, damping: 20 })
 
   /**
@@ -132,11 +154,15 @@ export default function Background({ children }: BackgroundProps): JSX.Element {
       >
         <div className="absolute inset-0 bg-cv-light-falloff forced-colors:hidden" />
         <div className="absolute inset-x-0 top-0 h-[max(100dvh,48rem)] forced-colors:hidden">
-          <div className="absolute top-0 left-0 size-[162.5%] bg-cv-light-wash" />
-          <motion.div
-            style={{ rotate: beamLean }}
-            className="absolute -top-32 right-0 -bottom-[35%] -left-32 origin-top-left bg-cv-light-beam motion-safe:pointer-fine:will-change-transform"
-          />
+          <div
+            className={`absolute inset-0 ${lightClass(isHeld, hasBeenHeld)}`}
+          >
+            <div className="absolute top-0 left-0 size-[162.5%] bg-cv-light-wash" />
+            <motion.div
+              style={{ rotate: beamLean }}
+              className="absolute -top-32 right-0 -bottom-[35%] -left-32 origin-top-left bg-cv-light-beam motion-safe:pointer-fine:will-change-transform"
+            />
+          </div>
           <div className="absolute top-[20%] left-1/2 h-[70%] w-[calc(105vw+30dvh)] -translate-x-1/2 rotate-15 bg-cv-light-echo [--band-light:var(--cv-light-rest)]" />
           <LightSweep />
           <LightEcho />

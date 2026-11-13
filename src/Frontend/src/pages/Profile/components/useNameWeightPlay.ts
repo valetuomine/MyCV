@@ -13,6 +13,7 @@ import {
 } from "react"
 import { lightSweepAtom } from "../../../state/lightSweepAtom"
 import { nameEchoAtom } from "../../../state/nameEchoAtom"
+import useLightHold from "../../components/useLightHold"
 
 interface NameWeightPlay {
   headingRef: RefObject<HTMLHeadingElement | null>
@@ -64,10 +65,12 @@ function easeStep(factor: number, elapsed: number): number {
  * scroll that starts on the name doesn't. It also gives the sheen the
  * pointer's position relative to the heading.
  *
- * The name also lights the background. The start of the reveal sends two bands
- * of light across it together, unless motion is reduced: the sweep from the left
- * through `lightSweepAtom`, and the echo from the bottom up (`LightEcho`,
- * `DotEcho`) through `nameEchoAtom`. Every click or tap on the name, with a
+ * The name also lights the background. It keeps the directed light dark from
+ * its first paint (`useLightHold`) and lights it as the reveal starts. The
+ * start of the reveal also sends two bands of light across the background
+ * together, unless motion is reduced: the sweep from the left through
+ * `lightSweepAtom`, and the echo from the bottom up (`LightEcho`, `DotEcho`)
+ * through `nameEchoAtom`. Every click or tap on the name, with a
  * mouse too, sends another echo. `nameEchoAtom` goes back to null when the name
  * leaves the page.
  *
@@ -96,6 +99,7 @@ export default function useNameWeightPlay(
   const prefersReducedMotion = useReducedMotion()
   const setEcho = useSetAtom(nameEchoAtom)
   const setLightSweep = useSetAtom(lightSweepAtom)
+  const releaseLight = useLightHold()
   const pointerX = useMotionValue(-1000)
   const pointerY = useMotionValue(-1000)
 
@@ -392,13 +396,19 @@ export default function useNameWeightPlay(
   }
 
   /**
-   * Sends the sweep and the echo across the background together as the reveal
-   * starts, unless motion is reduced.
+   * Lights the background's directed light as the reveal starts and, unless
+   * motion is reduced, sends the sweep and the echo across it in the same
+   * frame.
    *
    * @param definition - The variant that started animating.
    */
   const startReveal = (definition: unknown): void => {
-    if (definition === "visible" && !prefersReducedMotion) {
+    if (definition !== "visible") {
+      return
+    }
+
+    releaseLight()
+    if (!prefersReducedMotion) {
       setLightSweep((count) => count + 1)
       sendEcho()
     }

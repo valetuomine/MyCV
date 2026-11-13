@@ -14,8 +14,8 @@ Use this workflow when recreating the MyCV frontend inside `src/Frontend`.
 - React with TypeScript
 - Vite using the `react-ts` template
 - Tailwind CSS v4 with `@tailwindcss/vite`
-- Layered background (a directed light from the top-left corner, dot grid, grain, cursor spotlight, and the lit dots of the name's sweep and echo drawn on a canvas) with light and dark themes through CSS custom properties
-- Framer Motion for motion, Jotai for UI state (theme, language, the name's echo, the light's sweep)
+- Layered background (a directed light from the top-left corner that comes on with the CV name's reveal, dot grid, grain, cursor spotlight, and the lit dots of the name's sweep and echo drawn on a canvas) with light and dark themes through CSS custom properties
+- Framer Motion for motion, Jotai for UI state (theme, language, the name's echo, the light's sweep and ignition)
 - Geist headings/body text and Geist Mono labels
 - Node.js `24.21.0` managed with NVM
 

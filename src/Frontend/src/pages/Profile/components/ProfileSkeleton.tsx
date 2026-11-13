@@ -1,5 +1,6 @@
 import type { JSX } from "react"
 import { useTranslation } from "react-i18next"
+import useLightHold from "../../components/useLightHold"
 import useSkeletonTiming from "./useSkeletonTiming"
 
 /**
@@ -18,13 +19,15 @@ const line = "flex h-lh w-full items-center"
  * shapes stay invisible for 300 ms of the load and then fade in, so a quick
  * load goes straight to the CV; screen readers hear the status at once. One
  * light crosses all the shapes together (`cv-skeleton`) and stands still
- * under reduced motion.
+ * under reduced motion. While it shows, the background's directed light stays
+ * dark (`useLightHold`), so the light comes on with the name's reveal.
  *
  * @returns The busy main landmark with the placeholder.
  */
 export default function ProfileSkeleton(): JSX.Element {
   const { t } = useTranslation()
   const timing = useSkeletonTiming()
+  useLightHold()
 
   return (
     <main

@@ -28,7 +28,6 @@
   --cv-accent-ink: #ffffff;
   --cv-accent-core: #044e42;
   --cv-accent-deep: #2dd4b0;
-  --cv-beam: #94a61a;
   --cv-name-light: var(--cv-accent);
   --cv-name-glow-strength: 30;
   --cv-name-glow-spread: 0.07em;
@@ -72,7 +71,6 @@
     --cv-accent-ink: #03130f;
     --cv-accent-core: #b1f7e4;
     --cv-accent-deep: #063d2f;
-    --cv-beam: #c9dc4a;
     --cv-name-light: color-mix(in srgb, var(--cv-ink) 62%, var(--cv-accent));
     --cv-name-glow-strength: 70;
     --cv-name-glow-spread: 0.12em;
@@ -110,7 +108,6 @@
   --color-cv-accent-ink: var(--cv-accent-ink);
   --color-cv-accent-core: var(--cv-accent-core);
   --color-cv-accent-deep: var(--cv-accent-deep);
-  --color-cv-beam: var(--cv-beam);
   --color-cv-danger: var(--cv-danger);
   --color-cv-wash: var(--cv-wash);
   --color-cv-overlay: var(--cv-overlay);
@@ -153,6 +150,8 @@
   --animate-cv-light-sweep: cv-light-sweep 1.8s cubic-bezier(0.45, 0, 0.2, 1)
     both;
   --animate-cv-light-echo: cv-light-echo 1.8s cubic-bezier(0.45, 0, 0.2, 1) both;
+  /* Lights the directed light from dark as the CV's reveal starts. */
+  --animate-cv-light-ignite: cv-fade-in 500ms cubic-bezier(0.23, 1, 0.32, 1);
   /* Held invisible briefly so screens that resolve quickly never flash. */
   --animate-cv-fade-in-delayed: cv-fade-in 200ms ease-out 300ms both;
 
