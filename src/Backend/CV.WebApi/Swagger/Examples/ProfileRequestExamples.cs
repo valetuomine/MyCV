@@ -3,6 +3,11 @@ using Swashbuckle.AspNetCore.Filters;
 
 namespace CV.WebApi.Swagger.Examples
 {
+    internal static class ExampleProfileLinks
+    {
+        public const string Handle = "jane-doe";
+    }
+
     public class CreateProfileRequestExample : IExamplesProvider<CreateProfileRequest>
     {
         public CreateProfileRequest GetExamples()
@@ -28,8 +33,8 @@ namespace CV.WebApi.Swagger.Examples
                         Location = "Tampere, Finland"
                     }
                 ],
-                LinkedInUrl = "https://www.linkedin.com/in/jane-doe",
-                GitHubUrl = "https://github.com/jane-doe"
+                LinkedInUrl = $"https://www.linkedin.com/in/{ExampleProfileLinks.Handle}",
+                GitHubUrl = $"https://github.com/{ExampleProfileLinks.Handle}"
             };
         }
     }
@@ -58,8 +63,8 @@ namespace CV.WebApi.Swagger.Examples
                         Location = "Tampere, Finland"
                     }
                 ],
-                LinkedInUrl = "https://www.linkedin.com/in/jane-doe",
-                GitHubUrl = "https://github.com/jane-doe"
+                LinkedInUrl = $"https://www.linkedin.com/in/{ExampleProfileLinks.Handle}",
+                GitHubUrl = $"https://github.com/{ExampleProfileLinks.Handle}"
             };
         }
     }

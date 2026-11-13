@@ -22,11 +22,11 @@ Tell the subagent to:
 - Follow the `code-review-and-quality` skill: the five axes, change sizing, dead code and dependency discipline.
 - Check the change against the acceptance criteria and the `Toteutusohje` you copied in, and against the decisions already made with the user, so it does not reopen them.
 - Check the MyCV rules in `CLAUDE.md`: the *Never* list (secrets, personal data, real tenant and client IDs, links to local-only files) and the *Conventions* table, such as JSDoc-only frontend comments and English code and docs. For backend and client integration changes, also the patterns in `create-cv-skills`; for frontend UI, `DESIGN.md` and `setup-frontend`.
-- Check the changed C# against the SonarLint rules that the build does not enforce and that earlier pull requests got flagged for (US-149): S3776, a method with cognitive complexity over 15 (split nested loops and chains of `if` into private methods); S6960, a controller with more than one responsibility (for example a controller whose endpoints use a separate set of services belongs in its own controller, with unchanged routes); S6932, request data read by hand through `Request.Form`, `Request.ReadFormAsync` or similar instead of model binding (a deliberate exception gets `[SuppressMessage]` with a `Justification`, never a silent suppression). Report each as **Should fix**, with the rule ID in the title.
+- For C#, do not check the Sonar rules by hand: the Release build runs `SonarAnalyzer.CSharp` (`src/Directory.Build.props`) and fails on any finding, including S3776, S6960 and S6932. Only review a `[SuppressMessage]` that the change adds: it must carry a `Justification` that really explains the exception, and a silent suppression (`#pragma`, `.editorconfig`) is a **Should fix**.
 - Report in the categories and format of *Report The Findings* below; give it the table and the format.
 - Not edit any file.
 
-The lint and build results are already known, so the review does not re-run them or report what they enforce. The SonarLint rules above are not among them.
+The lint and build results are already known, so the review does not re-run them or report what they enforce.
 
 In the same step, also run the built-in `code-review` skill yourself as a second pass that hunts for correctness bugs, on the same diff as the subagent. Call it as `Skill` with `skill: code-review` and `args: "<level> <target>"`, for example `args: "medium origin/main"`:
 

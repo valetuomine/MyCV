@@ -24,7 +24,7 @@ namespace CV.Logic.Pdf
         private const string ErrorSelector = "[data-print-error]";
 
         private readonly PdfPrinterOptions _options = options.Value;
-        private readonly object _installGate = new();
+        private readonly Lock _installGate = new();
         private readonly SemaphoreSlim _launchLock = new(1, 1);
         private readonly SemaphoreSlim _printSlots = new(
             Math.Max(1, options.Value.MaxConcurrentPrints),

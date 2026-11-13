@@ -40,13 +40,21 @@ namespace CV.Logic.Storage
             };
 
             var settings = options.Value;
-            BlobServiceClient? service = settings.ServiceUri is { } serviceUri
-                ? new BlobServiceClient(serviceUri, new DefaultAzureCredential(), clientOptions)
-                : !string.IsNullOrWhiteSpace(settings.ConnectionString)
-                    ? new BlobServiceClient(settings.ConnectionString, clientOptions)
-                    : null;
+            var service = CreateService(settings, clientOptions);
 
             _container = service?.GetBlobContainerClient(BlobStorageOptions.ContainerName);
+        }
+
+        private static BlobServiceClient? CreateService(BlobStorageOptions settings, BlobClientOptions clientOptions)
+        {
+            if (settings.ServiceUri is { } serviceUri)
+            {
+                return new BlobServiceClient(serviceUri, new DefaultAzureCredential(), clientOptions);
+            }
+
+            return string.IsNullOrWhiteSpace(settings.ConnectionString)
+                ? null
+                : new BlobServiceClient(settings.ConnectionString, clientOptions);
         }
 
         public bool IsConfigured => _container is not null;

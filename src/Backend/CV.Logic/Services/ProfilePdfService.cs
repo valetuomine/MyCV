@@ -16,7 +16,7 @@ namespace CV.Logic.Services
         // schedule for a frontend deploy to reach it, even when it is requested often.
         private static readonly TimeSpan CacheDuration = TimeSpan.FromHours(1);
 
-        private static readonly object CacheGate = new();
+        private static readonly Lock CacheGate = new();
 
         private readonly IProfileService _profileService = profileService;
         private readonly IHtmlPdfPrinter _printer = printer;

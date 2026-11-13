@@ -18,10 +18,6 @@ namespace CV.DataAccess
             modelBuilder.ApplyConfiguration(new ProfileTranslationConfiguration());
             modelBuilder.ApplyConfiguration(new CandidateConfiguration());
             modelBuilder.ApplyConfiguration(new CandidateLoginConfiguration());
-
-            // Alternative: automatically apply all IEntityTypeConfiguration implementations
-            // from this assembly as the number of entity configurations grows.
-            // modelBuilder.ApplyConfigurationsFromAssembly(typeof(CvContext).Assembly);
         }
 
         public override int SaveChanges(bool acceptAllChangesOnSuccess)
