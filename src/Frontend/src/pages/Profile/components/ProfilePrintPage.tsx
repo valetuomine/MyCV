@@ -25,7 +25,9 @@ const sectionHeading =
  * @returns The quoted CSS string.
  */
 function toCssString(value: string): string {
-  const escaped = value.replace(/["\\]/g, "\\$&").replace(/\r?\n/g, "\\A ")
+  const escaped = value
+    .replace(/["\\]/g, String.raw`\$&`)
+    .replace(/\r?\n/g, String.raw`\A `)
   return `"${escaped}"`
 }
 

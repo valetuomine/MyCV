@@ -17,7 +17,10 @@ export const googleRedirectUri = `${window.location.origin}${RoutePaths.GoogleAu
 /** Google's OAuth 2.0 authorization endpoint. */
 const authorizationEndpoint = "https://accounts.google.com/o/oauth2/v2/auth"
 /** The issuers that Google ID tokens may carry. */
-const validIssuers = ["https://accounts.google.com", "accounts.google.com"]
+const validIssuers = new Set([
+  "https://accounts.google.com",
+  "accounts.google.com",
+])
 /** How long before expiry a token stops being handed out, so it doesn't expire in flight. */
 const tokenExpiryMarginMs = 60 * 1000
 /** Session-storage key for the sign-in request waiting for Google's response. */
@@ -258,13 +261,29 @@ export function clearGoogleSignInRequest(): void {
 function decodeTokenClaims(token: string): GoogleIdTokenClaims | null {
   try {
     const payload = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
-    const bytes = Uint8Array.from(atob(payload), (character) =>
-      character.charCodeAt(0),
+    const bytes = Uint8Array.from(
+      atob(payload),
+      (character) => character.codePointAt(0) ?? 0,
     )
     return JSON.parse(new TextDecoder().decode(bytes)) as GoogleIdTokenClaims
   } catch {
     return null
   }
+}
+
+/**
+ * Tells whether the `state` in Google's response is the one the request sent,
+ * which ties the response to the sign-in that started it.
+ *
+ * @param response - The parameters from the callback URL's fragment.
+ * @param request - The request the response must belong to.
+ * @returns Whether the response carries the request's `state`.
+ */
+function hasRequestState(
+  response: URLSearchParams,
+  request: PendingGoogleRequest,
+): boolean {
+  return response.get("state") === request.state
 }
 
 /**
@@ -282,7 +301,7 @@ function checkGoogleResponse(
   response: URLSearchParams | null,
   request: PendingGoogleRequest | null,
 ): CheckedGoogleResponse {
-  if (!response || !request || response.get("state") !== request.state) {
+  if (!response || !request || !hasRequestState(response, request)) {
     return {
       matchesRequest: false,
       failure: SignInFailure.Failed,
@@ -310,7 +329,7 @@ function checkGoogleResponse(
     !claims.exp ||
     claims.nonce !== request.nonce ||
     claims.aud !== clientId ||
-    !validIssuers.includes(claims.iss ?? "") ||
+    !validIssuers.has(claims.iss ?? "") ||
     claims.exp * 1000 <= Date.now()
   ) {
     return {

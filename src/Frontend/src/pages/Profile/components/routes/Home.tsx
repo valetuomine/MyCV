@@ -167,7 +167,7 @@ export default function Home(): JSX.Element {
               aria-hidden="true"
               className="size-2 rounded-full bg-cv-accent"
             />
-            MyCV
+            <span>MyCV</span>
           </p>
           <div className="grid gap-4">
             <h1 className="m-0 font-cv-display text-4xl leading-tight font-semibold tracking-tighter text-balance sm:text-5xl">

@@ -369,9 +369,9 @@ export default function SignInMethodsSection({
         </p>
       </div>
       {message && (
-        <p
+        <output
           id={messageId}
-          role={message.isError ? "alert" : "status"}
+          role={message.isError ? "alert" : undefined}
           className={`m-0 flex items-start gap-3 rounded-lg border px-4 py-3 text-sm ${message.isError ? "border-cv-danger text-cv-danger" : "border-cv-line text-cv-ink"}`}
         >
           <span
@@ -379,7 +379,7 @@ export default function SignInMethodsSection({
             className={`mt-1.5 size-2 shrink-0 rounded-full ${message.isError ? "bg-cv-danger" : "bg-cv-accent"}`}
           />
           {messageText}
-        </p>
+        </output>
       )}
       {loginsQuery.isLoading && <SignInMethodsSkeleton />}
       {loginsQuery.isError && !loginsQuery.isLoading && (

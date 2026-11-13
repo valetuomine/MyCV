@@ -31,10 +31,9 @@ export default function LanguageToggle(): JSX.Element {
   }, [i18n, language])
 
   return (
-    <div
-      role="group"
+    <fieldset
       aria-label={t("language.label")}
-      className="flex h-11 items-center gap-0.5 rounded-full border border-cv-line bg-cv-wash p-1"
+      className="m-0 flex h-11 min-w-0 items-center gap-0.5 rounded-full border border-cv-line bg-cv-wash p-1"
     >
       {languages.map((code) => (
         <Button
@@ -48,6 +47,6 @@ export default function LanguageToggle(): JSX.Element {
           <LanguageFlag language={code} />
         </Button>
       ))}
-    </div>
+    </fieldset>
   )
 }

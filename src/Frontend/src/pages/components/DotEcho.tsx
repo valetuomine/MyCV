@@ -219,7 +219,7 @@ export default function DotEcho({
       )
       canvas.width = Math.round(width * ratio)
       canvas.height = Math.round(height * ratio)
-      rootFontSize = parseFloat(
+      rootFontSize = Number.parseFloat(
         getComputedStyle(document.documentElement).fontSize,
       )
       litRadius = rootFontSize * litRadiusRem

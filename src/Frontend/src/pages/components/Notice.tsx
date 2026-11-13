@@ -36,13 +36,10 @@ export default function Notice({
   }, [noticeKey, onDismiss])
 
   return (
-    <div
-      role="status"
-      className="pointer-events-none fixed inset-x-0 bottom-6 z-30 flex justify-center px-4"
-    >
+    <output className="pointer-events-none fixed inset-x-0 bottom-6 z-30 flex justify-center px-4">
       <AnimatePresence>
         {noticeKey && (
-          <motion.p
+          <motion.span
             key={noticeKey}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -55,9 +52,9 @@ export default function Notice({
               className="size-2 rounded-full bg-cv-accent"
             />
             {children}
-          </motion.p>
+          </motion.span>
         )}
       </AnimatePresence>
-    </div>
+    </output>
   )
 }

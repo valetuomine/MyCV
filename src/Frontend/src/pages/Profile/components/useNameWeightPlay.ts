@@ -166,7 +166,7 @@ export default function useNameWeightPlay(
         x: letter.offsetLeft + letter.offsetWidth / 2,
         y: letter.offsetTop + letter.offsetHeight / 2,
       }))
-      radius = parseFloat(getComputedStyle(heading).fontSize) * 1.35
+      radius = Number.parseFloat(getComputedStyle(heading).fontSize) * 1.35
     }
     measure()
     void document.fonts.ready.then(measure)

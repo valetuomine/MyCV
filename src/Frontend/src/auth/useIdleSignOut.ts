@@ -182,8 +182,8 @@ export default function useIdleSignOut(): IdleSignOutState {
       if (wait <= 0) {
         clearTimeout(pendingShare)
         sendActivity()
-      } else if (pendingShare === undefined) {
-        pendingShare = setTimeout(sendActivity, wait)
+      } else {
+        pendingShare ??= setTimeout(sendActivity, wait)
       }
     }
 

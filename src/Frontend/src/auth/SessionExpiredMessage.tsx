@@ -169,12 +169,9 @@ export default function SessionExpiredMessage({
       actions={
         <>
           {note && (
-            <p
-              role="status"
-              className="m-0 basis-full text-base leading-relaxed text-pretty text-cv-ink"
-            >
+            <output className="m-0 block basis-full text-base leading-relaxed text-pretty text-cv-ink">
               {note}
-            </p>
+            </output>
           )}
           <Button
             autoFocus

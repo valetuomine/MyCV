@@ -88,16 +88,17 @@ const httpAddress = /^https?:\/\/[^/\\?#]/i
  * character to the end backtracks over long runs of it.
  *
  * @param value - The text.
- * @param isTrimmed - Tells, from its UTF-16 code, whether a character is trimmed.
+ * @param isTrimmed - Tells, from the code point that starts at an index, whether the
+ *   character there is trimmed.
  * @returns The text without the matching characters at either end.
  */
 function trimEnds(value: string, isTrimmed: (code: number) => boolean): string {
   let start = 0
   let end = value.length
-  while (start < end && isTrimmed(value.charCodeAt(start))) {
+  while (start < end && isTrimmed(value.codePointAt(start) ?? Number.NaN)) {
     start++
   }
-  while (end > start && isTrimmed(value.charCodeAt(end - 1))) {
+  while (end > start && isTrimmed(value.codePointAt(end - 1) ?? Number.NaN)) {
     end--
   }
 

@@ -21,9 +21,7 @@ export default function FeaturedCvSkeleton(): JSX.Element {
 
   return (
     <div aria-busy="true" className="w-full">
-      <div role="status">
-        <span className="sr-only">{t("home.featuredLoading")}</span>
-      </div>
+      <output className="sr-only">{t("home.featuredLoading")}</output>
       <div
         aria-hidden="true"
         style={timing}

@@ -32,19 +32,19 @@ export default function LinkPopupMessage({
       aria-busy="true"
       className="grid justify-items-start gap-4 rounded-lg border border-cv-line p-4"
     >
-      <div role="status" className="grid gap-1">
-        <p className="m-0 flex items-center gap-3 font-medium text-cv-ink">
+      <output className="grid gap-1">
+        <span className="flex items-center gap-3 font-medium text-cv-ink">
           <span aria-hidden="true" className="relative grid size-2 shrink-0">
             <span className="absolute inset-0 animate-cv-pulse rounded-full bg-cv-accent motion-reduce:hidden" />
             <span className="relative size-2 rounded-full bg-cv-accent" />
           </span>
           {t("signIn.popupTitle", { provider: signInMethodNames[method] })}
-        </p>
-        <p className="m-0 max-w-[60ch] text-sm text-pretty text-cv-copy">
+        </span>
+        <span className="block max-w-[60ch] text-sm text-pretty text-cv-copy">
           {t("signIn.popupDescription")}
           {method === SignInMethod.Microsoft && t("signIn.popupClosedHint")}
-        </p>
-      </div>
+        </span>
+      </output>
       <Button onClick={onCancel} autoFocus>
         {t("common.cancel")}
       </Button>

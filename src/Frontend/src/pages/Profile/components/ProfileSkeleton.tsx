@@ -35,8 +35,8 @@ export default function ProfileSkeleton(): JSX.Element {
       className="mx-auto flex min-h-dvh w-full max-w-7xl flex-col pt-20 lg:pt-4"
     >
       <div className="flex flex-1 items-center overflow-y-clip py-12 sm:py-16">
-        <div role="status" className="w-full">
-          <span className="sr-only">{t("cv.loading")}</span>
+        <div className="w-full">
+          <output className="sr-only">{t("cv.loading")}</output>
           <div
             aria-hidden="true"
             style={timing}

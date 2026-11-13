@@ -39,7 +39,9 @@ const sheenSpring = { stiffness: 100, damping: 20 }
  */
 const weightSteps = (restWeight - startWeight) / weightStep
 if (!Number.isInteger(weightSteps)) {
-  throw new Error("The reveal's weight span must divide evenly by weightStep.")
+  throw new TypeError(
+    "The reveal's weight span must divide evenly by weightStep.",
+  )
 }
 
 /** The reveal's curve as a function, for easing the weight in steps. */
@@ -244,11 +246,11 @@ export default function ProfileName({
       <span className="sr-only">{fullName}</span>
       <span ref={lettersRef} aria-hidden="true" className="block">
         {words.map((parts, wordIndex) => (
-          <Fragment key={wordIndex}>
+          <Fragment key={parts[0][0].index}>
             {wordIndex > 0 && " "}
-            {parts.map((part, partIndex) => (
+            {parts.map((part) => (
               <span
-                key={partIndex}
+                key={part[0].index}
                 className={`inline-block overflow-y-clip ${clipRoom}`}
               >
                 {part.map(({ letter, kerning, delay, index }) => (
@@ -279,10 +281,10 @@ export default function ProfileName({
         className="pointer-events-none absolute inset-0 block bg-clip-text text-transparent select-none motion-reduce:hidden print:hidden forced-colors:hidden"
       >
         {words.map((parts, wordIndex) => (
-          <Fragment key={wordIndex}>
+          <Fragment key={parts[0][0].index}>
             {wordIndex > 0 && " "}
-            {parts.map((part, partIndex) => (
-              <span key={partIndex} className={`inline-block ${bleed}`}>
+            {parts.map((part) => (
+              <span key={part[0].index} className={`inline-block ${bleed}`}>
                 {part.map(({ letter, kerning, index }) => (
                   <span
                     key={index}

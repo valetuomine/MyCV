@@ -270,12 +270,12 @@ export default function SignInMessage({
       actions={
         <div className="grid basis-full gap-4">
           {cancelledMethod && (
-            <p id={cancelledNoteId} role="status" className="m-0 text-cv-copy">
+            <output id={cancelledNoteId} className="m-0 block text-cv-copy">
               {t("signIn.cancelledNote")}
               {isCancelledInPopup &&
                 cancelledMethod === SignInMethod.Microsoft &&
                 t("signIn.microsoftWindowHint")}
-            </p>
+            </output>
           )}
           <div className="grid w-[min(20rem,calc(100vw-3rem))] gap-4">
             {Object.values(SignInMethod)

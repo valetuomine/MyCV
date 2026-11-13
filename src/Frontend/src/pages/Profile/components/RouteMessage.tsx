@@ -17,7 +17,7 @@ interface RouteMessageProps {
 /**
  * A full-page message for loading, empty and error states. Shows the given
  * actions, or a retry and an Open a CV button. Errors are announced as
- * alerts, everything else as status.
+ * alerts, everything else has no live-region role.
  *
  * @param props - The component props.
  * @param props.children - The heading.
@@ -78,7 +78,7 @@ export default function RouteMessage({
           </span>
         )}
         <div
-          role={tone === Tone.Error ? "alert" : "status"}
+          role={tone === Tone.Error ? "alert" : undefined}
           className="grid gap-4"
         >
           <h1 className="m-0 font-cv-display text-3xl leading-tight font-semibold tracking-tight text-balance sm:text-4xl [&_code]:rounded-md [&_code]:bg-cv-overlay [&_code]:px-2 [&_code]:py-0.5 [&_code]:font-cv-mono [&_code]:text-[0.7em] [&_code]:font-normal [&_code]:text-cv-accent">

@@ -75,9 +75,7 @@ export default function ProfilePdfFrame({
 
   return (
     <>
-      <p role="status" className="sr-only">
-        {announcement}
-      </p>
+      <output className="sr-only">{announcement}</output>
       <div
         ref={frameRef}
         tabIndex={-1}

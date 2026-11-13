@@ -99,9 +99,9 @@ export default function CopyLinkButton({
   return (
     <div className="grid justify-items-start gap-2">
       {magnetic ? <Magnetic>{button}</Magnetic> : button}
-      <span role="status" className="sr-only">
+      <output className="sr-only">
         {isCopied ? t("copyLink.copiedStatus") : ""}
-      </span>
+      </output>
       {copyStatus === CopyStatus.Error && (
         <p role="alert" className="m-0 max-w-52 text-sm text-cv-danger">
           {t("copyLink.failed")}

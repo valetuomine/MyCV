@@ -16,6 +16,7 @@ const burstDots = Array.from({ length: dotCount }, (_, index) => {
   const angle = (index / dotCount) * Math.PI * 2 + (index % 2 ? 0.2 : -0.1)
   const distance = 46 + ((index * 37) % 34)
   return {
+    id: index,
     x: Math.cos(angle) * distance,
     y: Math.sin(angle) * distance * 0.75,
     size: index % 3 === 0 ? 7 : 5,
@@ -48,7 +49,7 @@ export default function CopyBurst({
     >
       {burstDots.map((dot, index) => (
         <motion.span
-          key={index}
+          key={dot.id}
           initial={{ x: 0, y: 0, scale: 0.4, opacity: 1 }}
           animate={{
             x: dot.x,

@@ -27,12 +27,12 @@ export default function ProfileFormStatus({
 
   return (
     <div className="grid gap-3" aria-busy={isLoading}>
-      <p
-        role={error ? "alert" : "status"}
-        className={error ? "text-cv-danger" : "text-cv-copy"}
+      <output
+        role={error ? "alert" : undefined}
+        className={`block ${error ? "text-cv-danger" : "text-cv-copy"}`}
       >
         {error ?? t("profileForm.loadingDetails")}
-      </p>
+      </output>
       <Button onClick={onCancel} className="w-fit">
         {t("common.cancel")}
       </Button>

@@ -339,8 +339,8 @@ export default function ProfilePictureSection({
         </div>
       </div>
       {outcome && outcomeText && (
-        <p
-          role={outcome.isError ? "alert" : "status"}
+        <output
+          role={outcome.isError ? "alert" : undefined}
           className={`m-0 flex items-start gap-3 rounded-lg border px-4 py-3 text-sm ${outcome.isError ? "border-cv-danger text-cv-danger" : "border-cv-line text-cv-ink"}`}
         >
           <span
@@ -348,7 +348,7 @@ export default function ProfilePictureSection({
             className={`mt-1.5 size-2 shrink-0 rounded-full ${outcome.isError ? "bg-cv-danger" : "bg-cv-accent"}`}
           />
           {outcomeText}
-        </p>
+        </output>
       )}
     </section>
   )

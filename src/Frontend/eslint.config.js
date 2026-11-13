@@ -60,6 +60,16 @@ export default defineConfig(
           message:
             "Build elements through JSX or the DOM API. insertAdjacentHTML and document.write can run injected markup.",
         },
+        {
+          selector: "JSXAttribute[name.name='role'] Literal[value='status']",
+          message:
+            'Use the <output> element instead of role="status" (jsx-a11y/prefer-tag-over-role, Sonar S6819).',
+        },
+        {
+          selector: "JSXAttribute[name.name='role'] Literal[value='group']",
+          message:
+            'Use the <fieldset> element instead of role="group" (jsx-a11y/prefer-tag-over-role, Sonar S6819).',
+        },
       ],
     },
   },

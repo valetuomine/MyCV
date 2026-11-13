@@ -206,10 +206,7 @@ export default function EditableProfileForm({
               >
                 {t("common.cancel")}
               </Button>
-              <p
-                role="status"
-                className="m-0 ml-auto flex items-center gap-2 px-2 font-cv-mono text-xs tracking-wide text-cv-muted uppercase"
-              >
+              <output className="m-0 ml-auto flex items-center gap-2 px-2 font-cv-mono text-xs tracking-wide text-cv-muted uppercase">
                 <span
                   aria-hidden="true"
                   className={`size-2 rounded-full transition-colors ${isDirty ? "bg-cv-accent" : "bg-cv-line"}`}
@@ -217,7 +214,7 @@ export default function EditableProfileForm({
                 {isDirty
                   ? t("profileForm.unsavedChanges")
                   : t("profileForm.noChanges")}
-              </p>
+              </output>
             </>
           )}
         </div>

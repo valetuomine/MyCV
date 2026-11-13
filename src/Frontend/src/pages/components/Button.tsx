@@ -277,6 +277,7 @@ function RouterLinkButton({
  * @param props.className - Extra classes.
  * @param props.children - The label.
  * @param props.ref - The anchor's ref.
+ * @param props.href - The link's address.
  * @param props.onClick - The caller's click handler.
  * @returns The link.
  */
@@ -286,6 +287,7 @@ function ExternalLinkButton({
   className = "",
   children,
   ref,
+  href,
   onClick,
   ...anchorProps
 }: Readonly<ExternalLinkButtonProps>): JSX.Element {
@@ -296,6 +298,7 @@ function ExternalLinkButton({
     <a
       {...anchorProps}
       ref={ref}
+      href={href}
       target="_blank"
       rel="noreferrer"
       onClick={guardClick(isUnavailable, onClick)}

@@ -93,7 +93,7 @@ export const profileSchema = z
  * CV links taken by routes that start with a static segment: `/admin` and
  * `/print/:profileId`.
  */
-const reservedPublicUrlSegments = ["admin", "print"]
+const reservedPublicUrlSegments = new Set(["admin", "print"])
 
 /**
  * The create-profile form: the profile form plus the public URL segment,
@@ -109,8 +109,7 @@ export const createProfileSchema = profileSchema.safeExtend({
     .max(100, validationMessage("cvLinkMax"))
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, validationMessage("cvLinkFormat"))
     .refine(
-      (publicUrlSegment) =>
-        !reservedPublicUrlSegments.includes(publicUrlSegment),
+      (publicUrlSegment) => !reservedPublicUrlSegments.has(publicUrlSegment),
       validationMessage("cvLinkReserved"),
     ),
 })
