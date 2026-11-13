@@ -46,7 +46,7 @@ const item: Variants = {
  * @param props.text - The summary.
  * @returns The summary with its toggle.
  */
-function ExpandableSummary({ text }: { text: string }): JSX.Element {
+function ExpandableSummary({ text }: Readonly<{ text: string }>): JSX.Element {
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
   const id = useId()
@@ -96,7 +96,7 @@ export default function ReadOnlyProfileForm({
   onEdit,
   focusEdit = false,
   pdfPath,
-}: ReadOnlyProfileFormProps): JSX.Element {
+}: Readonly<ReadOnlyProfileFormProps>): JSX.Element {
   const { t, i18n } = useTranslation()
   const editButtonRef = useRef<HTMLButtonElement>(null)
   const publicUrl = `${window.location.origin}${window.location.pathname}`

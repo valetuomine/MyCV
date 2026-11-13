@@ -48,6 +48,12 @@ export function googlePopupChannelName(attemptId: string): string {
   return `mycv-google-sign-in.${attemptId}`
 }
 
+/** The provider that each sign-in callback route belongs to. */
+const callbackMethods = new Map<string, SignInMethod>([
+  [RoutePaths.AuthCallback, SignInMethod.Microsoft],
+  [RoutePaths.GoogleAuthCallback, SignInMethod.Google],
+])
+
 /**
  * Tells whether this page load is a sign-in popup's response: a callback
  * route whose `state` carries the popup prefix. MSAL sends Microsoft's state
@@ -60,12 +66,7 @@ export function googlePopupChannelName(attemptId: string): string {
 export function readPopupCallback(): PopupCallback | null {
   const { pathname, hash, search } = window.location
   /** The provider whose callback route this is, or null. */
-  const method =
-    pathname === RoutePaths.AuthCallback
-      ? SignInMethod.Microsoft
-      : pathname === RoutePaths.GoogleAuthCallback
-        ? SignInMethod.Google
-        : null
+  const method = callbackMethods.get(pathname) ?? null
   if (!method) {
     return null
   }

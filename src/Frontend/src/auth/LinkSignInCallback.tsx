@@ -57,7 +57,7 @@ export default function LinkSignInCallback({
   linkedAccount = null,
   failure,
   onLeave,
-}: LinkSignInCallbackProps): JSX.Element {
+}: Readonly<LinkSignInCallbackProps>): JSX.Element {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [linkLogin] = useLinkLoginMutation()

@@ -137,7 +137,7 @@ function problemDetail(error: unknown): string | null {
 export default function SignInMethodsSection({
   publicUrlSegment,
   linkResult,
-}: SignInMethodsSectionProps): JSX.Element {
+}: Readonly<SignInMethodsSectionProps>): JSX.Element {
   const { t } = useTranslation()
   const headingId = useId()
   const addHintId = useId()
@@ -310,22 +310,41 @@ export default function SignInMethodsSection({
    * @param isCurrent - Whether the method is the session's.
    * @returns The reason, or null when it can be removed.
    */
-  const removeBlockedReason = (isCurrent: boolean): string | null =>
-    logins.length <= 1
-      ? t("signInMethods.onlyMethod")
-      : isCurrent
-        ? t("signInMethods.currentMethod")
-        : null
+  const removeBlockedReason = (isCurrent: boolean): string | null => {
+    if (logins.length <= 1) {
+      return t("signInMethods.onlyMethod")
+    }
 
+    return isCurrent ? t("signInMethods.currentMethod") : null
+  }
+
+  /**
+   * Labels a method's add button: adding it, opening its popup, or ready to add.
+   *
+   * @param method - The method the button adds.
+   * @returns The label in the active language.
+   */
+  const addButtonLabel = (method: SignInMethod): string => {
+    const provider = signInMethodNames[method]
+    if (linkProgress?.method !== method) {
+      return t("signInMethods.add", { provider })
+    }
+
+    return linkProgress.step === "saving"
+      ? t("signInMethods.adding", { provider })
+      : t("signInMethods.opening", { provider })
+  }
+
+  /** Microsoft's window hint, added to a message about a Microsoft popup. */
+  const windowHint = message?.showMicrosoftWindowHint
+    ? t("signIn.microsoftWindowHint")
+    : ""
   /** The message's text in the active language, or the API's detail as it came. */
   const messageText = message
     ? (message.detail ??
       t(`signInMethods.${message.key}`, {
         provider: message.method ? signInMethodNames[message.method] : "",
-      }) +
-        (message.showMicrosoftWindowHint
-          ? t("signIn.microsoftWindowHint")
-          : ""))
+      }) + windowHint)
     : null
 
   return (
@@ -362,9 +381,8 @@ export default function SignInMethodsSection({
           {messageText}
         </p>
       )}
-      {loginsQuery.isLoading ? (
-        <SignInMethodsSkeleton />
-      ) : loginsQuery.isError ? (
+      {loginsQuery.isLoading && <SignInMethodsSkeleton />}
+      {loginsQuery.isError && !loginsQuery.isLoading && (
         <div className="flex flex-wrap items-center gap-3">
           <p role="alert" className="m-0 text-sm text-cv-danger">
             {t("signInMethods.loadFailed")}
@@ -373,7 +391,8 @@ export default function SignInMethodsSection({
             {t("common.tryAgain")}
           </Button>
         </div>
-      ) : (
+      )}
+      {!loginsQuery.isLoading && !loginsQuery.isError && (
         <ul className="m-0 list-none divide-y divide-cv-line border-y border-cv-line p-0">
           {logins.map((login) => {
             const { id } = login
@@ -411,19 +430,7 @@ export default function SignInMethodsSection({
                 <SignInMethodButton
                   key={`${method}-${method === cancelledMethod}`}
                   method={method}
-                  label={
-                    linkProgress?.method === method
-                      ? linkProgress.step === "saving"
-                        ? t("signInMethods.adding", {
-                            provider: signInMethodNames[method],
-                          })
-                        : t("signInMethods.opening", {
-                            provider: signInMethodNames[method],
-                          })
-                      : t("signInMethods.add", {
-                          provider: signInMethodNames[method],
-                        })
-                  }
+                  label={addButtonLabel(method)}
                   disabled={isAddDisabled}
                   autoFocus={method === cancelledMethod}
                   describedBy={

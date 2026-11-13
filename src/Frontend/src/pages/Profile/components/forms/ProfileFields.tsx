@@ -19,7 +19,7 @@ interface ProfileFieldsProps {
  */
 export default function ProfileFields({
   isDisabled,
-}: ProfileFieldsProps): JSX.Element {
+}: Readonly<ProfileFieldsProps>): JSX.Element {
   const { t } = useTranslation()
 
   return (

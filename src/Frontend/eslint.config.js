@@ -4,6 +4,7 @@ import globals from "globals"
 import jsdoc from "eslint-plugin-jsdoc"
 import reactHooks from "eslint-plugin-react-hooks"
 import reactRefresh from "eslint-plugin-react-refresh"
+import sonarjs from "eslint-plugin-sonarjs"
 import tseslint from "typescript-eslint"
 
 export default defineConfig(
@@ -57,6 +58,11 @@ export default defineConfig(
         },
       ],
     },
+  },
+  {
+    extends: [sonarjs.configs.recommended],
+    files: ["**/*.{ts,tsx}"],
+    ignores: ["src/generated/**"],
   },
   {
     extends: [jsdoc.configs["flat/recommended-typescript-error"]],

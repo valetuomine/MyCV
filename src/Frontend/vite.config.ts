@@ -176,9 +176,9 @@ const packageChunk = new Map(
  * @returns The `vendor-*` chunk name, or undefined.
  */
 function manualChunks(id: string): string | undefined {
-  const match = id
-    .replace(/\\/g, "/")
-    .match(/\/node_modules\/((?:@[^/]+\/)?[^/]+)\//)
+  const match = /\/node_modules\/((?:@[^/]+\/)?[^/]+)\//.exec(
+    id.replace(/\\/g, "/"),
+  )
   return match ? packageChunk.get(match[1]) : undefined
 }
 

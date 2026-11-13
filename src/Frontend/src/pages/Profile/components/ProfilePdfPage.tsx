@@ -40,7 +40,7 @@ export default function ProfilePdfPage({
   profileId,
   publicUrlSegment,
   languageCode,
-}: ProfilePdfPageProps): JSX.Element {
+}: Readonly<ProfilePdfPageProps>): JSX.Element {
   const { t, i18n } = useTranslation()
   const [downloadStatus, setDownloadStatus] = useState<DownloadStatus>(
     DownloadStatus.Idle,

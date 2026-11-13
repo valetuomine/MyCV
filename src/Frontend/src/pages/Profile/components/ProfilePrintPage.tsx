@@ -68,7 +68,7 @@ function pageFooterCss(updatedText: string): string {
 export default function ProfilePrintPage({
   values,
   languageCode,
-}: ProfilePrintPageProps): JSX.Element {
+}: Readonly<ProfilePrintPageProps>): JSX.Element {
   const { t } = useTranslation(undefined, { lng: languageCode })
   const [fontsReady, setFontsReady] = useState(false)
   const pictureUrl = getProfilePictureUrl(values.pictureUrl)
@@ -77,7 +77,7 @@ export default function ProfilePrintPage({
   )
   const [failedPictureUrl, setFailedPictureUrl] = useState<string | null>(null)
   /** Shows the picture unless there is none or it failed to load. */
-  const showPicture = Boolean(pictureUrl) && failedPictureUrl !== pictureUrl
+  const showPicture = Boolean(pictureUrl && failedPictureUrl !== pictureUrl)
   /** Ready to print once the fonts are in and the picture has loaded or failed. */
   const ready = fontsReady && (!pictureUrl || settledPictureUrl === pictureUrl)
 

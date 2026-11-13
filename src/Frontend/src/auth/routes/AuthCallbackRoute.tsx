@@ -5,12 +5,12 @@ import {
   clearRedirectSignInError,
   getLinkRedirectResult,
   getRedirectSignInError,
-  isSignInCancelled,
+  signInFailureOf,
   subscribeRedirectSignInError,
 } from "../entraAuth"
 import LinkSignInCallback from "../LinkSignInCallback"
 import SignInCallback from "../SignInCallback"
-import { SignInFailure, SignInMethod } from "../../types"
+import { SignInMethod } from "../../types"
 
 /**
  * The `/auth/callback` route that Microsoft redirects back to. A linking
@@ -30,11 +30,7 @@ export default function AuthCallbackRoute(): JSX.Element {
   /** The linking marker, read once before the callback clears it. */
   const [linkMarker] = useState(readLinkSignInMarker)
   /** Whether sign-in was cancelled or failed, or null while it hasn't. */
-  const signInFailure = redirectError
-    ? isSignInCancelled(redirectError)
-      ? SignInFailure.Cancelled
-      : SignInFailure.Failed
-    : null
+  const signInFailure = signInFailureOf(redirectError)
 
   if (linkMarker?.method === SignInMethod.Microsoft) {
     /** The added account's result, available once MSAL is idle. */

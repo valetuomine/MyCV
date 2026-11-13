@@ -23,6 +23,38 @@ interface SignInCallbackProps {
 }
 
 /**
+ * Picks where a signed-in user was headed: the given destination, then
+ * profile creation, then the CV they came from, otherwise Home.
+ *
+ * @param targets - Where the user may have been headed.
+ * @param targets.destination - The page given instead of the markers, if any.
+ * @param targets.isCreatingProfile - Whether the user was creating a profile.
+ * @param targets.publicUrlSegment - The CV the user came from, if any.
+ * @returns The path to go to.
+ */
+function signedInPath({
+  destination,
+  isCreatingProfile,
+  publicUrlSegment,
+}: {
+  destination?: string | null
+  isCreatingProfile: boolean
+  publicUrlSegment: string | null
+}): string {
+  if (destination) {
+    return destination
+  }
+
+  if (isCreatingProfile) {
+    return RoutePaths.AdminCreateProfile
+  }
+
+  return publicUrlSegment
+    ? RoutePaths.CandidateProfile(publicUrlSegment)
+    : RoutePaths.Home
+}
+
+/**
  * The screen of a sign-in callback route, shared by Microsoft and Google.
  * Once the provider's response is handled, it clears the return markers and
  * sends the user on: to the given destination, to profile creation or the CV
@@ -46,7 +78,7 @@ export default function SignInCallback({
   signInFailure,
   destination,
   onLeave,
-}: SignInCallbackProps): JSX.Element {
+}: Readonly<SignInCallbackProps>): JSX.Element {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const hasNavigated = useRef(false)
@@ -71,14 +103,9 @@ export default function SignInCallback({
     }
 
     /** Where a signed-in user was headed, or Home. */
-    const nextPath =
-      isSignedIn && destination
-        ? destination
-        : isSignedIn && isCreatingProfile
-          ? RoutePaths.AdminCreateProfile
-          : isSignedIn && publicUrlSegment
-            ? RoutePaths.CandidateProfile(publicUrlSegment)
-            : RoutePaths.Home
+    const nextPath = isSignedIn
+      ? signedInPath({ destination, isCreatingProfile, publicUrlSegment })
+      : RoutePaths.Home
     navigate(nextPath, { replace: true })
     hasNavigated.current = true
   }, [
@@ -95,12 +122,14 @@ export default function SignInCallback({
 
   if (hasFailed) {
     const isCancelled = signInFailure === SignInFailure.Cancelled
+    /** The sign-in route of the CV the user came from, or null. */
+    const cvRetryPath = publicUrlSegment
+      ? RoutePaths.CandidateAdmin(publicUrlSegment)
+      : null
     /** The sign-in route to retry from, or null when nothing was pending. */
     const retryPath = isCreatingProfile
       ? RoutePaths.AdminCreateProfile
-      : publicUrlSegment
-        ? RoutePaths.CandidateAdmin(publicUrlSegment)
-        : null
+      : cvRetryPath
 
     /**
      * Clears the error and starts the same method again on the sign-in route.

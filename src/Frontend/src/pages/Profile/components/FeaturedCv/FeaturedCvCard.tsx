@@ -33,7 +33,7 @@ interface FeaturedCvCardProps {
 export default function FeaturedCvCard({
   profile,
   publicUrlSegment,
-}: FeaturedCvCardProps): JSX.Element {
+}: Readonly<FeaturedCvCardProps>): JSX.Element {
   const { t } = useTranslation()
   const nameId = useId()
 

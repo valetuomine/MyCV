@@ -18,7 +18,7 @@ interface LanguageFlagProps {
  */
 export default function LanguageFlag({
   language,
-}: LanguageFlagProps): JSX.Element {
+}: Readonly<LanguageFlagProps>): JSX.Element {
   return (
     <span
       aria-hidden="true"

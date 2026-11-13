@@ -18,7 +18,9 @@ const pullSpring = { stiffness: 220, damping: 15, mass: 0.6 }
  * @param props.children - The control that leans.
  * @returns The control in a wrapper that follows the pointer.
  */
-export default function Magnetic({ children }: MagneticProps): JSX.Element {
+export default function Magnetic({
+  children,
+}: Readonly<MagneticProps>): JSX.Element {
   const prefersReducedMotion = useReducedMotion()
   const x = useSpring(0, pullSpring)
   const y = useSpring(0, pullSpring)

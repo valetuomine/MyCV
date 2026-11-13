@@ -28,7 +28,7 @@ interface ProfilePageProps {
 export default function ProfilePage({
   values,
   pdfPath,
-}: ProfilePageProps): JSX.Element {
+}: Readonly<ProfilePageProps>): JSX.Element {
   const { t, i18n } = useTranslation()
 
   useEffect(() => {

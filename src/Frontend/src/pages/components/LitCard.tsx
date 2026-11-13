@@ -40,7 +40,7 @@ export default function LitCard({
   className = "",
   contentClassName = "",
   wakesWithEditForm = false,
-}: LitCardProps): JSX.Element {
+}: Readonly<LitCardProps>): JSX.Element {
   const trackPointer = usePointerLight()
 
   return (

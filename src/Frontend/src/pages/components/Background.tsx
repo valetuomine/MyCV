@@ -84,7 +84,9 @@ function lightClass(isHeld: boolean, hasBeenHeld: boolean): string {
  * @param props.children - The page content.
  * @returns The framed page.
  */
-export default function Background({ children }: BackgroundProps): JSX.Element {
+export default function Background({
+  children,
+}: Readonly<BackgroundProps>): JSX.Element {
   const signingOutReason = useSigningOutReason()
   const sessionRefusal = useSyncExternalStore(
     subscribeSessionRefusal,

@@ -20,6 +20,7 @@ import {
   clearRedirectSignInError,
   getRedirectSignInError,
   isSignInCancelled,
+  signInFailureOf,
   subscribeRedirectSignInError,
 } from "./entraAuth"
 import { clearGoogleSignInRequest } from "./googleAuth"
@@ -150,19 +151,15 @@ export default function useLoginRedirect({
 
   const failureError = redirectError ?? startError
   /** Whether sign-in was cancelled or failed, or null while it hasn't. */
-  const signInFailure: SignInFailure | null = failureError
-    ? isSignInCancelled(failureError)
-      ? SignInFailure.Cancelled
-      : SignInFailure.Failed
-    : popupFailedMethod
-      ? SignInFailure.Failed
-      : null
+  const signInFailure: SignInFailure | null =
+    signInFailureOf(failureError) ??
+    (popupFailedMethod ? SignInFailure.Failed : null)
+  /** The chosen method that failed: the pending one when starting it failed, otherwise the popup's. */
+  const chosenFailedMethod = startError ? pendingMethod : popupFailedMethod
   /** The method that failed: Microsoft for an MSAL redirect error, otherwise the chosen one. */
   const failedMethod = redirectError
     ? SignInMethod.Microsoft
-    : startError
-      ? pendingMethod
-      : popupFailedMethod
+    : chosenFailedMethod
 
   /**
    * Returns to the choice with the redirect's method as cancelled: stops

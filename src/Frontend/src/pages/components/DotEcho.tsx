@@ -117,6 +117,27 @@ function litMask(distance: number, radius: number): number {
 }
 
 /**
+ * Tells how strongly the bands light a dot: the strongest band's light, which
+ * falls off from its crest like a bell curve and fades with the band.
+ *
+ * @param bands - The running bands.
+ * @param x - The dot's centre on the x axis.
+ * @param y - The dot's centre on the y axis.
+ * @returns The light at the dot, from 0 to 1.
+ */
+function bandLight(bands: Band[], x: number, y: number): number {
+  let lit = 0
+  for (const band of bands) {
+    const direction = bandDirections[band.kind]
+    /** The dot's distance from the band's middle, in crest widths. */
+    const distance =
+      (x * direction.x + y * direction.y - band.middle) / band.width
+    lit = Math.max(lit, Math.exp(-distance * distance) * band.fade)
+  }
+  return lit
+}
+
+/**
  * The lit dots of the background's light: a canvas over the static dot layers
  * that draws only the dots a band of light or the spotlight reaches, on the
  * same 24px grid and through the first mask of `bg-cv-dots-fade`, so they
@@ -253,6 +274,84 @@ export default function DotEcho({
     }
 
     /**
+     * Draws a dot inside the spotlight's reach as a ring around the static
+     * dot, in the static and lit dots' colours, so the dot looks the same,
+     * only larger, with the hot core over it near the pointer.
+     *
+     * @param x - The dot's centre on the x axis.
+     * @param y - The dot's centre on the y axis.
+     * @param fade - How strongly the fade mask shows the dot.
+     * @param spotDistance - The dot's distance from the spotlight's middle.
+     * @returns Whether the spotlight lit the dot enough to draw it.
+     */
+    const drawSpotlightDot = (
+      x: number,
+      y: number,
+      fade: number,
+      spotDistance: number,
+    ): boolean => {
+      const glow = litMask(spotDistance, litRadius)
+      if (glow <= 0.01) {
+        return false
+      }
+      context.beginPath()
+      context.arc(x, y, dotRadius + spotlightSwell * glow, 0, Math.PI * 2)
+      context.moveTo(x + dotRadius, y)
+      context.arc(x, y, dotRadius, 0, Math.PI * 2, true)
+      context.fillStyle = dotColor
+      context.globalAlpha = fade
+      context.fill()
+      context.fillStyle = accent
+      context.globalAlpha = litStrength * glow
+      context.fill()
+      /** How much of the hot core the spotlight's light holds at the dot. */
+      const heat = 1 - spotDistance / (litRadius * coreReach)
+      if (heat > 0) {
+        context.fillStyle = core
+        context.globalAlpha = litStrength * glow * heat
+        context.fill()
+      }
+      return true
+    }
+
+    /**
+     * Draws a dot under the bands in the accent, with a smaller hot core in
+     * its middle near a band's crest.
+     *
+     * @param x - The dot's centre on the x axis.
+     * @param y - The dot's centre on the y axis.
+     * @param fade - How strongly the fade mask shows the dot.
+     * @returns Whether the bands lit the dot enough to draw it.
+     */
+    const drawBandDot = (x: number, y: number, fade: number): boolean => {
+      const lit = bandLight(bands, x, y)
+      if (lit * fade <= 0.01) {
+        return false
+      }
+      context.beginPath()
+      context.arc(x, y, dotRadius + bandSwell * lit, 0, Math.PI * 2)
+      context.fillStyle = accent
+      context.globalAlpha = litStrength * lit * fade
+      context.fill()
+      /** The hot core's strength, which shows only near the band's crest. */
+      const coreStrength = lit * lit * fade
+      if (coreStrength > 0.01) {
+        context.beginPath()
+        context.arc(
+          x,
+          y,
+          (dotRadius + bandSwell * lit) * coreShare,
+          0,
+          Math.PI * 2,
+        )
+        context.fillStyle = core
+        context.globalAlpha = coreStrength
+        context.fill()
+      }
+      return true
+    }
+
+    /**
      * Draws one frame: clears the previous one, moves the bands, and draws the
      * dots under the spotlight and under the bands. A spotlight dot is a ring
      * around the static dot in the static and lit dots' colours, so the dot
@@ -290,61 +389,13 @@ export default function DotEcho({
         const fade = dots[index + 2]
 
         const spotSquared = (x - spotX) ** 2 + (y - spotY) ** 2
-        /** The dot's distance from the spotlight's middle. */
-        const spotDistance =
-          spotSquared < litRadiusSquared ? Math.sqrt(spotSquared) : 0
-        const glow =
-          spotSquared < litRadiusSquared ? litMask(spotDistance, litRadius) : 0
-        if (glow > 0.01) {
-          context.beginPath()
-          context.arc(x, y, dotRadius + spotlightSwell * glow, 0, Math.PI * 2)
-          context.moveTo(x + dotRadius, y)
-          context.arc(x, y, dotRadius, 0, Math.PI * 2, true)
-          context.fillStyle = dotColor
-          context.globalAlpha = fade
-          context.fill()
-          context.fillStyle = accent
-          context.globalAlpha = litStrength * glow
-          context.fill()
-          /** How much of the hot core the spotlight's light holds at the dot. */
-          const heat = 1 - spotDistance / (litRadius * coreReach)
-          if (heat > 0) {
-            context.fillStyle = core
-            context.globalAlpha = litStrength * glow * heat
-            context.fill()
-          }
+        if (
+          spotSquared < litRadiusSquared &&
+          drawSpotlightDot(x, y, fade, Math.sqrt(spotSquared))
+        ) {
           isPainted = true
         }
-
-        let lit = 0
-        for (const band of bands) {
-          const direction = bandDirections[band.kind]
-          /** The dot's distance from the band's middle, in crest widths. */
-          const distance =
-            (x * direction.x + y * direction.y - band.middle) / band.width
-          lit = Math.max(lit, Math.exp(-distance * distance) * band.fade)
-        }
-        if (lit * fade > 0.01) {
-          context.beginPath()
-          context.arc(x, y, dotRadius + bandSwell * lit, 0, Math.PI * 2)
-          context.fillStyle = accent
-          context.globalAlpha = litStrength * lit * fade
-          context.fill()
-          /** The hot core's strength, which shows only near the band's crest. */
-          const coreStrength = lit * lit * fade
-          if (coreStrength > 0.01) {
-            context.beginPath()
-            context.arc(
-              x,
-              y,
-              (dotRadius + bandSwell * lit) * coreShare,
-              0,
-              Math.PI * 2,
-            )
-            context.fillStyle = core
-            context.globalAlpha = coreStrength
-            context.fill()
-          }
+        if (drawBandDot(x, y, fade)) {
           isPainted = true
         }
       }

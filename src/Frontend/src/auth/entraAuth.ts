@@ -21,7 +21,7 @@ import { isLocalAuthStorage } from "./authStorage"
 import { microsoftSignInParameters } from "./signInLanguage"
 import { isLinkPopupState } from "./signInPopupState"
 import { RoutePaths } from "../routePaths"
-import { SignInMethod } from "../types"
+import { SignInFailure, SignInMethod } from "../types"
 
 /** The Entra app registration's client ID, or "" when not configured. */
 const clientId = import.meta.env.VITE_ENTRA_CLIENT_ID?.trim() ?? ""
@@ -244,6 +244,23 @@ export function isSignInCancelled(error: unknown): boolean {
     (error.errorCode === BrowserAuthErrorCodes.userCancelled ||
       error.errorCode === "access_denied")
   )
+}
+
+/**
+ * Tells how a sign-in error ended the sign-in.
+ *
+ * @param error - The error from MSAL, or a falsy value when there is none.
+ * @returns Cancelled for a cancelled or declined sign-in, Failed for any
+ *   other error, or null without an error.
+ */
+export function signInFailureOf(error: unknown): SignInFailure | null {
+  if (!error) {
+    return null
+  }
+
+  return isSignInCancelled(error)
+    ? SignInFailure.Cancelled
+    : SignInFailure.Failed
 }
 
 /**

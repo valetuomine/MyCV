@@ -182,7 +182,7 @@ function splitAtHyphens(word: Glyph[]): Glyph[][] {
  */
 export default function ProfileName({
   fullName,
-}: ProfileNameProps): JSX.Element {
+}: Readonly<ProfileNameProps>): JSX.Element {
   const prefersReducedMotion = useReducedMotion()
   const fontLoaded = useFontLoaded(kerningFont, fullName)
 

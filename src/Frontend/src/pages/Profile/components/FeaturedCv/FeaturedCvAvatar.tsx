@@ -22,7 +22,7 @@ interface FeaturedCvAvatarProps {
 export default function FeaturedCvAvatar({
   initials,
   imageUrl,
-}: FeaturedCvAvatarProps): JSX.Element {
+}: Readonly<FeaturedCvAvatarProps>): JSX.Element {
   const [failedUrl, setFailedUrl] = useState<string>()
   /** Shows the photo unless there is none or this URL failed to load. */
   const showPhoto = Boolean(imageUrl) && imageUrl !== failedUrl

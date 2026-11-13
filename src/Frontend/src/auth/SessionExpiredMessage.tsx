@@ -72,7 +72,7 @@ const stepFailureKeys: Partial<Record<SignInAgainStep, ParseKeys>> = {
  */
 export default function SessionExpiredMessage({
   refusal,
-}: SessionExpiredMessageProps): JSX.Element {
+}: Readonly<SessionExpiredMessageProps>): JSX.Element {
   const { t } = useTranslation()
   const dispatch = useDispatch()
   const location = useLocation()
@@ -111,7 +111,7 @@ export default function SessionExpiredMessage({
    * could not even start counts as failed.
    */
   const signInAgain = (): void => {
-    if (!canUsePopup || method === null) {
+    if (!canUsePopup) {
       signInOnPage()
       return
     }

@@ -71,7 +71,7 @@ export default function RHFTextarea<TFieldValues extends FieldValues>({
   required,
   description,
   ...textareaAttributes
-}: RHFTextareaProps<TFieldValues>): JSX.Element {
+}: Readonly<RHFTextareaProps<TFieldValues>>): JSX.Element {
   const { id, error, describedBy, value, frameProps, registration } =
     useFormField(name, maxLength, description)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)

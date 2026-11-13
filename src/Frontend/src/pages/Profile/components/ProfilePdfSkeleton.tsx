@@ -19,7 +19,7 @@ interface ProfilePdfSkeletonProps {
  */
 export default function ProfilePdfSkeleton({
   shimmering,
-}: ProfilePdfSkeletonProps): JSX.Element {
+}: Readonly<ProfilePdfSkeletonProps>): JSX.Element {
   const { t } = useTranslation()
   /** One placeholder bar, whose shimmer stops once nothing shows it. */
   const bar = `rounded-full ${shimmering ? "cv-skeleton" : "bg-cv-overlay"}`

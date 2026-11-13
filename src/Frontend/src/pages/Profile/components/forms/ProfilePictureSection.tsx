@@ -1,3 +1,4 @@
+import type { TFunction } from "i18next"
 import { useId, useRef, useState, type ChangeEvent, type JSX } from "react"
 import { flushSync } from "react-dom"
 import { useTranslation } from "react-i18next"
@@ -34,6 +35,44 @@ interface PictureOutcome {
 }
 
 /**
+ * Picks the change under way. Only one runs at a time, because each blocks
+ * the others, so the order only settles which one wins.
+ *
+ * @param busy - Whether each change is under way.
+ * @returns The change under way, or null when none is.
+ */
+function firstBusyChange(
+  busy: Record<PictureChange, boolean>,
+): PictureChange | null {
+  if (busy.upload) {
+    return "upload"
+  }
+
+  if (busy.google) {
+    return "google"
+  }
+
+  return busy.remove ? "remove" : null
+}
+
+/**
+ * Words how the last picture change ended.
+ *
+ * @param outcome - How the change ended.
+ * @param t - The translation function.
+ * @returns The failure's message, or the confirmation of the saved or removed picture.
+ */
+function describeOutcome(outcome: PictureOutcome, t: TFunction): string {
+  if (outcome.isError) {
+    return getProfilePictureError(outcome.error, outcome.change, t)
+  }
+
+  return outcome.change === "remove"
+    ? t("profilePicture.removed")
+    : t("profilePicture.saved")
+}
+
+/**
  * The edit view's profile picture: a preview, or the initials when there is
  * none, with Choose or Change picture, Use Google picture for a Google
  * sign-in only, and Remove picture, which asks first. Each change is saved
@@ -54,7 +93,7 @@ export default function ProfilePictureSection({
   profileId,
   pictureUrl,
   fullName,
-}: ProfilePictureSectionProps): JSX.Element {
+}: Readonly<ProfilePictureSectionProps>): JSX.Element {
   const { t } = useTranslation()
   const headingId = useId()
   const hintId = useId()
@@ -73,16 +112,13 @@ export default function ProfilePictureSection({
   const [failedPreviewUrl, setFailedPreviewUrl] = useState<string | null>(null)
   const previewUrl = getProfilePictureUrl(pictureUrl)
   /** Shows the preview unless there is none or it failed to load. */
-  const showPreview = Boolean(previewUrl) && failedPreviewUrl !== previewUrl
+  const showPreview = Boolean(previewUrl && failedPreviewUrl !== previewUrl)
   /** The change under way, which blocks the others. */
-  const busyChange: PictureChange | null =
-    isPreparing || uploadState.isLoading
-      ? "upload"
-      : googleState.isLoading
-        ? "google"
-        : removeState.isLoading
-          ? "remove"
-          : null
+  const busyChange = firstBusyChange({
+    upload: isPreparing || uploadState.isLoading,
+    google: googleState.isLoading,
+    remove: removeState.isLoading,
+  })
   /** Whether the session is a Google sign-in, which alone has a Google picture. */
   const canUseGoogle = session.method === SignInMethod.Google
 
@@ -181,13 +217,7 @@ export default function ProfilePictureSection({
   }
 
   /** The outcome's message in the active language. */
-  const outcomeText = outcome
-    ? outcome.isError
-      ? getProfilePictureError(outcome.error, outcome.change, t)
-      : outcome.change === "remove"
-        ? t("profilePicture.removed")
-        : t("profilePicture.saved")
-    : null
+  const outcomeText = outcome ? describeOutcome(outcome, t) : null
 
   return (
     <section

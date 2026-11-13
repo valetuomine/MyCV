@@ -203,9 +203,13 @@ async function recordByHand(provider: E2EProvider): Promise<void> {
       provider,
       adminSignedInButton,
     )
+    /** Microsoft's extra step, which a persistent Chrome profile doesn't ask. */
+    const staySignedInHint = provider.profileDir
+      ? ""
+      : ', and answer Yes to "Stay signed in?"'
     console.log(
       signInPage
-        ? `Sign in with the ${provider.label} Playwright test user in the browser window${provider.profileDir ? "" : ', and answer Yes to "Stay signed in?"'}.`
+        ? `Sign in with the ${provider.label} Playwright test user in the browser window${staySignedInHint}.`
         : `The ${provider.label} profile is already signed in.`,
     )
     await adminSignedInButton(page).waitFor({ timeout: signInTimeoutMs })

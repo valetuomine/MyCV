@@ -33,6 +33,11 @@ const closedPollMs = 250
 const touchDeviceQuery = "(hover: none) and (pointer: coarse)"
 /** The Google popup's window name, so a new attempt reuses a window left open. */
 const googlePopupName = "mycv-google-sign-in"
+/** The attempt's outcome for each way Google's sign-in can fail. */
+const failureOutcomes: Record<SignInFailure, SignInPopupOutcome> = {
+  [SignInFailure.Cancelled]: SignInPopupOutcome.Cancelled,
+  [SignInFailure.Failed]: SignInPopupOutcome.Failed,
+}
 
 /**
  * How a sign-in popup ended. A popup that adds a sign-in method also hands
@@ -136,6 +141,23 @@ function handleMsalEvent(message: EventMessage): void {
 msalInstance.addEventCallback(handleMsalEvent)
 
 /**
+ * Paints a popup's blank page with the app's background and colour scheme.
+ * Leaves the page as it is when the browser doesn't let this tab reach it.
+ *
+ * @param popup - The window, still on its blank page.
+ */
+function paintBlankPopup(popup: Window): void {
+  try {
+    const theme = getComputedStyle(document.documentElement)
+    const { style } = popup.document.documentElement
+    style.colorScheme = theme.colorScheme
+    style.background = theme.getPropertyValue("--cv-background")
+  } catch {
+    return
+  }
+}
+
+/**
  * Opens a window like `window.open`, and paints the blank page that MSAL
  * opens first with the app's background and colour scheme, so the Microsoft
  * popup doesn't flash white in the dark theme before Microsoft's page loads.
@@ -153,17 +175,8 @@ function openThemedPopup(
   features?: string,
 ): Window | null {
   const popup = window.open(url, target, features)
-  if (!popup || url !== "about:blank") {
-    return popup
-  }
-
-  try {
-    const theme = getComputedStyle(document.documentElement)
-    const { style } = popup.document.documentElement
-    style.colorScheme = theme.colorScheme
-    style.background = theme.getPropertyValue("--cv-background")
-  } catch {
-    return popup
+  if (popup && url === "about:blank") {
+    paintBlankPopup(popup)
   }
 
   return popup
@@ -362,11 +375,7 @@ function startGooglePopup(
     const { failure, linkToken } = signIn.complete(event.data)
     settleAttempt(
       attempt,
-      failure === null
-        ? SignInPopupOutcome.SignedIn
-        : failure === SignInFailure.Cancelled
-          ? SignInPopupOutcome.Cancelled
-          : SignInPopupOutcome.Failed,
+      failure === null ? SignInPopupOutcome.SignedIn : failureOutcomes[failure],
       linkToken,
     )
   }
@@ -422,13 +431,11 @@ function startPopupAttempt(
     if (method === SignInMethod.Google) {
       startGooglePopup(attempt, isPromptRequired)
     } else {
+      /** Asks for the credentials again when a prompt is needed. */
+      const loginPrompt = isPromptRequired ? PromptValue.LOGIN : undefined
       startMicrosoftPopup(
         attempt,
-        isLink
-          ? PromptValue.SELECT_ACCOUNT
-          : isPromptRequired
-            ? PromptValue.LOGIN
-            : undefined,
+        isLink ? PromptValue.SELECT_ACCOUNT : loginPrompt,
       )
     }
   })

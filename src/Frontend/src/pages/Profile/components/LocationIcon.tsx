@@ -14,7 +14,7 @@ interface LocationIconProps {
  */
 export default function LocationIcon({
   className,
-}: LocationIconProps): JSX.Element {
+}: Readonly<LocationIconProps>): JSX.Element {
   return (
     <svg
       aria-hidden="true"

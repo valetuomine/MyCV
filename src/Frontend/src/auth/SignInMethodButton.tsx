@@ -61,7 +61,7 @@ export default function SignInMethodButton({
   describedBy,
   autoFocus = false,
   onSelect,
-}: SignInMethodButtonProps): JSX.Element {
+}: Readonly<SignInMethodButtonProps>): JSX.Element {
   const { t } = useTranslation()
   const badgeId = useId()
   const { logo, className } = methodStyles[method]

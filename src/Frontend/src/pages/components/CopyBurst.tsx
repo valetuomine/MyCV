@@ -34,7 +34,7 @@ const burstDots = Array.from({ length: dotCount }, (_, index) => {
  */
 export default function CopyBurst({
   trigger,
-}: CopyBurstProps): JSX.Element | null {
+}: Readonly<CopyBurstProps>): JSX.Element | null {
   const prefersReducedMotion = useReducedMotion()
   if (prefersReducedMotion || trigger === 0) {
     return null

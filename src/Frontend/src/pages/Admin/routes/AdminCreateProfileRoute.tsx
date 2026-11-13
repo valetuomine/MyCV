@@ -58,6 +58,19 @@ function describeOwnCvError(status: unknown, t: TFunction): string {
 }
 
 /**
+ * Words a failed creation.
+ *
+ * @param failure - Why the creation failed.
+ * @param t - The translation function.
+ * @returns The message to show under the form.
+ */
+function describeSubmitFailure(failure: SubmitFailure, t: TFunction): string {
+  return failure.reason === SubmitFailureReason.NoPublicUrl
+    ? t("createProfile.noPublicUrl")
+    : getProfileFormError(failure.error, t("formErrors.creation"), t)
+}
+
+/**
  * The `/admin` route for creating a profile. Lets the user choose a sign-in
  * method and signs them in first. Once signed in, it looks up the user's own
  * CV and sends an owner straight on to managing it; only a user without a CV
@@ -134,12 +147,9 @@ export default function AdminCreateProfileRoute(): JSX.Element {
   })
 
   /** The failed creation's message, in the active language. */
-  const submitError =
-    submitFailure === null
-      ? undefined
-      : submitFailure.reason === SubmitFailureReason.NoPublicUrl
-        ? t("createProfile.noPublicUrl")
-        : getProfileFormError(submitFailure.error, t("formErrors.creation"), t)
+  const submitError = submitFailure
+    ? describeSubmitFailure(submitFailure, t)
+    : undefined
 
   if (!canLookUpOwnCv) {
     return (

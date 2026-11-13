@@ -60,6 +60,24 @@ const traceGlows = Array.from(
 )
 
 /**
+ * Picks the character count's colour: danger at the limit, accent in its
+ * last tenth, and otherwise muted and shown only while the field has focus.
+ *
+ * @param length - The value's length.
+ * @param maxLength - The field's limit.
+ * @returns The count's classes.
+ */
+function pickCountTone(length: number, maxLength: number): string {
+  if (length >= maxLength) {
+    return "text-cv-danger"
+  }
+
+  return length >= maxLength * 0.9
+    ? "text-cv-accent-strong"
+    : "text-cv-muted opacity-0 group-has-[[data-field-frame]:focus-within]/field:opacity-100"
+}
+
+/**
  * The frame of a form field: its label with a required marker and character
  * count, the field itself, and its validation message beneath it.
  *
@@ -117,24 +135,15 @@ export default function FormField({
   description,
   action,
   children,
-}: FormFieldProps): JSX.Element {
+}: Readonly<FormFieldProps>): JSX.Element {
   const { t } = useTranslation()
   const frameRef = useRef<HTMLDivElement>(null)
   const trackPointer = usePointerLight()
   const handledSubmitCountRef = useRef(submitCount)
 
-  /**
-   * The count's colour: danger at the limit, accent in its last tenth, and
-   * otherwise muted and shown only while the field has focus.
-   */
+  /** The count's colour, or none for a field without a limit. */
   const countTone =
-    maxLength === undefined
-      ? undefined
-      : length >= maxLength
-        ? "text-cv-danger"
-        : length >= maxLength * 0.9
-          ? "text-cv-accent-strong"
-          : "text-cv-muted opacity-0 group-has-[[data-field-frame]:focus-within]/field:opacity-100"
+    maxLength === undefined ? undefined : pickCountTone(length, maxLength)
 
   useEffect(() => {
     if (submitCount === handledSubmitCountRef.current) {

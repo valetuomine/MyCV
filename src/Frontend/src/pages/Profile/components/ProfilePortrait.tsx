@@ -78,7 +78,7 @@ export default function ProfilePortrait({
   fullName,
   initials,
   imageUrl,
-}: ProfilePortraitProps): JSX.Element {
+}: Readonly<ProfilePortraitProps>): JSX.Element {
   const { t } = useTranslation()
   const [failedUrl, setFailedUrl] = useState<string | null>(null)
   const [loadedUrl, setLoadedUrl] = useState<string | null>(null)
@@ -86,6 +86,10 @@ export default function ProfilePortrait({
   const showImage = Boolean(imageUrl) && failedUrl !== imageUrl
   /** Whether the photo shown has loaded, which starts its reveal. */
   const isImageLoaded = showImage && loadedUrl === imageUrl
+  /** The photo's alt text, naming the candidate when the name is known. */
+  const photoAlt = fullName
+    ? t("cv.portraitOf", { name: fullName })
+    : t("cv.portrait")
   const prefersReducedMotion = useReducedMotion()
   const rotateX = useSpring(0, tiltSpring)
   const rotateY = useSpring(0, tiltSpring)
@@ -197,11 +201,7 @@ export default function ProfilePortrait({
                 )}
                 <motion.img
                   src={imageUrl ?? undefined}
-                  alt={
-                    fullName
-                      ? t("cv.portraitOf", { name: fullName })
-                      : t("cv.portrait")
-                  }
+                  alt={photoAlt}
                   onLoad={() => setLoadedUrl(imageUrl ?? null)}
                   onError={() => setFailedUrl(imageUrl ?? null)}
                   initial={false}

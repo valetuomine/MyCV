@@ -43,7 +43,7 @@ function formatCountdown(seconds: number): string {
 export default function IdleWarningPanel({
   secondsLeft,
   onContinue,
-}: IdleWarningPanelProps): JSX.Element {
+}: Readonly<IdleWarningPanelProps>): JSX.Element {
   const { t } = useTranslation()
   const titleId = useId()
   const descriptionId = useId()

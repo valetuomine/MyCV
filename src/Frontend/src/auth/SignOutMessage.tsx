@@ -18,7 +18,7 @@ interface SignOutMessageProps {
  */
 export default function SignOutMessage({
   reason,
-}: SignOutMessageProps): JSX.Element {
+}: Readonly<SignOutMessageProps>): JSX.Element {
   const { t } = useTranslation()
 
   return (

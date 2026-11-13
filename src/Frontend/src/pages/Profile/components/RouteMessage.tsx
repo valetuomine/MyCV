@@ -37,7 +37,7 @@ export default function RouteMessage({
   onRetry,
   actions,
   delayed = false,
-}: RouteMessageProps): JSX.Element {
+}: Readonly<RouteMessageProps>): JSX.Element {
   const { t } = useTranslation()
   /** Red for errors, accent otherwise. */
   const dotColor = tone === Tone.Error ? "bg-cv-danger" : "bg-cv-accent"

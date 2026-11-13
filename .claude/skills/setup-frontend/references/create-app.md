@@ -53,6 +53,8 @@ npm run lint
 Pop-Location
 ```
 
+`npm run lint` also runs the Sonar rules: `eslint.config.js` has its own block that extends `sonarjs.configs.recommended` (from `eslint-plugin-sonarjs`) and ignores `src/generated/**`, like the JSDoc block. Fix a finding in the code instead of silencing the rule: replace a nested ternary with a helper function or an `if` chain, split a function that is too complex, and wrap a component's props type in `Readonly<...>`.
+
 Check the ports first, as described in *Servers* in `references/checks.md` of `/create-pull-request`, and start the local preview only when port 3000 is free:
 
 ```powershell

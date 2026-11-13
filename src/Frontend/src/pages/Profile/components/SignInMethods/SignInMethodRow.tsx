@@ -57,7 +57,7 @@ export default function SignInMethodRow({
   onRequestRemove,
   onConfirmRemove,
   onKeep,
-}: SignInMethodRowProps): JSX.Element {
+}: Readonly<SignInMethodRowProps>): JSX.Element {
   const { t, i18n } = useTranslation()
   const reasonId = useId()
   const removeButtonRef = useRef<HTMLButtonElement>(null)

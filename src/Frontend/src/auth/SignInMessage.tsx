@@ -1,3 +1,4 @@
+import type { TFunction } from "i18next"
 import { useId, useState, type JSX, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 import RouteMessage from "../pages/Profile/components/RouteMessage"
@@ -31,6 +32,61 @@ interface SignInMessageProps {
   chooseAnotherMethod: () => void
   backLabel: string
   onBack: () => void
+}
+
+/**
+ * Words a cancelled or failed sign-in.
+ *
+ * @param signInFailure - Whether sign-in was cancelled or failed.
+ * @param failedMethod - The method that was tried, or null when it is unknown.
+ * @param t - The translation function.
+ * @returns The message's tone, title and description, which names the
+ *   provider of a failed sign-in when it is known.
+ */
+function describeFailure(
+  signInFailure: SignInFailure,
+  failedMethod: SignInMethod | null,
+  t: TFunction,
+): { tone: Tone; title: string; description: string } {
+  if (signInFailure === SignInFailure.Cancelled) {
+    return {
+      tone: Tone.Neutral,
+      title: t("signIn.cancelledTitle"),
+      description: t("signIn.cancelledDescription"),
+    }
+  }
+
+  return {
+    tone: Tone.Error,
+    title: t("signIn.failedTitle"),
+    description: failedMethod
+      ? t("signIn.failedDescription", {
+          provider: signInMethodNames[failedMethod],
+        })
+      : t("signIn.failedDescriptionGeneric"),
+  }
+}
+
+/**
+ * Words the pending screen's help line.
+ *
+ * @param isRedirectSlow - Whether the redirect is taking too long.
+ * @param pendingMethod - The method being redirected to, or null while MSAL checks a response.
+ * @param t - The translation function.
+ * @returns The slow-redirect hint, the redirect naming its provider, or the check.
+ */
+function describePending(
+  isRedirectSlow: boolean,
+  pendingMethod: SignInMethod | null,
+  t: TFunction,
+): string {
+  if (isRedirectSlow) {
+    return t("signIn.slow")
+  }
+
+  return pendingMethod
+    ? t("signIn.redirecting", { provider: signInMethodNames[pendingMethod] })
+    : t("signIn.checking")
 }
 
 /**
@@ -93,7 +149,7 @@ export default function SignInMessage({
   chooseAnotherMethod,
   backLabel,
   onBack,
-}: SignInMessageProps): JSX.Element {
+}: Readonly<SignInMessageProps>): JSX.Element {
   const { t } = useTranslation()
   const [lastUsedMethod] = useState(readLastSignInMethod)
   const cancelledNoteId = useId()
@@ -123,20 +179,12 @@ export default function SignInMessage({
   }
 
   if (signInFailure) {
-    const isCancelled = signInFailure === SignInFailure.Cancelled
-    /** Why sign-in failed, naming the provider when it is known. */
-    const failedDescription = failedMethod
-      ? t("signIn.failedDescription", {
-          provider: signInMethodNames[failedMethod],
-        })
-      : t("signIn.failedDescriptionGeneric")
+    const failure = describeFailure(signInFailure, failedMethod, t)
 
     return (
       <RouteMessage
-        tone={isCancelled ? Tone.Neutral : Tone.Error}
-        description={
-          isCancelled ? t("signIn.cancelledDescription") : failedDescription
-        }
+        tone={failure.tone}
+        description={failure.description}
         actions={
           <>
             <Button variant={ButtonVariant.Primary} onClick={retrySignIn}>
@@ -151,7 +199,7 @@ export default function SignInMessage({
           </>
         }
       >
-        {isCancelled ? t("signIn.cancelledTitle") : t("signIn.failedTitle")}
+        {failure.title}
       </RouteMessage>
     )
   }
@@ -182,15 +230,7 @@ export default function SignInMessage({
       <RouteMessage
         tone={Tone.Pending}
         delayed
-        description={
-          isRedirectSlow
-            ? t("signIn.slow")
-            : pendingMethod
-              ? t("signIn.redirecting", {
-                  provider: signInMethodNames[pendingMethod],
-                })
-              : t("signIn.checking")
-        }
+        description={describePending(isRedirectSlow, pendingMethod, t)}
         actions={
           <>
             {isRedirectSlow ? (

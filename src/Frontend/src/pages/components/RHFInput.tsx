@@ -52,7 +52,7 @@ export default function RHFInput<TFieldValues extends FieldValues>({
   description,
   action,
   ...inputAttributes
-}: RHFInputProps<TFieldValues>): JSX.Element {
+}: Readonly<RHFInputProps<TFieldValues>>): JSX.Element {
   const { id, error, describedBy, frameProps, registration } = useFormField(
     name,
     maxLength,

@@ -15,6 +15,32 @@ import SignInRouteFallback from "../SignInRouteFallback"
 import useLoginRedirect from "../useLoginRedirect"
 
 /**
+ * Says why the CV couldn't be looked up, with Try again when another attempt
+ * may help.
+ *
+ * @param props - The component props.
+ * @param props.error - The failed lookup's error.
+ * @param props.onRetry - Looks the CV up again.
+ * @returns The error message.
+ */
+function CandidateLookupError({
+  error,
+  onRetry,
+}: Readonly<{
+  error: unknown
+  onRetry: () => void
+}>): JSX.Element {
+  const { t } = useTranslation()
+  const { message, retryable } = describeRouteError(error, t)
+
+  return (
+    <RouteMessage tone={Tone.Error} onRetry={retryable ? onRetry : undefined}>
+      {message}
+    </RouteMessage>
+  )
+}
+
+/**
  * The `/:publicUrlSegment/admin` route. Looks up the CV first, and only
  * when it exists lets the user choose a sign-in method and signs them in,
  * then returns them to the CV, where the edit action appears if they may
@@ -67,14 +93,11 @@ export default function AdminLoginRoute(): JSX.Element {
   }
 
   if (candidateQuery.isError) {
-    const { message, retryable } = describeRouteError(candidateQuery.error, t)
     return (
-      <RouteMessage
-        tone={Tone.Error}
-        onRetry={retryable ? () => void candidateQuery.refetch() : undefined}
-      >
-        {message}
-      </RouteMessage>
+      <CandidateLookupError
+        error={candidateQuery.error}
+        onRetry={() => void candidateQuery.refetch()}
+      />
     )
   }
 

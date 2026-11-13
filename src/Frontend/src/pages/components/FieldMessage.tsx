@@ -19,7 +19,7 @@ interface FieldMessageProps {
 export default function FieldMessage({
   id,
   error,
-}: FieldMessageProps): JSX.Element {
+}: Readonly<FieldMessageProps>): JSX.Element {
   const [lastError, setLastError] = useState(error)
 
   if (error && error !== lastError) {

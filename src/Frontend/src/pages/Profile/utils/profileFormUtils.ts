@@ -77,11 +77,32 @@ const urlScheme = /^[a-z][a-z0-9+.-]*:/i
  * The host must contain a dot or be `localhost`, so `javascript:1/alert(1)`
  * still counts as a scheme.
  */
-const hostAndPort =
-  /^(?:[a-z0-9-]+(?:\.[a-z0-9-]+)+|localhost):[0-9]+(?:[/?#]|$)/i
+const hostAndPort = /^(?:[a-z0-9-]+(?:\.[a-z0-9-]+)+|localhost):\d+(?:[/?#]|$)/i
 
 /** Matches an `http` or `https` address with a host. */
 const httpAddress = /^https?:\/\/[^/\\?#]/i
+
+/**
+ * Trims the characters that match a test from both ends of a text. A loop
+ * instead of a regular expression, because one that anchors a repeated
+ * character to the end backtracks over long runs of it.
+ *
+ * @param value - The text.
+ * @param isTrimmed - Tells, from its UTF-16 code, whether a character is trimmed.
+ * @returns The text without the matching characters at either end.
+ */
+function trimEnds(value: string, isTrimmed: (code: number) => boolean): string {
+  let start = 0
+  let end = value.length
+  while (start < end && isTrimmed(value.charCodeAt(start))) {
+    start++
+  }
+  while (end > start && isTrimmed(value.charCodeAt(end - 1))) {
+    end--
+  }
+
+  return value.slice(start, end)
+}
 
 /**
  * Trims the C0 controls and spaces that browsers drop from both ends of a
@@ -91,16 +112,7 @@ const httpAddress = /^https?:\/\/[^/\\?#]/i
  * @returns The link without leading or trailing controls and spaces.
  */
 function trimControls(value: string): string {
-  let start = 0
-  let end = value.length
-  while (start < end && value.charCodeAt(start) <= 0x20) {
-    start++
-  }
-  while (end > start && value.charCodeAt(end - 1) <= 0x20) {
-    end--
-  }
-
-  return value.slice(start, end)
+  return trimEnds(value, (code) => code <= 0x20)
 }
 
 /**
@@ -127,6 +139,9 @@ export function isAllowedProfileLink(value: string | null): boolean {
   return httpAddress.test(normalized) && URL.canParse(normalized)
 }
 
+/** The UTF-16 code of `/`. */
+const slashCode = 0x2f
+
 /**
  * Accepts a bare public URL segment or a full CV link and returns the segment.
  *
@@ -139,7 +154,7 @@ export function extractPublicUrlSegment(input: string): string {
     const segments = new URL(value).pathname.split("/").filter(Boolean)
     return segments[segments.length - 1] ?? ""
   } catch {
-    return value.replace(/^\/+|\/+$/g, "")
+    return trimEnds(value, (code) => code === slashCode)
   }
 }
 
@@ -236,37 +251,50 @@ export function getProfileFormError(
   action: string,
   t: TFunction,
 ): string {
-  if (typeof error === "object" && error !== null) {
-    if ("status" in error && error.status === 403) {
-      return t("formErrors.googleNotInvited")
-    }
-
-    if ("status" in error && error.status === 409) {
-      return t("formErrors.alreadyHasCv")
-    }
-
-    if (
-      "data" in error &&
-      typeof error.data === "object" &&
-      error.data !== null &&
-      "detail" in error.data &&
-      typeof error.data.detail === "string"
-    ) {
-      return error.data.detail
-    }
-
-    if ("status" in error) {
-      if (error.status === 400 || error.status === 422) {
-        return t("formErrors.invalid", { action })
-      }
-
-      if (error.status === "FETCH_ERROR" || error.status === "TIMEOUT_ERROR") {
-        return t("formErrors.unreachable", { action })
-      }
-
-      return t("formErrors.failed", { action })
-    }
+  const status = errorStatus(error)
+  if (status === 403) {
+    return t("formErrors.googleNotInvited")
   }
 
-  return t("formErrors.failed", { action })
+  if (status === 409) {
+    return t("formErrors.alreadyHasCv")
+  }
+
+  const detail = problemDetail(error)
+  if (detail !== undefined) {
+    return detail
+  }
+
+  switch (status) {
+    case 400:
+    case 422:
+      return t("formErrors.invalid", { action })
+    case "FETCH_ERROR":
+    case "TIMEOUT_ERROR":
+      return t("formErrors.unreachable", { action })
+    default:
+      return t("formErrors.failed", { action })
+  }
+}
+
+/**
+ * Reads the problem detail from a failed RTK Query request's response body.
+ *
+ * @param error - The error from the request.
+ * @returns The `detail` text, or undefined when the body has none.
+ */
+function problemDetail(error: unknown): string | undefined {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "data" in error &&
+    typeof error.data === "object" &&
+    error.data !== null &&
+    "detail" in error.data &&
+    typeof error.data.detail === "string"
+  ) {
+    return error.data.detail
+  }
+
+  return undefined
 }

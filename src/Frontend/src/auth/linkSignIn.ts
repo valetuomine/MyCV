@@ -22,6 +22,16 @@ const conflictOutcomes: Record<string, LinkOutcome> = {
   "login-is-current": LinkOutcome.SameAccount,
 }
 
+/** The link's failure for each way a linking popup that opened can end. */
+const popupFailures: Record<
+  Exclude<SignInPopupOutcome, typeof SignInPopupOutcome.Blocked>,
+  SignInFailure | null
+> = {
+  [SignInPopupOutcome.SignedIn]: null,
+  [SignInPopupOutcome.Cancelled]: SignInFailure.Cancelled,
+  [SignInPopupOutcome.Failed]: SignInFailure.Failed,
+}
+
 /** What a linking popup brings back, ready for `completeLinkSignIn`. */
 export interface LinkSignInPopupResult {
   marker: LinkSignInMarker
@@ -119,12 +129,7 @@ export async function startLinkSignIn({
         marker,
         linkToken,
         linkedAccount,
-        failure:
-          outcome === SignInPopupOutcome.SignedIn
-            ? null
-            : outcome === SignInPopupOutcome.Cancelled
-              ? SignInFailure.Cancelled
-              : SignInFailure.Failed,
+        failure: popupFailures[outcome],
       }
     }
   }

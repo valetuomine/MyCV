@@ -24,7 +24,7 @@ interface LinkPopupMessageProps {
 export default function LinkPopupMessage({
   method,
   onCancel,
-}: LinkPopupMessageProps): JSX.Element {
+}: Readonly<LinkPopupMessageProps>): JSX.Element {
   const { t } = useTranslation()
 
   return (

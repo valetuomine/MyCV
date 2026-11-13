@@ -33,7 +33,7 @@ export default function CopyLinkButton({
   url,
   label,
   magnetic = false,
-}: CopyLinkButtonProps): JSX.Element {
+}: Readonly<CopyLinkButtonProps>): JSX.Element {
   const { t } = useTranslation()
   const [copyStatus, setCopyStatus] = useState<CopyStatus>(CopyStatus.Idle)
   const [burst, setBurst] = useState(0)

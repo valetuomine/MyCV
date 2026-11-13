@@ -175,12 +175,11 @@ function buttonClassName(
   const shape = variantShapes[variant]
   const { rest, interactive } = variantClasses[variant]
   /** The state's own classes: dimmed when unavailable, a busy cursor when loading. */
-  const stateClassName =
-    state === "unavailable"
-      ? "cursor-not-allowed opacity-60"
-      : state === "loading"
-        ? "cursor-progress"
-        : interactive
+  const stateClassName = {
+    unavailable: "cursor-not-allowed opacity-60",
+    loading: "cursor-progress",
+    usable: interactive,
+  }[state]
 
   return [
     baseClassName,
@@ -205,6 +204,209 @@ function isAriaDisabled(value: AriaAttributes["aria-disabled"]): boolean {
 }
 
 /**
+ * Builds a click handler that blocks the click while the element can't be
+ * used, so a link isn't followed and a submit button's form isn't submitted,
+ * and otherwise passes it on to the caller's handler.
+ *
+ * @param blocked - Whether the click is blocked.
+ * @param onClick - The caller's click handler, if any.
+ * @returns The click handler.
+ */
+function guardClick<E extends HTMLElement>(
+  blocked: boolean,
+  onClick?: (event: MouseEvent<E>) => void,
+): (event: MouseEvent<E>) => void {
+  return (event) => {
+    if (blocked) {
+      event.preventDefault()
+      return
+    }
+    onClick?.(event)
+  }
+}
+
+/**
+ * A button-styled React Router link, which blocks the click while
+ * `aria-disabled` marks it unavailable.
+ *
+ * @param props - The link props.
+ * @param props.variant - The look.
+ * @param props.size - The size.
+ * @param props.className - Extra classes.
+ * @param props.children - The label.
+ * @param props.ref - The anchor's ref.
+ * @param props.onClick - The caller's click handler.
+ * @returns The link.
+ */
+function RouterLinkButton({
+  variant = ButtonVariant.Secondary,
+  size = ButtonSize.Medium,
+  className = "",
+  children,
+  ref,
+  onClick,
+  ...linkProps
+}: Readonly<RouterLinkButtonProps>): JSX.Element {
+  const isUnavailable = isAriaDisabled(linkProps["aria-disabled"])
+
+  return (
+    <Link
+      {...linkProps}
+      ref={ref}
+      onClick={guardClick(isUnavailable, onClick)}
+      className={buttonClassName(
+        variant,
+        size,
+        isUnavailable ? "unavailable" : "usable",
+        className,
+      )}
+    >
+      {children}
+    </Link>
+  )
+}
+
+/**
+ * A button-styled external link that opens in a new tab with an arrow and
+ * says so to screen readers. It blocks the click while `aria-disabled` marks
+ * it unavailable.
+ *
+ * @param props - The link props.
+ * @param props.variant - The look.
+ * @param props.size - The size.
+ * @param props.className - Extra classes.
+ * @param props.children - The label.
+ * @param props.ref - The anchor's ref.
+ * @param props.onClick - The caller's click handler.
+ * @returns The link.
+ */
+function ExternalLinkButton({
+  variant = ButtonVariant.Secondary,
+  size = ButtonSize.Medium,
+  className = "",
+  children,
+  ref,
+  onClick,
+  ...anchorProps
+}: Readonly<ExternalLinkButtonProps>): JSX.Element {
+  const { t } = useTranslation()
+  const isUnavailable = isAriaDisabled(anchorProps["aria-disabled"])
+
+  return (
+    <a
+      {...anchorProps}
+      ref={ref}
+      target="_blank"
+      rel="noreferrer"
+      onClick={guardClick(isUnavailable, onClick)}
+      className={`group ${buttonClassName(
+        variant,
+        size,
+        isUnavailable ? "unavailable" : "usable",
+        className,
+      )}`}
+    >
+      {children}
+      <span className="sr-only">{t("common.opensInNewTab")}</span>
+      <span
+        aria-hidden="true"
+        className="inline-block transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-0"
+      >
+        ↗
+      </span>
+    </a>
+  )
+}
+
+/**
+ * Tells a native button's state. Unavailable wins over loading, which only
+ * matters while usable.
+ *
+ * @param isUnavailable - Whether `disabled` or `aria-disabled` is set.
+ * @param loading - Whether the button is loading.
+ * @returns The state.
+ */
+function nativeButtonState(
+  isUnavailable: boolean,
+  loading: boolean,
+): "unavailable" | "loading" | "usable" {
+  if (isUnavailable) {
+    return "unavailable"
+  }
+  return loading ? "loading" : "usable"
+}
+
+/**
+ * A `<button>`. `loading` sets `aria-busy`, blocks the click the
+ * `aria-disabled` way and, with `loadingText`, swaps the label for a spinner
+ * and that text in the same grid cell, so the width doesn't jump.
+ *
+ * @param props - The button props.
+ * @param props.variant - The look.
+ * @param props.size - The size.
+ * @param props.className - Extra classes.
+ * @param props.children - The label.
+ * @param props.ref - The button's ref.
+ * @param props.loading - Whether the button is busy.
+ * @param props.loadingText - The label shown with the spinner while loading.
+ * @param props.type - The button type, `button` by default.
+ * @param props.disabled - Whether the button is disabled.
+ * @param props.onClick - The caller's click handler.
+ * @returns The button.
+ */
+function NativeButton({
+  variant = ButtonVariant.Secondary,
+  size = ButtonSize.Medium,
+  className = "",
+  children,
+  ref,
+  loading = false,
+  loadingText,
+  type = "button",
+  disabled,
+  onClick,
+  ...buttonProps
+}: Readonly<NativeButtonProps>): JSX.Element {
+  const isUnavailable =
+    Boolean(disabled) || isAriaDisabled(buttonProps["aria-disabled"])
+
+  return (
+    <button
+      {...buttonProps}
+      ref={ref}
+      type={type}
+      disabled={disabled}
+      aria-disabled={loading || buttonProps["aria-disabled"] || undefined}
+      aria-busy={loading || undefined}
+      onClick={guardClick(loading || isUnavailable, onClick)}
+      className={buttonClassName(
+        variant,
+        size,
+        nativeButtonState(isUnavailable, loading),
+        className,
+      )}
+    >
+      {loadingText === undefined ? (
+        children
+      ) : (
+        <span className="grid">
+          <span className={`${labelLayer} ${loading ? "invisible" : ""}`}>
+            {children}
+          </span>
+          <span className={`${labelLayer} ${loading ? "" : "invisible"}`}>
+            <span
+              aria-hidden="true"
+              className={`size-3.5 shrink-0 rounded-full border-2 border-current border-r-transparent ${loading ? "animate-cv-spin motion-reduce:animate-cv-spin-slow" : ""}`}
+            />
+            {loadingText}
+          </span>
+        </span>
+      )}
+    </button>
+  )
+}
+
+/**
  * The app's one button: a `<button>` by default, a React Router link with
  * `to`, or an external link with `href`, which opens in a new tab with an
  * arrow and says so to screen readers. Every variant shares the press
@@ -225,160 +427,11 @@ function isAriaDisabled(value: AriaAttributes["aria-disabled"]): boolean {
  * @returns The button or link.
  */
 export default function Button(props: ButtonProps): JSX.Element {
-  const { t } = useTranslation()
-
   if ("to" in props) {
-    const {
-      variant = ButtonVariant.Secondary,
-      size = ButtonSize.Medium,
-      className = "",
-      children,
-      ref,
-      onClick,
-      ...linkProps
-    } = props
-    const isUnavailable = isAriaDisabled(linkProps["aria-disabled"])
-
-    /**
-     * Follows the link unless it is marked unavailable.
-     *
-     * @param event - The click.
-     */
-    const handleClick = (event: MouseEvent<HTMLAnchorElement>): void => {
-      if (isUnavailable) {
-        event.preventDefault()
-        return
-      }
-      onClick?.(event)
-    }
-
-    return (
-      <Link
-        {...linkProps}
-        ref={ref}
-        onClick={handleClick}
-        className={buttonClassName(
-          variant,
-          size,
-          isUnavailable ? "unavailable" : "usable",
-          className,
-        )}
-      >
-        {children}
-      </Link>
-    )
+    return <RouterLinkButton {...props} />
   }
-
   if ("href" in props) {
-    const {
-      variant = ButtonVariant.Secondary,
-      size = ButtonSize.Medium,
-      className = "",
-      children,
-      ref,
-      onClick,
-      ...anchorProps
-    } = props
-    const isUnavailable = isAriaDisabled(anchorProps["aria-disabled"])
-
-    /**
-     * Opens the link unless it is marked unavailable.
-     *
-     * @param event - The click.
-     */
-    const handleClick = (event: MouseEvent<HTMLAnchorElement>): void => {
-      if (isUnavailable) {
-        event.preventDefault()
-        return
-      }
-      onClick?.(event)
-    }
-
-    return (
-      <a
-        {...anchorProps}
-        ref={ref}
-        target="_blank"
-        rel="noreferrer"
-        onClick={handleClick}
-        className={`group ${buttonClassName(
-          variant,
-          size,
-          isUnavailable ? "unavailable" : "usable",
-          className,
-        )}`}
-      >
-        {children}
-        <span className="sr-only">{t("common.opensInNewTab")}</span>
-        <span
-          aria-hidden="true"
-          className="inline-block transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-0"
-        >
-          ↗
-        </span>
-      </a>
-    )
+    return <ExternalLinkButton {...props} />
   }
-
-  const {
-    variant = ButtonVariant.Secondary,
-    size = ButtonSize.Medium,
-    className = "",
-    children,
-    ref,
-    loading = false,
-    loadingText,
-    type = "button",
-    disabled,
-    onClick,
-    ...buttonProps
-  } = props
-  const isUnavailable =
-    Boolean(disabled) || isAriaDisabled(buttonProps["aria-disabled"])
-  /** Unavailable wins over loading, which only matters while usable. */
-  const state = isUnavailable ? "unavailable" : loading ? "loading" : "usable"
-
-  /**
-   * Runs the click unless the button is loading or marked unavailable. A
-   * submit button's form is then not submitted either.
-   *
-   * @param event - The click.
-   */
-  const handleClick = (event: MouseEvent<HTMLButtonElement>): void => {
-    if (loading || isUnavailable) {
-      event.preventDefault()
-      return
-    }
-    onClick?.(event)
-  }
-
-  return (
-    <button
-      {...buttonProps}
-      ref={ref}
-      type={type}
-      disabled={disabled}
-      aria-disabled={loading || buttonProps["aria-disabled"] || undefined}
-      aria-busy={loading || undefined}
-      onClick={handleClick}
-      className={buttonClassName(variant, size, state, className)}
-    >
-      {loadingText === undefined ? (
-        children
-      ) : (
-        <span className="grid">
-          <span className={`${labelLayer} ${loading ? "invisible" : ""}`}>
-            {children}
-          </span>
-          <span className={`${labelLayer} ${loading ? "" : "invisible"}`}>
-            <span
-              aria-hidden="true"
-              className={`size-3.5 shrink-0 rounded-full border-2 border-current border-r-transparent ${loading ? "animate-cv-spin motion-reduce:animate-cv-spin-slow" : ""}`}
-            />
-            {loadingText}
-          </span>
-        </span>
-      )}
-    </button>
-  )
+  return <NativeButton {...props} />
 }

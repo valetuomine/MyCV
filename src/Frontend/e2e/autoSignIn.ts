@@ -64,11 +64,16 @@ async function describeStep(page: Page): Promise<string> {
       .first()
       .textContent({ timeout: 1_000 })
       .catch(() => null)) ?? ""
-  /** The heading without email addresses or extra whitespace. */
+  /**
+   * The heading without email addresses or extra whitespace. Each word with an
+   * `@` between two characters counts as an address, checked word by word
+   * because a regular expression across the whole heading backtracks.
+   */
   const safeHeading = heading
-    .replace(/\S+@\S+/g, "<email>")
-    .replace(/\s+/g, " ")
-    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => (/.@./.test(word) ? "<email>" : word))
+    .join(" ")
     .slice(0, 120)
   /** The host only: the path can hold a tenant ID and the query string a login hint. */
   const where = URL.canParse(page.url())

@@ -57,7 +57,7 @@ export default defineConfig<TestOptions>({
       },
       {
         name: provider.name,
-        testMatch: /.*\.spec\.ts/,
+        testMatch: /\.spec\.ts/,
         dependencies: [`${provider.name}-setup`],
         use,
       },

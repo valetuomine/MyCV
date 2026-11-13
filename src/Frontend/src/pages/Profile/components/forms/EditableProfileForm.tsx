@@ -62,7 +62,7 @@ export default function EditableProfileForm({
   profileId,
   pictureUrl,
   savedFullName,
-}: EditableProfileFormProps): JSX.Element {
+}: Readonly<EditableProfileFormProps>): JSX.Element {
   const { t } = useTranslation()
   const headingRef = useRef<HTMLHeadingElement>(null)
   const cancelButtonRef = useRef<HTMLButtonElement>(null)

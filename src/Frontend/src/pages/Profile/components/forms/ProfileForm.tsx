@@ -1,11 +1,22 @@
 import { skipToken } from "@reduxjs/toolkit/query"
+import type { TFunction } from "i18next"
 import { AnimatePresence, m as motion, type Transition } from "framer-motion"
-import { useCallback, useEffect, useMemo, useState, type JSX } from "react"
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type JSX,
+  type SubmitEventHandler,
+} from "react"
 import { FormProvider, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { useLocation, useNavigate } from "react-router-dom"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { getLinkSignInResult } from "../../../../auth/signInLocationState"
+import {
+  getLinkSignInResult,
+  type LinkSignInResult,
+} from "../../../../auth/signInLocationState"
 import useCanEditProfile from "../../../../auth/useCanEditProfile"
 import {
   useGetProfileAdminQuery,
@@ -37,9 +48,103 @@ interface ProfileFormProps {
 type SaveFailure =
   { reason: "missingId" } | { reason: "request"; error: unknown }
 
+/**
+ * Words a failed save.
+ *
+ * @param failure - Why the save failed.
+ * @param t - The translation function.
+ * @returns The message to show under the form.
+ */
+function describeSaveFailure(failure: SaveFailure, t: TFunction): string {
+  return failure.reason === "missingId"
+    ? t("profileForm.missingIdUpdate")
+    : getProfileFormError(failure.error, t("formErrors.update"), t)
+}
+
 const viewTransition: Transition = {
   duration: 0.25,
   ease: [0.23, 1, 0.32, 1],
+}
+
+interface EditViewProps {
+  adminQuery: ReturnType<typeof useGetProfileAdminQuery>
+  profileId: Profile["id"]
+  publicUrlSegment?: string
+  linkResult: LinkSignInResult | null
+  isSaving: boolean
+  saveFailure: SaveFailure | null
+  onSubmit: SubmitEventHandler<HTMLFormElement>
+  onCancel: () => void
+}
+
+/**
+ * The edit view: the form, with the owner's sign-in methods, once the admin
+ * profile has loaded, otherwise its loading or error status. It renders only
+ * while editing, so the CV view never builds its messages.
+ *
+ * @param props - The component props.
+ * @param props.adminQuery - The admin profile's query.
+ * @param props.profileId - The profile's ID, missing for a profile that can't be edited.
+ * @param props.publicUrlSegment - The CV's public URL segment, if known.
+ * @param props.linkResult - How adding a sign-in method ended, when the view opened on the way back from it.
+ * @param props.isSaving - Whether a save is in flight.
+ * @param props.saveFailure - Why the last save failed, if it did.
+ * @param props.onSubmit - Validates and saves the profile.
+ * @param props.onCancel - Discards the changes and leaves edit mode.
+ * @returns The edit form, or its loading or error status.
+ */
+function EditView({
+  adminQuery,
+  profileId,
+  publicUrlSegment,
+  linkResult,
+  isSaving,
+  saveFailure,
+  onSubmit,
+  onCancel,
+}: Readonly<EditViewProps>): JSX.Element {
+  const { t } = useTranslation()
+  const adminProfile = adminQuery.data
+
+  if (!adminProfile || !profileId) {
+    /** Why loading the admin profile failed, if it did. */
+    const adminLoadError = adminQuery.isError
+      ? getProfileFormError(adminQuery.error, t("formErrors.details"), t)
+      : undefined
+
+    return (
+      <ProfileFormStatus
+        error={profileId ? adminLoadError : t("profileForm.missingIdEdit")}
+        isLoading={adminQuery.isLoading}
+        onCancel={onCancel}
+      />
+    )
+  }
+
+  return (
+    <div className="grid gap-20">
+      <EditableProfileForm
+        onCancel={onCancel}
+        onSubmit={onSubmit}
+        isSaving={isSaving}
+        saveError={
+          saveFailure ? describeSaveFailure(saveFailure, t) : undefined
+        }
+        publicUrlSegment={publicUrlSegment}
+        profileId={profileId}
+        pictureUrl={adminProfile.pictureUrl}
+        savedFullName={adminProfile.fullName}
+      />
+      {adminProfile.isOwner && (
+        <SignInMethodsSection
+          publicUrlSegment={
+            publicUrlSegment ?? adminProfile.publicUrlSegment ?? undefined
+          }
+          linkResult={linkResult}
+        />
+      )}
+    </div>
+  )
 }
 
 /**
@@ -63,7 +168,7 @@ const viewTransition: Transition = {
 export default function ProfileForm({
   values,
   pdfPath,
-}: ProfileFormProps): JSX.Element {
+}: Readonly<ProfileFormProps>): JSX.Element {
   const { t } = useTranslation()
   const { canEdit, publicUrlSegment } = useCanEditProfile(values.id)
   const location = useLocation()
@@ -132,14 +237,6 @@ export default function ProfileForm({
     }
   })
 
-  /** The failed save's message, in the active language. */
-  const saveError =
-    saveFailure === null
-      ? undefined
-      : saveFailure.reason === "missingId"
-        ? t("profileForm.missingIdUpdate")
-        : getProfileFormError(saveFailure.error, t("formErrors.update"), t)
-
   /** Discards the changes and leaves edit mode. */
   const cancelEditing = (): void => {
     reset(formValues)
@@ -162,13 +259,6 @@ export default function ProfileForm({
    */
   const viewEntrance = isEditing || hasEdited ? { opacity: 0, y: 24 } : false
 
-  /** Why the edit form can't open: a missing ID or a failed admin load. */
-  const isError = !values.id
-    ? t("profileForm.missingIdEdit")
-    : profileAdminQuery.isError
-      ? getProfileFormError(profileAdminQuery.error, t("formErrors.details"), t)
-      : undefined
-
   return (
     <FormProvider {...profileForm}>
       <div className="grid w-full gap-8">
@@ -182,36 +272,16 @@ export default function ProfileForm({
             transition={viewTransition}
           >
             {isEditing ? (
-              profileAdminQuery.data && values.id ? (
-                <div className="grid gap-20">
-                  <EditableProfileForm
-                    onCancel={cancelEditing}
-                    onSubmit={saveProfile}
-                    isSaving={updateProfileState.isLoading}
-                    saveError={saveError}
-                    publicUrlSegment={publicUrlSegment}
-                    profileId={values.id}
-                    pictureUrl={profileAdminQuery.data.pictureUrl}
-                    savedFullName={profileAdminQuery.data.fullName}
-                  />
-                  {profileAdminQuery.data.isOwner && (
-                    <SignInMethodsSection
-                      publicUrlSegment={
-                        publicUrlSegment ??
-                        profileAdminQuery.data.publicUrlSegment ??
-                        undefined
-                      }
-                      linkResult={linkResult}
-                    />
-                  )}
-                </div>
-              ) : (
-                <ProfileFormStatus
-                  error={isError}
-                  isLoading={profileAdminQuery.isLoading}
-                  onCancel={cancelEditing}
-                />
-              )
+              <EditView
+                adminQuery={profileAdminQuery}
+                profileId={values.id}
+                publicUrlSegment={publicUrlSegment}
+                linkResult={linkResult}
+                isSaving={updateProfileState.isLoading}
+                saveFailure={saveFailure}
+                onSubmit={saveProfile}
+                onCancel={cancelEditing}
+              />
             ) : (
               <ReadOnlyProfileForm
                 values={values}

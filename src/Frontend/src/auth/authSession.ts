@@ -94,9 +94,11 @@ export function useAuthSession(): AuthSession {
     hasAbandonedSignInPopup,
   )
   const isBusy = inProgress !== InteractionStatus.None && !hasAbandonedPopup
+  /** The first signed-in Microsoft account, which stands in for the active one only without a Google session. */
+  const fallbackAccount = googleSession ? null : accounts[0]
   /** The active Microsoft account, or the first signed-in one when there is no Google session. */
   const msalAccount = accounts[0]
-    ? (instance.getActiveAccount() ?? (googleSession ? null : accounts[0]))
+    ? (instance.getActiveAccount() ?? fallbackAccount)
     : null
 
   if (msalAccount) {

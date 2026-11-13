@@ -1,4 +1,5 @@
 import { useRef, type JSX, type ReactNode } from "react"
+import type { TFunction } from "i18next"
 import { useTranslation } from "react-i18next"
 import { ButtonVariant, PdfLoadStatus } from "../../../types"
 import Button from "../../components/Button"
@@ -9,6 +10,24 @@ interface ProfilePdfFrameProps {
   url: string
   label: string
   children: ReactNode
+}
+
+/**
+ * Describes a load status for the status region: empty at first, for a
+ * failure, which has its own alert, and without a viewer, where no PDF appears
+ * to announce.
+ *
+ * @param status - Where the PDF's load is.
+ * @param t - Translates a key into the active language.
+ * @returns The preparing or ready text, or an empty string for a status that
+ *   announces nothing.
+ */
+function describeAnnouncement(status: PdfLoadStatus, t: TFunction): string {
+  if (status === PdfLoadStatus.Pending) {
+    return t("pdf.preparing")
+  }
+
+  return status === PdfLoadStatus.Ready ? t("pdf.ready") : ""
 }
 
 /**
@@ -35,7 +54,7 @@ export default function ProfilePdfFrame({
   url,
   label,
   children,
-}: ProfilePdfFrameProps): JSX.Element {
+}: Readonly<ProfilePdfFrameProps>): JSX.Element {
   const { t } = useTranslation()
   const { status, retry } = useProfilePdfLoad(url)
   const frameRef = useRef<HTMLDivElement>(null)
@@ -45,16 +64,8 @@ export default function ProfilePdfFrame({
   /** Whether the `<object>` is in place, showing the PDF or its fallback. */
   const showsObject =
     status === PdfLoadStatus.Ready || status === PdfLoadStatus.NoViewer
-  /**
-   * The status region's text: empty at first, for a failure, which has its own
-   * alert, and without a viewer, where no PDF appears to announce.
-   */
-  const announcement =
-    status === PdfLoadStatus.Pending
-      ? t("pdf.preparing")
-      : status === PdfLoadStatus.Ready
-        ? t("pdf.ready")
-        : ""
+  /** The status region's text in the active language, or empty without one. */
+  const announcement = describeAnnouncement(status, t)
 
   /** Loads the PDF again, keeping focus in the frame. */
   const handleRetry = (): void => {

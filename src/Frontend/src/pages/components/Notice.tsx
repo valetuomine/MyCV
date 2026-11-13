@@ -25,7 +25,7 @@ export default function Notice({
   noticeKey,
   onDismiss,
   children,
-}: NoticeProps): JSX.Element {
+}: Readonly<NoticeProps>): JSX.Element {
   useEffect(() => {
     if (!noticeKey) {
       return

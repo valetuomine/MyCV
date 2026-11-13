@@ -22,7 +22,7 @@ export default function ProfileFormStatus({
   error,
   isLoading,
   onCancel,
-}: ProfileFormStatusProps): JSX.Element {
+}: Readonly<ProfileFormStatusProps>): JSX.Element {
   const { t } = useTranslation()
 
   return (

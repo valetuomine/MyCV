@@ -30,10 +30,12 @@ export function measureKerning(words: string[][]): number[][] | null {
   const width = (text: string): number => context.measureText(text).width
   return words.map((letters) =>
     letters.map((letter, index) => {
+      if (index === letters.length - 1) {
+        return 0
+      }
+
       const next = letters[index + 1]
-      return next === undefined
-        ? 0
-        : (width(letter + next) - width(letter) - width(next)) / 100
+      return (width(letter + next) - width(letter) - width(next)) / 100
     }),
   )
 }
