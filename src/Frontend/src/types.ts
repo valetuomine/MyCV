@@ -130,14 +130,6 @@ export const ActivityEvent = {
 
 export type ActivityEvent = (typeof ActivityEvent)[keyof typeof ActivityEvent]
 
-export const IdleMessageType = {
-  Activity: "activity",
-  SignOut: "signOut",
-} as const
-
-export type IdleMessageType =
-  (typeof IdleMessageType)[keyof typeof IdleMessageType]
-
 export const SignInMethod = {
   Microsoft: "microsoft",
   Google: "google",

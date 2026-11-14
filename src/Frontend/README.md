@@ -11,8 +11,7 @@ The Playwright tests in `e2e/` check the signed-in views as two test users, one 
 1. Create the test users. Both have "Playwright" in their display name, and neither has a role:
    - **Microsoft:** a user in the app's Entra tenant, without the `CvAdmin` role. If the app's enterprise application requires assignment, assign the user to it without a role. Sign in with the user's user principal name; no mailbox is needed.
    - **Google:** a Google account. Add its address to the API's user secrets under the next free index of `Authentication:Google:AllowedSignUpEmails`, for example `dotnet user-secrets set "Authentication:Google:AllowedSignUpEmails:1" "<address>" --project src/Backend/CV.WebApi`, and restart the API.
-2. Add `VITE_AUTH_STORAGE=local` to `src/Frontend/.env.development.local` and restart the dev server. It keeps the sign-in sessions in local storage, which the saved sessions hold. Only the dev server honours the variable: the app ignores it in `npm run build`, so a built app always keeps sessions in session storage and a session never outlives its tab.
-3. Install Playwright's browser: `npx playwright install chromium`. The scripts need Node 22.18 or newer, which runs TypeScript files directly. The Google session is recorded in Chrome, because Google's sign-in page refuses Playwright's own Chromium.
+2. Install Playwright's browser: `npx playwright install chromium`. The scripts need Node 22.18 or newer, which runs TypeScript files directly. The Google session is recorded in Chrome, because Google's sign-in page refuses Playwright's own Chromium.
 
 ### Recording the sessions
 
@@ -30,7 +29,7 @@ The Google session is recorded in a persistent Chrome profile outside the reposi
 
 ### Running the tests
 
-Start the API and its database, then run `npm run e2e`. The API check before the run doesn't reach the database, so a missing database shows only when a test saves. Playwright uses the frontend on port 3000, or starts one with `VITE_AUTH_STORAGE=local` when none runs. Before the tests, and before `e2e:auth` opens a browser, the frontend's own settings are checked: it must be the dev server, keep sessions in local storage, and send API requests to this machine. Before each sign-in method's tests, its setup project checks that the session still signs in, creates the test CV when it is missing, and saves the session again with the tokens the app renewed. Reports, traces and screenshots go to `e2e/.output/` (git-ignored). With `CI` set, failed tests are retried, a JUnit report is written to `e2e/.output/junit.xml`, and Playwright always starts its own frontend, so port 3000 must be free.
+Start the API and its database, then run `npm run e2e`. The API check before the run doesn't reach the database, so a missing database shows only when a test saves. Playwright uses the frontend on port 3000, or starts one when none runs. Before the tests, and before `e2e:auth` opens a browser, the frontend's own settings are checked: it must be the dev server and send API requests to this machine. Before each sign-in method's tests, its setup project checks that the session still signs in, creates the test CV when it is missing, and saves the session again with the tokens the app renewed. Reports, traces and screenshots go to `e2e/.output/` (git-ignored). With `CI` set, failed tests are retried, a JUnit report is written to `e2e/.output/junit.xml`, and Playwright always starts its own frontend, so port 3000 must be free.
 
 | Variable           | Default                 |
 | ------------------ | ----------------------- |

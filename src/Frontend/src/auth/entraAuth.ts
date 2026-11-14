@@ -17,7 +17,7 @@ import {
   readLinkSignInMarker,
   storeLastSignInMethod,
 } from "./adminLoginStorage"
-import { isLocalAuthStorage } from "./authStorage"
+import { browserSessionId } from "./authStorage"
 import { microsoftSignInParameters } from "./signInLanguage"
 import { isLinkPopupState } from "./signInPopupState"
 import { RoutePaths } from "../routePaths"
@@ -55,9 +55,11 @@ export const signInPopupTimeoutMs = 10 * 60 * 1000
 /**
  * The app's MSAL client. Without configuration it falls back to a placeholder
  * client ID and the multi-tenant authority, so the app still loads and the
- * sign-in routes explain that sign-in isn't set up. The cache stays in
- * session storage unless the Playwright tests' dev server moves it to local
- * storage (`isLocalAuthStorage`).
+ * sign-in routes explain that sign-in isn't set up. The cache is in local
+ * storage, so every tab of the app shares the sign-in. MSAL encrypts it with
+ * a key in a cookie that ends with the browser session, so the session never
+ * outlives the browser. When cookies are blocked, the key couldn't be kept,
+ * so the cache stays in the tab's session storage (`browserSessionId`).
  */
 export const msalInstance = new PublicClientApplication({
   auth: {
@@ -68,7 +70,7 @@ export const msalInstance = new PublicClientApplication({
     redirectUri,
   },
   cache: {
-    cacheLocation: isLocalAuthStorage
+    cacheLocation: browserSessionId
       ? BrowserCacheLocation.LocalStorage
       : BrowserCacheLocation.SessionStorage,
   },
@@ -111,6 +113,25 @@ let linkRedirectResult: AuthenticationResult | null = null
  * recognised by their linking state, so their `LOGIN_SUCCESS` is skipped.
  */
 const linkPopupCorrelationIds = new Set<string>()
+/**
+ * The correlation IDs of the tokens this tab acquired. MSAL also passes on
+ * the `LOGIN_SUCCESS` of the app's other tabs, which never send their
+ * `ACQUIRE_TOKEN_SUCCESS`, so a login without one here is another tab's: that
+ * tab has already made its account active in the shared cache, and a linking
+ * popup's account must not become active here.
+ */
+const localTokenCorrelationIds = new Set<string>()
+/** How often a tab checks for an account that another tab signed in. */
+const sharedAccountPollMs = 100
+/** How long a tab waits for an account that another tab signed in. */
+const sharedAccountWaitMs = 5000
+/**
+ * Counts the accounts that other tabs signed in and that this tab has taken
+ * into its cache, so `useAuthSession` reads the accounts again.
+ */
+let sharedAccountsVersion = 0
+/** Components subscribed to `sharedAccountsVersion` through `useSyncExternalStore`. */
+const sharedAccountsListeners = new Set<() => void>()
 
 /**
  * A linking marker left by a redirect the user never finished, for example
@@ -142,12 +163,91 @@ function isLinkLogin(correlationId: string): boolean {
 }
 
 /**
+ * Remembers a token this tab acquired with a redirect or popup, whose
+ * `LOGIN_SUCCESS` follows, and whether it adds a sign-in method to the CV:
+ * a redirect by the linking marker's ID in `state`, a popup by its linking
+ * state.
+ *
+ * @param message - The `ACQUIRE_TOKEN_SUCCESS` event with the full result.
+ */
+function rememberInteractiveToken(message: EventMessage): void {
+  const result = message.payload as AuthenticationResult
+  if (message.interactionType !== InteractionType.Silent) {
+    localTokenCorrelationIds.add(message.correlationId)
+  }
+  if (message.interactionType === InteractionType.Redirect) {
+    const linkMarker = readLinkSignInMarker()
+    if (linkMarker && result.state === linkMarker.id) {
+      linkRedirectResult = result
+    }
+  } else if (
+    message.interactionType === InteractionType.Popup &&
+    isLinkPopupState(result.state)
+  ) {
+    linkPopupCorrelationIds.add(message.correlationId)
+  }
+}
+
+/**
+ * Waits until an account that another tab signed in is in this tab's cache,
+ * then notifies `subscribeSharedAccounts`. MSAL passes the other tab's
+ * `LOGIN_SUCCESS` on before this tab has decrypted the shared cache, and
+ * msal-react reads the accounts only on MSAL's events, so without this the
+ * open tab would stay signed out until it reloads.
+ *
+ * @param account - The account from the other tab's `LOGIN_SUCCESS`.
+ */
+function waitForSharedAccount(account: AccountInfo): void {
+  /** When to stop waiting for the account. */
+  const deadline = Date.now() + sharedAccountWaitMs
+
+  /** Checks the cache for the account and checks again until the deadline. */
+  const check = (): void => {
+    const isCached = msalInstance
+      .getAllAccounts()
+      .some((cached) => cached.homeAccountId === account.homeAccountId)
+    if (isCached) {
+      sharedAccountsVersion += 1
+      sharedAccountsListeners.forEach((listener) => listener())
+    } else if (Date.now() < deadline) {
+      setTimeout(check, sharedAccountPollMs)
+    }
+  }
+
+  check()
+}
+
+/**
+ * Subscribes to the accounts that other tabs sign in, once this tab has
+ * them in its cache.
+ *
+ * @param listener - Called whenever such an account is cached.
+ * @returns A function that unsubscribes the listener.
+ */
+export function subscribeSharedAccounts(listener: () => void): () => void {
+  sharedAccountsListeners.add(listener)
+  return () => sharedAccountsListeners.delete(listener)
+}
+
+/**
+ * Reads how many accounts from other tabs this tab has cached, for
+ * `useSyncExternalStore`.
+ *
+ * @returns The count, 0 until another tab signs in.
+ */
+export function getSharedAccountsVersion(): number {
+  return sharedAccountsVersion
+}
+
+/**
  * Makes the signed-in account active after a successful login, remembers
  * Microsoft as the last sign-in method and clears the credential prompt that
  * a sign-out required. A redirect or popup that adds a sign-in method is
  * kept apart instead, so the account being added never becomes the session:
  * the redirect by the linking marker's ID in `state`, the popup by its
- * linking state. Records the error when a redirect sign-in fails, and
+ * linking state. Another tab's login, which MSAL passes on, is left to that
+ * tab, and this tab only waits until its account is cached
+ * (`waitForSharedAccount`). Records the error when a redirect sign-in fails, and
  * forgets a timed-out silent renewal once a sign-in or token succeeds.
  *
  * @param message - The MSAL event. `LOGIN_SUCCESS` carries the account, and
@@ -165,26 +265,15 @@ function handleMsalEvent(message: EventMessage): void {
     message.eventType === EventType.ACQUIRE_TOKEN_SUCCESS &&
     message.payload
   ) {
-    const result = message.payload as AuthenticationResult
-    if (message.interactionType === InteractionType.Redirect) {
-      const linkMarker = readLinkSignInMarker()
-      if (linkMarker && result.state === linkMarker.id) {
-        linkRedirectResult = result
-      }
-    } else if (
-      message.interactionType === InteractionType.Popup &&
-      isLinkPopupState(result.state)
-    ) {
-      linkPopupCorrelationIds.add(message.correlationId)
+    rememberInteractiveToken(message)
+  } else if (message.eventType === EventType.LOGIN_SUCCESS && message.payload) {
+    if (!localTokenCorrelationIds.delete(message.correlationId)) {
+      waitForSharedAccount(message.payload as AccountInfo)
+    } else if (!isLinkLogin(message.correlationId)) {
+      msalInstance.setActiveAccount(message.payload as AccountInfo)
+      storeLastSignInMethod(SignInMethod.Microsoft)
+      clearSignInPromptRequired()
     }
-  } else if (
-    message.eventType === EventType.LOGIN_SUCCESS &&
-    message.payload &&
-    !isLinkLogin(message.correlationId)
-  ) {
-    msalInstance.setActiveAccount(message.payload as AccountInfo)
-    storeLastSignInMethod(SignInMethod.Microsoft)
-    clearSignInPromptRequired()
   } else if (
     message.eventType === EventType.ACQUIRE_TOKEN_FAILURE &&
     message.interactionType === InteractionType.Redirect

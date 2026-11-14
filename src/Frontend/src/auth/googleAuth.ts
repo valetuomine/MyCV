@@ -2,7 +2,11 @@ import {
   clearSignInPromptRequired,
   storeLastSignInMethod,
 } from "./adminLoginStorage"
-import { getAuthSessionStorage } from "./authStorage"
+import {
+  getAuthSessionStorage,
+  googleSessionKey,
+  readBrowserSessionCookie,
+} from "./authStorage"
 import { signInLanguage } from "./signInLanguage"
 import { RoutePaths } from "../routePaths"
 import { SignInFailure, SignInMethod } from "../types"
@@ -26,11 +30,13 @@ const tokenExpiryMarginMs = 60 * 1000
 /** Session-storage key for the sign-in request waiting for Google's response. */
 const pendingRequestKey = "mycv-google-sign-in-request"
 /**
- * Storage key for the signed-in Google session. Session storage, like MSAL's
- * cache, so the token never outlives the tab, except on the Playwright tests'
- * dev server, which keeps both in local storage (`getAuthSessionStorage`).
+ * Storage key for the signed-in Google session. Local storage, like MSAL's
+ * cache, so every tab of the app shares the sign-in, and the session carries
+ * the browser session's ID, so it never outlives the browser
+ * (`getAuthSessionStorage`). A new browser session removes it before this
+ * module reads it (`googleSessionKey`).
  */
-const sessionKey = "mycv-google-session"
+const sessionKey = googleSessionKey
 
 /** The sign-in request stored before the redirect to Google. */
 interface PendingGoogleRequest {
@@ -48,6 +54,11 @@ export interface GoogleSession {
   exp: number
   name?: string
   email?: string
+}
+
+/** The Google session as stored, tied to the browser session that stored it. */
+interface StoredGoogleSession extends GoogleSession {
+  browserSession: string | null
 }
 
 /** The claims that the browser checks in Google's ID token. */
@@ -119,11 +130,37 @@ function readSessionJson<T>(
   }
 }
 
+/**
+ * Reads the stored Google session and removes one that another browser
+ * session stored, so a session never survives closing the browser.
+ *
+ * @returns The session of this browser session, or null.
+ */
+function readStoredGoogleSession(): GoogleSession | null {
+  const stored = readSessionJson<StoredGoogleSession>(
+    sessionKey,
+    getAuthSessionStorage(),
+  )
+  if (!stored) {
+    return null
+  }
+
+  if (stored.browserSession !== readBrowserSessionCookie()) {
+    getAuthSessionStorage().removeItem(sessionKey)
+    return null
+  }
+
+  return {
+    idToken: stored.idToken,
+    sub: stored.sub,
+    exp: stored.exp,
+    name: stored.name,
+    email: stored.email,
+  }
+}
+
 /** The signed-in Google session, or null. */
-let googleSession = readSessionJson<GoogleSession>(
-  sessionKey,
-  getAuthSessionStorage(),
-)
+let googleSession = readStoredGoogleSession()
 /** Components subscribed to `googleSession` through `useSyncExternalStore`. */
 const googleSessionListeners = new Set<() => void>()
 
@@ -135,12 +172,38 @@ const googleSessionListeners = new Set<() => void>()
 function setGoogleSession(session: GoogleSession | null): void {
   googleSession = session
   if (session) {
-    getAuthSessionStorage().setItem(sessionKey, JSON.stringify(session))
+    getAuthSessionStorage().setItem(
+      sessionKey,
+      JSON.stringify({
+        ...session,
+        browserSession: readBrowserSessionCookie(),
+      } satisfies StoredGoogleSession),
+    )
   } else {
     getAuthSessionStorage().removeItem(sessionKey)
   }
   googleSessionListeners.forEach((listener) => listener())
 }
+
+/**
+ * Takes in a sign-in or sign-out from another tab of the app, which changed
+ * the shared session in local storage, and notifies every subscriber.
+ *
+ * @param event - The storage event from another tab.
+ */
+function handleSharedSessionChange(event: StorageEvent): void {
+  if (
+    event.storageArea !== getAuthSessionStorage() ||
+    (event.key !== sessionKey && event.key !== null)
+  ) {
+    return
+  }
+
+  googleSession = readStoredGoogleSession()
+  googleSessionListeners.forEach((listener) => listener())
+}
+
+window.addEventListener("storage", handleSharedSessionChange)
 
 /**
  * Subscribes to changes of the Google session.

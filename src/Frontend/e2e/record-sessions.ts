@@ -19,13 +19,7 @@ import {
   saveCredentialsHint,
 } from "./credentials.ts"
 import { assertTestDevServer } from "./devServer.ts"
-import {
-  baseURL,
-  devEnvFile,
-  isCI,
-  providers,
-  type E2EProvider,
-} from "./settings.ts"
+import { baseURL, isCI, providers, type E2EProvider } from "./settings.ts"
 import { adminSignedInButton } from "./adminSignedIn.ts"
 import { assertTestAccount } from "./testAccount.ts"
 
@@ -178,7 +172,7 @@ async function saveSession(page: Page, provider: E2EProvider): Promise<void> {
   )
   if (!isStoredLocally) {
     throw new Error(
-      `The app kept the ${provider.label} session in session storage. Set VITE_AUTH_STORAGE=local in ${devEnvFile} and restart the dev server.`,
+      `The app kept the ${provider.label} session in session storage, which it does only when the browser refuses its cookies. Allow cookies for ${baseURL} and sign in again.`,
     )
   }
 
@@ -328,9 +322,9 @@ async function recordAutomatically(
  * session in its persistent Chrome profile. The sign-in methods are recorded
  * one after another on purpose: their sign-in windows must never be open at
  * the same time, so the chain must not become a `Promise.all`. It refuses in CI, which uses a mock
- * identity provider instead. The frontend must already run on `baseURL` with
- * VITE_AUTH_STORAGE=local, which is checked before any browser opens, so a
- * sign-in is never lost to it.
+ * identity provider instead. The frontend's dev server must already run on
+ * `baseURL`, which is checked before any browser opens, so a sign-in is never
+ * lost to it.
  */
 async function main(): Promise<void> {
   const args = process.argv.slice(2)

@@ -122,8 +122,5 @@ export const providers: E2EProvider[] = [
   },
 ]
 
-/** Where a developer keeps `VITE_AUTH_STORAGE=local`: read by the dev server only, never by `vite build`. */
-export const devEnvFile = "src/Frontend/.env.development.local"
-
 /** What to do when a saved session is missing or no longer signs in. */
-export const renewSessionHint = `Run \`npm --prefix src/Frontend run e2e:auth\` again. A dev server you started yourself at ${baseURL} needs VITE_AUTH_STORAGE=local in ${devEnvFile}.`
+export const renewSessionHint = `Run \`npm --prefix src/Frontend run e2e:auth\` again.`

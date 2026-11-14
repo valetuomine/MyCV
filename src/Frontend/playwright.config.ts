@@ -67,7 +67,6 @@ export default defineConfig<TestOptions>({
     command: `npm run dev -- --port ${basePort} --strictPort --no-open`,
     url: baseURL,
     reuseExistingServer: !isCI,
-    env: { VITE_AUTH_STORAGE: "local" },
     timeout: 60_000,
   },
 })

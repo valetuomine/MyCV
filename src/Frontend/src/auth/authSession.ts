@@ -11,10 +11,12 @@ import {
 import {
   acquireApiAuthenticationResult,
   apiScope,
+  getSharedAccountsVersion,
   isEntraConfigured,
   isTokenRedirectPending,
   msalInstance,
   redirectUri,
+  subscribeSharedAccounts,
   subscribeTokenRedirect,
   type ApiTokenRedirectOptions,
 } from "./entraAuth"
@@ -32,7 +34,7 @@ import {
 } from "./signInPopup"
 import { microsoftSignInParameters } from "./signInLanguage"
 import { RoutePaths } from "../routePaths"
-import { SignInMethod, type SignOutReason } from "../types"
+import { SignInMethod, SignOutReason } from "../types"
 
 /** True when at least one sign-in method is set up. */
 export const isSignInConfigured = isEntraConfigured || isGoogleConfigured
@@ -76,7 +78,10 @@ interface AuthSession {
  * Only one is active at a time, because starting a sign-in clears the other.
  * The one exception is a Microsoft account being added to a Google
  * session's CV: it is never made active, and the Google session wins until
- * linking removes the account. MSAL stays busy with a Microsoft popup that
+ * linking removes the account. msal-react reads the accounts only on MSAL's
+ * events, which can come before an account that another tab signed in is
+ * cached here, so the accounts are read again once it is
+ * (`subscribeSharedAccounts`). MSAL stays busy with a Microsoft popup that
  * was cancelled until the next popup or its timeout ends it, which doesn't
  * count as busy here.
  *
@@ -84,7 +89,14 @@ interface AuthSession {
  */
 export function useAuthSession(): AuthSession {
   const { t } = useTranslation()
-  const { accounts, inProgress, instance } = useMsal()
+  const { accounts: msalReactAccounts, inProgress, instance } = useMsal()
+  const sharedAccountsVersion = useSyncExternalStore(
+    subscribeSharedAccounts,
+    getSharedAccountsVersion,
+  )
+  /** The signed-in Microsoft accounts, read from the cache again once another tab has signed one in. */
+  const accounts =
+    sharedAccountsVersion > 0 ? instance.getAllAccounts() : msalReactAccounts
   const googleSession = useSyncExternalStore(
     subscribeGoogleSession,
     getGoogleSession,
@@ -258,6 +270,59 @@ const signOutHoldMs = 3500
 let signingOutReason: SignOutReason | null = null
 /** Components subscribed to `signingOutReason` through `useSyncExternalStore`. */
 const signingOutListeners = new Set<() => void>()
+/**
+ * The channel that carries a sign-out to every tab of the app, which share
+ * the session, or null in a browser without `BroadcastChannel`.
+ */
+const signOutChannel =
+  typeof BroadcastChannel === "undefined"
+    ? null
+    : new BroadcastChannel("mycv-auth-sign-out")
+
+/** A sign-out that another tab of the app sends, with why the user was signed out. */
+interface SharedSignOutMessage {
+  reason: SignOutReason
+}
+
+/**
+ * Tells whether a message from another tab is a sign-out.
+ *
+ * @param data - The message data.
+ * @returns True when the data is a `SharedSignOutMessage`.
+ */
+function isSharedSignOutMessage(data: unknown): data is SharedSignOutMessage {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    "reason" in data &&
+    Object.values<unknown>(SignOutReason).includes(data.reason)
+  )
+}
+
+/**
+ * Subscribes to the sign-outs of the app's other tabs, so this tab signs
+ * out too, with its own return page and the same notice.
+ *
+ * @param listener - Called with why the user was signed out in the other tab.
+ * @returns A function that unsubscribes the listener.
+ */
+export function subscribeSharedSignOut(
+  listener: (reason: SignOutReason) => void,
+): () => void {
+  /**
+   * Passes a valid sign-out message on to the listener.
+   *
+   * @param event - The message from another tab.
+   */
+  const handleMessage = (event: MessageEvent<unknown>): void => {
+    if (isSharedSignOutMessage(event.data)) {
+      listener(event.data.reason)
+    }
+  }
+
+  signOutChannel?.addEventListener("message", handleMessage)
+  return () => signOutChannel?.removeEventListener("message", handleMessage)
+}
 
 /**
  * Stores the reason of the sign-out under way and notifies every subscriber.
@@ -290,21 +355,26 @@ export function getSigningOutReason(): SignOutReason | null {
 }
 
 /**
- * Signs out within the app, without Microsoft's or Google's logout page:
- * clears MSAL's accounts and tokens and the Google session, then after
- * `signOutHoldMs` reloads Home, which returns to the CV and shows the
- * sign-out notice. The reload also drops any open editor and cached admin
- * data. The provider sessions stay, so the next sign-in asks for credentials
- * or an account instead (see `storeSignOutReturn`). Subscribers see the
- * sign-out as under way until the reload, or until it fails.
+ * The in-app sign-out under way, which a second call joins instead of
+ * starting another, or null. A failed sign-out clears it, so the next call
+ * tries again. A completed one keeps it, because the page is already leaving.
+ */
+let signOutInProgress: Promise<void> | null = null
+
+/**
+ * Runs one in-app sign-out for `signOutInApp`. The other tabs are told only
+ * once MSAL's cache is cleared, so a failure that leaves this tab signed in
+ * never signs them out.
  *
  * @param publicUrlSegment - The CV to return to, or undefined to stay on Home.
  * @param reason - Whether the user signed out or was signed out when idle.
+ * @param isShared - Whether to sign the other tabs out too.
  * @returns A promise that rejects, leaving the user signed in, when the cache can't be cleared.
  */
-export async function signOutInApp(
+async function runSignOut(
   publicUrlSegment: string | undefined,
   reason: SignOutReason,
+  isShared: boolean,
 ): Promise<void> {
   setSigningOutReason(reason)
   try {
@@ -313,8 +383,43 @@ export async function signOutInApp(
     setSigningOutReason(null)
     throw error
   }
+  if (isShared) {
+    signOutChannel?.postMessage({ reason } satisfies SharedSignOutMessage)
+  }
   clearGoogleSession()
   storeSignOutReturn(publicUrlSegment, reason)
   await new Promise((resolve) => setTimeout(resolve, signOutHoldMs))
   window.location.replace(RoutePaths.Home)
+}
+
+/**
+ * Signs out within the app, without Microsoft's or Google's logout page:
+ * clears MSAL's accounts and tokens and the Google session, then after
+ * `signOutHoldMs` reloads Home, which returns to the CV and shows the
+ * sign-out notice. The reload also drops any open editor and cached admin
+ * data. The provider sessions stay, so the next sign-in asks for credentials
+ * or an account instead (see `storeSignOutReturn`). Subscribers see the
+ * sign-out as under way until the reload, or until it fails. The app's tabs
+ * share the session, so once MSAL's cache is cleared the other tabs are told
+ * and sign out the same way (`subscribeSharedSignOut`). A call while a
+ * sign-out is under way joins it and gets its promise, with its reason and
+ * return page.
+ *
+ * @param publicUrlSegment - The CV to return to, or undefined to stay on Home.
+ * @param reason - Whether the user signed out or was signed out when idle.
+ * @param isShared - Whether to sign the other tabs out too, false when another tab asked for it.
+ * @returns A promise that rejects, leaving the user signed in, when the cache can't be cleared.
+ */
+export function signOutInApp(
+  publicUrlSegment: string | undefined,
+  reason: SignOutReason,
+  isShared = true,
+): Promise<void> {
+  signOutInProgress ??= runSignOut(publicUrlSegment, reason, isShared).catch(
+    (error: unknown) => {
+      signOutInProgress = null
+      throw error
+    },
+  )
+  return signOutInProgress
 }

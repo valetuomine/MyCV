@@ -1,8 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import { signOutInApp, useAuthSession } from "./authSession"
+import {
+  signOutInApp,
+  subscribeSharedSignOut,
+  useAuthSession,
+} from "./authSession"
 import { createActivityFilter } from "./idleActivity"
 import useSignOutReturnSegment from "./useSignOutReturnSegment"
-import { ActivityEvent, IdleMessageType, SignOutReason } from "../types"
+import { ActivityEvent, SignOutReason } from "../types"
 
 /** How long the app may go unused before the user is signed out. */
 const idleTimeoutMs = 5 * 60 * 1000
@@ -19,9 +23,8 @@ const lastActivityKey = "mycv-idle-last-activity"
 /** The least time between two shares of the activity with the other tabs. */
 const activityShareIntervalMs = 2000
 
-/** A message between the app's tabs about the idle session, with the sender's last activity. */
+/** A message between the app's tabs with the sender's last activity. */
 interface IdleMessage {
-  type: IdleMessageType
   at: number
 }
 
@@ -32,7 +35,7 @@ interface IdleSignOutState {
 }
 
 /**
- * Tells whether a message from another tab is an idle-session message.
+ * Tells whether a message from another tab carries its last activity.
  *
  * @param data - The message data.
  * @returns True when the data is an `IdleMessage`.
@@ -41,8 +44,6 @@ function isIdleMessage(data: unknown): data is IdleMessage {
   return (
     typeof data === "object" &&
     data !== null &&
-    "type" in data &&
-    Object.values<unknown>(IdleMessageType).includes(data.type) &&
     "at" in data &&
     typeof data.at === "number"
   )
@@ -98,9 +99,12 @@ function storeSharedActivity(at: number): void {
  * in all of them. Local storage keeps it too, because a tab the browser
  * froze or put to sleep can wake before the channel's queued messages
  * arrive, and every check reads it first. Signing in or loading the page
- * counts as activity and is shared at once. The idle sign-out message
- * carries the sender's last activity, and a tab with newer activity ignores
- * it. A user's own sign-out stays in its tab.
+ * counts as activity and is shared at once. The tabs also share the
+ * session, so any sign-out, idle or the user's own, signs out every tab
+ * (`subscribeSharedSignOut`), each with its own return page. That
+ * subscription doesn't depend on being signed in, because the shared cache
+ * can drop this tab's accounts before the sign-out's message arrives; a tab
+ * that was signed in since it loaded still signs out with the notice.
  *
  * @returns The seconds left while the warning should show, otherwise null, and a function that continues the session.
  */
@@ -109,11 +113,37 @@ export default function useIdleSignOut(): IdleSignOutState {
   const publicUrlSegment = useSignOutReturnSegment()
   const returnSegment = useRef(publicUrlSegment)
   const continueSessionRef = useRef<() => void>(() => undefined)
+  /** Whether someone was signed in since this page loaded, so another tab's sign-out still signs this one out after its accounts are gone. */
+  const wasSignedIn = useRef(false)
+  /** Signs this tab out for another tab's sign-out while the idle timer runs, hiding the warning, or null when it doesn't run. */
+  const signOutFromOtherTab = useRef<((reason: SignOutReason) => void) | null>(
+    null,
+  )
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null)
 
   useEffect(() => {
     returnSegment.current = publicUrlSegment
   }, [publicUrlSegment])
+
+  useEffect(() => {
+    if (isSignedIn) {
+      wasSignedIn.current = true
+    }
+  }, [isSignedIn])
+
+  useEffect(
+    () =>
+      subscribeSharedSignOut((reason) => {
+        if (signOutFromOtherTab.current) {
+          signOutFromOtherTab.current(reason)
+        } else if (wasSignedIn.current) {
+          signOutInApp(returnSegment.current, reason, false).catch(
+            () => undefined,
+          )
+        }
+      }),
+    [],
+  )
 
   useEffect(() => {
     if (!isSignedIn) {
@@ -151,21 +181,12 @@ export default function useIdleSignOut(): IdleSignOutState {
       return lastActivity + idleTimeoutMs - Date.now()
     }
 
-    /**
-     * Sends a message to the other tabs with this tab's last activity.
-     *
-     * @param type - Whether it shares the activity or signs the tabs out.
-     */
-    const postMessage = (type: IdleMessageType): void => {
-      channel?.postMessage({ type, at: lastActivity } satisfies IdleMessage)
-    }
-
     /** Shares the last activity with the other tabs. */
     const sendActivity = (): void => {
       pendingShare = undefined
       lastSharedAt = Date.now()
       storeSharedActivity(lastActivity)
-      postMessage(IdleMessageType.Activity)
+      channel?.postMessage({ at: lastActivity } satisfies IdleMessage)
     }
 
     /**
@@ -188,22 +209,23 @@ export default function useIdleSignOut(): IdleSignOutState {
     }
 
     /**
-     * Signs out for being idle and hides the warning. If the sign-out fails,
-     * the user stays signed in and the check tries again after
+     * Signs out and hides the warning: for being idle, which signs the other
+     * tabs out too, or because another tab signed out. If the sign-out
+     * fails, the user stays signed in and the check tries again after
      * `signOutRetryMs`.
      *
+     * @param reason - Why the user is signed out.
      * @param isShared - Whether to sign the other tabs out too, false when another tab asked for it.
      */
-    const signOut = async (isShared: boolean): Promise<void> => {
+    const signOut = async (
+      reason: SignOutReason,
+      isShared: boolean,
+    ): Promise<void> => {
       isSigningOut = true
       clearTimeout(nextCheck)
       setSecondsLeft(null)
-      if (isShared) {
-        postMessage(IdleMessageType.SignOut)
-      }
-
       try {
-        await signOutInApp(returnSegment.current, SignOutReason.Idle)
+        await signOutInApp(returnSegment.current, reason, isShared)
       } catch {
         isSigningOut = false
         nextCheck = setTimeout(check, signOutRetryMs)
@@ -225,7 +247,7 @@ export default function useIdleSignOut(): IdleSignOutState {
 
       const left = timeLeft()
       if (left <= 0) {
-        void signOut(true)
+        void signOut(SignOutReason.Idle, true)
         return
       }
 
@@ -279,9 +301,8 @@ export default function useIdleSignOut(): IdleSignOutState {
     }
 
     /**
-     * Follows the other tabs: newer activity restarts the idle time here
-     * too, and their idle sign-out signs this tab out, unless this tab was
-     * used after the sender's last activity.
+     * Follows the other tabs' activity: newer activity restarts the idle
+     * time here too.
      *
      * @param event - The message from another tab.
      */
@@ -291,11 +312,7 @@ export default function useIdleSignOut(): IdleSignOutState {
       }
 
       takeSharedActivity()
-      if (event.data.type === IdleMessageType.SignOut) {
-        if (event.data.at >= lastActivity) {
-          void signOut(false)
-        }
-      } else if (event.data.at > lastActivity) {
+      if (event.data.at > lastActivity) {
         lastActivity = Math.min(event.data.at, Date.now())
         check()
       }
@@ -315,6 +332,11 @@ export default function useIdleSignOut(): IdleSignOutState {
     )
     document.addEventListener("visibilitychange", handleVisibilityChange)
     channel?.addEventListener("message", handleMessage)
+    signOutFromOtherTab.current = (reason) => {
+      if (!isSigningOut) {
+        void signOut(reason, false)
+      }
+    }
     shareActivity(true)
     nextCheck = setTimeout(check, idleCheckIntervalMs)
 
@@ -325,6 +347,7 @@ export default function useIdleSignOut(): IdleSignOutState {
       document.removeEventListener("visibilitychange", handleVisibilityChange)
       channel?.removeEventListener("message", handleMessage)
       channel?.close()
+      signOutFromOtherTab.current = null
       clearTimeout(nextCheck)
       clearTimeout(pendingShare)
       continueSessionRef.current = () => undefined

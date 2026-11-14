@@ -103,6 +103,16 @@ export default defineConfig(
     },
   },
   {
+    extends: [js.configs.recommended, sonarjs.configs.recommended],
+    files: ["e2e/mcp/**/*.js"],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: "script",
+      globals: globals.browser,
+    },
+    rules: { "no-unused-expressions": "error" },
+  },
+  {
     files: ["e2e/**/*.ts"],
     plugins: { unicorn },
     rules: { "unicorn/prefer-top-level-await": "error" },

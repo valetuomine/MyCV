@@ -1,14 +1,13 @@
-import { baseURL, devEnvFile, parseLocalURL } from "./settings.ts"
+import { baseURL, parseLocalURL } from "./settings.ts"
 
 /** An app module that the dev server serves with its settings at the top. */
-const settingsProbePath = "/src/auth/authStorage.ts"
+const settingsProbePath = "/src/api/baseApi.ts"
 
 /** Matches the `import.meta.env` object that Vite's dev server writes into a module. */
 const servedSettingsPattern = /^import\.meta\.env = (\{.*?\});/m
 
 /** The dev server's settings that the tests depend on. */
 interface ServedSettings {
-  VITE_AUTH_STORAGE?: string
   VITE_API_BASE_URL?: string
 }
 
@@ -36,18 +35,12 @@ async function readServedSettings(): Promise<ServedSettings> {
 }
 
 /**
- * Checks before any sign-in or test that the running frontend can hold the
- * saved sessions and sends its API requests to this machine: it keeps the
- * sessions in local storage (`VITE_AUTH_STORAGE=local`), and its
- * `VITE_API_BASE_URL` is empty (the `/api` proxy to the local API) or local.
+ * Checks before any sign-in or test that the running frontend is the dev
+ * server and sends its API requests to this machine: its `VITE_API_BASE_URL`
+ * is empty (the `/api` proxy to the local API) or local.
  */
 export async function assertTestDevServer(): Promise<void> {
   const settings = await readServedSettings()
-  if (settings.VITE_AUTH_STORAGE?.trim().toLowerCase() !== "local") {
-    throw new Error(
-      `The frontend at ${baseURL} keeps the sign-in sessions in session storage, which saved sessions can't hold. Set VITE_AUTH_STORAGE=local in ${devEnvFile} and restart the dev server.`,
-    )
-  }
   const apiBaseUrl = settings.VITE_API_BASE_URL?.trim()
   if (apiBaseUrl) {
     parseLocalURL("The frontend's VITE_API_BASE_URL", apiBaseUrl)
