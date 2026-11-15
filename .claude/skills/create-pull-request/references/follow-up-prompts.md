@@ -10,7 +10,7 @@ End the report with prompts that the user copies into a new chat to continue the
 Act as <role>.
 Address the review comments on pull request <PR id> (User Story <id>: <title>).
 Read its active comment threads, fix each one on branch <branch>, and reply to each thread with what changed, using repo_pull_request_thread_write (action: reply, status: Closed) so the thread is closed and the reviewer does not have to resolve it.
-Ship the fixes with /create-pull-request: it pushes to the same branch and pull request.
+Ship the fixes with /create-pull-request: it reviews only what changed since the last push and pushes to the same branch and pull request.
 Reply to me in Finnish, even though this prompt is in English.
 ```
 

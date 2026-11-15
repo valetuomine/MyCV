@@ -8,7 +8,7 @@ model: sonnet
 
 # Create A Pull Request
 
-Use this workflow to take changes in the working tree all the way to an open pull request in the `MyCV` repository (Azure DevOps project `MyCV`). `<project url>` below is `projectUrl` in `.claude/azure-devops.json`. The user's manual steps are to decide which code review findings to fix and to review and complete the pull request, so every other step happens here without asking for approval in between. Stop and ask only when something below says so.
+Use this workflow to take changes in the working tree all the way to an open pull request in the `MyCV` repository (Azure DevOps project `MyCV`). `<project url>` below is `projectUrl` in `.claude/azure-devops.json`. The user's manual steps are to decide which code review findings to fix, to comment on the code before it is committed, and to review and complete the pull request, so every other step happens here without asking for approval in between. Stop and ask only when something below says so.
 
 ## Role
 
@@ -32,7 +32,7 @@ In a cloud session (`CLAUDE_CODE_REMOTE` is `true`), read [references/cloud-sess
 2. **Resolve the work item.** Read [references/work-item.md](references/work-item.md).
 3. **Check the current branch and create the feature branch.** If the current branch is wrong for this work, switch to `main` and pull from `origin` first. Read [references/branch.md](references/branch.md).
 4. **Run the checks.** Read [references/checks.md](references/checks.md) and run only the parts for the areas the change touches. Fix anything that fails before continuing.
-5. **Review the code** and wait for the user to choose which findings to fix. Read [references/code-review.md](references/code-review.md).
+5. **Review the code**, then wait for the user to choose which findings to fix and to give their own comments on the code. A follow-up push to an active pull request, and each round of fixes for the user's comments, gets a delta review of only the new changes, never a second full review. Read [references/code-review.md](references/code-review.md).
 6. **Commit** the changes as several focused commits. Read [references/commits.md](references/commits.md). Before the first commit, if the change touches code under `src` and `graphify-out/graph.json` exists, refresh the local code graph; see *Code graph* in [references/checks.md](references/checks.md).
 7. **Push** the branch: `git push -u origin <branch>`. The `origin` remote pushes only to Azure DevOps; the pipeline copies `main` to GitHub after the merge, so feature branches never go to GitHub. In a cloud session, push as `cloud-session.md` says instead.
 8. **Open the pull request** and post the reviewer comment. Read [references/pull-request.md](references/pull-request.md). If the branch already has an active pull request, as when fixing review comments, the push updates it: skip creating a new one. Then delete the cloud handoff page if the change came from one; see *Cloud Handoff* below.
@@ -57,7 +57,7 @@ End with:
 - The work item link, whether it was created or reused, and whether its description or `Toteutusohje` was added or updated
 - The branch name and the list of commits
 - The check results
-- The code review findings that were fixed and those left as they are
+- The code review findings that were fixed and those left as they are, and the user's own comments that were fixed
 - Any changes left uncommitted because they were unrelated
 - What was added to the production notes, if anything
 - Whether a cloud handoff page was deleted
