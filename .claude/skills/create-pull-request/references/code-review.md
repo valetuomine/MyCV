@@ -30,10 +30,10 @@ Read the size from the work item's `Effort` field (1–2 is XS–S, 3 or more is
 Tell the subagent to:
 
 - Follow the `code-review-and-quality` skill: the five axes, change sizing, dead code and dependency discipline.
-- Check the change against the acceptance criteria and the `Toteutusohje` you copied in, and against the decisions already made with the user, so it does not reopen them.
+- Run the **Spec** axis of *The Spec Axis* below on the acceptance criteria and the `Toteutusohje` you copied in, and respect the decisions already made with the user, so it does not reopen them.
 - Check the MyCV rules in `CLAUDE.md`: the *Never* list (secrets, personal data, real tenant and client IDs, links to local-only files) and the *Conventions* table, such as JSDoc-only frontend comments and English code and docs. For backend and client integration changes, also the patterns in `create-cv-skills`; for frontend UI, `DESIGN.md` and `setup-frontend`.
 - For C#, do not check the Sonar rules by hand: the Release build runs `SonarAnalyzer.CSharp` (`src/Directory.Build.props`) and fails on any finding, including S3776, S6960 and S6932. Only review a `[SuppressMessage]` that the change adds: it must carry a `Justification` that really explains the exception, and a silent suppression (`#pragma`, `.editorconfig`) is a **Should fix**.
-- Report in the categories and format of *Report The Findings* below; give it the table and the format.
+- Report in the categories and format of *Report The Findings* below; give it the category table, the finding format and the Spec table.
 - Not edit any file.
 
 The lint and build results are already known, so the review does not re-run them or report what they enforce.
@@ -51,15 +51,28 @@ A delta review looks only at what changed on top of code that was already review
 
 1. **Find the base.** On a follow-up push, it is `origin/<branch>`, so the delta also includes local commits that were not pushed yet. For a round of fixes in this chat, it is the review snapshot taken before the fixes (*Wait For The Decision*).
 2. **Show the delta.** Run `git add -N <files>` on new untracked files, then `git diff <base> --stat` and `git diff <base>`. If the delta is empty, there is nothing to review: say so and continue.
-3. **Collect what the delta answers.** On a follow-up push, read the pull request's comment threads with `repo_pull_request_thread` (the active ones, and the ones closed since the last push) and copy each comment with its file and line. For a round in this chat, copy the user's comments and the findings they chose to fix. Also copy the work item's acceptance criteria (`Valmis, kun`) and `Toteutusohje`, as context only.
+3. **Collect what the delta answers.** On a follow-up push, read the pull request's comment threads with `repo_pull_request_thread` (the active ones, and the ones closed since the last push) and copy each comment with its file and line. For a round in this chat, copy the user's comments and the findings they chose to fix. Also copy the work item's acceptance criteria (`Valmis, kun`) and `Toteutusohje`, for the Spec axis.
 4. **Run one review subagent** (`Agent`, `subagent_type: general-purpose`, in the background). Pick its `model` and `effort` from the size of the delta, not of the work item, with the table in *Run The Review*: a delta of a few files is XS or S (`sonnet`, `medium`). Paste the base and the diff commands into the prompt, and tell it to:
    - Review only the lines in the delta. Read the surrounding code only to judge them, and report a problem in unchanged code only when the delta causes it.
    - Check that each change does what the comment or finding it answers asked, and changes nothing else.
+   - Run the Spec axis of *The Spec Axis* below only on the criteria and `Toteutus` steps that the delta touches, and return the Spec table with those rows only.
    - Apply the same rules as *Run The Review*: the `code-review-and-quality` axes, the MyCV rules of `CLAUDE.md`, the Sonar note, the categories and format of *Report The Findings*, and no file edits.
 5. **Do not run the `code-review` skill** in a delta review. Its targets cover a whole branch or a whole uncommitted diff, not a delta from a base of your choice, so it would review the whole pull request again.
 6. **Check the UI part** if the delta changes what the user sees: a browser subagent checks only the views that the delta touches (*Browser subagent* in [checks.md](checks.md)).
 
 Then continue with *Report The Findings* and *Wait For The Decision* as after a full review, and wait for both subagents' completion notices first.
+
+## The Spec Axis
+
+Besides the code-quality axes, the reviewer goes through every `Valmis, kun` criterion and every `Toteutus` step of the work item one by one, and marks each with a status and a short reason:
+
+| Status | Meaning |
+| --- | --- |
+| Met | The change fulfils it; the reason names the file or behavior that does |
+| Not met | The change does not fulfil it, or only partly |
+| Not checkable from code | It needs something else, such as a browser check or the pull request itself |
+
+A criterion that is *Not met* is a **Should fix** finding (*Report The Findings*). In a delta review only the criteria and steps that the delta touches are marked, and the report says that the table is partial. When the work item has no `Valmis, kun` criteria, skip the Spec table and note that in the report.
 
 ## Report The Findings
 
@@ -78,6 +91,16 @@ Show each finding as:
 **1. <short title>** — [file.ts:42](src/Frontend/src/file.ts#L42)
 <What is wrong and why it matters.> Fix: <the proposed change>.
 ```
+
+Before the findings, show the Spec result as its own short table, one row per criterion or step:
+
+```markdown
+| Criterion or step | Status | Reason |
+| --- | --- | --- |
+| <criterion, shortened> | Met / Not met / Not checkable from code | <one line> |
+```
+
+Give every *Not met* row its own numbered **Should fix** finding, so that the user can pick it by number. Update the *Not checkable from code* rows from the browser subagent's report when it settles them; keep the others as they are, with the reason.
 
 Leave out empty categories. Add your recommendation at the end: which findings to fix and which to leave, with a reason for each one you would leave.
 
