@@ -77,6 +77,13 @@ export default defineConfig(
     extends: [sonarjs.configs.recommended],
     files: ["**/*.{ts,tsx}"],
     ignores: ["src/generated/**"],
+    plugins: { unicorn },
+    rules: {
+      "unicorn/numeric-separators-style": "error",
+      "unicorn/prefer-at": "error",
+      "unicorn/prefer-math-trunc": "error",
+      "unicorn/prefer-string-replace-all": "error",
+    },
   },
   {
     extends: [jsdoc.configs["flat/recommended-typescript-error"]],

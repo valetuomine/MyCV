@@ -127,6 +127,7 @@ export default function ReadOnlyProfileForm({
       className={`grid w-full grid-cols-[minmax(0,1fr)] items-center gap-14 lg:gap-16 ${showPortrait ? "lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]" : ""}`}
     >
       <section
+        data-cv-trace-avoid
         className={`grid min-w-0 grid-cols-[minmax(0,1fr)] content-center justify-items-start ${showPortrait ? "" : "max-w-5xl"}`}
       >
         <motion.p

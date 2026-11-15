@@ -62,7 +62,7 @@ async function describeStep(page: Page): Promise<string> {
     (await page
       .getByRole("heading")
       .first()
-      .textContent({ timeout: 1_000 })
+      .textContent({ timeout: 1000 })
       .catch(() => null)) ?? ""
   /**
    * The heading without email addresses or extra whitespace. Each word with an
@@ -269,7 +269,7 @@ type AppStep = "signedIn" | "signInButton"
  * milliseconds. Google's own pages forward a working sign-in back to the app
  * within a moment; one that stays waits for a person.
  */
-const googlePageSettleMs = 5_000
+const googlePageSettleMs = 5000
 
 /**
  * Matches what Google writes when it refuses the browser or wants proof of

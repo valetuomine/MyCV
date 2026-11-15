@@ -77,8 +77,9 @@ function lightClass(isHeld: boolean, hasBeenHeld: boolean): string {
  * (`useDirectedLight`); other pages, and reduced motion, show them at once.
  * While the CV shows, `LightSweep` carries one band of light across the page
  * from the left, `LightEcho` carries another one from the bottom up, and
- * `DotEcho` lights the dots under both and swells the dots under the
- * spotlight. Forced colours leave the light out.
+ * `DotEcho` lights the dots under both, sends a few traces of light along
+ * the dot grid with them and swells the dots under the spotlight. Forced
+ * colours leave the light out.
  *
  * @param props - The component props.
  * @param props.children - The page content.

@@ -26,8 +26,8 @@ const sectionHeading =
  */
 function toCssString(value: string): string {
   const escaped = value
-    .replace(/["\\]/g, String.raw`\$&`)
-    .replace(/\r?\n/g, String.raw`\A `)
+    .replaceAll(/["\\]/g, String.raw`\$&`)
+    .replaceAll(/\r?\n/g, String.raw`\A `)
   return `"${escaped}"`
 }
 

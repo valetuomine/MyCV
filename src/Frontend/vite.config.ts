@@ -177,7 +177,7 @@ const packageChunk = new Map(
  */
 function manualChunks(id: string): string | undefined {
   const match = /\/node_modules\/((?:@[^/]+\/)?[^/]+)\//.exec(
-    id.replace(/\\/g, "/"),
+    id.replaceAll("\\", "/"),
   )
   return match ? packageChunk.get(match[1]) : undefined
 }
@@ -225,6 +225,7 @@ export default defineConfig(({ mode }) => {
       ).globalHeaders,
     },
     build: {
+      target: "es2022",
       rollupOptions: {
         output: { manualChunks },
         /**
@@ -235,7 +236,7 @@ export default defineConfig(({ mode }) => {
          * @param warn - Rollup's default handler, which prints the warning.
          */
         onwarn(warning, warn) {
-          const moduleId = warning.id?.replace(/\\/g, "/")
+          const moduleId = warning.id?.replaceAll("\\", "/")
           if (
             warning.code === "INVALID_ANNOTATION" &&
             moduleId?.includes("node_modules/zod/")

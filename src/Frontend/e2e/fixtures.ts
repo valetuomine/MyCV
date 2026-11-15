@@ -58,7 +58,7 @@ const failureReasons: Record<Exclude<SessionState, "ready">, string> = {
  * session counts as signed out, so a slow restore of a valid session (a cold
  * dev server, a token renewal) doesn't fail the check.
  */
-const signedOutGraceMs = 3_000
+const signedOutGraceMs = 3000
 
 /**
  * Waits until a view that needs a signed-in user shows, and fails with the

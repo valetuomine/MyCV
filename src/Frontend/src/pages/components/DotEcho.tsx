@@ -10,6 +10,16 @@ import { useStore } from "jotai"
 import { useEffect, useRef, type JSX } from "react"
 import { lightSweepAtom } from "../../state/lightSweepAtom"
 import { maxEchoes, nameEchoAtom } from "../../state/nameEchoAtom"
+import {
+  drawTrace,
+  maxTraces,
+  planTrace,
+  traceStaggerMs,
+  tracesPerBand,
+  type Point,
+  type Trace,
+  type TraceColors,
+} from "./lightTraces"
 
 interface DotEchoProps {
   spotlightX: MotionValue<number>
@@ -24,6 +34,20 @@ interface Band {
   middle: number
   width: number
   fade: number
+  /** How far along the viewport the band's middle is. */
+  along: number
+  /** How many traces the band has yet to send. */
+  tracesLeft: number
+  /** When the band sends its next trace, or null before its light shows. */
+  nextTraceAt: number | null
+}
+
+/** A box on the layer that no trace's route crosses, in CSS pixels. */
+interface AvoidBox {
+  left: number
+  top: number
+  right: number
+  bottom: number
 }
 
 /** The dot grid's cell, the same as in `bg-cv-dots`. */
@@ -84,6 +108,65 @@ const bandDirections: Record<BandKind, { x: number; y: number }> = {
 }
 
 /**
+ * The way each band's traces run along the grid, one cell long: the sweep's
+ * to the right, and the echo's to the right too, along its level band, so
+ * they stay in its light. Routes up the page found almost no room, because
+ * they crossed the name or ran where the dots fade out.
+ */
+const traceWays: Record<BandKind, Point> = {
+  sweep: { x: cell, y: 0 },
+  echo: { x: cell, y: 0 },
+}
+/**
+ * Where a trace starts, ahead of its band's middle, in crest widths, so the
+ * band's light is just reaching it.
+ */
+const traceLead = 0.5
+/** From how far along the viewport a band's middle sends traces. */
+const traceAlongFrom = 0.05
+/**
+ * Up to how far along the viewport each band's middle sends traces: the
+ * sweep's while its routes still have room on its right, and the echo's
+ * nearly to the top, because on a phone the only room clear of the CV's text
+ * is above it.
+ */
+const traceAlongTo: Record<BandKind, number> = { sweep: 0.75, echo: 0.9 }
+/** A route's length, as a share of the light box's shorter side in cells. */
+const traceCellsShare = 0.32
+/** The shortest route, in cells. */
+const minTraceCells = 6
+/** The longest route, in cells. */
+const maxTraceCells = 14
+/** The resting band's middle, as a share of the light box's height. */
+const restBandMiddle = 0.55
+/**
+ * The second mask of `bg-cv-dots-fade`, which hides the static dots under the
+ * resting band: its stops as distances from the band's middle, in shares of
+ * the light box's height, and the mask's opacity at each.
+ */
+const restBandStops: Array<[number, number]> = [
+  [0.13, 0],
+  [0.17, 0.06],
+  [0.22, 0.3],
+  [0.28, 0.72],
+  [0.34, 1],
+]
+/**
+ * The elements whose text the traces keep away from: the children of an
+ * element marked with `data-cv-trace-avoid`: the CV's eyebrow, name, title and
+ * buttons, and the page's controls in the top corner. The resting band's mask
+ * hides the dots behind the CV's text on a wide screen, but on a phone the
+ * text sits above it.
+ */
+const avoidSelector = "[data-cv-trace-avoid] > *"
+/** How far the traces keep from that text, in CSS pixels: half a cell. */
+const avoidMargin = cell / 2
+/** The sine of the second mask's 15° tilt from level. */
+const restBandSine = Math.sin((15 * Math.PI) / 180)
+/** The cosine of the second mask's 15° tilt from level. */
+const restBandCosine = Math.cos((15 * Math.PI) / 180)
+
+/**
  * Tells how strongly the dots show at a point, with the falloff of the first
  * mask of `bg-cv-dots-fade`: `radial-gradient(78% 72% at 20% 12%, #000 18%,
  * transparent 100%)`. Its second mask, which hides the static dots under the
@@ -101,6 +184,45 @@ function fadeMask(x: number, y: number, width: number, height: number): number {
     (y - height * 0.12) / (height * 0.72),
   )
   return Math.min(1, Math.max(0, 1 - (distance - 0.18) / 0.82))
+}
+
+/**
+ * Tells how strongly the static dots show at a point under the second mask of
+ * `bg-cv-dots-fade`, which fades them out under the resting band, so the
+ * traces keep away from the name and the small text there as the dots do.
+ *
+ * @param x - The point's distance from the layer's left edge.
+ * @param y - The point's distance from the layer's top edge.
+ * @param viewportWidth - The viewport's width, the mask's `100vw`.
+ * @param box - The light box's height, the mask's `--box`.
+ * @returns The mask's opacity at the point, from 0 to 1.
+ */
+function restMask(
+  x: number,
+  y: number,
+  viewportWidth: number,
+  box: number,
+): number {
+  /** The point's distance from the band's middle, in shares of the box. */
+  const distance =
+    Math.abs(
+      (viewportWidth - x) * restBandSine +
+        y * restBandCosine -
+        (viewportWidth / 2) * restBandSine -
+        box * restBandMiddle * restBandCosine,
+    ) / box
+  let previous: [number, number] = [0, 0]
+  for (const stop of restBandStops) {
+    if (distance < stop[0]) {
+      return (
+        previous[1] +
+        ((stop[1] - previous[1]) * (distance - previous[0])) /
+          (stop[0] - previous[0])
+      )
+    }
+    previous = stop
+  }
+  return 1
 }
 
 /**
@@ -150,6 +272,13 @@ function bandLight(bands: Band[], x: number, y: number): number {
  * 1px to 1.6px in their own colours, on the spotlight's spring, without moving, and turn
  * toward the hot core the nearer they are to the pointer.
  *
+ * Each band also sends a few traces of light (`lightTraces.ts`) where its
+ * light is about to reach: short pieces of light with a hot head and a fading
+ * accent tail that run once along the dot grid with right angles, the sweep's
+ * to the right along the grid, and keep away from the name and the small text
+ * as the static dots do, and from the boxes of the CV's text
+ * (`data-cv-trace-avoid`).
+ *
  * It draws on Framer Motion's frame loop, after the spring has moved, so the
  * dots keep up with the spotlight, and only while something moves. At rest
  * the canvas stays transparent and draws nothing, and a hidden tab pauses
@@ -189,12 +318,18 @@ export default function DotEcho({
     let dotColor = ""
     let accent = ""
     let core = ""
+    /** The traces' colours, kept in one object that `readColors` updates. */
+    const traceColors: TraceColors = { accent: "", core: "" }
     let needsLayout = true
     let isPainted = false
     let layoutPixelRatio = 0
     let isNameShown = store.get(nameEchoAtom) !== null
     let bands: Band[] = []
+    let traces: Trace[] = []
+    let avoidBoxes: AvoidBox[] = []
     let rootFontSize = 16
+    let viewportWidth = 0
+    let lightBoxHeight = 0
 
     /** Reads the current theme's dot, accent and hot core colours. */
     const readColors = (): void => {
@@ -202,14 +337,20 @@ export default function DotEcho({
       dotColor = styles.getPropertyValue("--cv-dot").trim()
       accent = styles.getPropertyValue("--cv-accent").trim()
       core = styles.getPropertyValue("--cv-accent-core").trim()
+      traceColors.accent = accent
+      traceColors.core = core
     }
 
     /**
      * Sizes the canvas to the layer and the screen's pixel density, which
      * also clears it, and records every dot's centre and how strongly the
-     * fade mask shows it.
+     * fade mask shows it. Running traces are dropped when the layer or the
+     * viewport changes width, because their routes no longer fit the page.
      */
     const layOut = (): void => {
+      if (layer.clientWidth !== width || window.innerWidth !== viewportWidth) {
+        traces = []
+      }
       width = layer.clientWidth
       height = layer.clientHeight
       layoutPixelRatio = window.devicePixelRatio
@@ -242,11 +383,15 @@ export default function DotEcho({
 
     /**
      * Moves the bands to a frame's time, drops the finished ones in place, and
-     * works out each band's middle along its direction, width and fade.
+     * works out each band's middle along its direction, width and fade. It
+     * also records the viewport's width and the light box's height for the
+     * frame, which the traces read.
      *
      * @param timestamp - The frame's time, the clock of the CSS animations.
      */
     const moveBands = (timestamp: number): void => {
+      viewportWidth = window.innerWidth
+      lightBoxHeight = Math.max(window.innerHeight, sweepBoxRem * rootFontSize)
       let alive = 0
       for (const band of bands) {
         /** How far through its run the band is, from 0 to 1. */
@@ -267,10 +412,161 @@ export default function DotEcho({
             ? window.innerWidth * sweepBandShare
             : window.innerHeight * echoBandShare
           band.fade = Math.min(1, (1 - time) / bandFadeShare)
+          band.along = along
           bands[alive++] = band
         }
       }
       bands.length = alive
+    }
+
+    /**
+     * Tells how strongly the dots show at a point, through both masks of
+     * `bg-cv-dots-fade`.
+     *
+     * @param x - The point's distance from the layer's left edge.
+     * @param y - The point's distance from the layer's top edge.
+     * @returns How strongly the dots show, from 0 to 1.
+     */
+    const traceVisibility = (x: number, y: number): number =>
+      fadeMask(x, y, width, height) *
+      restMask(x, y, viewportWidth, lightBoxHeight)
+
+    /**
+     * Measures the text that the traces keep away from, as boxes on the
+     * layer grown by `avoidMargin`. It runs before a trace is planned, so the
+     * boxes follow the page as the name and the rest of the CV come in.
+     */
+    const measureAvoidBoxes = (): void => {
+      const layerBox = layer.getBoundingClientRect()
+      avoidBoxes = []
+      for (const element of document.querySelectorAll(avoidSelector)) {
+        const box = element.getBoundingClientRect()
+        if (box.width > 0 && box.height > 0) {
+          avoidBoxes.push({
+            left: box.left - layerBox.left - avoidMargin,
+            top: box.top - layerBox.top - avoidMargin,
+            right: box.right - layerBox.left + avoidMargin,
+            bottom: box.bottom - layerBox.top + avoidMargin,
+          })
+        }
+      }
+    }
+
+    /**
+     * Tells how strongly the dots show at a point for planning a route: as
+     * `traceVisibility`, but not at all over the text that the traces keep
+     * away from, so no route runs behind it.
+     *
+     * @param x - The point's distance from the layer's left edge.
+     * @param y - The point's distance from the layer's top edge.
+     * @returns How strongly the dots show, from 0 to 1.
+     */
+    const routeVisibility = (x: number, y: number): number =>
+      avoidBoxes.some(
+        (box) => x > box.left && x < box.right && y > box.top && y < box.bottom,
+      )
+        ? 0
+        : traceVisibility(x, y)
+
+    /**
+     * Tells how many cells a route runs: a share of the light box's shorter
+     * side, so a phone gets shorter routes than a wide screen.
+     *
+     * @param boxWidth - The light box's width.
+     * @param boxHeight - The light box's height.
+     * @returns The route's length, in cells.
+     */
+    const traceCells = (boxWidth: number, boxHeight: number): number =>
+      Math.min(
+        maxTraceCells,
+        Math.max(
+          minTraceCells,
+          Math.round((Math.min(boxWidth, boxHeight) / cell) * traceCellsShare),
+        ),
+      )
+
+    /**
+     * Starts one trace for a band where its light is about to reach, unless
+     * `maxTraces` already run or no route fits.
+     *
+     * @param band - The band that sends the trace.
+     * @param timestamp - The frame's time.
+     * @returns Whether the trace is done with: started, or left out because
+     *   `maxTraces` already run. False when no route fits yet.
+     */
+    const sendTrace = (band: Band, timestamp: number): boolean => {
+      if (traces.length >= maxTraces) {
+        return true
+      }
+      /** The light box's width, which ends with the layer. */
+      const boxWidth = Math.min(width, viewportWidth)
+      /** The light box's height, which ends with the layer. */
+      const boxHeight = Math.min(height, lightBoxHeight)
+      measureAvoidBoxes()
+      const trace = planTrace({
+        reach: band.middle + band.width * traceLead,
+        direction: bandDirections[band.kind],
+        way: traceWays[band.kind],
+        cells: traceCells(boxWidth, boxHeight),
+        cell,
+        width: boxWidth,
+        height: boxHeight,
+        visibility: routeVisibility,
+        startedAt: timestamp,
+        isEcho: band.kind === "echo",
+      })
+      if (!trace) {
+        return false
+      }
+      traces.push(trace)
+      return true
+    }
+
+    /**
+     * Sends the bands' traces that are due: once a band's light shows, every
+     * `traceStaggerMs` one trace starts where its light is about to reach,
+     * the echo's half a step after the sweep's, so the two interleave. A
+     * trace that finds no route tries again on the next frame, from where the
+     * band's light has moved on, because many routes would cross the name or
+     * run where the dots fade out. A trace that comes while `maxTraces` already run
+     * is left out, and so is the rest once the band has crossed.
+     *
+     * @param timestamp - The frame's time.
+     */
+    const sendTraces = (timestamp: number): void => {
+      for (const band of bands) {
+        if (band.along > traceAlongTo[band.kind]) {
+          band.tracesLeft = 0
+        }
+        if (band.tracesLeft > 0 && band.along >= traceAlongFrom) {
+          band.nextTraceAt ??=
+            timestamp + (band.kind === "echo" ? traceStaggerMs / 2 : 0)
+          if (timestamp >= band.nextTraceAt && sendTrace(band, timestamp)) {
+            band.tracesLeft--
+            band.nextTraceAt = timestamp + traceStaggerMs
+          }
+        }
+      }
+    }
+
+    /**
+     * Draws the running traces over the dots, and drops the finished ones in
+     * place.
+     *
+     * @param timestamp - The frame's time.
+     * @returns Whether a trace still runs.
+     */
+    const drawTraces = (timestamp: number): boolean => {
+      let alive = 0
+      for (const trace of traces) {
+        if (
+          drawTrace(context, trace, timestamp, traceColors, traceVisibility)
+        ) {
+          traces[alive++] = trace
+        }
+      }
+      traces.length = alive
+      return alive > 0
     }
 
     /**
@@ -352,13 +648,15 @@ export default function DotEcho({
     }
 
     /**
-     * Draws one frame: clears the previous one, moves the bands, and draws the
-     * dots under the spotlight and under the bands. A spotlight dot is a ring
+     * Draws one frame: clears the previous one, moves the bands, sends the
+     * traces that are due, and draws the dots under the spotlight and under
+     * the bands, and the running traces over them. A spotlight dot is a ring
      * around the static dot in the static and lit dots' colours, so the dot
      * looks the same, only larger, with the hot core over it near the pointer.
-     * A dot under a band is the accent with a smaller hot core in its middle. Asks for another frame while a band runs;
-     * the first frame without one clears the last band, and the spotlight's
-     * spring asks for its own.
+     * A dot under a band is the accent with a smaller hot core in its middle.
+     * Asks for another frame while a band or a trace runs; the first frame
+     * without either clears the last of them, and the spotlight's spring asks
+     * for its own.
      *
      * @param frameData - The frame's timing.
      * @param frameData.timestamp - The frame's time, which keeps the bands on
@@ -375,7 +673,8 @@ export default function DotEcho({
       }
 
       moveBands(timestamp)
-      if (bands.length === 0 && !isNameShown) {
+      sendTraces(timestamp)
+      if (bands.length === 0 && traces.length === 0 && !isNameShown) {
         return
       }
 
@@ -399,9 +698,12 @@ export default function DotEcho({
           isPainted = true
         }
       }
+      if (drawTraces(timestamp)) {
+        isPainted = true
+      }
       context.globalAlpha = 1
 
-      if (bands.length > 0) {
+      if (bands.length > 0 || traces.length > 0) {
         frame.render(draw)
       }
     }
@@ -418,6 +720,9 @@ export default function DotEcho({
         middle: 0,
         width: 1,
         fade: 1,
+        along: bandStart,
+        tracesLeft: tracesPerBand,
+        nextTraceAt: null,
       })
     }
 
@@ -445,6 +750,7 @@ export default function DotEcho({
       isNameShown = store.get(nameEchoAtom) !== null
       if (!isNameShown) {
         bands = bands.filter((band) => !isEcho(band))
+        traces = traces.filter((trace) => !trace.isEcho)
       } else {
         if (bands.filter(isEcho).length === maxEchoes) {
           bands.splice(bands.findIndex(isEcho), 1)
@@ -464,7 +770,7 @@ export default function DotEcho({
     /** Lays the dots out again on the next draw, and redraws what shows. */
     const relayOut = (): void => {
       needsLayout = true
-      if (isPainted || bands.length > 0) {
+      if (isPainted || bands.length > 0 || traces.length > 0) {
         frame.render(draw)
       }
     }

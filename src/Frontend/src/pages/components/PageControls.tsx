@@ -19,6 +19,7 @@ export default function PageControls(): JSX.Element {
   return (
     <aside
       aria-label={t("controls.label")}
+      data-cv-trace-avoid
       className="absolute top-5 right-6 z-20 flex max-w-[calc(100%-3rem)] flex-wrap items-start justify-end gap-2 sm:right-[clamp(1.5rem,5vw,5.5rem)] print:hidden"
     >
       <SignOutButton />

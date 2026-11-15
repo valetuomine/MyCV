@@ -158,7 +158,7 @@ function letterMargin(kerning: number): { marginInlineEnd: string } {
 function splitAtHyphens(word: Glyph[]): Glyph[][] {
   const parts: Glyph[][] = [[]]
   word.forEach((glyph, index) => {
-    parts[parts.length - 1].push(glyph)
+    parts.at(-1)?.push(glyph)
     if (glyph.letter === "-" && index < word.length - 1) {
       parts.push([])
     }

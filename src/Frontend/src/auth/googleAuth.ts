@@ -323,7 +323,10 @@ export function clearGoogleSignInRequest(): void {
  */
 function decodeTokenClaims(token: string): GoogleIdTokenClaims | null {
   try {
-    const payload = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+    const payload = token
+      .split(".")[1]
+      .replaceAll("-", "+")
+      .replaceAll("_", "/")
     const bytes = Uint8Array.from(
       atob(payload),
       (character) => character.codePointAt(0) ?? 0,

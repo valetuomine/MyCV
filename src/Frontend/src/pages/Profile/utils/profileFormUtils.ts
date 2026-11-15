@@ -48,12 +48,12 @@ function firstGrapheme(word: string): string {
  */
 export function getInitials(fullName?: string | null): string {
   const words = (fullName ?? "").split(/\s+/).filter(Boolean)
-  while (words.length > 2 && nameSuffix.test(words[words.length - 1])) {
+  while (words.length > 2 && nameSuffix.test(words.at(-1) ?? "")) {
     words.pop()
   }
 
   const picked =
-    words.length > 1 ? [words[0], words[words.length - 1]] : words.slice(0, 1)
+    words.length > 1 ? [words[0], words.at(-1) ?? ""] : words.slice(0, 1)
 
   return picked.map(firstGrapheme).join("").toUpperCase()
 }
@@ -127,7 +127,7 @@ function trimControls(value: string): string {
  * @returns Whether the link may be saved.
  */
 export function isAllowedProfileLink(value: string | null): boolean {
-  const normalized = trimControls((value ?? "").replace(/[\t\n\r]/g, ""))
+  const normalized = trimControls((value ?? "").replaceAll(/[\t\n\r]/g, ""))
 
   if (
     !normalized ||
@@ -153,7 +153,7 @@ export function extractPublicUrlSegment(input: string): string {
   const value = input.trim()
   try {
     const segments = new URL(value).pathname.split("/").filter(Boolean)
-    return segments[segments.length - 1] ?? ""
+    return segments.at(-1) ?? ""
   } catch {
     return trimEnds(value, (code) => code === slashCode)
   }
