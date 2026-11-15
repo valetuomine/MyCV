@@ -1,0 +1,2 @@
+# Skills lock files are written with LF by the skills CLI; keep them LF on every platform.
+**/skills-lock.json text eol=lf
