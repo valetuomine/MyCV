@@ -27,4 +27,4 @@ Commit message format, in English, with an imperative summary:
 - Stage files by name. Never use `git add -A` or `git add .`.
 - Never commit secrets or local settings: `.env.local`, `.mcp.json`, user secrets, credentials.
 - Leave changes that have nothing to do with this work item unstaged, and mention them in the report.
-- `write-user-story` installs a story's new skill when the story is created, leaving `skills-lock.json` uncommitted. Commit that change in the story's pull request, first, as `US-<id>: Add the <name> skill`. If `git diff skills-lock.json` adds a skill that another work item names instead, leave it unstaged.
+- The first `Toteutus` step of a story may install a new skill, leaving `skills-lock.json` and the `.gitignore` exception for its folder changed but uncommitted. Commit those changes in the story's pull request, first, as `US-<id>: Add the <name> skill`. If `git diff skills-lock.json` adds a skill that another work item names instead, leave it unstaged.

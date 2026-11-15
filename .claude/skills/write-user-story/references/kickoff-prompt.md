@@ -11,7 +11,7 @@ Act as <role>.
 Implement User Story <id>: <title>.
 Read the work item in Azure DevOps and follow the Toteutusohje at the end of its description. Ask its Avoimet kysymykset before you start. Check its Predecessor links: if a predecessor is not done yet, tell me before you start.
 Branch: feat/US-<id>_<Title_slug>
-Skills: <the skills its Lähtötilanne names>
+Skills: <the skills its Lähtötilanne names; a skill that is not installed yet as "<name> (not installed: install it first, see the first Toteutus step)">
 When every Valmis, kun criterion holds, ship the change with /create-pull-request.
 Reply to me in Finnish, even though this prompt is in English.
 ```
