@@ -84,14 +84,13 @@ export default function SessionExpiredMessage({
   const canUsePopup =
     method !== null && step !== SignInAgainStep.Blocked && prefersSignInPopup()
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    return () => {
       if (returnFocus instanceof HTMLElement && returnFocus.isConnected) {
         returnFocus.focus()
       }
-    },
-    [returnFocus],
-  )
+    }
+  }, [returnFocus])
 
   /**
    * Drops the refused session and opens the page's sign-in route. Shows an

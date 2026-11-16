@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from "react"
 import {
   signOutInApp,
   subscribeSharedSignOut,
@@ -111,7 +111,6 @@ function storeSharedActivity(at: number): void {
 export default function useIdleSignOut(): IdleSignOutState {
   const { isSignedIn } = useAuthSession()
   const publicUrlSegment = useSignOutReturnSegment()
-  const returnSegment = useRef(publicUrlSegment)
   const continueSessionRef = useRef<() => void>(() => undefined)
   /** Whether someone was signed in since this page loaded, so another tab's sign-out still signs this one out after its accounts are gone. */
   const wasSignedIn = useRef(false)
@@ -121,15 +120,18 @@ export default function useIdleSignOut(): IdleSignOutState {
   )
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null)
 
-  useEffect(() => {
-    returnSegment.current = publicUrlSegment
-  }, [publicUrlSegment])
-
-  useEffect(() => {
-    if (isSignedIn) {
-      wasSignedIn.current = true
-    }
-  }, [isSignedIn])
+  /**
+   * Signs out in the app, returning to the CV open now, which the effects
+   * read without restarting when it changes.
+   *
+   * @param reason - Why the user is signed out.
+   * @param isShared - Whether to sign the other tabs out too, false when another tab asked for it.
+   * @returns A promise that settles once the sign-out has finished or failed.
+   */
+  const signOutToCurrentCv = useEffectEvent(
+    (reason: SignOutReason, isShared: boolean): Promise<void> =>
+      signOutInApp(publicUrlSegment, reason, isShared),
+  )
 
   useEffect(
     () =>
@@ -137,9 +139,7 @@ export default function useIdleSignOut(): IdleSignOutState {
         if (signOutFromOtherTab.current) {
           signOutFromOtherTab.current(reason)
         } else if (wasSignedIn.current) {
-          signOutInApp(returnSegment.current, reason, false).catch(
-            () => undefined,
-          )
+          signOutToCurrentCv(reason, false).catch(() => undefined)
         }
       }),
     [],
@@ -150,6 +150,7 @@ export default function useIdleSignOut(): IdleSignOutState {
       return
     }
 
+    wasSignedIn.current = true
     let lastActivity = Date.now()
     let isSigningOut = false
     let lastSharedAt = 0
@@ -225,7 +226,7 @@ export default function useIdleSignOut(): IdleSignOutState {
       clearTimeout(nextCheck)
       setSecondsLeft(null)
       try {
-        await signOutInApp(returnSegment.current, reason, isShared)
+        await signOutToCurrentCv(reason, isShared)
       } catch {
         isSigningOut = false
         nextCheck = setTimeout(check, signOutRetryMs)

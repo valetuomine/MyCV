@@ -1,5 +1,5 @@
 import { m as motion, type Variants } from "framer-motion"
-import { useEffect, useId, useRef, useState, type JSX } from "react"
+import { useId, useState, type JSX } from "react"
 import { useTranslation } from "react-i18next"
 import {
   getProfilePictureUrl,
@@ -80,7 +80,8 @@ function ExpandableSummary({ text }: Readonly<{ text: string }>): JSX.Element {
 /**
  * The CV: name, title, location, summary, links and portrait, entering one
  * after another. With a mouse, the actions lean toward the pointer. Coming
- * back from editing, focus returns to the Edit profile button that started it.
+ * back from editing, focus returns to the Edit profile button that started it:
+ * the CV mounts again then, so the button's `autoFocus` applies.
  * When the owner hides the picture section, the portrait and its initials are
  * left out and the text takes the whole width, capped so its lines stay
  * readable.
@@ -101,7 +102,6 @@ export default function ReadOnlyProfileForm({
   pdfPath,
 }: Readonly<ReadOnlyProfileFormProps>): JSX.Element {
   const { t, i18n } = useTranslation()
-  const editButtonRef = useRef<HTMLButtonElement>(null)
   const publicUrl = `${window.location.origin}${window.location.pathname}`
   /** When the profile last changed, falling back to when it was created. */
   const updatedAt = formatProfileDate(
@@ -112,12 +112,6 @@ export default function ReadOnlyProfileForm({
   const hasActions = Boolean(values.gitHubUrl || values.linkedInUrl || onEdit)
   /** Whether the owner shows the portrait; profiles from before the choice do. */
   const showPortrait = values.showPicture !== false
-
-  useEffect(() => {
-    if (focusEdit) {
-      editButtonRef.current?.focus()
-    }
-  }, [focusEdit])
 
   return (
     <motion.div
@@ -202,7 +196,7 @@ export default function ReadOnlyProfileForm({
               {onEdit && (
                 <Magnetic>
                   <Button
-                    ref={editButtonRef}
+                    autoFocus={focusEdit}
                     onClick={onEdit}
                     className="border-dashed"
                   >
