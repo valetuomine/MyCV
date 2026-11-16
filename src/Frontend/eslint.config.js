@@ -4,6 +4,7 @@ import globals from "globals"
 import jsdoc from "eslint-plugin-jsdoc"
 import reactHooks from "eslint-plugin-react-hooks"
 import reactRefresh from "eslint-plugin-react-refresh"
+import reactYouMightNotNeedAnEffect from "eslint-plugin-react-you-might-not-need-an-effect"
 import sonarjs from "eslint-plugin-sonarjs"
 import tseslint from "typescript-eslint"
 import unicorn from "eslint-plugin-unicorn"
@@ -71,6 +72,21 @@ export default defineConfig(
             'Use the <fieldset> element instead of role="group" (jsx-a11y/prefer-tag-over-role, Sonar S6819).',
         },
       ],
+    },
+  },
+  {
+    files: ["**/*.{ts,tsx}"],
+    plugins: { reactYouMightNotNeedAnEffect },
+    rules: {
+      "reactYouMightNotNeedAnEffect/no-derived-state": "warn",
+      "reactYouMightNotNeedAnEffect/no-chain-state-updates": "warn",
+      "reactYouMightNotNeedAnEffect/no-event-handler": "warn",
+      "reactYouMightNotNeedAnEffect/no-adjust-state-on-prop-change": "warn",
+      "reactYouMightNotNeedAnEffect/no-reset-all-state-on-prop-change": "warn",
+      "reactYouMightNotNeedAnEffect/no-pass-live-state-to-parent": "warn",
+      "reactYouMightNotNeedAnEffect/no-pass-data-to-parent": "warn",
+      "reactYouMightNotNeedAnEffect/no-external-store-subscription": "warn",
+      "reactYouMightNotNeedAnEffect/no-initialize-state": "warn",
     },
   },
   {
