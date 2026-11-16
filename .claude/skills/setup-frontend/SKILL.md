@@ -28,8 +28,7 @@ Use this workflow when recreating the MyCV frontend inside `src/Frontend`.
 - Keep page state and data selection in the page component. Pass selected data and event handlers into child components through typed props instead of duplicating state in presentational components.
 - Build complex page sections through small composable components. A layout component such as `Background` or `HeaderRow` should accept `children`, while focused components such as `Navigation` or `ContentSection` should receive the data they render.
 - Use `type JSX` and `type ReactNode` imports from `react` when needed, and keep component files free of unused React imports.
-- Document code with JSDoc summaries (`/** ... */`) only. Do not write `//` or `/* */` comments, JSX `{/* */}` comments, or commented-out code; delete dead code instead. The only exceptions are tool directives such as `/// <reference types="..." />`, and generated files such as `src/generated/openapi.ts`.
-  The tag format, which values need a summary, and examples are in [references/jsdoc.md](references/jsdoc.md). Read it before documenting code.
+- Document code with JSDoc summaries only, by the rules in `.claude/rules/frontend-jsdoc.md`. Read it before documenting code.
 - Treat `useEffect` as the last resort, used only to synchronize with something outside React. Before writing one, read [references/effects.md](references/effects.md) and the `react-useeffect` skill for the simpler tool to reach for.
 - Follow `vercel-react-best-practices` for React performance, but skip its Next.js and server rules: this is a Vite single-page app. Where it differs from these conventions, these conventions win.
 - Follow `vercel-composition-patterns` when designing a reusable component's API: explicit variants instead of boolean modes, `children` instead of render props, and `ref` as a plain prop (React 19, no `forwardRef`). Where it differs from these conventions, these conventions win.

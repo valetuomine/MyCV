@@ -39,7 +39,13 @@ Labels: when the PR is a follow-up for a story that is still being worked on (li
 
 ## Work Item State
 
-Right after creating the PR, move every linked work item that `work-item.md` says moves (`New`, `Ready for Development`, `Waiting for Predecessor`, and for a User Story `On Hold` or `Waiting for Deployment`) to `In Progress` with `wit_work_item_write` (`action: update`), and write the `Tila` line in the same update: `<div><b>Tila:</b> In Progress: Pull request <n> on auki.</div>` with the real PR number. Replace an existing `Tila` line, or insert it first followed by `<div><br></div>`; the format is in `references/description.md` of `write-user-story`. Items that are already `In Progress` keep their state and line.
+Do not move the linked work items yourself. Creating the PR starts the PR pipeline, whose first stage (`templates/work-item-in-progress-job.yml`, no dependencies) moves them to `In Progress` by the rule in [work-item.md](work-item.md) and writes `Tila: In Progress: Pull request <n> on auki.` in the same update, soon after the PR is created. If an item has still not moved when you write the report, do not move it yourself either: the run may be queued or may have failed. Say in the report which item has not moved yet and that the PR pipeline run should be checked.
+
+Every description update (`Muutokset`, `Toteutusohje`, a decision or departure to record) belongs to step 2, before the PR is created, so that nothing you write races with the pipeline. If something must still be written after the PR exists:
+
+1. Read the work item again right before the update, and build the new description from that fresh copy, so that the `Tila` line the pipeline wrote stays as it is.
+2. Send it with `wit_work_item_write` (`action: update`), with a `test` operation on `/rev` holding the revision you just read as the first operation.
+3. If the update is rejected because the revision changed, the pipeline moved the item meanwhile, which is expected and not worth reporting: repeat steps 1 and 2 once. If that is rejected too, stop and say in the report which change is missing from the description.
 
 ## Screenshots
 
