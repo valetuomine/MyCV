@@ -22,11 +22,11 @@ Use this workflow when recreating the MyCV frontend inside `src/Frontend`.
 ## Frontend Conventions
 
 - Prefer Tailwind utility classes for new UI styling, including layout, spacing, sizing, typography, colors, borders, shadows, responsive behavior, and interaction states.
-- Create one focused React component per `.tsx` file. Use PascalCase filenames and default-export the component, for example `Header.tsx`, `Navigation.tsx`, or `ContentSection.tsx`.
+- Create one focused React component per `.tsx` file. Use PascalCase filenames and default-export the component, for example `Background.tsx`, `PageControls.tsx`, or `ProfileName.tsx`.
 - Keep shared page components under `src/pages/components/` and feature-specific components near their owning feature, such as `src/pages/Profile/components/CandidateCv/`.
 - Define a local props interface for every component that accepts props. Use `ReactNode` for layout components that render arbitrary content through `children`.
 - Keep page state and data selection in the page component. Pass selected data and event handlers into child components through typed props instead of duplicating state in presentational components.
-- Build complex page sections through small composable components. A layout component such as `Background` or `HeaderRow` should accept `children`, while focused components such as `Navigation` or `ContentSection` should receive the data they render.
+- Build complex page sections through small composable components. A layout component such as `Background` should accept `children`, while focused components such as `PageControls` or `ProfileName` should receive the data they render.
 - Use `type JSX` and `type ReactNode` imports from `react` when needed, and keep component files free of unused React imports.
 - Document code with JSDoc summaries only, by the rules in `.claude/rules/frontend-jsdoc.md`. Read it before documenting code.
 - Treat `useEffect` as the last resort, used only to synchronize with something outside React. Before writing one, read [references/effects.md](references/effects.md) and the `react-useeffect` skill for the simpler tool to reach for.

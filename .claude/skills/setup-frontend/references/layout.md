@@ -43,4 +43,4 @@ The duration and curve are in `DESIGN.md` under Background, Ignition.
 
 ## Layout
 
-The candidate CV is a single section: the API-backed Profile, with the text column on the left and the portrait on the right from `lg` up, stacked below that (`src/pages/Profile/components/ProfilePage.tsx`). The slides, their wheel and arrow-key navigation and the progress hint were removed while the only second slide was a "More to come" placeholder. `DESIGN.md` keeps their behaviour under Section Transitions for when real content sections exist.
+The candidate CV is a single section: the API-backed Profile, with the text column on the left and the portrait on the right from `lg` up, stacked below that (`src/pages/Profile/components/ProfilePage.tsx`). The slides, their wheel and arrow-key navigation and the progress hint were removed while the only second slide was a "More to come" placeholder.

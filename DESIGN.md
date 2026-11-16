@@ -114,38 +114,38 @@ Atmosphere comes from one directed emerald light that falls in from the top-left
 
 ## Colors
 
-A restrained zinc palette with one emerald accent. Components use only the semantic `--cv-*` variables defined in `src/Frontend/src/index.css`, which `data-theme` on `<html>` swaps.
+A restrained zinc palette with one emerald accent. The colour (hex) values live in the frontmatter above and in `src/Frontend/src/index.css`, and nowhere else; this text names the tokens and never repeats their values. Components use only the semantic `--cv-*` variables defined in `index.css`, which `data-theme` on `<html>` swaps.
 
 ### Primary
 
-- **Deep Emerald** (#007761, light theme): accent for the primary button, job title line and focus outlines. It leans a little toward cyan, the colour of green light in haze, with white ink on it at 5.5:1.
-- **Mint Signal** (#3dd1b2, dark theme): the same role on dark; its ink colour is **Near-Black Green** (#03130f).
-- **Accent Strong** (#035e4e / dark #75e2ca): the primary button's hover fill, and accent text on the background's light, such as the text button, the CV's job title and the form fields' labels; deeper than the accent in light, brighter in dark.
+- **Deep Emerald** (`accent`, light theme): accent for the primary button, job title line and focus outlines. It leans a little toward cyan, the colour of green light in haze, with white ink on it at 5.5:1.
+- **Mint Signal** (`accent-dark`, dark theme): the same role on dark; its ink colour is **Near-Black Green** (`accent-ink-dark`).
+- **Accent Strong** (`accent-strong`): the primary button's hover fill, and accent text on the background's light, such as the text button, the CV's job title and the form fields' labels; deeper than the accent in light, brighter in dark.
 
 ### Light
 
 The background's light is the accent at three depths, as real light in haze has: a deep haze around it, the accent as its surface and a hot core in its brightest points. Only the background's light uses these; text, buttons, fields and surfaces never do.
 
-- **Hot Core** (`--cv-accent-core`, #044e42 / dark #b1f7e4): the middle of a lit dot and the dots nearest the spotlight. A pale, nearly white mint in the dark theme. On the light theme's paper, light shows as saturation rather than brightness, so there the core is the deepest emerald.
-- **Deep Haze** (`--cv-accent-deep`, #2dd4b0 / dark #063d2f): the haze that the light's tail and edges fade through, so they end in a dark green rather than in a grey see-through accent. A dark green in the dark theme and a fresh, bright one in the light theme. `--cv-haze` sets its strength (16% / dark 30%).
+- **Hot Core** (`--cv-accent-core`, `accent-core`): the middle of a lit dot and the dots nearest the spotlight. A pale, nearly white mint in the dark theme. On the light theme's paper, light shows as saturation rather than brightness, so there the core is the deepest emerald.
+- **Deep Haze** (`--cv-accent-deep`, `accent-deep`): the haze that the light's tail and edges fade through, so they end in a dark green rather than in a grey see-through accent. A dark green in the dark theme and a fresh, bright one in the light theme. `--cv-haze` sets its strength (16% / dark 30%).
 
 ### Neutral
 
-- **Paper** (#fafafa / dark #09090b): page background.
-- **Surface** (#ffffff / dark #111113): panels and the portrait card.
-- **Hairline** (#e4e4e7 / dark #26262b): decorative borders and dividers.
-- **Field Line** (#8a8a93 / dark #6b6b74): a grey at least 3:1 against the page, for the loading spinner's track. Form fields use Field Border instead, see Inputs / Fields.
-- **Field Surface** (≈ #ebf4f2 / dark ≈ #152020) and **Field Border** (≈ #8dbbb4 / dark ≈ #2f675e): the resting fill and border of form fields and the profile preview, an accent tint over Surface (8%) and over Hairline (38%). The tint is capped at 8% because Meta must stay at 4.5:1 or more on the fill.
-- **Ink** (#09090b / dark #f4f4f5): headings and primary text.
-- **Copy** (#3f3f46 / dark #b4b4bb): body text.
-- **Muted** (#56565f / dark #9e9ea6) and **Meta** (#6e6e77 / dark #85858e): secondary info and placeholders; both at least 4.5:1 on page and surface. Small text in the background's lit area, such as the CV's update date and the PDF view's eyebrow, uses Muted, because Meta falls below 4.5:1 on the light, and small accent text there, such as the CV's job title and the form fields' labels, uses Accent Strong for the same reason. Meta stays in the PDF, which has no background light.
-- **Danger** (#dc2626 / dark #f87171): validation errors only.
+- **Paper** (`paper`, dark `midnight`): page background.
+- **Surface** (`surface`): panels and the portrait card.
+- **Hairline** (`line`): decorative borders and dividers.
+- **Field Line** (`field-line`): a grey at least 3:1 against the page, for the loading spinner's track. Form fields use Field Border instead, see Inputs / Fields.
+- **Field Surface** (`field-surface`) and **Field Border** (`field-border`): the resting fill and border of form fields and the profile preview, an accent tint over Surface (8%) and over Hairline (38%). The tint is capped at 8% because Meta must stay at 4.5:1 or more on the fill.
+- **Ink** (`ink`): headings and primary text.
+- **Copy** (`copy`): body text.
+- **Muted** (`muted`) and **Meta** (`meta`): secondary info and placeholders; both at least 4.5:1 on page and surface. Small text in the background's lit area, such as the CV's update date and the PDF view's eyebrow, uses Muted, because Meta falls below 4.5:1 on the light, and small accent text there, such as the CV's job title and the form fields' labels, uses Accent Strong for the same reason. Meta stays in the PDF, which has no background light.
+- **Danger** (`danger`): validation errors only.
 
 ### Named Rules
 
 **The One Voice Rule.** The accent marks identity, action and focus only. It never fills large areas. Glows stay at or below 10% opacity; the background's directed light is the one exception, 16% at its peak in the top-left corner and carried past the first screen, and one band of it rests across the page at about 11% in the dark theme and 20% in the light theme, where the same accent shows far less. Both fade out with no visible end, so they read as light rather than as a coloured area. The name's halo is a further exception: a thin drop-shadow around the letters nearest a mouse pointer, up to 70% accent in the dark theme and 30% in the light theme, because it has to show against the page's own light. A second exception is the resting surface of form fields and the profile preview, an 8% accent tint (its maximum), because they sit in that light and would otherwise show as black boxes.
 
-The light's Deep Haze and Hot Core are the same voice at other depths, not further colours. There is no second hue: a muted yellow-lime kept for thin rays of light (#94a61a / dark #c9dc4a) was removed when the rays were left out (see Background, Rejected). Orange was rejected: it lies far enough from the green to read as a second brand colour, it sits beside Danger red, where it would look like a warning, and with green it turns the light into flames, which is a different picture from light in haze.
+The light's Deep Haze and Hot Core are the same voice at other depths, not further colours. There is no second hue: a muted yellow-lime kept for thin rays of light was removed when the rays were left out (see Background, Rejected). Orange was rejected: it lies far enough from the green to read as a second brand colour, it sits beside Danger red, where it would look like a warning, and with green it turns the light into flames, which is a different picture from light in haze.
 
 **The Semantic Token Rule.** Components use `cv-*` utilities, never raw hex or Tailwind palette colours, so both themes stay in sync.
 
@@ -159,7 +159,7 @@ The light's Deep Haze and Hot Core are the same voice at other depths, not furth
 
 ### Hierarchy
 
-- **Display** (600, clamp(3rem, 8.5vw, 7rem), 0.95, tracking -0.05em): the candidate's name, which glows under a mouse pointer and sweeps between weights 540 and 800 on touch screens (see Name) while every letter keeps its weight-600 width. Section titles use clamp(3rem, 7vw, 5.5rem) at line-height 1.
+- **Display** (600, clamp(3rem, 8.5vw, 7rem), 0.95, tracking -0.05em): the candidate's name, which glows under a mouse pointer and sweeps between weights 540 and 800 on touch screens (see Name) while every letter keeps its weight-600 width.
 - **Title** (500, 1.25-1.5rem, tracking -0.025em): job title in accent colour.
 - **Body** (400, 1.125rem, 1.625): summary text, capped at 52ch.
 - **Label** (400 mono, 0.75rem, tracking 0.1em, uppercase): eyebrows, "Curriculum vitae", form labels.
@@ -170,7 +170,7 @@ The light's Deep Haze and Hot Core are the same voice at other depths, not furth
 
 ## Layout
 
-A single full-height column (`min-h-dvh`) with a fluid page gutter of clamp(1.5rem, 5vw, 5.5rem). The profile view is a two-column grid at `lg` (1.5fr text, 1fr portrait) with 3.5rem to 4rem gaps; below `lg` it stacks. When the owner hides the picture section, the grid has one column and the text caps at `max-w-5xl`, so the name and summary fill the top of the page instead of leaving an empty column. Text blocks are left-aligned with `max-w` caps (52ch body, 14ch section titles). The theme toggle is pinned top right in the gutter. Spacing rhythm is generous and uneven on purpose: tight between label, name and title, then 2.5rem before actions.
+A single full-height column (`min-h-dvh`) with a fluid page gutter of clamp(1.5rem, 5vw, 5.5rem). The profile view is a two-column grid at `lg` (1.5fr text, 1fr portrait) with 3.5rem to 4rem gaps; below `lg` it stacks. When the owner hides the picture section, the grid has one column and the text caps at `max-w-5xl`, so the name and summary fill the top of the page instead of leaving an empty column. Text blocks are left-aligned with `max-w` caps (52ch body). The page controls (see Page Controls) are pinned top right in the gutter. Spacing rhythm is generous and uneven on purpose: tight between label, name and title, then 2.5rem before actions.
 
 ## Elevation & Depth
 
@@ -285,9 +285,26 @@ Every field is `RHFInput` or `RHFTextarea`, framed by the shared `FormField` (`s
 - **In the PDF:** the photo sits beside the name in the header, 7rem square and rounded like the card, with a hairline border. Without one, the header is unchanged.
 - **Scroll (stacked layout, below `lg`):** a CSS scroll-driven animation (`animation-timeline: view()`) rises the panel from 3rem lower, tipped back 14°, at 40% opacity, and settles it by the time it is fully in view. A panel already in view on load is at rest. Browsers without scroll timelines, and reduced motion, show it at rest.
 
+### Page Controls
+
+- `PageControls` (`src/Frontend/src/pages/components/PageControls.tsx`) is the row in the page's top corner, pinned inside the gutter (1.25rem from the top), with sign-out, the language toggle and the theme toggle, 0.5rem apart. It is an `aside` named by `controls.label`, so a screen reader user finds it by landmark. The row wraps only on screens too narrow for it, stays clear of the light traces, and is not printed.
+
 ### Theme Toggle
 
-- 2.75rem (44px) circle, hairline border, wash fill; fixed top right.
+- 2.75rem (44px) circle, hairline border, wash fill; the last control in Page Controls.
+
+### Language Toggle
+
+- `LanguageToggle` (`src/Frontend/src/pages/components/LanguageToggle.tsx`) switches the UI between Finnish and English: a pill track (44px tall, hairline border, wash fill, 0.25rem padding) with one Segment per language, Finnish first, each showing only its flag (`LanguageFlag`, in the languages' official colours, the one place outside the accent that colours appear). The active segment is marked by `aria-pressed`. Every segment is named in its own language ("Suomeksi", "In English") and carries that `lang`, so it is read correctly whichever language is active. The choice is saved as `cv-language`, starting from the browser's language.
+
+### Segment
+
+- One option of a choice inside a pill track: the `Segment` variant of `Button`, 36px tall and at least 44px wide inside the 44px track, with a full-height touch target. At rest it has Copy text and no fill; hover adds the overlay and Ink text; the chosen segment (`aria-pressed`) has the accent fill and accent ink, deepening to Accent Strong on hover. Presses scale to 0.97.
+
+### Featured CV Card
+
+- On the home page, the `FeaturedCvCard` (`src/Frontend/src/pages/Profile/components/FeaturedCv/`) shows the CV the API features, as a `LitCard` whose surface lights up like the edit view's preview card. Inside: a mono featured label (`home.featuredLabel`) with an accent dot, the name (Display family, 1.875 to 2.25rem), the job title in accent, the location in Muted with a pin icon, an 80px square portrait (rounded 1rem; the initials when there is no photo) that grows to 12rem wide on `sm` and up and runs the height of the text and buttons, and under the text the primary View CV button and small GitHub and LinkedIn buttons. Below `sm` the buttons take the full width under the text and portrait.
+- It rises into place once its data arrives (the shared spring, 18px). Until then `FeaturedCvSkeleton` holds the same grid, so the card does not move. When no CV is featured or a request fails, the section renders nothing and the home page works without it.
 
 ### Background
 
@@ -303,17 +320,7 @@ Every field is `RHFInput` or `RHFTextarea`, framed by the shared `FormField` (`s
 - **Light traces:** while the sweep and each echo cross the page, their light sends a few traces along the dot grid, like a laser drawing from dot to dot: up to three per band, one every 100ms from the dots the band's light is just reaching, at most four on screen at once. Each runs once along a route of 6 to 14 cells (32% of the light box's shorter side) with one or two right-angle turns of a cell or two, all to the right, the echo's along its level band, in 450ms on `cubic-bezier(0.3, 0, 0.25, 1)`, so it sets off quickly and settles. The lit piece is a quarter of the route long, a 1.25px line whose tail fades linearly from the lit dots' 75% accent to nothing, with a 6px Hot Core head and a soft accent glow around it at 30%; it fades in and out over the first and last 15% of its run. Routes stay where the static dots show at least 45%, through both of the dots' masks, and half a cell clear of the CV's text (the eyebrow, the name, the title and the rest of the hero column) and of the page's controls in the top corner, because on a phone the text sits above the resting band's mask; the echo sends its traces until it is nine tenths of the way up, because on a phone the only room clear of the text is above it; so they never pass behind the name or the small text, and they fade with the dots. The band soon passes its traces, so they read as the paths its light leaves behind. A click or tap on the name sends them again with its echo, and they leave with it. Off for reduced motion, print and forced colours.
 - **Spotlight swelling:** while the CV shows, the dots under a mouse's spotlight grow from 1px to 1.6px in their own colours, with the lit dots' falloff and on the spotlight's spring, without moving.
 - **Budget:** the canvas draws only while an echo, the sweep or a trace runs or the spotlight moves, at most four traces at once with twelve tail pieces each, on Framer Motion's frame loop, which a hidden tab pauses. It is at most 2× the CSS pixels, and 1× on a page over 4 million CSS pixels. Other pages (sign-in, error pages, the PDF view) keep an empty 0×0 canvas. Reduced motion leaves the canvas out, and print and forced colours hide it.
-- **Rejected:** lit dots under the resting band, both as hard and bright as under a passing band and softened with a small core and a long edge, because they stayed right behind the small text all the time, and the band reads better as a plain reflection; a ring of light spreading from the name, and dots pushed outward by a wave, because the second light reads best as a copy of the first one from another direction, and a second light that starts when the reveal ends, because the two read as one moment when they cross together; a comet that circles the page without end, dots that dodge the pointer and ripple from clicks anywhere, and a depth layer that shifts against the pointer. The comet and the dodging dots compete with the name's weight play and the portrait's tilt, and the comet is an endless decorative loop; the depth layer was too faint to notice. For the directed light, compared in the real app in both themes: removing the dots, which keeps a cleaner surface but loses the echo and the material the sweep lights up; a 10% peak, which leaves the light too quiet in the dark theme; and a slow endless drift of the beam (±2.5° over 28s), which would make the background move on its own. Thin rays inside the beam, compared in the real app in both themes against the plain beam: three rays one to two degrees wide from the beam's source, at up to 10%, in a muted yellow-lime and in the accent. The plain beam was chosen, and the yellow token was removed with the rays. The rays also had to stay in the beam's upper half, because in its middle a full lean carried them over the date line, which has no contrast to spare. A light that comes on only when the reveal starts, after showing during the load, because it would go out and come on again. For the colours, compared in the real app in both themes: the earlier, less cyan accent (#047857 / dark #4fd1a5), and a black that leans toward green (#060b08) under either accent. The more cyan accent on the unchanged zinc black was chosen. For the light traces, compared in the real app: one trace per band in the muted yellow-lime (#94a61a / dark #c9dc4a), because as a 1.25px line beside the green dots it read as a faded olive, and darker still in the light theme, so the traces stay in the accent; a tail that fades with the square of its length, because only the head showed; traces that keep pace with the band, because a band crosses the page about seven times faster than a 450ms trace runs; the echo's traces running up the page, because on a wide screen almost every such route crossed the name or ran where the dots fade out, so a click rarely drew one; and an endless or pattern-switching run of traces, four to six changes a second, because it flickers and makes the background move on its own.
-
-### Section Transitions (reserved; not in the UI while the CV has one section)
-
-The CV once paged between full-viewport sections. That code was removed when the only second section was a "More to come" placeholder. Bring these behaviours back when real content sections exist:
-
-- **Transition:** outgoing and incoming section each move 1.5rem on the Y axis and fade, 250ms, `cubic-bezier(0.23, 1, 0.32, 1)`, one section at a time (wait mode). Moving forward enters from below and exits upward; moving back reverses. Animate `y`, never a raw `transform` string, so reduced motion applies.
-- **Section content entrance:** the shared spring (stiffness 100, damping 20), 18px rise, 0.09s stagger. A section built from `ContentSection` used an eyebrow in accent mono, an h1 capped at 14ch (clamp(3rem, 7vw, 5.5rem)) and a 52ch description, entering with a 0.25s delay.
-- **Progress hint:** a bottom bar above a hairline top border: a mono counter ("01 / 02"), one 2.5rem-wide bar per section (active in accent at full width, inactive hairline at half width, scaled on X over 150ms), a "Scroll to explore" line with an arrow, and a key hint (`kbd`) visible from `sm` up. It appeared only with more than one section.
-- **Input:** wheel with a 700ms throttle, and ArrowUp and ArrowDown (ignored while focus is in an input, button, link or editable field, and when Ctrl, Alt or Meta is held).
-- **Known problems to fix when rebuilding:** wheel capture must not block Ctrl+wheel zoom or scrolling of content taller than the viewport, and touch needs a path (swipe or visible next and previous controls). Prefer one tall scroll with anchors if sections are read like a page.
+- **Rejected:** lit dots under the resting band, both as hard and bright as under a passing band and softened with a small core and a long edge, because they stayed right behind the small text all the time, and the band reads better as a plain reflection; a ring of light spreading from the name, and dots pushed outward by a wave, because the second light reads best as a copy of the first one from another direction, and a second light that starts when the reveal ends, because the two read as one moment when they cross together; a comet that circles the page without end, dots that dodge the pointer and ripple from clicks anywhere, and a depth layer that shifts against the pointer. The comet and the dodging dots compete with the name's weight play and the portrait's tilt, and the comet is an endless decorative loop; the depth layer was too faint to notice. For the directed light, compared in the real app in both themes: removing the dots, which keeps a cleaner surface but loses the echo and the material the sweep lights up; a 10% peak, which leaves the light too quiet in the dark theme; and a slow endless drift of the beam (±2.5° over 28s), which would make the background move on its own. Thin rays inside the beam, compared in the real app in both themes against the plain beam: three rays one to two degrees wide from the beam's source, at up to 10%, in a muted yellow-lime and in the accent. The plain beam was chosen, and the yellow token was removed with the rays. The rays also had to stay in the beam's upper half, because in its middle a full lean carried them over the date line, which has no contrast to spare. A light that comes on only when the reveal starts, after showing during the load, because it would go out and come on again. For the colours, compared in the real app in both themes: the earlier, less cyan accent, and a black that leans toward green under either accent. The more cyan accent on the unchanged zinc black was chosen. For the light traces, compared in the real app: one trace per band in the muted yellow-lime, because as a 1.25px line beside the green dots it read as a faded olive, and darker still in the light theme, so the traces stay in the accent; a tail that fades with the square of its length, because only the head showed; traces that keep pace with the band, because a band crosses the page about seven times faster than a 450ms trace runs; the echo's traces running up the page, because on a wide screen almost every such route crossed the name or ran where the dots fade out, so a click rarely drew one; and an endless or pattern-switching run of traces, four to six changes a second, because it flickers and makes the background move on its own.
 
 ## Do's and Don'ts
 
