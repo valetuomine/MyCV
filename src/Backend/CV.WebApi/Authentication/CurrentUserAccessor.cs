@@ -8,6 +8,11 @@ namespace CV.WebApi.Authentication
     /// </summary>
     public sealed class CurrentUserAccessor : ICurrentUser
     {
+        /// <summary>
+        /// The Entra app role that lets a caller manage every CV.
+        /// </summary>
+        public const string CvAdminRole = "CvAdmin";
+
         private readonly ClaimsPrincipal? _user;
         private readonly Lazy<ExternalIdentity?> _identity;
 
@@ -19,6 +24,6 @@ namespace CV.WebApi.Authentication
 
         public ExternalIdentity? Identity => _identity.Value;
 
-        public bool IsCvAdmin => _user?.IsInRole("CvAdmin") == true;
+        public bool IsCvAdmin => _user?.IsInRole(CvAdminRole) == true;
     }
 }

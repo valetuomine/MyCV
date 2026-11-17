@@ -1,6 +1,5 @@
 using CV.Common.Exceptions;
 using CV.DataAccess;
-using CV.Logic.Extensions;
 using CV.Logic.Mappers;
 using CV.Logic.Pictures;
 using CV.LogicInterface.Authentication;
@@ -10,16 +9,24 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CV.Logic.Services
 {
-    public class ProfilePictureService(
-        CvContext dataContext,
-        IProfilePictureStore pictureStore,
-        HttpClient httpClient) : BaseService(dataContext), IProfilePictureService
+    public class ProfilePictureService : BaseService, IProfilePictureService
     {
-        private readonly CvContext _dataContext = dataContext;
-        private readonly IProfilePictureStore _pictureStore = pictureStore;
+        private readonly CvContext _dataContext;
+        private readonly IProfilePictureStore _pictureStore;
 
         // Registered without redirects and with a short timeout, see Program.cs.
-        private readonly HttpClient _httpClient = httpClient;
+        private readonly HttpClient _httpClient;
+
+        public ProfilePictureService(
+            CvContext dataContext,
+            IProfilePictureStore pictureStore,
+            HttpClient httpClient)
+            : base(dataContext)
+        {
+            _dataContext = dataContext;
+            _pictureStore = pictureStore;
+            _httpClient = httpClient;
+        }
 
         public async Task<ProfilePictureDto> SavePicture(
             Guid profileId,
@@ -183,29 +190,6 @@ namespace CV.Logic.Services
             if (!_pictureStore.IsConfigured)
             {
                 throw new ServiceUnavailableException("Profile picture storage is not set up.");
-            }
-        }
-
-        /// <summary>
-        /// Lets the profile's owner, or any caller with <c>CvAdmin</c>, manage its picture section.
-        /// A non-owner gets 404, like the other profile changes.
-        /// </summary>
-        private async Task EnsureCanManageProfile(
-            Guid profileId,
-            ExternalIdentity? actor,
-            bool canManageAny,
-            CancellationToken cancellationToken)
-        {
-            if (profileId == Guid.Empty)
-            {
-                throw new BadRequestException($"Invalid profile ID: {profileId}");
-            }
-
-            var canChange = await _dataContext.CandidateLogin.OwnsProfile(actor, profileId, cancellationToken)
-                || (canManageAny && await _dataContext.Profile.AnyAsync(profile => profile.Id == profileId, cancellationToken));
-            if (!canChange)
-            {
-                throw new NotFoundException($"Profile not found with Id: {profileId}");
             }
         }
 

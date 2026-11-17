@@ -53,8 +53,9 @@ if (!builder.Environment.IsDevelopment()
 }
 
 var googleSection = builder.Configuration.GetSection(GoogleAuthenticationOptions.SectionName);
-var googleClientId = googleSection.Get<GoogleAuthenticationOptions>()?.ClientId;
-var isGoogleConfigured = !string.IsNullOrWhiteSpace(googleClientId);
+var googleOptions = googleSection.Get<GoogleAuthenticationOptions>() ?? new GoogleAuthenticationOptions();
+var googleClientId = googleOptions.ClientId;
+var isGoogleConfigured = googleOptions.IsConfigured;
 builder.Services.Configure<GoogleAuthenticationOptions>(googleSection);
 
 // "Bearer" only forwards to Entra or Google by the token's issuer; the chosen scheme validates it.
@@ -84,15 +85,13 @@ if (isGoogleConfigured)
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidIssuers = GoogleAuthenticationOptions.ValidIssuers,
-            // Google never issues this claim, so IsInRole("CvAdmin") is always false for Google tokens.
+            // Google never issues this claim, so the CvAdmin role check is always false for Google tokens.
             RoleClaimType = "mycv_no_google_roles"
         };
     });
 }
 
-builder.Services.AddAuthorizationBuilder()
-    .AddPolicy("CvAdmin", policy =>
-        policy.RequireAuthenticatedUser().RequireRole("CvAdmin"));
+builder.Services.AddAuthorization();
 
 if (allowedOrigins.Length > 0)
 {

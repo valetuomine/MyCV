@@ -15,5 +15,18 @@ namespace CV.LogicInterface.Authentication
         string UserId,
         string? Email,
         bool EmailVerified,
-        string? PictureUrl = null);
+        string? PictureUrl = null)
+    {
+        /// <summary>
+        /// Checks whether a provider, tenant and user ID name this sign-in.
+        /// </summary>
+        /// <param name="provider">The sign-in provider to compare.</param>
+        /// <param name="tenantId">The tenant or issuer to compare.</param>
+        /// <param name="userId">The provider's user ID to compare.</param>
+        /// <returns>True when all three match.</returns>
+        public bool Matches(string provider, string tenantId, string userId)
+        {
+            return Provider == provider && TenantId == tenantId && UserId == userId;
+        }
+    }
 }

@@ -15,4 +15,4 @@ Keep DTO contracts together under `CV.LogicInterface/Dto/<Resource>` and use the
 
 When creating DTOs, document every DTO class and property with concise XML `<summary>` documentation. Describe each property's API meaning, including whether an identifier is internal, public, related, required, or optional.
 
-Use the solution's existing primary-constructor services, controller style, namespaces, brace style, and dependency injection lifetime. Do not introduce a new architectural pattern for one resource.
+Use the solution's existing explicit-constructor services (see `service-patterns.md`; `src/Backend/.editorconfig` turns off the IDE's primary-constructor suggestion), controller style, namespaces, brace style, and dependency injection lifetime. Do not introduce a new architectural pattern for one resource.

@@ -60,7 +60,7 @@ namespace CV.Logic.Tests.Services
             _context.ChangeTracker.Clear();
 
             _pictureService = new ProfilePictureService(_context, _pictureStore, null!);
-            _profileService = new ProfileService(_context, Options.Create(new GoogleAuthenticationOptions()), _pictureStore);
+            _profileService = new ProfileService(_context, Options.Create(new GoogleAuthenticationOptions()));
         }
 
         public void Dispose()

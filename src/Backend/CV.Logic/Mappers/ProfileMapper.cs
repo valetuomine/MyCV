@@ -1,4 +1,4 @@
-﻿using CV.DataAccess.Entity;
+using CV.DataAccess.Entity;
 using CV.Logic.Pictures;
 using CV.LogicInterface.Dto.Profile;
 
@@ -10,6 +10,30 @@ namespace CV.Logic.Mappers
     public static class ProfileMapper
     {
         public const string DefaultLanguageCode = "fi";
+
+        private static readonly HashSet<string> SupportedLanguageCodes = [DefaultLanguageCode, "en"];
+
+        /// <summary>
+        /// Trims and lowercases a language code, falling back to the default for a blank one.
+        /// </summary>
+        /// <param name="languageCode">The language code to normalize, or null.</param>
+        /// <returns>The normalized language code.</returns>
+        public static string NormalizeLanguageCode(string? languageCode)
+        {
+            return string.IsNullOrWhiteSpace(languageCode)
+                ? DefaultLanguageCode
+                : languageCode.Trim().ToLowerInvariant();
+        }
+
+        /// <summary>
+        /// Checks whether a normalized language code is one the profile supports.
+        /// </summary>
+        /// <param name="normalizedLanguageCode">A code from <see cref="NormalizeLanguageCode"/>.</param>
+        /// <returns>True for a supported code.</returns>
+        public static bool IsSupportedLanguageCode(string normalizedLanguageCode)
+        {
+            return SupportedLanguageCodes.Contains(normalizedLanguageCode);
+        }
 
         /// <summary>
         /// Builds the path of a profile's picture endpoint, with the picture's version.
@@ -39,7 +63,7 @@ namespace CV.Logic.Mappers
                 Translations = [.. request.Translations
                     .Select(translation => new ProfileTranslation
                     {
-                        LanguageCode = translation.LanguageCode.Trim().ToLowerInvariant(),
+                        LanguageCode = NormalizeLanguageCode(translation.LanguageCode),
                         Title = translation.Title,
                         Summary = translation.Summary,
                         Location = translation.Location
@@ -60,7 +84,7 @@ namespace CV.Logic.Mappers
             dbProfile.UpdatedAt = DateTime.UtcNow;
 
             var incomingTranslations = request.Translations
-                .ToDictionary(translation => translation.LanguageCode.Trim().ToLowerInvariant());
+                .ToDictionary(translation => NormalizeLanguageCode(translation.LanguageCode));
 
             foreach (var existingTranslation in dbProfile.Translations
                 .Where(translation => !incomingTranslations.ContainsKey(translation.LanguageCode))
@@ -101,9 +125,7 @@ namespace CV.Logic.Mappers
         /// <returns>A data transfer object containing the profile data.</returns>
         public static ProfileDto MapEntityToDto(this Profile dbProfile, string? languageCode)
         {
-            var normalizedLanguageCode = string.IsNullOrWhiteSpace(languageCode)
-                ? DefaultLanguageCode
-                : languageCode.ToLowerInvariant();
+            var normalizedLanguageCode = NormalizeLanguageCode(languageCode);
 
             var translation = dbProfile.Translations.FirstOrDefault(item => item.LanguageCode == normalizedLanguageCode)
                 ?? dbProfile.Translations.FirstOrDefault(item => item.LanguageCode == DefaultLanguageCode);

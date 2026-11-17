@@ -9,9 +9,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CV.Logic.Services
 {
-    public class LoginService(CvContext dataContext) : BaseService(dataContext), ILoginService
+    public class LoginService : BaseService, ILoginService
     {
-        private readonly CvContext _dataContext = dataContext;
+        private readonly CvContext _dataContext;
+
+        public LoginService(CvContext dataContext)
+            : base(dataContext)
+        {
+            _dataContext = dataContext;
+        }
 
         public async Task<IReadOnlyCollection<LoginDto>> GetLogins(
             ExternalIdentity actor,
@@ -35,7 +41,7 @@ namespace CV.Logic.Services
         {
             var candidateId = await GetCandidateId(actor, cancellationToken);
 
-            if (IsSameIdentity(actor, linked))
+            if (actor.Matches(linked.Provider, linked.TenantId, linked.UserId))
             {
                 throw new ConflictException(
                     "This is the sign-in you are using now. Choose another account.",
@@ -126,13 +132,6 @@ namespace CV.Logic.Services
                 .FirstOrDefaultAsync(cancellationToken);
 
             return candidateId ?? throw new NotFoundException("No CV is linked to this sign-in.");
-        }
-
-        private static bool IsSameIdentity(ExternalIdentity first, ExternalIdentity second)
-        {
-            return first.Provider == second.Provider
-                && first.TenantId == second.TenantId
-                && first.UserId == second.UserId;
         }
 
         private static ConflictException LinkedToAnotherCandidate()

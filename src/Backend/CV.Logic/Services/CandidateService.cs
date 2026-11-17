@@ -11,14 +11,22 @@ using Microsoft.Extensions.Options;
 
 namespace CV.Logic.Services
 {
-    public class CandidateService(
-        CvContext dataContext,
-        IProfilePictureStore pictureStore,
-        IOptions<FeaturedCandidateOptions> featuredOptions) : BaseService(dataContext), ICandidateService
+    public class CandidateService : BaseService, ICandidateService
     {
-        private readonly CvContext _dataContext = dataContext;
-        private readonly IProfilePictureStore _pictureStore = pictureStore;
-        private readonly FeaturedCandidateOptions _featuredOptions = featuredOptions.Value;
+        private readonly CvContext _dataContext;
+        private readonly IProfilePictureStore _pictureStore;
+        private readonly FeaturedCandidateOptions _featuredOptions;
+
+        public CandidateService(
+            CvContext dataContext,
+            IProfilePictureStore pictureStore,
+            IOptions<FeaturedCandidateOptions> featuredOptions)
+            : base(dataContext)
+        {
+            _dataContext = dataContext;
+            _pictureStore = pictureStore;
+            _featuredOptions = featuredOptions.Value;
+        }
 
         public async Task<CandidateDto> GetCandidateByPublicUrlSegment(
             string publicUrlSegment,
@@ -82,13 +90,7 @@ namespace CV.Logic.Services
                 .FirstOrDefaultAsync(candidate => candidate.Id == candidateId, cancellationToken)
                 ?? throw new NotFoundException($"Candidate not found with Id: {candidateId}");
 
-            if (!canManageAny && (actor is null
-                || !await _dataContext.CandidateLogin
-                    .ForIdentity(actor)
-                    .AnyAsync(login => login.CandidateId == candidateId, cancellationToken)))
-            {
-                throw new NotFoundException($"Candidate not found with Id: {candidateId}");
-            }
+            await EnsureCanManageCandidate(candidateId, actor, canManageAny, cancellationToken);
 
             // CascadeDeleteCandidateReferences deletes the profile by ID only, so read its picture first.
             var pictureBlobName = await _dataContext.Profile

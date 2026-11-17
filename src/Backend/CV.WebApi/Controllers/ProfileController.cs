@@ -33,7 +33,6 @@ namespace CV.WebApi.Controllers
             var result = await _profileService.CreateProfile(
                 request,
                 owner,
-                _currentUser.IsCvAdmin,
                 cancellationToken);
 
             return CreatedAtAction(nameof(GetProfile), new { profileId = result.Id }, result);
@@ -59,18 +58,6 @@ namespace CV.WebApi.Controllers
                 _currentUser.IsCvAdmin,
                 cancellationToken);
             return Ok(result);
-        }
-
-        [HttpDelete("{profileId:guid}")]
-        [Authorize]
-        public async Task<IActionResult> DeleteProfile(Guid profileId, CancellationToken cancellationToken)
-        {
-            await _profileService.DeleteProfile(
-                profileId,
-                _currentUser.Identity,
-                _currentUser.IsCvAdmin,
-                cancellationToken);
-            return NoContent();
         }
 
         [HttpPut("{profileId:guid}")]

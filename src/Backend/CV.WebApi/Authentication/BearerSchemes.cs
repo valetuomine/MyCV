@@ -32,11 +32,6 @@ namespace CV.WebApi.Authentication
         /// <returns><see cref="Google"/> for a Google-issued token, otherwise <see cref="Entra"/>.</returns>
         public static string Select(HttpContext context, bool isGoogleConfigured)
         {
-            if (!isGoogleConfigured)
-            {
-                return Entra;
-            }
-
             var authorization = context.Request.Headers.Authorization.ToString();
             if (!authorization.StartsWith(BearerPrefix, StringComparison.OrdinalIgnoreCase))
             {

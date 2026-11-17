@@ -47,8 +47,7 @@ namespace CV.WebApi.Authentication
                 throw new BadRequestException("LinkToken is required.");
             }
 
-            var isGoogleConfigured = !string.IsNullOrWhiteSpace(_googleOptions.ClientId);
-            var scheme = BearerSchemes.SelectForToken(token, isGoogleConfigured);
+            var scheme = BearerSchemes.SelectForToken(token, _googleOptions.IsConfigured);
             var options = _jwtBearerOptions.Get(scheme);
             var parameters = await GetValidationParameters(options, cancellationToken);
 

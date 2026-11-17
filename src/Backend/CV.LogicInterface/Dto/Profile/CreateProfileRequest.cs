@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace CV.LogicInterface.Dto.Profile
 {
     /// <summary>
@@ -7,12 +5,6 @@ namespace CV.LogicInterface.Dto.Profile
     /// </summary>
     public class CreateProfileRequest
     {
-        /// <summary>
-        /// Gets or sets the identifier of an existing candidate to reattach the profile to.
-        /// </summary>
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public Guid? CandidateId { get; set; }
-
         /// <summary>
         /// Gets or sets the unique public URL segment for a new candidate.
         /// </summary>

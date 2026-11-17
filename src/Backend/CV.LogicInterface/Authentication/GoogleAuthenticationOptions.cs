@@ -26,5 +26,10 @@ namespace CV.LogicInterface.Authentication
         /// Gets or sets the verified email addresses that may create a CV with an unlinked Google identity.
         /// </summary>
         public string[] AllowedSignUpEmails { get; set; } = [];
+
+        /// <summary>
+        /// Gets whether a client ID is set, which is what turns Google sign-in on.
+        /// </summary>
+        public bool IsConfigured => !string.IsNullOrWhiteSpace(ClientId);
     }
 }

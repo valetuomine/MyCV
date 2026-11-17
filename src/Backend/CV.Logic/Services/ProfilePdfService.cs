@@ -7,10 +7,11 @@ using System.Text;
 
 namespace CV.Logic.Services
 {
-    public class ProfilePdfService(
-        IProfileService profileService,
-        IHtmlPdfPrinter printer,
-        IMemoryCache cache) : IProfilePdfService
+    /// <summary>
+    /// Prints profiles as PDF. It reads the profile through <see cref="IProfileService"/> and never the
+    /// database, so it has no data context and doesn't derive from <see cref="BaseService"/>.
+    /// </summary>
+    public class ProfilePdfService : IProfilePdfService
     {
         // The layout ships with the frontend, so a cached PDF must age out on a fixed
         // schedule for a frontend deploy to reach it, even when it is requested often.
@@ -18,9 +19,19 @@ namespace CV.Logic.Services
 
         private static readonly Lock CacheGate = new();
 
-        private readonly IProfileService _profileService = profileService;
-        private readonly IHtmlPdfPrinter _printer = printer;
-        private readonly IMemoryCache _cache = cache;
+        private readonly IProfileService _profileService;
+        private readonly IHtmlPdfPrinter _printer;
+        private readonly IMemoryCache _cache;
+
+        public ProfilePdfService(
+            IProfileService profileService,
+            IHtmlPdfPrinter printer,
+            IMemoryCache cache)
+        {
+            _profileService = profileService;
+            _printer = printer;
+            _cache = cache;
+        }
 
         public async Task<ProfilePdfDto> GetProfilePdf(
             Guid profileId,

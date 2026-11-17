@@ -11,8 +11,8 @@ namespace CV.Logic.Tests.Services
     /// <summary>
     /// Checks that creating a profile refuses LinkedIn and GitHub links with a scheme other than http or
     /// https. The request is validated before the database is touched, so the context has no provider. A
-    /// create that passes validation asks to reattach a candidate without the right to, which fails with
-    /// <see cref="NotFoundException"/> before any query runs. Updating shares the same
+    /// create that passes validation reaches its first query and fails with
+    /// <see cref="InvalidOperationException"/> because no provider is configured. Updating shares the same
     /// <c>ValidateRequest</c> call, but checks ownership in the database first, so it can't be reached
     /// here; <see cref="Validation.ProfileLinkUriTests"/> covers the rule itself.
     /// </summary>
@@ -26,7 +26,7 @@ namespace CV.Logic.Tests.Services
 
         public ProfileServiceLinkValidationTests()
         {
-            _service = new ProfileService(_context, Options.Create(new GoogleAuthenticationOptions()), null!);
+            _service = new ProfileService(_context, Options.Create(new GoogleAuthenticationOptions()));
         }
 
         public void Dispose()
@@ -40,7 +40,7 @@ namespace CV.Logic.Tests.Services
             var request = CreateRequest(linkedInUrl: "javascript:alert(document.cookie)");
 
             var exception = await Assert.ThrowsExactlyAsync<BadRequestException>(
-                () => _service.CreateProfile(request, Owner, canManageAny: false));
+                () => _service.CreateProfile(request, Owner));
 
             Assert.AreEqual("LinkedInUrl must be an http or https link.", exception.Message);
         }
@@ -51,7 +51,7 @@ namespace CV.Logic.Tests.Services
             var request = CreateRequest(gitHubUrl: "javascript:alert(1)");
 
             var exception = await Assert.ThrowsExactlyAsync<BadRequestException>(
-                () => _service.CreateProfile(request, Owner, canManageAny: false));
+                () => _service.CreateProfile(request, Owner));
 
             Assert.AreEqual("GitHubUrl must be an http or https link.", exception.Message);
         }
@@ -63,10 +63,11 @@ namespace CV.Logic.Tests.Services
         public async Task CreateAcceptsHttpsAndSchemelessLinks(string? linkedInUrl, string? gitHubUrl)
         {
             var request = CreateRequest(linkedInUrl, gitHubUrl);
-            request.CandidateId = Guid.NewGuid();
 
-            await Assert.ThrowsExactlyAsync<NotFoundException>(
-                () => _service.CreateProfile(request, Owner, canManageAny: false));
+            var exception = await Assert.ThrowsExactlyAsync<InvalidOperationException>(
+                () => _service.CreateProfile(request, Owner));
+
+            StringAssert.Contains(exception.Message, "database provider");
         }
 
         private static CreateProfileRequest CreateRequest(string? linkedInUrl = null, string? gitHubUrl = null)

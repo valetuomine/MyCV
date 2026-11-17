@@ -2,14 +2,26 @@
 
 ## Service shape
 
-Use the primary-constructor service shape already used in the solution:
+Every service that uses the database derives from `BaseService` with an explicit constructor (no primary constructor), and keeps its own `_dataContext` field as the first field of the class:
 
 ```csharp
-public class <Resource>Service(CvContext dataContext) : BaseService(dataContext), I<Resource>Service
+public class <Resource>Service : BaseService, I<Resource>Service
 {
-    private readonly CvContext _dataContext = dataContext;
+    private readonly CvContext _dataContext;
+
+    public <Resource>Service(CvContext dataContext)
+        : base(dataContext)
+    {
+        _dataContext = dataContext;
+    }
+
+    public async Task<<Resource>Dto> Get<Resource>(...)
+    {
+    }
 }
 ```
+
+Use `_dataContext` for queries. Other dependencies get their own `private readonly` fields after `_dataContext`, assigned in the same constructor. A service that never touches the database, such as `ProfilePdfService`, keeps the explicit-constructor shape but does not derive from `BaseService`, because an unread `_dataContext` field fails the Release build (Sonar S4487). `BaseService` holds the shared owner-or-admin check (`EnsureCanManageProfile`, `EnsureCanManageCandidate`, both on one `EnsureOwnerOrAdmin` rule): call them instead of writing the check again in a service.
 
 Validate direct service callers even when controllers or model binding perform related validation. Pass the cancellation token to every EF Core async operation. Keep query and business behavior in the service, not the controller.
 

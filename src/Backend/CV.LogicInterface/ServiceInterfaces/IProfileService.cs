@@ -13,13 +13,11 @@ namespace CV.LogicInterface.ServiceInterfaces
         /// </summary>
         /// <param name="request">The profile values to create.</param>
         /// <param name="owner">The caller's sign-in identity, linked to a new candidate as its first login.</param>
-        /// <param name="canManageAny">Whether the caller has the <c>CvAdmin</c> role.</param>
         /// <param name="cancellationToken">The token used to cancel the operation.</param>
         /// <returns>The created profile.</returns>
         Task<ProfileAdminDto> CreateProfile(
             CreateProfileRequest request,
             ExternalIdentity owner,
-            bool canManageAny,
             CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -40,19 +38,6 @@ namespace CV.LogicInterface.ServiceInterfaces
         /// <param name="cancellationToken">The token used to cancel the operation.</param>
         /// <returns>The profile and all its translations.</returns>
         Task<ProfileAdminDto> GetProfileAdmin(
-            Guid profileId,
-            ExternalIdentity? actor,
-            bool canManageAny,
-            CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Deletes a profile while preserving its candidate row.
-        /// </summary>
-        /// <param name="profileId">The identifier of the profile to delete.</param>
-        /// <param name="actor">The caller's sign-in identity, or null when the token carries none.</param>
-        /// <param name="canManageAny">Whether the caller has the <c>CvAdmin</c> role.</param>
-        /// <param name="cancellationToken">The token used to cancel the operation.</param>
-        Task DeleteProfile(
             Guid profileId,
             ExternalIdentity? actor,
             bool canManageAny,

@@ -502,26 +502,7 @@ export interface paths {
             };
         };
         post?: never;
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    profileId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -863,8 +844,6 @@ export interface components {
             profileId?: string | null;
         };
         CreateProfileRequest: {
-            /** Format: uuid */
-            candidateId?: string | null;
             publicUrlSegment?: string | null;
             fullName?: string | null;
             translations?: components["schemas"]["ProfileTranslationRequest"][] | null;

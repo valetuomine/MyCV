@@ -48,9 +48,7 @@ namespace CV.Logic.Mappers
         /// <returns>True when the provider, tenant and user ID all match.</returns>
         public static bool Matches(this CandidateLogin dbLogin, ExternalIdentity identity)
         {
-            return dbLogin.Provider == identity.Provider
-                && dbLogin.ProviderTenantId == identity.TenantId
-                && dbLogin.ProviderUserId == identity.UserId;
+            return identity.Matches(dbLogin.Provider, dbLogin.ProviderTenantId, dbLogin.ProviderUserId);
         }
     }
 }
