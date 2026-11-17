@@ -1,5 +1,9 @@
+import { m as motion } from "framer-motion"
 import { useState, type JSX } from "react"
-import { featuredCvPortraitClassName } from "./featuredCvLayout"
+import {
+  featuredCvPortraitClassName,
+  featuredCvReveal,
+} from "./featuredCvLayout"
 
 interface FeaturedCvAvatarProps {
   initials: string
@@ -12,7 +16,8 @@ interface FeaturedCvAvatarProps {
  * `portrait` area: beside the name on phones, and from the top of the card's
  * content to the bottom of its buttons on wider screens. The photo is placed
  * absolutely and cropped to fit, so a tall photo never makes the card taller.
- * The name already says whose CV it is, so assistive tech skips it.
+ * It rises in with the card's content (`featuredCvReveal`). The name
+ * already says whose CV it is, so assistive tech skips it.
  *
  * @param props - The component props.
  * @param props.initials - The candidate's initials.
@@ -28,8 +33,9 @@ export default function FeaturedCvAvatar({
   const showPhoto = Boolean(imageUrl) && imageUrl !== failedUrl
 
   return (
-    <div
+    <motion.div
       aria-hidden="true"
+      variants={featuredCvReveal}
       className={`relative grid place-items-center overflow-hidden border border-cv-line bg-cv-wash ${featuredCvPortraitClassName}`}
     >
       {showPhoto ? (
@@ -44,6 +50,6 @@ export default function FeaturedCvAvatar({
           {initials}
         </span>
       )}
-    </div>
+    </motion.div>
   )
 }

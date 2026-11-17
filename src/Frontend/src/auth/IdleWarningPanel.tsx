@@ -89,7 +89,7 @@ export default function IdleWarningPanel({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 16, transition: { duration: 0.15 } }}
       transition={{ type: "spring", stiffness: 100, damping: 20 }}
-      className="fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 mx-auto grid max-w-md gap-5 rounded-3xl border border-cv-line bg-cv-surface/90 p-5 shadow-cv-panel backdrop-blur-md sm:p-6 print:hidden"
+      className="fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 mx-auto grid max-w-md gap-5 rounded-3xl border border-cv-line bg-cv-pane bg-cv-pane-dense p-5 shadow-cv-panel inset-shadow-cv-rim sm:p-6 print:hidden"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="grid min-w-0 gap-2">

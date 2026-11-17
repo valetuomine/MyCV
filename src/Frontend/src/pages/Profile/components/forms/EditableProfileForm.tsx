@@ -177,7 +177,7 @@ export default function EditableProfileForm({
             {saveError}
           </p>
         )}
-        <div className="sticky bottom-[max(1rem,env(safe-area-inset-bottom))] z-20 flex min-h-17 flex-wrap items-center gap-3 rounded-3xl border border-cv-line bg-cv-surface/85 p-3 shadow-cv-panel backdrop-blur-md">
+        <div className="sticky bottom-[max(1rem,env(safe-area-inset-bottom))] z-20 flex min-h-17 flex-wrap items-center gap-3 rounded-3xl border border-cv-line bg-cv-pane bg-cv-pane-dense p-3 shadow-cv-panel inset-shadow-cv-rim">
           {confirmingDiscard ? (
             <>
               <p className="m-0 mr-auto px-2 text-sm text-cv-ink">
@@ -210,7 +210,7 @@ export default function EditableProfileForm({
               >
                 {t("common.cancel")}
               </Button>
-              <output className="m-0 ml-auto flex items-center gap-2 px-2 font-cv-mono text-xs tracking-wide text-cv-muted uppercase">
+              <output className="m-0 ml-auto flex items-center gap-2 px-2 font-cv-mono text-xs tracking-wide text-cv-copy uppercase">
                 <span
                   aria-hidden="true"
                   className={`size-2 rounded-full transition-colors ${isDirty ? "bg-cv-accent" : "bg-cv-line"}`}

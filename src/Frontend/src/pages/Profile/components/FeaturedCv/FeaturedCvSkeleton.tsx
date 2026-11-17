@@ -25,7 +25,7 @@ export default function FeaturedCvSkeleton(): JSX.Element {
       <div
         aria-hidden="true"
         style={timing}
-        className={`animate-cv-fade-in-delayed rounded-3xl border-2 border-cv-line bg-cv-wash ${featuredCvGridClassName}`}
+        className={`animate-cv-fade-in-delayed rounded-3xl border-2 border-cv-field-border bg-cv-pane shadow-cv-card inset-shadow-cv-rim forced-colors:shadow-none print:shadow-none ${featuredCvGridClassName}`}
       >
         <div className="grid w-full min-w-0 [grid-area:text]">
           <div className="flex h-lh items-center text-xs">

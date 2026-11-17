@@ -48,7 +48,8 @@ interface UseLoginRedirectOptions {
  * Reads the method whose redirect left the sign-in route when this page was
  * loaded again with the browser's Back button instead of being restored
  * from its back/forward cache. Any other page load, such as MSAL's return
- * to the sign-in route after Microsoft's callback, doesn't count.
+ * to the sign-in route after Microsoft's callback, doesn't count. It only
+ * reads, so React may call it more than once.
  *
  * @returns The method the user came back from, or null.
  */
@@ -57,6 +58,19 @@ function readAbandonedRedirectMethod(): SignInMethod | null {
     "navigation",
   ) as PerformanceNavigationTiming[]
   return navigation?.type === "back_forward" ? readSignInRedirectMethod() : null
+}
+
+/**
+ * Clears the return markers and Google's pending request that a redirect
+ * the user came back from with Back left behind. It reads session storage
+ * again instead of taking the hook's state, so running it twice, as Strict
+ * Mode does, finds nothing the second time.
+ */
+function clearAbandonedRedirect(): void {
+  if (readAbandonedRedirectMethod()) {
+    clearAuthReturnPaths()
+    clearGoogleSignInRequest()
+  }
 }
 
 /**
@@ -182,12 +196,7 @@ export default function useLoginRedirect({
     setCancelledMethod(method)
   }, [])
 
-  useEffect(() => {
-    if (abandonedMethod) {
-      clearAuthReturnPaths()
-      clearGoogleSignInRequest()
-    }
-  }, [abandonedMethod])
+  useEffect(clearAbandonedRedirect, [])
 
   useEffect(() => {
     if (!enabled || isBusy) {

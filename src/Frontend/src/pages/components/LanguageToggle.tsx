@@ -33,7 +33,7 @@ export default function LanguageToggle(): JSX.Element {
   return (
     <fieldset
       aria-label={t("language.label")}
-      className="m-0 flex h-11 min-w-0 items-center gap-0.5 rounded-full border border-cv-line bg-cv-wash p-1"
+      className="m-0 flex h-11 min-w-0 items-center gap-0.5 rounded-full border border-cv-field-border bg-cv-pane p-1 shadow-cv-edge forced-colors:shadow-none print:shadow-none"
     >
       {languages.map((code) => (
         <Button

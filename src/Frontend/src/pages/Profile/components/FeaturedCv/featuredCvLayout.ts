@@ -1,3 +1,5 @@
+import type { Variants } from "framer-motion"
+
 /**
  * The featured CV card's grid: its text and portrait side by side, with the
  * buttons under the text. On phones the buttons take the full width under
@@ -15,3 +17,17 @@ export const featuredCvGridClassName =
  */
 export const featuredCvPortraitClassName =
   "size-20 self-start rounded-2xl [grid-area:portrait] sm:h-auto sm:w-48 sm:self-stretch"
+
+/**
+ * Lets the card's content rise into place once its data has arrived. Only
+ * the content fades, never the card or anything around it: a fading
+ * ancestor would switch off the Pane's backdrop blur until it ends.
+ */
+export const featuredCvReveal: Variants = {
+  hidden: { opacity: 0, y: 18 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { type: "spring", stiffness: 100, damping: 20 },
+  },
+}

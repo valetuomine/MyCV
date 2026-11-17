@@ -31,33 +31,69 @@ interface LinkSignInCallbackProps {
   onLeave?: () => void
 }
 
+interface LinkSignInMethodProps {
+  method: SignInMethod
+}
+
+interface LinkSignInSubmitProps {
+  method: SignInMethod
+  marker: LinkSignInMarker
+  linkToken: string | null
+  linkedAccount: AccountInfo | null
+  failure: SignInFailure | null
+}
+
 /**
- * The callback screen of a sign-in that adds a method to the CV, shared by
- * Microsoft and Google. Once the provider has handled its response, it
- * clears the linking marker, restores the session and sends the new token,
- * then returns to the CV's admin view, which shows the outcome. An expired
- * session can't open the admin view, so that outcome shows here, as does a
- * response that arrives without its marker.
+ * Shows that a response arrived without its linking marker, so no method
+ * was added. It clears any marker left for another method when it opens.
+ *
+ * @param props - The component props.
+ * @param props.method - The method that was being added.
+ * @returns The error message.
+ */
+function LinkSignInNotAdded({
+  method,
+}: Readonly<LinkSignInMethodProps>): JSX.Element {
+  const { t } = useTranslation()
+
+  useEffect(() => {
+    clearLinkSignInMarker()
+  }, [])
+
+  return (
+    <RouteMessage
+      tone={Tone.Error}
+      description={t("linkCallback.notAddedDescription")}
+    >
+      {t("linkCallback.notAddedTitle", {
+        provider: signInMethodNames[method],
+      })}
+    </RouteMessage>
+  )
+}
+
+/**
+ * Finishes adding a method once the provider has handled its response. When
+ * it opens, it clears the linking marker, restores the session and sends the
+ * new token once, then returns to the CV's admin view, which shows the
+ * outcome. An expired session can't open the admin view, so that outcome
+ * shows here.
  *
  * @param props - The component props.
  * @param props.method - The method being added.
- * @param props.marker - The linking marker read when the route opened, or null without one.
- * @param props.isReady - Whether the provider has handled its response.
+ * @param props.marker - The linking marker read when the route opened.
  * @param props.linkToken - The new method's token, or null when its sign-in didn't complete.
  * @param props.linkedAccount - The Microsoft account signed in for linking, if any.
  * @param props.failure - Whether the new method's sign-in was cancelled or failed.
- * @param props.onLeave - Clears the provider's error on unmount.
- * @returns The pending message, or the outcome that can't be shown on the CV.
+ * @returns The pending message, or the expired session's message.
  */
-export default function LinkSignInCallback({
+function LinkSignInSubmit({
   method,
   marker,
-  isReady,
   linkToken,
-  linkedAccount = null,
+  linkedAccount,
   failure,
-  onLeave,
-}: Readonly<LinkSignInCallbackProps>): JSX.Element {
+}: Readonly<LinkSignInSubmitProps>): JSX.Element {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [linkLogin] = useLinkLoginMutation()
@@ -66,16 +102,12 @@ export default function LinkSignInCallback({
   const methodName = signInMethodNames[method]
 
   useEffect(() => {
-    if (!isReady || hasStarted.current) {
+    if (hasStarted.current) {
       return
     }
 
     hasStarted.current = true
     clearLinkSignInMarker()
-
-    if (!marker) {
-      return
-    }
 
     void completeLinkSignIn({
       marker,
@@ -95,20 +127,9 @@ export default function LinkSignInCallback({
         state: linkSignInLocationState({ method, outcome: result }),
       })
     })
-  }, [
-    failure,
-    isReady,
-    linkLogin,
-    linkToken,
-    linkedAccount,
-    marker,
-    method,
-    navigate,
-  ])
+  }, [failure, linkLogin, linkToken, linkedAccount, marker, method, navigate])
 
-  useEffect(() => onLeave, [onLeave])
-
-  if (isSessionExpired && marker) {
+  if (isSessionExpired) {
     /** Returns to the CV, which renews or asks for the session's sign-in. */
     const backToCv = (): void => {
       void navigate(RoutePaths.CandidateProfile(marker.publicUrlSegment), {
@@ -132,16 +153,20 @@ export default function LinkSignInCallback({
     )
   }
 
-  if (isReady && !marker) {
-    return (
-      <RouteMessage
-        tone={Tone.Error}
-        description={t("linkCallback.notAddedDescription")}
-      >
-        {t("linkCallback.notAddedTitle", { provider: methodName })}
-      </RouteMessage>
-    )
-  }
+  return <LinkSignInPending method={method} />
+}
+
+/**
+ * Shows that adding a method is still in progress.
+ *
+ * @param props - The component props.
+ * @param props.method - The method being added.
+ * @returns The pending message.
+ */
+function LinkSignInPending({
+  method,
+}: Readonly<LinkSignInMethodProps>): JSX.Element {
+  const { t } = useTranslation()
 
   return (
     <RouteMessage
@@ -150,7 +175,61 @@ export default function LinkSignInCallback({
       description={t("linkCallback.pendingDescription")}
       showHomeButton={false}
     >
-      {t("linkCallback.pendingTitle", { provider: methodName })}
+      {t("linkCallback.pendingTitle", { provider: signInMethodNames[method] })}
     </RouteMessage>
+  )
+}
+
+/**
+ * The callback screen of a sign-in that adds a method to the CV, shared by
+ * Microsoft and Google. It waits until the provider has handled its
+ * response, then `LinkSignInSubmit` finishes the linking, or
+ * `LinkSignInNotAdded` explains a response that arrived without its marker.
+ * Once ready, it stays ready, so the provider getting busy again can't
+ * unmount the linking and send the token twice.
+ *
+ * @param props - The component props.
+ * @param props.method - The method being added.
+ * @param props.marker - The linking marker read when the route opened, or null without one.
+ * @param props.isReady - Whether the provider has handled its response.
+ * @param props.linkToken - The new method's token, or null when its sign-in didn't complete.
+ * @param props.linkedAccount - The Microsoft account signed in for linking, if any.
+ * @param props.failure - Whether the new method's sign-in was cancelled or failed.
+ * @param props.onLeave - Clears the provider's error on unmount.
+ * @returns The pending message, the linking, or the missing marker's message.
+ */
+export default function LinkSignInCallback({
+  method,
+  marker,
+  isReady,
+  linkToken,
+  linkedAccount = null,
+  failure,
+  onLeave,
+}: Readonly<LinkSignInCallbackProps>): JSX.Element {
+  const [wasReady, setWasReady] = useState(isReady)
+
+  if (isReady && !wasReady) {
+    setWasReady(true)
+  }
+
+  useEffect(() => onLeave, [onLeave])
+
+  if (!wasReady) {
+    return <LinkSignInPending method={method} />
+  }
+
+  if (!marker) {
+    return <LinkSignInNotAdded method={method} />
+  }
+
+  return (
+    <LinkSignInSubmit
+      method={method}
+      marker={marker}
+      linkToken={linkToken}
+      linkedAccount={linkedAccount}
+      failure={failure}
+    />
   )
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, type JSX, type ReactNode } from "react"
+import { useState, type AnimationEvent, type JSX, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 import FieldMessage from "./FieldMessage"
 import prefersReducedMotion from "./prefersReducedMotion"
@@ -23,16 +23,6 @@ interface FormFieldProps extends FieldFrameProps {
   action?: ReactNode
   children: ReactNode
 }
-
-/** A single sideways shake that settles, for a field left invalid by a submit. */
-const shakeKeyframes: Keyframe[] = [
-  { transform: "translateX(0)" },
-  { transform: "translateX(-4px)" },
-  { transform: "translateX(4px)" },
-  { transform: "translateX(-3px)" },
-  { transform: "translateX(2px)" },
-  { transform: "translateX(0)" },
-]
 
 /**
  * One lap of the focus light, in seconds. Set on each glow, so it also sets
@@ -81,8 +71,13 @@ function pickCountTone(length: number, maxLength: number): string {
  * The frame of a form field: its label with a required marker and character
  * count, the field itself, and its validation message beneath it.
  *
- * The frame draws the field's opaque surface, so the page background doesn't
- * show through, and fades the whole field while it is disabled. With a
+ * The frame draws the field's surface, the see-through and blurred Pane, so
+ * the page's light shows through softly and its dot grid blurs away, with
+ * the resting edge glow around it, which a mouse hover strengthens and any
+ * focus inside strengthens most (neither in print, and no hover glow on a
+ * disabled field). An invalid field gets the neutral Pane and a
+ * danger-coloured glow.
+ * The frame also fades the whole field while it is disabled. With a
  * mouse, a light follows the pointer around the field's border and faintly
  * tints the surface beneath the transparent field. The position goes to CSS
  * variables once per frame, so moving the pointer doesn't re-render. Touch
@@ -97,8 +92,10 @@ function pickCountTone(length: number, maxLength: number): string {
  * limit, in accent and then in danger at the limit. Screen readers hear it
  * as part of the field's description, not on every keystroke.
  *
- * An effect shakes the field once when a submit leaves it invalid, but not
- * when its error changes while typing, and not for reduced motion.
+ * The field shakes once (`animate-cv-shake`) when a submit leaves it
+ * invalid, but not when its error changes while typing, and not for reduced
+ * motion. A new `submitCount` starts the shake during render, without an
+ * effect, and the shake's end clears it.
  *
  * @param props - The component props.
  * @param props.id - The field element's ID, which the label points to.
@@ -137,24 +134,47 @@ export default function FormField({
   children,
 }: Readonly<FormFieldProps>): JSX.Element {
   const { t } = useTranslation()
-  const frameRef = useRef<HTMLDivElement>(null)
   const trackPointer = usePointerLight()
-  const handledSubmitCountRef = useRef(submitCount)
+  const [handledSubmitCount, setHandledSubmitCount] = useState(submitCount)
+  const [isShaking, setIsShaking] = useState(false)
+
+  if (submitCount !== handledSubmitCount) {
+    setHandledSubmitCount(submitCount)
+    if (error && !prefersReducedMotion()) {
+      setIsShaking(true)
+    }
+  }
 
   /** The count's colour, or none for a field without a limit. */
   const countTone =
     maxLength === undefined ? undefined : pickCountTone(length, maxLength)
 
-  useEffect(() => {
-    if (submitCount === handledSubmitCountRef.current) {
-      return
+  /**
+   * Ends the shake when the frame's own animation ends or is cancelled, not
+   * when one of the lights inside it finishes a round, so a cancelled shake
+   * never leaves `animate-cv-shake` on.
+   *
+   * @param event - The animation end or cancel event.
+   */
+  const stopShaking = (event: AnimationEvent<HTMLDivElement> | Event): void => {
+    if (event.target === event.currentTarget) {
+      setIsShaking(false)
     }
+  }
 
-    handledSubmitCountRef.current = submitCount
-    if (error && !prefersReducedMotion()) {
-      frameRef.current?.animate(shakeKeyframes, { duration: 300 })
+  /**
+   * Listens for a cancelled shake on the frame, because React has no
+   * `onAnimationCancel` prop.
+   *
+   * @param frame - The field's frame.
+   * @returns Removes the listener when React detaches this ref.
+   */
+  const listenForCancelledShake = (frame: HTMLDivElement): (() => void) => {
+    frame.addEventListener("animationcancel", stopShaking)
+    return () => {
+      frame.removeEventListener("animationcancel", stopShaking)
     }
-  }, [submitCount, error])
+  }
 
   return (
     <div
@@ -186,11 +206,12 @@ export default function FormField({
       </div>
       <div className="flex min-w-0 gap-3">
         <div
-          ref={frameRef}
           data-field-frame
+          onAnimationEnd={stopShaking}
+          ref={listenForCancelledShake}
           onPointerEnter={trackPointer}
           onPointerMove={trackPointer}
-          className="group/frame relative isolate min-w-0 flex-1 rounded-lg bg-cv-field-surface transition-colors duration-200 group-data-invalid/field:bg-cv-surface group-data-invalid/field:[--cv-autofill:var(--cv-surface)] group-data-invalid/field:[--spot:var(--cv-danger)] has-disabled:opacity-60"
+          className={`group/frame relative isolate min-w-0 flex-1 rounded-lg bg-cv-pane ${isShaking ? "animate-cv-shake" : ""} shadow-cv-edge transition-[background-color,box-shadow] duration-200 ease-out not-print:hover:not-has-disabled:not-has-focus-visible:shadow-cv-edge-hover not-print:has-focus-visible:shadow-cv-edge-focus group-data-invalid/field:bg-cv-pane-neutral group-data-invalid/field:bg-none group-data-invalid/field:[--cv-autofill:var(--cv-surface)] group-data-invalid/field:[--edge:var(--cv-danger)] motion-reduce:transition-none forced-colors:shadow-none print:shadow-none group-data-invalid/field:[--spot:var(--cv-danger)] has-disabled:opacity-60`}
         >
           <span
             aria-hidden="true"

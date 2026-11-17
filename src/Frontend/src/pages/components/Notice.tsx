@@ -45,7 +45,7 @@ export default function Notice({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="m-0 flex items-center gap-3 rounded-full border border-cv-line bg-cv-surface px-4 py-2.5 text-sm text-cv-ink shadow-lg"
+            className="m-0 flex items-center gap-3 rounded-full border border-cv-line bg-cv-pane bg-cv-pane-dense px-4 py-2.5 text-sm text-cv-ink shadow-cv-panel inset-shadow-cv-rim"
           >
             <span
               aria-hidden="true"

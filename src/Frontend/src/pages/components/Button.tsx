@@ -63,42 +63,50 @@ const variantShapes: Record<ButtonVariant, ButtonShape> = {
 /**
  * Each variant's resting colours, and the hover and press feedback that only
  * applies while the button can be used. Every variant changes visibly on
- * hover. Brand leaves its colours to the caller, such as the sign-in
- * providers' own, so its hover is a faint layer of its own text colour
+ * hover, and every one but Text strengthens its edge glow then
+ * (`shadow-cv-edge-hover`; Primary adds it to its accent glow): the border
+ * and fill take the accent rather than a grey, so a hovered control lights up
+ * instead of darkening. Brand leaves its colours to the caller, such as the
+ * sign-in providers' own, so its hover is a faint layer of its own text colour
  * (`::after`, `bg-current`), which shows on any brand colours in both themes.
  * Segment is one option of a choice inside a pill track, such as the
  * language: `aria-pressed` marks the chosen one with the accent fill.
  * Switch is the track of a `role="switch"` button, whose child is the thumb:
- * `aria-checked` fills it with the accent.
+ * `aria-checked` fills it with the accent. Primary, Secondary, Danger, Icon
+ * and Switch carry the resting edge glow (`shadow-cv-edge`); Danger's is
+ * danger-coloured, and Brand has none at rest because its colours are the
+ * provider's. A keyboard focus gives every variant, Brand, Text and Segment
+ * included, the strongest edge glow beside the focus outline, except in
+ * print; a disabled button has no glow.
  */
 const variantClasses: Record<
   ButtonVariant,
   { rest: string; interactive: string }
 > = {
   [ButtonVariant.Primary]: {
-    rest: "rounded-full border border-transparent bg-cv-accent text-cv-accent-ink",
+    rest: "rounded-full border border-transparent bg-cv-accent text-cv-accent-ink shadow-cv-edge",
     interactive:
-      "hover:bg-cv-accent-strong hover:shadow-cv-accent active:scale-[0.97]",
+      "hover:bg-cv-accent-strong not-print:hover:shadow-cv-accent-hover active:scale-[0.97]",
   },
   [ButtonVariant.Secondary]: {
-    rest: "rounded-full border border-cv-line bg-cv-wash text-cv-ink",
+    rest: "rounded-full border border-cv-field-border bg-cv-wash text-cv-ink shadow-cv-edge",
     interactive:
-      "hover:border-cv-meta hover:bg-cv-overlay hover:shadow-cv-panel active:scale-[0.97]",
+      "hover:border-cv-accent/70 hover:bg-cv-accent/8 not-print:hover:shadow-cv-edge-hover active:scale-[0.97]",
   },
   [ButtonVariant.Danger]: {
-    rest: "rounded-full border border-cv-danger/50 text-cv-danger",
+    rest: "rounded-full border border-cv-danger/50 text-cv-danger shadow-cv-edge [--edge:var(--cv-danger)]",
     interactive:
-      "hover:border-cv-danger hover:bg-cv-danger/10 active:scale-[0.97]",
+      "hover:border-cv-danger hover:bg-cv-danger/10 not-print:hover:shadow-cv-edge-hover active:scale-[0.97]",
   },
   [ButtonVariant.Brand]: {
     rest: "rounded-full border after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:bg-current after:opacity-0 after:transition-opacity after:duration-200",
     interactive:
-      "hover:shadow-cv-panel hover:after:opacity-[0.08] active:scale-[0.97]",
+      "not-print:hover:shadow-cv-edge-hover hover:after:opacity-[0.08] active:scale-[0.97]",
   },
   [ButtonVariant.Icon]: {
-    rest: "rounded-full border border-cv-line bg-cv-wash text-cv-copy",
+    rest: "rounded-full border border-cv-field-border bg-cv-wash text-cv-copy shadow-cv-edge",
     interactive:
-      "hover:border-cv-meta hover:bg-cv-overlay hover:text-cv-ink active:scale-[0.92]",
+      "hover:border-cv-accent/70 hover:bg-cv-accent/8 hover:text-cv-ink not-print:hover:shadow-cv-edge-hover active:scale-[0.92]",
   },
   [ButtonVariant.Text]: {
     rest: "rounded-md text-cv-accent-strong underline decoration-cv-accent-strong/40 underline-offset-4",
@@ -108,12 +116,12 @@ const variantClasses: Record<
   [ButtonVariant.Segment]: {
     rest: "rounded-full text-cv-copy aria-pressed:bg-cv-accent aria-pressed:text-cv-accent-ink",
     interactive:
-      "hover:bg-cv-overlay hover:text-cv-ink aria-pressed:hover:bg-cv-accent-strong aria-pressed:hover:text-cv-accent-ink active:scale-[0.97]",
+      "hover:bg-cv-accent/8 hover:text-cv-ink not-print:hover:shadow-cv-edge-hover aria-pressed:hover:bg-cv-accent-strong aria-pressed:hover:text-cv-accent-ink active:scale-[0.97]",
   },
   [ButtonVariant.Switch]: {
-    rest: "rounded-full border border-cv-field-border bg-cv-field-surface aria-checked:border-cv-accent aria-checked:bg-cv-accent",
+    rest: "rounded-full border border-cv-field-border bg-cv-field-surface shadow-cv-edge aria-checked:border-cv-accent aria-checked:bg-cv-accent",
     interactive:
-      "hover:border-cv-meta hover:bg-cv-overlay aria-checked:hover:border-cv-accent-strong aria-checked:hover:bg-cv-accent-strong",
+      "hover:border-cv-accent/70 hover:bg-cv-accent/8 not-print:hover:shadow-cv-edge-hover aria-checked:hover:border-cv-accent-strong aria-checked:hover:bg-cv-accent-strong",
   },
 }
 
@@ -172,7 +180,7 @@ const shapeClasses: Record<ButtonShape, string> = {
 }
 
 const baseClassName =
-  "relative font-medium transition-[color,background-color,border-color,text-decoration-color,box-shadow,scale] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cv-accent disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:transition-colors motion-reduce:active:scale-100"
+  "relative font-medium transition-[color,background-color,border-color,text-decoration-color,box-shadow,scale] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] not-print:focus-visible:shadow-cv-edge-focus focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cv-accent disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none forced-colors:shadow-none print:shadow-none motion-reduce:transition-colors motion-reduce:active:scale-100"
 
 const labelLayer =
   "col-start-1 row-start-1 inline-flex items-center justify-center gap-2"

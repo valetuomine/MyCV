@@ -1,3 +1,4 @@
+import { m as motion } from "framer-motion"
 import { useId, type JSX } from "react"
 import { useTranslation } from "react-i18next"
 import {
@@ -11,7 +12,7 @@ import LitCard from "../../../components/LitCard"
 import { getInitials, toExternalUrl } from "../../utils/profileFormUtils"
 import LocationIcon from "../LocationIcon"
 import FeaturedCvAvatar from "./FeaturedCvAvatar"
-import { featuredCvGridClassName } from "./featuredCvLayout"
+import { featuredCvGridClassName, featuredCvReveal } from "./featuredCvLayout"
 
 interface FeaturedCvCardProps {
   profile: Profile
@@ -22,8 +23,9 @@ interface FeaturedCvCardProps {
  * The home page's card for the featured CV: its name, title, location and
  * portrait, a button that opens the CV, and its GitHub and LinkedIn links.
  * It is a `LitCard`, so its surface lights up like the edit view's preview
- * card. A profile without a location keeps that line empty, so the card
- * stays the size of its skeleton.
+ * card. Its content rises in on the reveal that `FeaturedCvSection` starts,
+ * while the card stays in place. A profile without a location keeps that
+ * line empty, so the card stays the size of its skeleton.
  *
  * @param props - The component props.
  * @param props.profile - The featured CV's public profile.
@@ -44,7 +46,10 @@ export default function FeaturedCvCard({
       className="w-full"
       contentClassName={featuredCvGridClassName}
     >
-      <div className="grid min-w-0 justify-items-start [grid-area:text]">
+      <motion.div
+        variants={featuredCvReveal}
+        className="grid min-w-0 justify-items-start [grid-area:text]"
+      >
         <p className="m-0 flex items-center gap-3 font-cv-mono text-xs tracking-widest text-cv-copy uppercase">
           <span
             aria-hidden="true"
@@ -76,12 +81,15 @@ export default function FeaturedCvCard({
         ) : (
           <span aria-hidden="true" className="mt-2 block h-lh text-sm" />
         )}
-      </div>
+      </motion.div>
       <FeaturedCvAvatar
         initials={getInitials(profile.fullName)}
         imageUrl={getProfilePictureUrl(profile.pictureUrl)}
       />
-      <div className="flex flex-wrap items-center gap-3 [grid-area:actions]">
+      <motion.div
+        variants={featuredCvReveal}
+        className="flex flex-wrap items-center gap-3 [grid-area:actions]"
+      >
         <Button
           variant={ButtonVariant.Primary}
           to={RoutePaths.CandidateProfile(publicUrlSegment)}
@@ -104,7 +112,7 @@ export default function FeaturedCvCard({
             LinkedIn
           </Button>
         )}
-      </div>
+      </motion.div>
     </LitCard>
   )
 }

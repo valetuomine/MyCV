@@ -51,6 +51,19 @@ const item: Variants = {
 }
 
 /**
+ * Lets the open form's part rise into place without a fade: its field is a
+ * blurred Pane, and a fading ancestor would switch off the blur until the
+ * fade ends, so the dot grid would show through and then snap away.
+ */
+const rise: Variants = {
+  hidden: { y: 18 },
+  visible: {
+    y: 0,
+    transition: { type: "spring", stiffness: 100, damping: 20 },
+  },
+}
+
+/**
  * The home page: what MyCV is, a card for the CV the API features, and a
  * form that opens any CV by its link or public address. The card shows a
  * skeleton while it loads and quietly stays away when no CV is featured or
@@ -180,7 +193,7 @@ export default function Home(): JSX.Element {
         </motion.div>
         <FeaturedCvSection />
         <motion.section
-          variants={item}
+          variants={rise}
           aria-labelledby={openHeadingId}
           className="grid w-full gap-4"
         >

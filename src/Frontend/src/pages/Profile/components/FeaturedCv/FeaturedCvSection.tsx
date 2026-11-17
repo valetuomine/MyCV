@@ -1,5 +1,5 @@
 import { skipToken } from "@reduxjs/toolkit/query"
-import { m as motion, type Variants } from "framer-motion"
+import { m as motion } from "framer-motion"
 import { useAtomValue } from "jotai"
 import type { JSX } from "react"
 import { useGetFeaturedCandidateQuery } from "../../../../api/candidateQueries"
@@ -8,21 +8,13 @@ import { languageAtom } from "../../../../state/languageAtoms"
 import FeaturedCvCard from "./FeaturedCvCard"
 import FeaturedCvSkeleton from "./FeaturedCvSkeleton"
 
-/** Lets the card rise into place once its data has arrived. */
-const cardReveal: Variants = {
-  hidden: { opacity: 0, y: 18 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { type: "spring", stiffness: 100, damping: 20 },
-  },
-}
-
 /**
  * The home page's featured CV: fetches the CV the API features and then its
  * profile in the current language, and shows a skeleton while either is on
  * its first load. When no CV is featured or a request fails, it renders
- * nothing, so the home page works without it.
+ * nothing, so the home page works without it. The wrapper only starts the
+ * card's reveal: the card's content rises in (`featuredCvReveal`) while the
+ * card itself stays where the skeleton was.
  *
  * @returns The featured CV's card, its skeleton, or nothing.
  */
@@ -50,12 +42,7 @@ export default function FeaturedCvSection(): JSX.Element | null {
   }
 
   return (
-    <motion.div
-      variants={cardReveal}
-      initial="hidden"
-      animate="visible"
-      className="w-full"
-    >
+    <motion.div initial="hidden" animate="visible" className="w-full">
       <FeaturedCvCard
         profile={profile}
         publicUrlSegment={candidate.publicUrlSegment}

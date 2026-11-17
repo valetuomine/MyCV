@@ -19,6 +19,23 @@
     var(--cv-surface)
   );
   --cv-field-border: color-mix(in srgb, var(--cv-accent) 38%, var(--cv-line));
+  --cv-pane-lit: color-mix(
+    in srgb,
+    var(--cv-accent) 3%,
+    color-mix(in srgb, var(--cv-surface) 85%, transparent)
+  );
+  --cv-pane-far: color-mix(
+    in srgb,
+    var(--cv-accent) 6%,
+    color-mix(in srgb, var(--cv-surface) 50%, transparent)
+  );
+  --cv-pane-rest: 4%;
+  --cv-pane-neutral: color-mix(in srgb, var(--cv-surface) 85%, transparent);
+  --cv-rim: rgb(255 255 255 / 0.8);
+  --cv-edge-glow: var(--cv-accent-core);
+  --cv-edge-rest: 32%;
+  --cv-edge-hover: 48%;
+  --cv-edge-focus: 60%;
   --cv-ink: #09090b;
   --cv-copy: #3f3f46;
   --cv-muted: #56565f;
@@ -62,6 +79,23 @@
       var(--cv-surface)
     );
     --cv-field-border: color-mix(in srgb, var(--cv-accent) 38%, var(--cv-line));
+    --cv-pane-lit: color-mix(
+      in srgb,
+      var(--cv-accent) 12%,
+      color-mix(in srgb, var(--cv-surface) 18%, transparent)
+    );
+    --cv-pane-far: color-mix(
+      in srgb,
+      var(--cv-accent) 3%,
+      color-mix(in srgb, var(--cv-surface) 55%, transparent)
+    );
+    --cv-pane-rest: 7%;
+    --cv-pane-neutral: color-mix(in srgb, var(--cv-surface) 55%, transparent);
+    --cv-rim: rgb(255 255 255 / 0.06);
+    --cv-edge-glow: var(--cv-accent);
+    --cv-edge-rest: 24%;
+    --cv-edge-hover: 42%;
+    --cv-edge-focus: 50%;
     --cv-ink: #f4f4f5;
     --cv-copy: #b4b4bb;
     --cv-muted: #9e9ea6;
@@ -109,6 +143,7 @@
   --color-cv-danger: var(--cv-danger);
   --color-cv-wash: var(--cv-wash);
   --color-cv-overlay: var(--cv-overlay);
+  --color-cv-pane-neutral: var(--cv-pane-neutral);
   --color-cv-google-surface: var(--cv-google-surface);
   --color-cv-google-line: var(--cv-google-line);
   --color-cv-google-ink: var(--cv-google-ink);
@@ -118,6 +153,39 @@
   --shadow-cv-panel: var(--cv-shadow-panel);
   --shadow-cv-accent: 0 0.5rem 2rem -0.75rem
     color-mix(in srgb, var(--cv-accent) 55%, transparent);
+  /* The edge glow: a halo at rest (--cv-edge-rest) that a mouse hover
+     strengthens (--cv-edge-hover) and a keyboard focus strengthens most
+     (--cv-edge-focus). Its colour, --cv-edge-glow, is the accent tone that
+     stands out from the background: the deepest emerald on the light
+     theme's pale page and the bright accent on the dark one. --edge swaps
+     it for another colour, such as Danger. */
+  --shadow-cv-edge: 0 0 0.875rem -0.125rem
+    color-mix(
+      in srgb,
+      var(--edge, var(--cv-edge-glow)) var(--cv-edge-rest),
+      transparent
+    );
+  --shadow-cv-edge-hover: 0 0 1.125rem -0.0625rem
+    color-mix(
+      in srgb,
+      var(--edge, var(--cv-edge-glow)) var(--cv-edge-hover),
+      transparent
+    );
+  --shadow-cv-edge-focus: 0 0 1.25rem 0
+    color-mix(
+      in srgb,
+      var(--edge, var(--cv-edge-glow)) var(--cv-edge-focus),
+      transparent
+    );
+  /* The primary button's hover: the accent glow with the hover edge glow. */
+  --shadow-cv-accent-hover:
+    var(--shadow-cv-accent), var(--shadow-cv-edge-hover);
+  /* A card's panel shadow with the resting edge glow, and with the hover
+     edge glow while a mouse is over it. */
+  --shadow-cv-card: var(--cv-shadow-panel), var(--shadow-cv-edge);
+  --shadow-cv-card-hover: var(--cv-shadow-panel), var(--shadow-cv-edge-hover);
+  /* The thin light along a card's or panel's top edge. */
+  --inset-shadow-cv-rim: inset 0 1px 0 0 var(--cv-rim);
   /* Paints over the browser's autofill fill with the field's own wash, kept
      opaque because the autofill colour sits underneath. */
   --inset-shadow-cv-autofill: inset 0 0 0 100vmax var(--cv-autofill);
@@ -152,6 +220,28 @@
   --animate-cv-light-ignite: cv-fade-in 500ms cubic-bezier(0.23, 1, 0.32, 1);
   /* Held invisible briefly so screens that resolve quickly never flash. */
   --animate-cv-fade-in-delayed: cv-fade-in 200ms ease-out 300ms both;
+  /* A single sideways shake that settles, for a field left invalid by a
+     submit. */
+  --animate-cv-shake: cv-shake 300ms linear;
+
+  @keyframes cv-shake {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    20% {
+      transform: translateX(-4px);
+    }
+    40% {
+      transform: translateX(4px);
+    }
+    60% {
+      transform: translateX(-3px);
+    }
+    80% {
+      transform: translateX(2px);
+    }
+  }
 
   @keyframes cv-pulse {
     0% {
@@ -238,8 +328,8 @@
  * timelines, and reduced motion, show it at rest.
  */
 @utility animate-cv-scroll-rise {
-  @media (prefers-reduced-motion: no-preference) {
-    @supports (animation-timeline: view()) {
+  @variant motion-safe {
+    @variant supports-[animation-timeline:view()] {
       animation: cv-scroll-rise linear both;
       animation-timeline: view();
       animation-range: entry 0% entry 100%;
@@ -284,7 +374,7 @@
   background-repeat: no-repeat;
   background-attachment: fixed;
 
-  @media (prefers-reduced-motion: no-preference) {
+  @variant motion-safe {
     animation: cv-shimmer 2.4s cubic-bezier(0.45, 0, 0.2, 1)
       calc(300ms - var(--cv-loading-elapsed, 0ms)) infinite;
   }
@@ -800,6 +890,61 @@
   );
 }
 
+/* The pane under cards and form fields: a see-through surface with a backdrop
+   blur, lit like the page. Along the diagonal it fades with
+   bg-cv-light-wash's stops (spent at 40%) from --cv-pane-lit in the top-left
+   corner to --cv-pane-far. In the dark theme the lit corner is the lighter,
+   more see-through one and the far pane the darker, denser one; in the light
+   theme the lit corner is the denser, whiter one and the far pane the more
+   see-through, faintly tinted one. A weaker accent light (--cv-pane-rest)
+   rises from 60% to the bottom-right corner on the same stops mirrored, so
+   the only dark part is the band from the bottom-left to the top-right
+   corner. "to bottom right" keeps that band on that diagonal at any aspect
+   ratio, so a wide input gets it too. */
+@utility bg-cv-pane {
+  backdrop-filter: blur(16px);
+  background-image:
+    linear-gradient(
+      to bottom right,
+      transparent 60%,
+      color-mix(
+          in srgb,
+          var(--cv-accent) calc(var(--cv-pane-rest) * 0.08),
+          transparent
+        )
+        66.4%,
+      color-mix(
+          in srgb,
+          var(--cv-accent) calc(var(--cv-pane-rest) * 0.3),
+          transparent
+        )
+        76.8%,
+      color-mix(
+          in srgb,
+          var(--cv-accent) calc(var(--cv-pane-rest) * 0.62),
+          transparent
+        )
+        88.8%,
+      color-mix(in srgb, var(--cv-accent) var(--cv-pane-rest), transparent) 100%
+    ),
+    linear-gradient(
+      to bottom right,
+      var(--cv-pane-lit) 0%,
+      color-mix(in srgb, var(--cv-pane-lit) 62%, var(--cv-pane-far)) 11.2%,
+      color-mix(in srgb, var(--cv-pane-lit) 30%, var(--cv-pane-far)) 23.2%,
+      color-mix(in srgb, var(--cv-pane-lit) 8%, var(--cv-pane-far)) 33.6%,
+      var(--cv-pane-far) 40%
+    );
+}
+
+/* A denser Pane for floating panels (the action bar, the sign-out warning and
+   the notice), which float over text and fields: a 75% Surface under the
+   Pane's light leaves about a fifth of the page showing through. Used beside
+   bg-cv-pane. */
+@utility bg-cv-pane-dense {
+  background-color: color-mix(in srgb, var(--cv-surface) 75%, transparent);
+}
+
 /*
  * Form field light under the pointer, at the --x and --y that FormField sets.
  * bg-cv-field-glow tints the fill and bg-cv-field-edge is cut to the 1px
@@ -853,7 +998,7 @@
 @utility offset-cv-field-border {
   offset-path: inset(0 round 0.5rem);
 
-  @supports not (offset-path: inset(0 round 1px)) {
+  @variant not-supports-[offset-path:inset(0_round_1px)] {
     display: none;
   }
 }
