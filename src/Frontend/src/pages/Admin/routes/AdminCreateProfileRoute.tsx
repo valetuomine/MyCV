@@ -203,7 +203,7 @@ export default function AdminCreateProfileRoute(): JSX.Element {
           aria-busy={createState.isLoading}
           className="grid w-full max-w-3xl gap-6"
         >
-          <h1 className="m-0 font-cv-display text-4xl font-semibold tracking-tight text-cv-ink">
+          <h1 className="m-0 min-w-0 font-cv-display text-4xl font-semibold tracking-tight wrap-break-word text-cv-ink">
             {t("createProfile.heading")}
           </h1>
           <fieldset

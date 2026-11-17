@@ -1,4 +1,11 @@
-import { useEffect, useId, useRef, useState, type JSX } from "react"
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type JSX,
+} from "react"
 import { useFormState } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import {
@@ -142,7 +149,9 @@ export default function SignInMethodsSection({
   const headingId = useId()
   const addHintId = useId()
   const messageId = useId()
-  const headingRef = useRef<HTMLHeadingElement>(null)
+  const headingRef = useRef<HTMLHeadingElement | null>(null)
+  /** Whether the section opened on the way back from a redirect; fixed at mount. */
+  const [returnedFromLink] = useState(linkResult !== null)
   const session = useAuthSession()
   const { isDirty } = useFormState<ProfileSchema>()
   const loginsQuery = useGetLoginsQuery()
@@ -175,11 +184,22 @@ export default function SignInMethodsSection({
   const redirectingMethod =
     linkProgress?.step === "redirect" ? linkProgress.method : null
 
-  useEffect(() => {
-    if (linkResult) {
-      headingRef.current?.focus()
-    }
-  }, [linkResult])
+  /**
+   * Keeps the heading in `headingRef` and, when the section mounts on the way
+   * back from a redirect, focuses it, which also scrolls the section into
+   * view. It runs only on mount, so it is no effect on the `linkResult` prop.
+   *
+   * @param heading - The heading element, or null when it unmounts.
+   */
+  const attachHeading = useCallback(
+    (heading: HTMLHeadingElement | null): void => {
+      headingRef.current = heading
+      if (heading && returnedFromLink) {
+        heading.focus()
+      }
+    },
+    [returnedFromLink],
+  )
 
   useEffect(() => {
     if (!redirectingMethod) {
@@ -358,9 +378,9 @@ export default function SignInMethodsSection({
         </p>
         <h2
           id={headingId}
-          ref={headingRef}
+          ref={attachHeading}
           tabIndex={-1}
-          className="m-0 font-cv-display text-2xl font-semibold tracking-tight outline-none"
+          className="m-0 min-w-0 font-cv-display text-2xl font-semibold tracking-tight wrap-break-word outline-none"
         >
           {t("signInMethods.heading")}
         </h2>

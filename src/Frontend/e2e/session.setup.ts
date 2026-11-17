@@ -157,7 +157,7 @@ setup(
     const editButton = page.getByRole("button", { name: "Edit profile" })
     /** Shows when the test CV doesn't exist yet. */
     const missingCv = page
-      .getByText("This candidate does not have a profile yet.")
+      .getByText("This candidate does not have a profile yet")
       .or(page.getByText("We couldn't find that CV."))
     /** The test CV's page, where the app renews the tokens. */
     const testCvPath = `/${encodeURIComponent(testCv)}`

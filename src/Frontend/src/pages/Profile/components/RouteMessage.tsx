@@ -81,7 +81,7 @@ export default function RouteMessage({
           role={tone === Tone.Error ? "alert" : undefined}
           className="grid gap-4"
         >
-          <h1 className="m-0 font-cv-display text-3xl leading-tight font-semibold tracking-tight text-balance sm:text-4xl [&_code]:rounded-md [&_code]:bg-cv-overlay [&_code]:px-2 [&_code]:py-0.5 [&_code]:font-cv-mono [&_code]:text-[0.7em] [&_code]:font-normal [&_code]:text-cv-accent">
+          <h1 className="m-0 min-w-0 font-cv-display text-3xl leading-tight font-semibold tracking-tight wrap-break-word text-balance sm:text-4xl [&_code]:rounded-md [&_code]:bg-cv-overlay [&_code]:px-2 [&_code]:py-0.5 [&_code]:font-cv-mono [&_code]:text-[0.7em] [&_code]:font-normal [&_code]:text-cv-accent">
             {children}
           </h1>
           {description && (

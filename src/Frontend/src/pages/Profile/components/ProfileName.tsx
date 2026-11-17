@@ -241,7 +241,7 @@ export default function ProfileName({
       onAnimationStart={startReveal}
       onAnimationComplete={finishReveal}
       dir="auto"
-      className="relative mt-8 font-cv-display text-[clamp(3rem,8.5vw,7rem)] leading-[0.95] font-semibold tracking-tighter text-balance"
+      className="relative mt-8 min-w-0 font-cv-display text-[clamp(3rem,8.5vw,7rem)] leading-[0.95] font-semibold tracking-tighter wrap-break-word text-balance"
     >
       <span className="sr-only">{fullName}</span>
       <span ref={lettersRef} aria-hidden="true" className="block">

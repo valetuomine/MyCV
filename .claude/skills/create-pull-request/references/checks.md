@@ -67,7 +67,17 @@ Then confirm:
 - It looks right on desktop (1440×900) and mobile (390×844), in both the light and the dark theme, with no horizontal scroll.
 - The changed interactions work: clicks, typing, keyboard focus and animations. Every usable button changes visibly on hover, in both themes (a shadow alone doesn't show).
 - With reduced motion (`browser_emulate_media`), the content still shows and the motion is off.
+- Layout and focus hold in the rendered view (the subagent cannot see this file, so the bullet is complete): a long name or heading wraps on mobile (390×844) without horizontal scroll or clipped text, and every interactive element shows a visible keyboard focus when you Tab through the view, in both themes. Code review checks the remaining *Layout, motion and copy rules* below from the diff.
 - The browser console has no new errors or warnings.
+
+**Layout, motion and copy rules** (typical machine-made UI mistakes; code review checks them from the diff, the browser check from the rendered view):
+
+- Layout: the page root clips horizontal overflow with `overflow-x: clip`, never `hidden` (`hidden` makes the root a scroll container and breaks `position: sticky`). Flexible grid columns are `minmax(0, 1fr)`, so a long word cannot widen the track: Tailwind's `grid-cols-2` already is that, while a hand-written `1fr` or `auto` track (`grid-cols-[6rem_1fr]`) is the mistake; a fixed first column such as `6rem` is fine. Large headings and names carry `overflow-wrap` and, when they are grid or flex children, `min-width: 0`: `wrap-break-word` needs the `min-w-0`, `wrap-anywhere` does not, and either one is fine.
+- Motion: no `transition: all` (list the properties). Animate `transform`, `opacity`, colour and shadow, never `width`, `height`, `top` or `left`; open and close a panel with the `grid-template-rows` technique instead of animating its height. Reduced motion is covered by the checklist above.
+- Focus: every interactive element has a visible `:focus-visible` style. `outline: none` is allowed only with a replacement (a ring or border change, as in `fieldClassName.ts`), or on a non-interactive element that script focuses (`tabIndex={-1}` headings and frames).
+- Copy: headings and button labels end without a full stop. A change or benefit is stated relative to something ("saved as soon as you make it", "up to 10 MB"), not as a free-standing claim. A heading that renders a status or error sentence (`RouteMessage`) follows the heading rule, so its text has no full stop either; a sentence in running text, such as a description or hint, keeps it.
+- Left out on purpose: the sources also ban mono-font uppercase eyebrow labels and a middle-dot separator in meta rows. The eyebrow ban conflicts with `DESIGN.md`, which defines the *Label* style (mono, uppercase, tracking 0.1em) for eyebrows and form labels and wins. The middle-dot ban conflicts with the code: the sign-in method rows (`SignInMethodRow.tsx`) and the document titles ("MyCV · CVs online" in `en.ts`) use `·` on purpose. Do not add these two rules.
+- Sources: Hallmark (`Nutlope/hallmark`, MIT: *The Floor* and `sloplint`) and Unslop (`heydamir/unslop`, CC-BY-4.0, Damir Sokolovsky), reworded.
 
 *Signed-in views* such as `/admin` and `/<cv-address>/admin` are checked as the Playwright test users, never with the user's own accounts. This holds for every work item, during the work and in `/create-pull-request`:
 
@@ -93,7 +103,7 @@ Run it with `browser_run_code_unsafe`, and again after the browser restarts. Nev
 2. **Start it in the background:** `Agent` with `subagent_type: general-purpose`, `model: sonnet`, `effort: medium` and `run_in_background: true`. The subagent cannot see this file, so paste into the prompt verbatim:
    - each view with its address, the MCP server to use for it (`playwright`, `playwright-microsoft` or `playwright-google`), and the changed interactions and states to try;
    - that it may save only the test CVs `/playwright-microsoft` and `/playwright-google`;
-   - the "Then confirm" bullets of the checklist above (both sizes, both themes, interactions and hover, reduced motion, console), and the `page.route` block, to run before any form or error state and again after a browser restart; leave out *Servers*;
+   - the "Then confirm" bullets of the checklist above (both sizes, both themes, interactions and hover, reduced motion, long names and headings wrap, keyboard focus is visible, console), and the `page.route` block, to run before any form or error state and again after a browser restart; leave out *Servers*;
    - the rules of *Screenshots* (`browser_resize` to both sizes, one theme, at most two images per view, ASCII file names), with the names `us-<id>-<view>-desktop.png` and `us-<id>-<view>-mobile.png` (a Task uses `task-<id>`), and the privacy check of every signed-in screenshot with the Read tool;
    - the privacy rule of the signed-in paragraph: it opens no snapshots or logs of signed-in views beyond what the check itself needs, and its report holds no content from them;
    - a ban on changing real data and on editing files, and the headless rules of [cloud-session.md](cloud-session.md) when it is a cloud session.

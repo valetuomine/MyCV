@@ -170,7 +170,7 @@ export default function Home(): JSX.Element {
             <span>MyCV</span>
           </p>
           <div className="grid gap-4">
-            <h1 className="m-0 font-cv-display text-4xl leading-tight font-semibold tracking-tighter text-balance sm:text-5xl">
+            <h1 className="m-0 min-w-0 font-cv-display text-4xl leading-tight font-semibold tracking-tighter wrap-break-word text-balance sm:text-5xl">
               {t("home.heading")}
             </h1>
             <p className="m-0 max-w-[52ch] text-lg leading-relaxed text-pretty text-cv-copy">

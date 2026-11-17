@@ -44,16 +44,16 @@ export const en = {
     ownerManage: "Manage your CV",
   },
   notFound: {
-    heading: "We couldn't find that page.",
+    heading: "We couldn't find that page",
     description:
       "The link may be mistyped or the CV may have moved. Check the address, or open a CV with its public link.",
   },
   cv: {
     loading: "Loading CV…",
-    noProfile: "This candidate does not have a profile yet.",
-    notFound: "We couldn't find that CV. Check the link and try again.",
-    unreachable: "Can't reach the server. Check your connection and try again.",
-    failed: "Something went wrong while loading this CV.",
+    noProfile: "This candidate does not have a profile yet",
+    notFound: "We couldn't find that CV. Check the link and try again",
+    unreachable: "Can't reach the server. Check your connection and try again",
+    failed: "Something went wrong while loading this CV",
     eyebrow: "Curriculum vitae",
     updated: "Updated {{date}}",
     readMore: "Read more",
@@ -160,7 +160,7 @@ export const en = {
     popupFailed: "Signing in didn't work. Try again.",
     notNow: "Not now",
     refusedAgain:
-      "Your sign-in still isn't accepted. Try again later, or sign in another way.",
+      "Your sign-in still isn't accepted. Try again later, or sign in another way",
   },
   profilePicture: {
     heading: "Profile picture",

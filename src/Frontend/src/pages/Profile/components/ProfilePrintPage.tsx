@@ -155,7 +155,7 @@ export default function ProfilePrintPage({
           {values.title && (
             <p
               dir="auto"
-              className="m-0 font-cv-display text-lg font-medium text-cv-accent"
+              className="m-0 font-cv-display text-lg font-medium wrap-anywhere text-cv-accent"
             >
               {values.title}
             </p>
@@ -194,7 +194,7 @@ export default function ProfilePrintPage({
                 <dd className="m-0">
                   <a
                     href={toExternalUrl(url)}
-                    className="text-cv-accent underline underline-offset-2 wrap-anywhere"
+                    className="text-cv-accent underline underline-offset-2 wrap-anywhere focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cv-accent"
                   >
                     {url}
                   </a>

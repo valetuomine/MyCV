@@ -137,7 +137,7 @@ export default function EditableProfileForm({
           <h1
             ref={headingRef}
             tabIndex={-1}
-            className="m-0 font-cv-display text-4xl font-semibold tracking-tighter outline-none"
+            className="m-0 min-w-0 font-cv-display text-4xl font-semibold tracking-tighter wrap-break-word outline-none"
           >
             {t("profileForm.heading")}
           </h1>

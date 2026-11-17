@@ -60,7 +60,7 @@ export default function ProfilePreview(): JSX.Element {
         {title?.trim() && (
           <p
             dir="auto"
-            className="mt-4 mb-0 font-cv-display text-lg font-medium tracking-tight text-cv-accent"
+            className="mt-4 mb-0 font-cv-display text-lg font-medium tracking-tight wrap-anywhere text-cv-accent"
           >
             {title}
           </p>

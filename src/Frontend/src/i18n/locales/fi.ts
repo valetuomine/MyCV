@@ -46,17 +46,17 @@ export const fi: Translation = {
     ownerManage: "Hallitse CV:täsi",
   },
   notFound: {
-    heading: "Sivua ei löytynyt.",
+    heading: "Sivua ei löytynyt",
     description:
       "Linkissä voi olla kirjoitusvirhe, tai CV on voinut siirtyä. Tarkista osoite tai avaa CV sen julkisella linkillä.",
   },
   cv: {
     loading: "Ladataan CV:tä…",
-    noProfile: "Tällä henkilöllä ei ole vielä profiilia.",
-    notFound: "CV:tä ei löytynyt. Tarkista linkki ja yritä uudelleen.",
+    noProfile: "Tällä henkilöllä ei ole vielä profiilia",
+    notFound: "CV:tä ei löytynyt. Tarkista linkki ja yritä uudelleen",
     unreachable:
-      "Palvelimeen ei saada yhteyttä. Tarkista yhteytesi ja yritä uudelleen.",
-    failed: "CV:n lataamisessa tapahtui virhe.",
+      "Palvelimeen ei saada yhteyttä. Tarkista yhteytesi ja yritä uudelleen",
+    failed: "CV:n lataamisessa tapahtui virhe",
     eyebrow: "Ansioluettelo",
     updated: "Päivitetty {{date}}",
     readMore: "Lue lisää",
@@ -165,7 +165,7 @@ export const fi: Translation = {
     popupFailed: "Kirjautuminen ei onnistunut. Yritä uudelleen.",
     notNow: "Ei nyt",
     refusedAgain:
-      "Kirjautumistasi ei vieläkään hyväksytä. Yritä myöhemmin uudelleen tai kirjaudu toisella tavalla.",
+      "Kirjautumistasi ei vieläkään hyväksytä. Yritä myöhemmin uudelleen tai kirjaudu toisella tavalla",
   },
   profilePicture: {
     heading: "Profiilikuva",
