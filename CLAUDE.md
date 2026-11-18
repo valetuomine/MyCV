@@ -54,6 +54,8 @@ npm --prefix src/Frontend run build
 npx --yes markdownlint-cli2@0.24.0
 ```
 
+A warning is a failed check: fix it, or ask the user whether to add the rule to the ignore list.
+
 Format changed C# with `dotnet format` and changed frontend files with Prettier.
 
 Check every frontend UI change in a real browser before pushing (*Browser checks* under *Tools*). Every work item checks its signed-in views as the Playwright test users, during the work and in `/create-pull-request`, never with the user's own accounts, and never types, reads or prints credentials. When a change touches sign-in or a signed-in view, also run `npm --prefix src/Frontend run e2e`, which needs the API and the test users' saved sessions. How the sessions renew, when the user is needed, the checklist and the e2e details are in `references/checks.md` of `/create-pull-request` (*Frontend*, *Frontend UI*, *Signed-in views* and *Browser subagent*).

@@ -4,6 +4,16 @@ Part of the `create-pull-request` skill. Read it in step 4 of the workflow, and 
 
 Run the same checks as the pull request pipeline for the areas the change touches. Run them from the repository root, before committing. A cloud session also follows *Checks* in [cloud-session.md](cloud-session.md). The PR and `main` pipelines use the same areas: their `Changes` stage (`templates/detect-changes-job.yml`) skips the .NET or frontend stage when the change does not touch that area. A change to `azure-pipelines.yml`, `azure-pipelines-pr.yml` or that template runs both.
 
+**A warning is a failed check.** Fix every warning that a check prints, from ESLint, markdownlint, `dotnet build`, `dotnet test`, `tsc` or `vite build`, at whatever step the check runs, just as you fix an error. If fixing one is completely pointless, ask the user whether to add the rule to the ignore list and do not continue before they answer. Never disable a rule without their approval. Where the ignore entry goes:
+
+| Tool | Ignore entry |
+| --- | --- |
+| ESLint | The rule set to `"off"` in `src/Frontend/eslint.config.js`, in a config object with the narrowest possible `files` scope |
+| markdownlint | `.markdownlint-cli2.jsonc` |
+| .NET build and tests | `<NoWarn>` in `src/Directory.Build.props`, with a comment that gives the reason; Sonar findings fail the Release build too, so their rule IDs go there as well |
+
+The frontend `lint` script uses `--max-warnings 0`, so one warning fails it and the PR pipeline. The warn-level rules in `eslint.config.js` stay at `warn`, so the editor still shows them.
+
 **Backend** (anything under `src/Backend`, `src/MyCV.sln` or `templates/dotnet-build-job.yml`):
 
 ```powershell

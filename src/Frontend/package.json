@@ -13,7 +13,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "generate-types": "openapi-typescript http://localhost:5062/swagger/v1/swagger.json -o src/generated/openapi.ts",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings 0",
     "e2e": "playwright test",
     "e2e:auth": "node e2e/record-sessions.ts",
     "preview": "vite preview"

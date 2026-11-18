@@ -36,7 +36,7 @@ Tell the subagent to:
 - Report in the categories and format of *Report The Findings* below; give it the category table, the finding format and the Spec table.
 - Not edit any file.
 
-The lint and build results are already known, so the review does not re-run them or report what they enforce.
+The review does not re-run the lint and build, but it reads their output. Every warning in it is a **Must fix** finding with a proposed fix, or, when a fix is completely pointless, a proposed ignore-list entry (*A warning is a failed check* in [checks.md](checks.md)). An ignore entry that the user approved, such as a `<NoWarn>` entry, is not a silent suppression, provided its approval is recorded in the pull request or the work item discussion. An ignore entry with no recorded approval is a **Must fix**. The silent suppressions in the Sonar rule above (`#pragma`, `.editorconfig`) stay a **Should fix**, because the user has not approved them.
 
 In the same step, also run the built-in `code-review` skill yourself as a second pass that hunts for correctness bugs, on the same diff as the subagent. Call it as `Skill` with `skill: code-review` and `args: "<level> <target>"`, for example `args: "medium origin/main"`:
 
