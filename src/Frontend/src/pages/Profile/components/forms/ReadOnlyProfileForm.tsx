@@ -8,6 +8,7 @@ import {
 import { ButtonVariant } from "../../../../types"
 import Button from "../../../components/Button"
 import CopyLinkButton from "../../../components/CopyLinkButton"
+import Eyebrow from "../../../components/Eyebrow"
 import Magnetic from "../../../components/Magnetic"
 import {
   formatProfileDate,
@@ -124,21 +125,13 @@ export default function ReadOnlyProfileForm({
         data-cv-trace-avoid
         className={`grid min-w-0 grid-cols-[minmax(0,1fr)] content-center justify-items-start ${showPortrait ? "" : "max-w-5xl"}`}
       >
-        <motion.p
+        <Eyebrow
           variants={item}
-          className="flex items-center gap-3 font-cv-mono text-xs tracking-widest text-cv-copy uppercase"
+          pulse
+          meta={updatedAt ? t("cv.updated", { date: updatedAt }) : undefined}
         >
-          <span aria-hidden="true" className="relative grid size-2">
-            <span className="absolute inset-0 animate-cv-pulse rounded-full bg-cv-accent motion-reduce:hidden print:hidden" />
-            <span className="relative size-2 rounded-full bg-cv-accent" />
-          </span>
           {t("cv.eyebrow")}
-          {updatedAt && (
-            <span className="text-cv-muted normal-case tracking-normal">
-              {t("cv.updated", { date: updatedAt })}
-            </span>
-          )}
-        </motion.p>
+        </Eyebrow>
         <ProfileName fullName={values.fullName ?? ""} />
         {values.title && (
           <motion.p

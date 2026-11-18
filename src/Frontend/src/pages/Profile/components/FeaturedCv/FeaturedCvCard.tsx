@@ -8,6 +8,7 @@ import {
 import { RoutePaths } from "../../../../routePaths"
 import { ButtonSize, ButtonVariant } from "../../../../types"
 import Button from "../../../components/Button"
+import Eyebrow from "../../../components/Eyebrow"
 import LitCard from "../../../components/LitCard"
 import { getInitials, toExternalUrl } from "../../utils/profileFormUtils"
 import LocationIcon from "../LocationIcon"
@@ -50,13 +51,7 @@ export default function FeaturedCvCard({
         variants={featuredCvReveal}
         className="grid min-w-0 justify-items-start [grid-area:text]"
       >
-        <p className="m-0 flex items-center gap-3 font-cv-mono text-xs tracking-widest text-cv-copy uppercase">
-          <span
-            aria-hidden="true"
-            className="size-2 rounded-full bg-cv-accent"
-          />
-          {t("home.featuredLabel")}
-        </p>
+        <Eyebrow>{t("home.featuredLabel")}</Eyebrow>
         <h2
           id={nameId}
           dir="auto"

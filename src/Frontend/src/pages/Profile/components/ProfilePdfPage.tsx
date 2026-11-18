@@ -8,6 +8,7 @@ import {
   type LanguageCode,
 } from "../../../types"
 import Button from "../../components/Button"
+import Eyebrow from "../../components/Eyebrow"
 import ProfilePdfFrame from "./ProfilePdfFrame"
 import ProfilePrintPage from "./ProfilePrintPage"
 
@@ -108,9 +109,7 @@ export default function ProfilePdfPage({
           </Button>
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div className="grid min-w-0 gap-2">
-              <p className="m-0 font-cv-mono text-xs tracking-widest text-cv-muted uppercase">
-                {t("pdf.eyebrow")}
-              </p>
+              <Eyebrow>{t("pdf.eyebrow")}</Eyebrow>
               <h1
                 dir="auto"
                 className="m-0 font-cv-display text-3xl leading-tight font-semibold tracking-tight text-balance wrap-anywhere text-cv-ink sm:text-4xl"

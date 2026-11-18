@@ -8,6 +8,7 @@ export const en = {
     pdfTitle: "{{name}} · CV (PDF)",
   },
   common: {
+    brand: "MyCV",
     tryAgain: "Try again",
     openCv: "Open a CV",
     backToCv: "Back to CV",

@@ -1,6 +1,7 @@
 import type { JSX, ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 import Button from "../../components/Button"
+import Eyebrow from "../../components/Eyebrow"
 import { RoutePaths } from "../../../routePaths"
 import { ButtonVariant, Tone } from "../../../types"
 
@@ -39,8 +40,6 @@ export default function RouteMessage({
   delayed = false,
 }: Readonly<RouteMessageProps>): JSX.Element {
   const { t } = useTranslation()
-  /** Red for errors, accent otherwise. */
-  const dotColor = tone === Tone.Error ? "bg-cv-danger" : "bg-cv-accent"
   /** Pending screens are centred so the loader is the focal point. */
   const isPending = tone === Tone.Pending
 
@@ -52,17 +51,9 @@ export default function RouteMessage({
       <div
         className={`grid max-w-xl gap-8 ${isPending ? "justify-items-center text-center" : "justify-items-start"} ${delayed ? "animate-cv-fade-in-delayed" : ""}`}
       >
-        <p className="flex items-center gap-3 font-cv-mono text-xs tracking-widest text-cv-copy uppercase">
-          <span aria-hidden="true" className="relative grid size-2">
-            {isPending && (
-              <span
-                className={`absolute inset-0 animate-cv-pulse rounded-full ${dotColor} motion-reduce:hidden`}
-              />
-            )}
-            <span className={`relative size-2 rounded-full ${dotColor}`} />
-          </span>
-          <span>MyCV</span>
-        </p>
+        <Eyebrow tone={tone} pulse={isPending} className="justify-center">
+          {t("common.brand")}
+        </Eyebrow>
         {isPending && (
           <span
             aria-hidden="true"

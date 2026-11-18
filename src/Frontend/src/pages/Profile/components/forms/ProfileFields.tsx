@@ -2,6 +2,7 @@ import type { JSX } from "react"
 import { useTranslation } from "react-i18next"
 import RHFInput from "../../../components/RHFInput"
 import RHFTextarea from "../../../components/RHFTextarea"
+import { labelClassName } from "../../../components/labelClassName"
 import type { ProfileSchema } from "../../schemas/profile-form-schema"
 
 interface ProfileFieldsProps {
@@ -62,9 +63,7 @@ export default function ProfileFields({
       >
         <legend className="mb-2 flex w-full items-baseline gap-3 border-t border-cv-line pt-6 font-cv-display text-xl font-semibold tracking-tight text-cv-ink">
           {t("profileFields.finnish")}
-          <span className="font-cv-mono text-xs font-normal tracking-wide text-cv-muted uppercase">
-            {t("profileFields.required")}
-          </span>
+          <span className={labelClassName}>{t("profileFields.required")}</span>
         </legend>
         <RHFInput<ProfileSchema>
           name="translations.0.title"
@@ -95,9 +94,7 @@ export default function ProfileFields({
       >
         <legend className="mb-2 flex w-full items-baseline gap-3 border-t border-cv-line pt-6 font-cv-display text-xl font-semibold tracking-tight text-cv-ink">
           {t("profileFields.english")}
-          <span className="font-cv-mono text-xs font-normal tracking-wide text-cv-muted uppercase">
-            {t("profileFields.optional")}
-          </span>
+          <span className={labelClassName}>{t("profileFields.optional")}</span>
         </legend>
         <RHFInput<ProfileSchema>
           name="translations.1.title"

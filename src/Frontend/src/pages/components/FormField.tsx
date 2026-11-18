@@ -1,6 +1,7 @@
 import { useState, type AnimationEvent, type JSX, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 import FieldMessage from "./FieldMessage"
+import { labelClassName } from "./labelClassName"
 import prefersReducedMotion from "./prefersReducedMotion"
 import usePointerLight from "./usePointerLight"
 
@@ -184,7 +185,7 @@ export default function FormField({
       <div className="flex items-baseline justify-between gap-3">
         <label
           htmlFor={id}
-          className="font-cv-mono text-xs tracking-wide text-cv-muted uppercase transition-colors duration-200 group-has-[[data-field-frame]:focus-within]/field:text-cv-accent-strong"
+          className={`${labelClassName} transition-colors duration-200 group-has-[[data-field-frame]:focus-within]/field:text-cv-accent-strong`}
         >
           {label}
           {required && (

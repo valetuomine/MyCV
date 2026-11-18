@@ -177,6 +177,18 @@
       var(--edge, var(--cv-edge-glow)) var(--cv-edge-focus),
       transparent
     );
+  /* The edge glow for text links: the same colour and strengths, drawn round
+     the letters. A text shadow also lights a text-decoration underline; a
+     drop shadow lights an underline drawn as a background, such as
+     bg-cv-underline. */
+  --text-shadow-cv-edge-hover: 0 0 0.625rem
+    color-mix(in srgb, var(--cv-edge-glow) var(--cv-edge-hover), transparent);
+  --text-shadow-cv-edge-focus: 0 0 0.75rem
+    color-mix(in srgb, var(--cv-edge-glow) var(--cv-edge-focus), transparent);
+  --drop-shadow-cv-edge-hover: 0 0 0.3125rem
+    color-mix(in srgb, var(--cv-edge-glow) var(--cv-edge-hover), transparent);
+  --drop-shadow-cv-edge-focus: 0 0 0.375rem
+    color-mix(in srgb, var(--cv-edge-glow) var(--cv-edge-focus), transparent);
   /* The primary button's hover: the accent glow with the hover edge glow. */
   --shadow-cv-accent-hover:
     var(--shadow-cv-accent), var(--shadow-cv-edge-hover);

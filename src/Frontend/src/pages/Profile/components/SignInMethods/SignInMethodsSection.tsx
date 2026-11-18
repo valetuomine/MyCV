@@ -34,6 +34,8 @@ import {
 } from "../../../../auth/signInPopup"
 import { LinkOutcome, SignInFailure, SignInMethod } from "../../../../types"
 import Button from "../../../components/Button"
+import Eyebrow from "../../../components/Eyebrow"
+import { headingClassName } from "../../../components/headingClassName"
 import LinkPopupMessage from "./LinkPopupMessage"
 import SignInMethodsSkeleton from "./SignInMethodsSkeleton"
 import type { ProfileSchema } from "../../schemas/profile-form-schema"
@@ -373,14 +375,12 @@ export default function SignInMethodsSection({
       className="grid gap-6 border-t border-cv-line pt-12 lg:w-3/5"
     >
       <div className="grid gap-3">
-        <p className="m-0 font-cv-mono text-xs tracking-widest text-cv-copy uppercase">
-          {t("signInMethods.eyebrow")}
-        </p>
+        <Eyebrow>{t("signInMethods.eyebrow")}</Eyebrow>
         <h2
           id={headingId}
           ref={attachHeading}
           tabIndex={-1}
-          className="m-0 min-w-0 font-cv-display text-2xl font-semibold tracking-tight wrap-break-word outline-none"
+          className={`${headingClassName} outline-none`}
         >
           {t("signInMethods.heading")}
         </h2>

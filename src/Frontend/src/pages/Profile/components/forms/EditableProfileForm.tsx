@@ -11,6 +11,8 @@ import { useTranslation } from "react-i18next"
 import { ButtonVariant } from "../../../../types"
 import Button from "../../../components/Button"
 import CopyLinkButton from "../../../components/CopyLinkButton"
+import Eyebrow from "../../../components/Eyebrow"
+import { labelClassName } from "../../../components/labelClassName"
 import type { ProfileSchema } from "../../schemas/profile-form-schema"
 import ProfileFields from "./ProfileFields"
 import ProfilePictureSection from "./ProfilePictureSection"
@@ -127,13 +129,7 @@ export default function EditableProfileForm({
     >
       <div className="grid min-w-0 gap-6">
         <div className="grid gap-4">
-          <p className="m-0 flex items-center gap-3 font-cv-mono text-xs tracking-widest text-cv-copy uppercase">
-            <span
-              aria-hidden="true"
-              className="size-2 rounded-full bg-cv-accent"
-            />
-            {t("profileForm.editing")}
-          </p>
+          <Eyebrow>{t("profileForm.editing")}</Eyebrow>
           <h1
             ref={headingRef}
             tabIndex={-1}
@@ -144,17 +140,15 @@ export default function EditableProfileForm({
         </div>
         {publicUrl && (
           <div className="grid gap-2">
-            <p className="m-0 font-cv-mono text-xs tracking-wide text-cv-muted uppercase">
-              {t("profileForm.cvLink")}
-            </p>
+            <p className={`m-0 ${labelClassName}`}>{t("profileForm.cvLink")}</p>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
               <a
                 href={publicUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="min-w-0 text-cv-ink transition-colors duration-200 wrap-anywhere hover:text-cv-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cv-accent motion-safe:hover:[--underline:100%]"
+                className="group/cv-link min-w-0 text-cv-ink transition-colors duration-200 wrap-anywhere hover:text-cv-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cv-accent motion-safe:hover:[--underline:100%]"
               >
-                <span className="bg-cv-underline pb-0.5 transition-[background-size] duration-250 ease-[cubic-bezier(0.23,1,0.32,1)]">
+                <span className="bg-cv-underline pb-0.5 transition-[background-size,filter] duration-250 ease-[cubic-bezier(0.23,1,0.32,1)] not-print:not-forced-colors:group-hover/cv-link:drop-shadow-cv-edge-hover not-print:not-forced-colors:group-focus-visible/cv-link:drop-shadow-cv-edge-focus motion-reduce:transition-none">
                   {publicUrl.replace(/^https?:\/\//, "")}
                 </span>
               </a>

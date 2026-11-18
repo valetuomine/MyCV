@@ -2,6 +2,7 @@ import { m as motion } from "framer-motion"
 import { useEffect, useId, useRef, useState, type JSX } from "react"
 import { useTranslation } from "react-i18next"
 import Button from "../pages/components/Button"
+import { headingClassName } from "../pages/components/headingClassName"
 import { ButtonVariant } from "../types"
 
 interface IdleWarningPanelProps {
@@ -93,10 +94,7 @@ export default function IdleWarningPanel({
     >
       <div className="flex items-start justify-between gap-4">
         <div className="grid min-w-0 gap-2">
-          <h2
-            id={titleId}
-            className="m-0 font-cv-display text-xl leading-tight font-semibold tracking-tight text-balance text-cv-ink"
-          >
+          <h2 id={titleId} className={headingClassName}>
             {t("idleWarning.title")}
           </h2>
           <p

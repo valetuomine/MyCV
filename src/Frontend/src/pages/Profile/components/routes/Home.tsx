@@ -23,6 +23,8 @@ import {
 } from "../../../../auth/authSession"
 import { signedOutLocationState } from "../../../../auth/signedOutState"
 import Button from "../../../components/Button"
+import Eyebrow from "../../../components/Eyebrow"
+import { headingClassName } from "../../../components/headingClassName"
 import RHFInput from "../../../components/RHFInput"
 import { RoutePaths } from "../../../../routePaths"
 import { ButtonVariant } from "../../../../types"
@@ -175,13 +177,7 @@ export default function Home(): JSX.Element {
         className="grid w-full max-w-2xl justify-items-start gap-10"
       >
         <motion.div variants={item} className="grid gap-6">
-          <p className="m-0 flex items-center gap-3 font-cv-mono text-xs tracking-widest text-cv-copy uppercase">
-            <span
-              aria-hidden="true"
-              className="size-2 rounded-full bg-cv-accent"
-            />
-            <span>MyCV</span>
-          </p>
+          <Eyebrow>{t("common.brand")}</Eyebrow>
           <div className="grid gap-4">
             <h1 className="m-0 min-w-0 font-cv-display text-4xl leading-tight font-semibold tracking-tighter wrap-break-word text-balance sm:text-5xl">
               {t("home.heading")}
@@ -197,10 +193,7 @@ export default function Home(): JSX.Element {
           aria-labelledby={openHeadingId}
           className="grid w-full gap-4"
         >
-          <h2
-            id={openHeadingId}
-            className="m-0 font-cv-display text-lg font-medium tracking-tight text-cv-ink"
-          >
+          <h2 id={openHeadingId} className={headingClassName}>
             {t("home.openHeading")}
           </h2>
           <FormProvider {...form}>

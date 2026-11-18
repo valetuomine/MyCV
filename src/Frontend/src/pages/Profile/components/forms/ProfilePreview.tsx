@@ -1,6 +1,7 @@
 import type { JSX } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
+import Eyebrow from "../../../components/Eyebrow"
 import LitCard from "../../../components/LitCard"
 import type { ProfileSchema } from "../../schemas/profile-form-schema"
 
@@ -39,13 +40,9 @@ export default function ProfilePreview(): JSX.Element {
       aria-hidden="true"
       className="sticky top-24 hidden self-start lg:block"
     >
-      <p className="m-0 flex items-center gap-3 font-cv-mono text-xs tracking-widest text-cv-copy uppercase">
-        <span className="size-2 rounded-full bg-cv-accent" />
+      <Eyebrow meta={t("profileForm.previewLanguage")}>
         {t("profileForm.livePreview")}
-        <span className="text-cv-muted normal-case tracking-normal">
-          {t("profileForm.previewLanguage")}
-        </span>
-      </p>
+      </Eyebrow>
       <LitCard
         className="mt-5"
         contentClassName="grid justify-items-start p-8"

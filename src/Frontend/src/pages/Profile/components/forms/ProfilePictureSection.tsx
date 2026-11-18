@@ -12,6 +12,8 @@ import {
 import { useAuthSession } from "../../../../auth/authSession"
 import { ButtonSize, ButtonVariant, SignInMethod } from "../../../../types"
 import Button from "../../../components/Button"
+import { headingClassName } from "../../../components/headingClassName"
+import { labelClassName } from "../../../components/labelClassName"
 import { maxPictureBytes, preparePicture } from "../../utils/preparePicture"
 import {
   getInitials,
@@ -283,10 +285,10 @@ export default function ProfilePictureSection({
     >
       <h2
         id={headingId}
-        className="m-0 flex flex-wrap items-baseline gap-x-3 gap-y-1 font-cv-display text-xl font-semibold tracking-tight text-cv-ink"
+        className={`${headingClassName} flex flex-wrap items-baseline gap-x-3 gap-y-1`}
       >
         {t("profilePicture.heading")}
-        <span className="font-cv-mono text-xs font-normal tracking-wide text-cv-muted uppercase">
+        <span className={labelClassName}>
           {t("profilePicture.savedAtOnce")}
         </span>
       </h2>

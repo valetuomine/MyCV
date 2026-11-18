@@ -63,8 +63,9 @@ const variantShapes: Record<ButtonVariant, ButtonShape> = {
 /**
  * Each variant's resting colours, and the hover and press feedback that only
  * applies while the button can be used. Every variant changes visibly on
- * hover, and every one but Text strengthens its edge glow then
- * (`shadow-cv-edge-hover`; Primary adds it to its accent glow): the border
+ * hover, and each strengthens its edge glow then (`shadow-cv-edge-hover`;
+ * Primary adds it to its accent glow, and Text, which has no edge, glows
+ * round its letters and underline with `text-shadow-cv-edge-hover`): the border
  * and fill take the accent rather than a grey, so a hovered control lights up
  * instead of darkening. Brand leaves its colours to the caller, such as the
  * sign-in providers' own, so its hover is a faint layer of its own text colour
@@ -77,7 +78,9 @@ const variantShapes: Record<ButtonVariant, ButtonShape> = {
  * danger-coloured, and Brand has none at rest because its colours are the
  * provider's. A keyboard focus gives every variant, Brand, Text and Segment
  * included, the strongest edge glow beside the focus outline, except in
- * print; a disabled button has no glow.
+ * print; Text's letters and underline glow too (`text-shadow-cv-edge-focus`).
+ * A disabled button has no glow. Reduced motion keeps only the colour
+ * transitions, so the glow appears without fading in.
  */
 const variantClasses: Record<
   ButtonVariant,
@@ -109,9 +112,9 @@ const variantClasses: Record<
       "hover:border-cv-accent/70 hover:bg-cv-accent/8 hover:text-cv-ink not-print:hover:shadow-cv-edge-hover active:scale-[0.92]",
   },
   [ButtonVariant.Text]: {
-    rest: "rounded-md text-cv-accent-strong underline decoration-cv-accent-strong/40 underline-offset-4",
+    rest: "rounded-md text-cv-accent-strong underline decoration-cv-accent-strong/40 underline-offset-4 not-print:focus-visible:text-shadow-cv-edge-focus disabled:text-shadow-none aria-disabled:text-shadow-none",
     interactive:
-      "hover:text-cv-ink hover:decoration-cv-ink active:scale-[0.97]",
+      "hover:text-cv-ink hover:decoration-cv-ink not-print:hover:text-shadow-cv-edge-hover active:scale-[0.97]",
   },
   [ButtonVariant.Segment]: {
     rest: "rounded-full text-cv-copy aria-pressed:bg-cv-accent aria-pressed:text-cv-accent-ink",
@@ -180,7 +183,7 @@ const shapeClasses: Record<ButtonShape, string> = {
 }
 
 const baseClassName =
-  "relative font-medium transition-[color,background-color,border-color,text-decoration-color,box-shadow,scale] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] not-print:focus-visible:shadow-cv-edge-focus focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cv-accent disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none forced-colors:shadow-none print:shadow-none motion-reduce:transition-colors motion-reduce:active:scale-100"
+  "relative font-medium transition-[color,background-color,border-color,text-decoration-color,box-shadow,text-shadow,scale] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] not-print:focus-visible:shadow-cv-edge-focus focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cv-accent disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none forced-colors:shadow-none print:shadow-none motion-reduce:transition-colors motion-reduce:active:scale-100"
 
 const labelLayer =
   "col-start-1 row-start-1 inline-flex items-center justify-center gap-2"

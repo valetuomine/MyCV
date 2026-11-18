@@ -10,6 +10,7 @@ export const fi: Translation = {
     pdfTitle: "{{name}} · CV (PDF)",
   },
   common: {
+    brand: "MyCV",
     tryAgain: "Yritä uudelleen",
     openCv: "Avaa CV",
     backToCv: "Takaisin CV:hen",
