@@ -43,7 +43,7 @@ const failureOutcomes: Record<SignInFailure, SignInPopupOutcome> = {
  * How a sign-in popup ended. A popup that adds a sign-in method also hands
  * back the new method's token, and for Microsoft the account it signed in.
  */
-export interface SignInPopupResult {
+interface SignInPopupResult {
   outcome: SignInPopupOutcome
   linkToken: string | null
   linkedAccount: AccountInfo | null

@@ -1,3 +1,5 @@
+import { googleSessionKey } from "./adminLoginStorage"
+
 /**
  * The cookie that marks this browser session. It has no expiry, so the
  * browser drops it when it closes, like MSAL's `msal.cache.encryption`
@@ -21,11 +23,6 @@ export function readBrowserSessionCookie(): string | null {
   return pair ? pair.slice(browserSessionCookie.length + 1) || null : null
 }
 
-/**
- * Storage key for the signed-in Google session (`googleAuth.ts`). It is kept
- * here because a new browser session removes it before the app reads it.
- */
-export const googleSessionKey = "mycv-google-session"
 /** The prefix of the keys of MSAL's cache. */
 const msalKeyPrefix = "msal."
 

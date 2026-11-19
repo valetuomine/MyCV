@@ -1,5 +1,15 @@
 import { SignInMethod, SignOutReason } from "../types"
 
+/**
+ * Storage key for the signed-in Google session (`googleAuth.ts`), in the
+ * storage that `getAuthSessionStorage` picks. A new browser session removes
+ * it before the app reads it (`authStorage.ts`).
+ */
+export const googleSessionKey = "mycv-google-session"
+/** Session-storage key for the Google sign-in request waiting for Google's response. */
+export const googleSignInRequestKey = "mycv-google-sign-in-request"
+/** Local-storage key of the last activity shared by the app's tabs, which a waking tab reads before it decides (`useIdleSignOut`). */
+export const idleLastActivityKey = "mycv-idle-last-activity"
 /** Session-storage key for the CV to manage after the sign-in redirect. */
 export const returnPublicUrlSegmentKey = "mycv-admin-return-public-url-segment"
 /** Session-storage key for the admin page to open after the sign-in redirect. */
@@ -11,22 +21,22 @@ export const returnAdminPathKey = "mycv-admin-return-path"
 export const logoutReturnPublicUrlSegmentKey =
   "mycv-logout-return-public-url-segment"
 /** Session-storage key set with the logout return marker: why the user was signed out. */
-export const signOutReasonKey = "mycv-sign-out-reason"
+const signOutReasonKey = "mycv-sign-out-reason"
 /**
  * Local-storage key set on every sign-out, so the next sign-in asks for
  * credentials again in any tab, even while the Microsoft session is alive.
  */
-export const signInPromptRequiredKey = "mycv-sign-in-prompt-required"
+const signInPromptRequiredKey = "mycv-sign-in-prompt-required"
 /** Local-storage key for the method of the last successful sign-in, for the "Last used" badge. */
-export const lastSignInMethodKey = "mycv-last-sign-in-method"
+const lastSignInMethodKey = "mycv-last-sign-in-method"
 /** Session-storage key for the sign-in method being added while its redirect is under way. */
-export const linkSignInKey = "mycv-link-sign-in"
+const linkSignInKey = "mycv-link-sign-in"
 /**
  * Session-storage key for the method whose sign-in redirect has left the
  * sign-in route, so coming back with the browser's Back button shows that
  * method as cancelled instead of starting anything.
  */
-export const signInRedirectMethodKey = "mycv-sign-in-redirect-method"
+const signInRedirectMethodKey = "mycv-sign-in-redirect-method"
 /**
  * Session-storage key set when Sign in again drops a session the API refused,
  * so a new sign-in that the API refuses too shows an error instead of the

@@ -1,12 +1,10 @@
 import {
   clearSignInPromptRequired,
+  googleSessionKey,
+  googleSignInRequestKey,
   storeLastSignInMethod,
 } from "./adminLoginStorage"
-import {
-  getAuthSessionStorage,
-  googleSessionKey,
-  readBrowserSessionCookie,
-} from "./authStorage"
+import { getAuthSessionStorage, readBrowserSessionCookie } from "./authStorage"
 import { signInLanguage } from "./signInLanguage"
 import { RoutePaths } from "../routePaths"
 import { SignInFailure, SignInMethod } from "../types"
@@ -16,7 +14,7 @@ const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim() ?? ""
 /** True when the Google client ID is set. */
 export const isGoogleConfigured = Boolean(clientId)
 /** Where Google sends the browser back after sign-in. */
-export const googleRedirectUri = `${window.location.origin}${RoutePaths.GoogleAuthCallback}`
+const googleRedirectUri = `${window.location.origin}${RoutePaths.GoogleAuthCallback}`
 
 /** Google's OAuth 2.0 authorization endpoint. */
 const authorizationEndpoint = "https://accounts.google.com/o/oauth2/v2/auth"
@@ -27,16 +25,6 @@ const validIssuers = new Set([
 ])
 /** How long before expiry a token stops being handed out, so it doesn't expire in flight. */
 const tokenExpiryMarginMs = 60 * 1000
-/** Session-storage key for the sign-in request waiting for Google's response. */
-const pendingRequestKey = "mycv-google-sign-in-request"
-/**
- * Storage key for the signed-in Google session. Local storage, like MSAL's
- * cache, so every tab of the app shares the sign-in, and the session carries
- * the browser session's ID, so it never outlives the browser
- * (`getAuthSessionStorage`). A new browser session removes it before this
- * module reads it (`googleSessionKey`).
- */
-const sessionKey = googleSessionKey
 
 /** The sign-in request stored before the redirect to Google. */
 interface PendingGoogleRequest {
@@ -48,7 +36,7 @@ interface PendingGoogleRequest {
 }
 
 /** The signed-in Google session. */
-export interface GoogleSession {
+interface GoogleSession {
   idToken: string
   sub: string
   exp: number
@@ -76,7 +64,7 @@ interface GoogleIdTokenClaims {
  * What the Google callback found. `isLink` marks a sign-in that adds a
  * method to the CV; its ID token is in `linkToken`, kept in memory only.
  */
-export interface GoogleSignInResult {
+interface GoogleSignInResult {
   failure: SignInFailure | null
   isSignInRequired: boolean
   returnPath: string | null
@@ -100,13 +88,13 @@ interface CheckedGoogleResponse {
 }
 
 /** How a Google popup's response ended: why it failed, and a linking popup's ID token. */
-export interface GooglePopupResult {
+interface GooglePopupResult {
   failure: SignInFailure | null
   linkToken: string | null
 }
 
 /** A Google sign-in in a popup, whose request stays in the opening tab's memory. */
-export interface GooglePopupSignIn {
+interface GooglePopupSignIn {
   url: string
   complete: (fragment: string) => GooglePopupResult
 }
@@ -138,7 +126,7 @@ function readSessionJson<T>(
  */
 function readStoredGoogleSession(): GoogleSession | null {
   const stored = readSessionJson<StoredGoogleSession>(
-    sessionKey,
+    googleSessionKey,
     getAuthSessionStorage(),
   )
   if (!stored) {
@@ -146,7 +134,7 @@ function readStoredGoogleSession(): GoogleSession | null {
   }
 
   if (stored.browserSession !== readBrowserSessionCookie()) {
-    getAuthSessionStorage().removeItem(sessionKey)
+    getAuthSessionStorage().removeItem(googleSessionKey)
     return null
   }
 
@@ -173,14 +161,14 @@ function setGoogleSession(session: GoogleSession | null): void {
   googleSession = session
   if (session) {
     getAuthSessionStorage().setItem(
-      sessionKey,
+      googleSessionKey,
       JSON.stringify({
         ...session,
         browserSession: readBrowserSessionCookie(),
       } satisfies StoredGoogleSession),
     )
   } else {
-    getAuthSessionStorage().removeItem(sessionKey)
+    getAuthSessionStorage().removeItem(googleSessionKey)
   }
   googleSessionListeners.forEach((listener) => listener())
 }
@@ -194,7 +182,7 @@ function setGoogleSession(session: GoogleSession | null): void {
 function handleSharedSessionChange(event: StorageEvent): void {
   if (
     event.storageArea !== getAuthSessionStorage() ||
-    (event.key !== sessionKey && event.key !== null)
+    (event.key !== googleSessionKey && event.key !== null)
   ) {
     return
   }
@@ -303,7 +291,7 @@ export function startGoogleSignIn({
     silent: prompt === "none",
     link,
   }
-  sessionStorage.setItem(pendingRequestKey, JSON.stringify(request))
+  sessionStorage.setItem(googleSignInRequestKey, JSON.stringify(request))
   window.location.assign(buildAuthorizationUrl(request, prompt, loginHint))
 }
 
@@ -312,7 +300,7 @@ export function startGoogleSignIn({
  * back without a response, for example with the browser's Back button.
  */
 export function clearGoogleSignInRequest(): void {
-  sessionStorage.removeItem(pendingRequestKey)
+  sessionStorage.removeItem(googleSignInRequestKey)
 }
 
 /**
@@ -492,8 +480,8 @@ export function createGooglePopupSignIn(
 function readGoogleResponse(
   response: URLSearchParams | null,
 ): GoogleSignInResult {
-  const request = readSessionJson<PendingGoogleRequest>(pendingRequestKey)
-  sessionStorage.removeItem(pendingRequestKey)
+  const request = readSessionJson<PendingGoogleRequest>(googleSignInRequestKey)
+  sessionStorage.removeItem(googleSignInRequestKey)
   const result: GoogleSignInResult = {
     failure: SignInFailure.Failed,
     isSignInRequired: false,

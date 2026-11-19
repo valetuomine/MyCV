@@ -18,6 +18,7 @@ import {
   storeLastSignInMethod,
 } from "./adminLoginStorage"
 import { browserSessionId } from "./authStorage"
+import { getGoogleSession } from "./googleAuth"
 import { microsoftSignInParameters } from "./signInLanguage"
 import { isLinkPopupState } from "./signInPopupState"
 import { RoutePaths } from "../routePaths"
@@ -402,6 +403,34 @@ function isInteractionNeeded(error: unknown): boolean {
   return error instanceof InteractionRequiredAuthError || isTimedOut(error)
 }
 
+/**
+ * Picks the Microsoft account that the session uses, which is the one rule
+ * for whether the active sign-in is Microsoft's or Google's: the active
+ * account, otherwise the first signed-in one, unless a Google session is
+ * active. Only one method is active at a time, because starting a sign-in
+ * clears the other; the one exception is a Microsoft account being added to
+ * a Google session's CV, which is never made active, so the Google session
+ * wins until linking removes the account. Without an account here, the
+ * session is Google's when there is a Google session, otherwise nobody is
+ * signed in.
+ *
+ * @param accounts - The signed-in Microsoft accounts, MSAL's cache by default.
+ * @param hasGoogleSession - Whether a Google session is stored, read by default.
+ * @returns The session's Microsoft account, or null when the session isn't Microsoft's.
+ */
+export function getSessionMicrosoftAccount(
+  accounts: AccountInfo[] = msalInstance.getAllAccounts(),
+  hasGoogleSession = getGoogleSession() !== null,
+): AccountInfo | null {
+  if (!accounts[0]) {
+    return null
+  }
+
+  return (
+    msalInstance.getActiveAccount() ?? (hasGoogleSession ? null : accounts[0])
+  )
+}
+
 /** Whether acquiring an API token may leave the page for Microsoft. */
 export interface ApiTokenRedirectOptions {
   /**
@@ -411,12 +440,6 @@ export interface ApiTokenRedirectOptions {
    * handled as an expired session. Defaults to true.
    */
   allowRedirect?: boolean
-}
-
-/** How `acquireApiAuthenticationResult` acquires the token. */
-export interface ApiTokenOptions extends ApiTokenRedirectOptions {
-  /** The account to acquire the token for, when not the active one. */
-  account?: AccountInfo
 }
 
 /**
@@ -447,32 +470,27 @@ function startTokenRedirect(account: AccountInfo): void {
 }
 
 /**
- * Acquires an API access token silently for the given account, the active
- * account or the first signed-in account. Returns null when sign-in isn't
- * configured, nobody is signed in or the token needs interaction; in the last
+ * Acquires an API access token silently for the session's Microsoft account
+ * (`getSessionMicrosoftAccount`). Returns null when sign-in isn't configured,
+ * the session isn't Microsoft's or the token needs interaction; in the last
  * case it also starts one token redirect, unless `allowRedirect` is false.
  * After a silent renewal of the account has timed out, it skips the renewal
  * until a sign-in or token succeeds: a request that may not redirect goes
  * without a token at once, and one that may redirect starts the redirect
  * without waiting for another timeout.
  *
- * @param options - The account and whether a redirect may start.
- * @param options.account - The account to acquire the token for, when not the active one.
+ * @param options - Whether a redirect may start.
  * @param options.allowRedirect - Whether a token that needs interaction may start a redirect.
  * @returns The authentication result with the access token, or null.
  */
 export async function acquireApiAuthenticationResult({
-  account,
   allowRedirect = true,
-}: ApiTokenOptions = {}): Promise<AuthenticationResult | null> {
-  if (!isEntraConfigured || !apiScope) {
+}: ApiTokenRedirectOptions = {}): Promise<AuthenticationResult | null> {
+  if (!isEntraConfigured) {
     return null
   }
 
-  const selectedAccount =
-    account ??
-    msalInstance.getActiveAccount() ??
-    msalInstance.getAllAccounts()[0]
+  const selectedAccount = getSessionMicrosoftAccount()
 
   if (!selectedAccount) {
     return null

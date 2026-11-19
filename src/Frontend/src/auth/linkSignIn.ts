@@ -4,7 +4,12 @@ import {
   storeLinkSignInMarker,
   type LinkSignInMarker,
 } from "./adminLoginStorage"
-import { apiScope, msalInstance, redirectUri } from "./entraAuth"
+import {
+  apiScope,
+  getSessionMicrosoftAccount,
+  msalInstance,
+  redirectUri,
+} from "./entraAuth"
 import { getGoogleIdToken, startGoogleSignIn } from "./googleAuth"
 import { microsoftSignInParameters } from "./signInLanguage"
 import { openLinkSignInPopup, prefersSignInPopup } from "./signInPopup"
@@ -111,8 +116,8 @@ export async function startLinkSignIn({
   /** The Microsoft account of the session, restored as the active one afterwards. */
   const msalAccount =
     sessionMethod === SignInMethod.Microsoft
-      ? (msalInstance.getActiveAccount() ?? msalInstance.getAllAccounts()[0])
-      : undefined
+      ? getSessionMicrosoftAccount()
+      : null
   const marker: LinkSignInMarker = {
     id: crypto.randomUUID(),
     method,

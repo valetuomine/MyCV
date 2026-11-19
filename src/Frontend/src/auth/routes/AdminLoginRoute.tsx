@@ -74,7 +74,7 @@ export default function AdminLoginRoute(): JSX.Element {
    * not edit this CV.
    */
   const adminQuery = useGetProfileAdminQuery(
-    isSessionReady && profileId ? profileId : skipToken,
+    isSessionReady && profileId ? { profileId } : skipToken,
   )
 
   const loginRedirect = useLoginRedirect({

@@ -8,7 +8,7 @@ const uploadQuality = 0.92
 export const maxPictureBytes = 10 * 1024 * 1024
 
 /** A picture ready to upload, with a file name that matches its type. */
-export interface PreparedPicture {
+interface PreparedPicture {
   blob: Blob
   fileName: string
 }

@@ -1,3 +1,4 @@
+import { defaultSerializeQueryArgs } from "@reduxjs/toolkit/query"
 import type { components } from "../generated/openapi"
 import { apiBaseUrl, baseApi } from "./baseApi"
 
@@ -5,8 +6,8 @@ export type Profile = components["schemas"]["ProfileDto"]
 export type ProfileAdmin = components["schemas"]["ProfileAdminDto"]
 export type CreateProfileRequest = components["schemas"]["CreateProfileRequest"]
 export type UpdateProfileRequest = components["schemas"]["UpdateProfileRequest"]
-export type ProfilePicture = components["schemas"]["ProfilePictureDto"]
-export type ProfilePictureVisibility =
+type ProfilePicture = components["schemas"]["ProfilePictureDto"]
+type ProfilePictureVisibility =
   components["schemas"]["ProfilePictureVisibilityDto"]
 export type UpdateProfilePictureVisibilityRequest =
   components["schemas"]["UpdateProfilePictureVisibilityRequest"]
@@ -57,6 +58,26 @@ export function getProfilePdfUrl({
 
   const query = params.size > 0 ? `?${params}` : ""
   return `${apiBaseUrl}/api/Profile/${encodeURIComponent(profileId)}/pdf${query}`
+}
+
+interface ProfileAdminArgs {
+  profileId: string
+  /**
+   * Whether a 401 shows the sign-in-again message and an expired Microsoft
+   * session may be renewed with a redirect. False for the background check
+   * of a public CV page, whose reader only reads it. Defaults to true.
+   */
+  reportsRefusal?: boolean
+}
+
+/**
+ * Tells whether a call of `getProfileAdmin` reports its 401.
+ *
+ * @param args - The call's arguments, or undefined before the first call.
+ * @returns False only for a background check.
+ */
+function reportsAdminRefusal(args: ProfileAdminArgs | undefined): boolean {
+  return args?.reportsRefusal !== false
 }
 
 interface UpdateProfileArgs {
@@ -111,52 +132,29 @@ export const profileQueries = baseApi.injectEndpoints({
     /**
      * Fetches the profile with every translation for editing. Succeeds only
      * for users allowed to edit it, so it also answers whether they can.
-     * The result also fills `getProfileAccess`, which fetches the same URL,
-     * so the CV page that `/:publicUrlSegment/admin` opens next doesn't
-     * fetch it again.
+     * Every call shares one cache entry per profile, so the edit view, the
+     * edit-access check of a public CV page and `/:publicUrlSegment/admin`
+     * read the same data. Each call says whether its 401 is reported
+     * (`reportsRefusal`), and a call that reports it fetches again when the
+     * entry was filled by a background check, so the edit view and the
+     * admin route renew an expired session as before and the entry's later
+     * refetches report a 401 too.
      */
-    getProfileAdmin: builder.query<ProfileAdmin, string>({
-      query: (profileId) =>
-        `/api/Profile/${encodeURIComponent(profileId)}/admin`,
+    getProfileAdmin: builder.query<ProfileAdmin, ProfileAdminArgs>({
+      query: ({ profileId, reportsRefusal = true }) => ({
+        url: `/api/Profile/${encodeURIComponent(profileId)}/admin`,
+        reportsRefusal,
+      }),
       extraOptions: { requiresSignIn: true },
-      providesTags: (_result, _error, profileId) => [
-        { type: "Profile", id: profileId },
-        "Session",
-      ],
-      /**
-       * Copies a successful result into the `getProfileAccess` cache. A
-       * failed request is left to the query's own error state.
-       *
-       * @param profileId - The profile that was fetched.
-       * @param api - RTK Query's lifecycle helpers.
-       * @param api.dispatch - Dispatches the cache update.
-       * @param api.queryFulfilled - Settles when the request finishes.
-       */
-      async onQueryStarted(profileId, { dispatch, queryFulfilled }) {
-        const result = await queryFulfilled.catch(() => null)
-        if (result) {
-          void dispatch(
-            profileQueries.util.upsertQueryData(
-              "getProfileAccess",
-              profileId,
-              result.data,
-            ),
-          )
-        }
-      },
-    }),
-    /**
-     * Fetches the same admin view only to tell whether the signed-in user
-     * may edit the profile, in the background of a public CV page. A 401
-     * hides the edit controls without the sign-in-again message, because
-     * the user only reads the page; editing then asks through
-     * `getProfileAdmin`.
-     */
-    getProfileAccess: builder.query<ProfileAdmin, string>({
-      query: (profileId) =>
-        `/api/Profile/${encodeURIComponent(profileId)}/admin`,
-      extraOptions: { requiresSignIn: true, reportsRefusal: false },
-      providesTags: (_result, _error, profileId) => [
+      serializeQueryArgs: ({ endpointName, endpointDefinition, queryArgs }) =>
+        defaultSerializeQueryArgs({
+          endpointName,
+          endpointDefinition,
+          queryArgs: queryArgs.profileId,
+        }),
+      forceRefetch: ({ currentArg, previousArg }) =>
+        reportsAdminRefusal(currentArg) && !reportsAdminRefusal(previousArg),
+      providesTags: (_result, _error, { profileId }) => [
         { type: "Profile", id: profileId },
         "Session",
       ],
@@ -270,9 +268,10 @@ export const profileQueries = baseApi.injectEndpoints({
     /**
      * Shows or hides the picture section on the CV and its PDF, at once,
      * apart from the profile's fields. Hiding keeps the stored picture.
-     * The asked value goes into the cached admin views at once, so the
-     * switch doesn't flip back while they refetch, and a failure restores
-     * the previous one.
+     * The asked value goes into the cached admin view at once, so the
+     * switch shows it while the request and the refetch run, and a failure
+     * restores the previous one. This is the only optimistic update of the
+     * visibility.
      */
     setProfilePictureVisibility: builder.mutation<
       ProfilePictureVisibility,
@@ -287,35 +286,30 @@ export const profileQueries = baseApi.injectEndpoints({
       invalidatesTags: (_result, error, { profileId }) =>
         profileTagsAfter(error, profileId),
       /**
-       * Writes the asked visibility into the cached admin views, and undoes
+       * Writes the asked visibility into the cached admin view, and undoes
        * it when the request fails.
        *
        * @param args - The mutation's arguments.
        * @param args.profileId - The changed profile.
        * @param args.body - The asked visibility.
        * @param api - RTK Query's lifecycle helpers.
-       * @param api.dispatch - Dispatches the cache updates.
+       * @param api.dispatch - Dispatches the cache update.
        * @param api.queryFulfilled - Settles when the request finishes.
        */
       async onQueryStarted({ profileId, body }, { dispatch, queryFulfilled }) {
-        const patches = (["getProfileAdmin", "getProfileAccess"] as const).map(
-          (endpoint) =>
-            dispatch(
-              profileQueries.util.updateQueryData(
-                endpoint,
-                profileId,
-                (draft) => {
-                  draft.showPicture = body.isVisible
-                },
-              ),
-            ),
+        const patch = dispatch(
+          profileQueries.util.updateQueryData(
+            "getProfileAdmin",
+            { profileId },
+            (draft) => {
+              draft.showPicture = body.isVisible
+            },
+          ),
         )
         try {
           await queryFulfilled
         } catch {
-          for (const patch of patches) {
-            patch.undo()
-          }
+          patch.undo()
         }
       },
     }),
@@ -335,7 +329,6 @@ export const profileQueries = baseApi.injectEndpoints({
 export const {
   useGetProfileQuery,
   useGetProfileAdminQuery,
-  useGetProfileAccessQuery,
   useGetProfilePicturePreviewQuery,
   useCreateProfileMutation,
   useUpdateProfileMutation,

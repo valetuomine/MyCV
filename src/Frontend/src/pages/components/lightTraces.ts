@@ -36,7 +36,7 @@ export interface TraceColors {
  * Tells how strongly the dots show at a point, from 0 to 1, so a trace stays
  * where the dots show and fades with them.
  */
-export type Visibility = (x: number, y: number) => number
+type Visibility = (x: number, y: number) => number
 
 /** How long a trace takes to run its route, in milliseconds. */
 const traceMs = 450

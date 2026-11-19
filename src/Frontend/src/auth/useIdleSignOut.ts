@@ -4,6 +4,7 @@ import {
   subscribeSharedSignOut,
   useAuthSession,
 } from "./authSession"
+import { idleLastActivityKey } from "./adminLoginStorage"
 import { createActivityFilter } from "./idleActivity"
 import useSignOutReturnSegment from "./useSignOutReturnSegment"
 import { ActivityEvent, SignOutReason } from "../types"
@@ -18,8 +19,6 @@ const idleCheckIntervalMs = 10 * 1000
 const signOutRetryMs = 10 * 1000
 /** The channel that keeps the idle time and the idle sign-out the same in every tab of the app. */
 const idleChannelName = "mycv-idle-session"
-/** The local storage key of the last activity shared by the app's tabs, which a waking tab reads before it decides. */
-const lastActivityKey = "mycv-idle-last-activity"
 /** The least time between two shares of the activity with the other tabs. */
 const activityShareIntervalMs = 2000
 
@@ -56,7 +55,7 @@ function isIdleMessage(data: unknown): data is IdleMessage {
  */
 function readSharedActivity(): number {
   try {
-    return Number(localStorage.getItem(lastActivityKey)) || 0
+    return Number(localStorage.getItem(idleLastActivityKey)) || 0
   } catch {
     return 0
   }
@@ -70,7 +69,7 @@ function readSharedActivity(): number {
  */
 function storeSharedActivity(at: number): void {
   try {
-    localStorage.setItem(lastActivityKey, String(at))
+    localStorage.setItem(idleLastActivityKey, String(at))
   } catch {
     return
   }

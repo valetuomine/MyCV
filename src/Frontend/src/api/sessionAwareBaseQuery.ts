@@ -13,8 +13,17 @@ export interface SessionExtraOptions {
   reportsRefusal?: boolean
 }
 
+/**
+ * A request's fetch arguments, with whether its 401 is reported when the
+ * call, not the endpoint, decides it, such as `getProfileAdmin`.
+ */
+interface SessionFetchArgs extends FetchArgs {
+  /** Overrides the endpoint's `reportsRefusal` for this request. */
+  reportsRefusal?: boolean
+}
+
 /** What the session-aware base query asks and tells about the session. */
-export interface SessionHandlers {
+interface SessionHandlers {
   /** Tells whether a token renewal is leaving the page, so a 401 meanwhile means nothing. */
   isTokenRenewalPending: () => boolean
   /** Reads the session's generation, which grows each time the user signs in again. */
@@ -44,7 +53,7 @@ type RawBaseQuery = BaseQueryFn<
  * @param args - The request's URL or fetch arguments.
  * @returns True when the request carries its own `Authorization` header.
  */
-export function hasOwnAuthorization(args: string | FetchArgs): boolean {
+function hasOwnAuthorization(args: string | FetchArgs): boolean {
   const headers = typeof args === "string" ? undefined : args.headers
   if (!headers) {
     return false
@@ -64,6 +73,29 @@ export function hasOwnAuthorization(args: string | FetchArgs): boolean {
 }
 
 /**
+ * Splits a request's own `reportsRefusal` from its fetch arguments, which
+ * `fetch` doesn't know, into the session options.
+ *
+ * @param args - The request's URL or fetch arguments.
+ * @param endpointOptions - The endpoint's session options.
+ * @returns The fetch arguments, and the session options for this request.
+ */
+function splitSessionArgs(
+  args: string | SessionFetchArgs,
+  endpointOptions: SessionExtraOptions | undefined,
+): { args: string | FetchArgs; extraOptions: SessionExtraOptions } {
+  if (typeof args === "string" || args.reportsRefusal === undefined) {
+    return { args, extraOptions: endpointOptions ?? {} }
+  }
+
+  const { reportsRefusal, ...fetchArgs } = args
+  return {
+    args: fetchArgs,
+    extraOptions: { ...endpointOptions, reportsRefusal },
+  }
+}
+
+/**
  * Wraps a base query so the app hears when the API refuses or accepts the
  * signed-in session. A 401 to a request that used the app's own token
  * reports the session as refused, unless a token renewal is leaving the
@@ -75,8 +107,9 @@ export function hasOwnAuthorization(args: string | FetchArgs): boolean {
  * `Authorization` header reports nothing, because it handles its own 401,
  * and neither does one sent before the session was last refused or signed
  * in again (`getSessionGeneration`). The endpoint's options go on to the
- * wrapped base query, so its `prepareHeaders` can read them, and the result
- * always goes back to the caller unchanged.
+ * wrapped base query, so its `prepareHeaders` can read them, with the
+ * request's own `reportsRefusal` in place of the endpoint's when it sets
+ * one, and the result always goes back to the caller unchanged.
  *
  * @param baseQuery - The base query to wrap.
  * @param handlers - The session callbacks.
@@ -86,15 +119,19 @@ export function createSessionAwareBaseQuery(
   baseQuery: RawBaseQuery,
   handlers: SessionHandlers,
 ): BaseQueryFn<
-  string | FetchArgs,
+  string | SessionFetchArgs,
   unknown,
   FetchBaseQueryError,
   SessionExtraOptions,
   FetchBaseQueryMeta
 > {
-  return async (args, api, extraOptions) => {
+  return async (requestArgs, api, endpointOptions) => {
+    const { args, extraOptions } = splitSessionArgs(
+      requestArgs,
+      endpointOptions,
+    )
     const generation = handlers.currentGeneration()
-    const result = await baseQuery(args, api, extraOptions ?? {})
+    const result = await baseQuery(args, api, extraOptions)
     if (
       hasOwnAuthorization(args) ||
       generation !== handlers.currentGeneration()
@@ -106,13 +143,13 @@ export function createSessionAwareBaseQuery(
     const status = result.error?.status
     if (status === 401) {
       if (
-        extraOptions?.reportsRefusal !== false &&
+        extraOptions.reportsRefusal !== false &&
         !handlers.isTokenRenewalPending()
       ) {
         handlers.onSessionRefused()
       }
     } else if (
-      extraOptions?.requiresSignIn &&
+      extraOptions.requiresSignIn &&
       (status === undefined ||
         (typeof status === "number" && status < firstServerErrorStatus))
     ) {

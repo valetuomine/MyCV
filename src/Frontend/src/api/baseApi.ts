@@ -23,7 +23,9 @@ export const apiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim() ?? ""
  * background check that hides its 401 (`reportsRefusal: false`), such as a
  * public CV reader's edit-access check, because the reader only reads the
  * page. Those requests go without a token, and the API's 401 is handled as
- * an expired session (`sessionRefusal.ts`) or ignored.
+ * an expired session (`sessionRefusal.ts`) or ignored. When the check shares
+ * a cache entry that the edit view filled, the entry's later refetches
+ * report a 401 and may redirect, as the edit view's do.
  *
  * @param type - Whether the request is a query or a mutation.
  * @param extraOptions - The endpoint's session options.

@@ -105,6 +105,9 @@ function EditView({
 }: Readonly<EditViewProps>): JSX.Element {
   const { t } = useTranslation()
   const adminProfile = adminQuery.data
+  /** The CV's public URL segment, from the access check or the admin profile. */
+  const urlSegment =
+    publicUrlSegment ?? adminProfile?.publicUrlSegment ?? undefined
 
   if (!adminProfile || !profileId) {
     /** Why loading the admin profile failed, if it did. */
@@ -130,7 +133,7 @@ function EditView({
         saveError={
           saveFailure ? describeSaveFailure(saveFailure, t) : undefined
         }
-        publicUrlSegment={publicUrlSegment}
+        publicUrlSegment={urlSegment}
         profileId={profileId}
         pictureUrl={adminProfile.pictureUrl}
         showPicture={adminProfile.showPicture !== false}
@@ -138,9 +141,7 @@ function EditView({
       />
       {adminProfile.isOwner && (
         <SignInMethodsSection
-          publicUrlSegment={
-            publicUrlSegment ?? adminProfile.publicUrlSegment ?? undefined
-          }
+          publicUrlSegment={urlSegment}
           linkResult={linkResult}
         />
       )}
@@ -171,7 +172,6 @@ export default function ProfileForm({
   pdfPath,
 }: Readonly<ProfileFormProps>): JSX.Element {
   const { t } = useTranslation()
-  const { canEdit, publicUrlSegment } = useCanEditProfile(values.id)
   const location = useLocation()
   const navigate = useNavigate()
   /** How adding a sign-in method ended, when the CV opened on the way back from it. */
@@ -179,6 +179,7 @@ export default function ProfileForm({
     getLinkSignInResult(location.state),
   )
   const [isEditing, setIsEditing] = useState(linkResult !== null)
+  const { canEdit, publicUrlSegment } = useCanEditProfile(values.id, isEditing)
   /** After leaving edit mode, focus goes back to the Edit profile button. */
   const [hasEdited, setHasEdited] = useState(false)
   const [savedNotice, setSavedNotice] = useState<string | null>(null)
@@ -186,7 +187,7 @@ export default function ProfileForm({
   const [saveFailure, setSaveFailure] = useState<SaveFailure | null>(null)
   const [updateProfile, updateProfileState] = useUpdateProfileMutation()
   const profileAdminQuery = useGetProfileAdminQuery(
-    isEditing && values.id ? values.id : skipToken,
+    isEditing && values.id ? { profileId: values.id } : skipToken,
   )
 
   /** The admin profile's form values once loaded, else the public profile's. */

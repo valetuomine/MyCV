@@ -1,7 +1,7 @@
 import { atomWithStorage } from "jotai/utils"
 import { Theme } from "../types"
 
-export const themeStorageKey = "cv-theme"
+const themeStorageKey = "cv-theme"
 
 /**
  * Reads the operating system's color scheme.

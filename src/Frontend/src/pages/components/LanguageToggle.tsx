@@ -1,5 +1,5 @@
 import { useAtom } from "jotai"
-import { useEffect, type JSX } from "react"
+import type { JSX } from "react"
 import { useTranslation } from "react-i18next"
 import { languageAtom } from "../../state/languageAtoms"
 import { ButtonVariant, LanguageCode } from "../../types"
@@ -14,21 +14,14 @@ const languages = [LanguageCode.Finnish, LanguageCode.English]
  * showing only its flag, the active one marked with `aria-pressed`. Each
  * segment is named in its own language ("Suomeksi", "In English"), and
  * carries that `lang`, so a screen reader pronounces it right whichever
- * language is active. An effect keeps i18next on the chosen language, also
- * when another tab changes it. It skips a language i18next already has, so
- * the first render doesn't reset the page title a CV has set.
+ * language is active. Choosing a language writes `languageAtom`, which
+ * switches i18next itself.
  *
  * @returns The language choice.
  */
 export default function LanguageToggle(): JSX.Element {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const [language, setLanguage] = useAtom(languageAtom)
-
-  useEffect(() => {
-    if (i18n.language !== language) {
-      void i18n.changeLanguage(language)
-    }
-  }, [i18n, language])
 
   return (
     <fieldset

@@ -100,11 +100,12 @@ function describeOutcome(outcome: PictureOutcome, t: TFunction): string {
  * shows below the actions, and after a removal focus moves to Choose picture,
  * because Remove is gone. The Show profile picture on CV switch hides or
  * shows the whole section on the CV and its PDF, also saved at once; while it
- * saves, it shows the value asked for. A hidden section keeps its picture,
- * which the preview dims under a Hidden from CV badge, and uploading or using
- * the Google picture leaves the switch as it is. The preview is fetched
- * signed in, because the public picture URL is not found while hidden, and
- * its frame stays empty while it loads.
+ * saves, it shows the value asked for, which the mutation writes into the
+ * cached admin view (`setProfilePictureVisibility`). A hidden section keeps
+ * its picture, which the preview dims under a Hidden from CV badge, and
+ * uploading or using the Google picture leaves the switch as it is. The
+ * preview is fetched signed in, because the public picture URL is not found
+ * while hidden, and its frame stays empty while it loads.
  *
  * @param props - The component props.
  * @param props.profileId - The profile whose picture this is.
@@ -154,10 +155,6 @@ export default function ProfilePictureSection({
     remove: removeState.isLoading,
     visibility: visibilityState.isLoading,
   })
-  /** The switch's value: the one being saved, otherwise the saved one. */
-  const isPictureShown = visibilityState.isLoading
-    ? (visibilityState.originalArgs?.body.isVisible ?? showPicture)
-    : showPicture
   /** Whether the session is a Google sign-in, which alone has a Google picture. */
   const canUseGoogle = session.method === SignInMethod.Google
 
@@ -295,7 +292,7 @@ export default function ProfilePictureSection({
       <div className="flex flex-wrap items-start gap-x-6 gap-y-4">
         <div className="relative h-32 w-26 shrink-0 overflow-hidden rounded-3xl border border-cv-line bg-cv-surface">
           <div
-            className={`size-full transition-opacity duration-200 motion-reduce:transition-none ${isPictureShown ? "" : "opacity-40 grayscale"}`}
+            className={`size-full transition-opacity duration-200 motion-reduce:transition-none ${showPicture ? "" : "opacity-40 grayscale"}`}
           >
             {showPreview && (
               <img
@@ -315,7 +312,7 @@ export default function ProfilePictureSection({
               </div>
             )}
           </div>
-          {!isPictureShown && (
+          {!showPicture && (
             <span className="absolute inset-x-1 bottom-1.5 rounded-full border border-cv-line bg-cv-surface px-1.5 py-1 text-center text-[0.6875rem] leading-tight font-medium whitespace-nowrap text-cv-ink">
               {t("profilePicture.hiddenBadge")}
             </span>
@@ -326,7 +323,7 @@ export default function ProfilePictureSection({
             id={hintId}
             className="m-0 max-w-[56ch] text-sm text-pretty text-cv-copy"
           >
-            {!showPreview && !isPreviewLoading && isPictureShown && (
+            {!showPreview && !isPreviewLoading && showPicture && (
               <span className="block text-cv-ink">
                 {t("profilePicture.none")}
               </span>
@@ -400,7 +397,7 @@ export default function ProfilePictureSection({
           </p>
           <div className="mt-2 border-t border-cv-line pt-4">
             <PictureVisibilitySwitch
-              checked={isPictureShown}
+              checked={showPicture}
               busy={busyChange === "visibility"}
               disabled={busyChange !== null && busyChange !== "visibility"}
               onChange={changeVisibility}

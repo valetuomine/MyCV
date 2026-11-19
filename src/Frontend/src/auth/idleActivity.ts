@@ -14,7 +14,7 @@ const userScrollWindowMs = 1000
  * @param deliberateOnly - True while the idle warning shows, when only a press, a tap or a key continues the session.
  * @returns True when the event counts as activity.
  */
-export type ActivityFilter = (event: Event, deliberateOnly: boolean) => boolean
+type ActivityFilter = (event: Event, deliberateOnly: boolean) => boolean
 
 /**
  * Creates a filter that accepts only the user's own input, so the idle time

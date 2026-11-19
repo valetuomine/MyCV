@@ -11,6 +11,7 @@ import {
 import {
   acquireApiAuthenticationResult,
   apiScope,
+  getSessionMicrosoftAccount,
   getSharedAccountsVersion,
   isEntraConfigured,
   isTokenRedirectPending,
@@ -74,13 +75,10 @@ interface AuthSession {
 }
 
 /**
- * Combines the MSAL account and the Google session into one sign-in state.
- * Only one is active at a time, because starting a sign-in clears the other.
- * The one exception is a Microsoft account being added to a Google
- * session's CV: it is never made active, and the Google session wins until
- * linking removes the account. msal-react reads the accounts only on MSAL's
- * events, which can come before an account that another tab signed in is
- * cached here, so the accounts are read again once it is
+ * Combines the MSAL account and the Google session into one sign-in state,
+ * by the rule of `getSessionMicrosoftAccount`. msal-react reads the accounts
+ * only on MSAL's events, which can come before an account that another tab
+ * signed in is cached here, so the accounts are read again once it is
  * (`subscribeSharedAccounts`). MSAL stays busy with a Microsoft popup that
  * was cancelled until the next popup or its timeout ends it, which doesn't
  * count as busy here.
@@ -106,12 +104,11 @@ export function useAuthSession(): AuthSession {
     hasAbandonedSignInPopup,
   )
   const isBusy = inProgress !== InteractionStatus.None && !hasAbandonedPopup
-  /** The first signed-in Microsoft account, which stands in for the active one only without a Google session. */
-  const fallbackAccount = googleSession ? null : accounts[0]
-  /** The active Microsoft account, or the first signed-in one when there is no Google session. */
-  const msalAccount = accounts[0]
-    ? (instance.getActiveAccount() ?? fallbackAccount)
-    : null
+  /** The session's Microsoft account, or null when the session is Google's or nobody's. */
+  const msalAccount = getSessionMicrosoftAccount(
+    accounts,
+    googleSession !== null,
+  )
 
   if (msalAccount) {
     return {
@@ -185,8 +182,8 @@ let isGoogleRenewalInProgress = false
 
 /**
  * Gets the bearer token for the API: the Entra access token, or the Google
- * ID token. A Google session counts while no Microsoft account is active,
- * so a Microsoft account being added to its CV is never used. When the
+ * ID token when the session is Google's (`getSessionMicrosoftAccount`), so
+ * a Microsoft account being added to its CV is never used. When the
  * Google token has expired, it starts one silent redirect to Google that
  * returns to the current page. When the Entra token needs interaction, it
  * starts a redirect to Microsoft only if `allowRedirect` allows it.
@@ -199,7 +196,7 @@ export async function acquireApiToken({
   allowRedirect = true,
 }: ApiTokenRedirectOptions = {}): Promise<string | null> {
   const googleSession = getGoogleSession()
-  if (googleSession && !msalInstance.getActiveAccount()) {
+  if (googleSession && !getSessionMicrosoftAccount()) {
     const idToken = getGoogleIdToken()
     if (!idToken && !isGoogleRenewalInProgress) {
       isGoogleRenewalInProgress = true
