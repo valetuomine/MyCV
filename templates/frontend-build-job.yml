@@ -28,6 +28,10 @@ jobs:
     displayName: Install frontend dependencies
     workingDirectory: src/Frontend
 
+  - script: npm audit --audit-level=high
+    displayName: Audit frontend dependencies
+    workingDirectory: src/Frontend
+
   - script: npm run lint
     displayName: Lint frontend
     workingDirectory: src/Frontend

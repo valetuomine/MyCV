@@ -49,6 +49,7 @@ The PR and `main` pipelines run these, but only for the areas a change touches (
 dotnet build src/MyCV.sln --configuration Release
 dotnet test src/MyCV.sln --configuration Release --no-build
 dotnet ef migrations has-pending-model-changes --project src/Backend/CV.DataAccess/CV.DataAccess.csproj --startup-project src/Backend/CV.WebApi/CV.WebApi.csproj
+npm --prefix src/Frontend audit --audit-level=high
 npm --prefix src/Frontend run lint
 npm --prefix src/Frontend run build
 npx --yes markdownlint-cli2@0.24.0

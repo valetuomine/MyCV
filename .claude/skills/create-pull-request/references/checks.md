@@ -35,9 +35,12 @@ If it reports pending changes, add the missing migration with `dotnet ef migrati
 
 ```powershell
 npm --prefix src/Frontend ci        # only when package.json or package-lock.json changed
+npm --prefix src/Frontend audit --audit-level=high
 npm --prefix src/Frontend run lint
 npm --prefix src/Frontend run build
 ```
+
+The audit checks the live advisory database, so a newly published advisory can fail an unrelated frontend change. Run `npm --prefix src/Frontend audit fix` without `--force`. If that is not enough, add a scoped `overrides` entry to `package.json` or ask the user. Never lower `--audit-level`.
 
 While a dev server runs on port 3000 (see *Servers* below), run `npm --prefix src/Frontend install` instead of `ci`: `ci` deletes `node_modules` first, fails with `EPERM` on the native module that Vite holds open, and by then has removed Vite's pre-bundled dependencies (`node_modules/.vite`), so the running server answers `504` until it restarts. If that happens to the user's server, ask the user to restart it.
 
