@@ -3,7 +3,9 @@ parameters:
   type: string
 
 # auto: FrontendSelfHosted runs when PickAgent (templates/pick-agent-job.yml) found an idle
-# self-hosted agent, otherwise FrontendHosted does. An empty PickAgent output counts as no agent.
+# self-hosted agent, otherwise FrontendHosted does. PickAgent runs only when the change also builds
+# the backend, so a change that builds only the frontend always uses FrontendHosted. An empty
+# PickAgent output counts as no agent.
 # The other two values force the pool and use the default job name.
 jobs:
 - ${{ if eq(parameters.agentPool, 'auto') }}:

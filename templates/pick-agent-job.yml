@@ -5,10 +5,11 @@ parameters:
 jobs:
 - job: PickAgent
   displayName: Pick frontend build agent
-  # Runs only when the change needs the frontend build. A skipped job leaves its output empty,
-  # which selects the Microsoft-hosted agent.
+  # Runs only when the change builds both the frontend and the backend, because the self-hosted
+  # agent is worth using only when the backend build runs on a Microsoft-hosted agent at the same
+  # time. A skipped job leaves its output empty, which selects the Microsoft-hosted agent.
   dependsOn: DetectChanges
-  condition: and(succeeded(), eq(dependencies.DetectChanges.outputs['paths.frontend'], 'true'))
+  condition: and(succeeded(), eq(dependencies.DetectChanges.outputs['paths.frontend'], 'true'), eq(dependencies.DetectChanges.outputs['paths.backend'], 'true'))
   pool: ${{ parameters.pool }}
   steps:
   - checkout: none

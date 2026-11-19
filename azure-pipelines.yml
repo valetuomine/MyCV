@@ -6,10 +6,13 @@ trigger:
 pr: none
 
 parameters:
-# auto: the frontend build runs on the self-hosted agent when one in the Default pool is online
-# and idle (templates/pick-agent-job.yml), and on a Microsoft-hosted agent otherwise. The backend
-# build always runs on a Microsoft-hosted agent, so the two builds use separate parallel jobs and
-# run side by side. The other two values force the pool for both builds.
+# auto: when the change builds both backend and frontend, the frontend build runs on the
+# self-hosted agent if one in the Default pool is online and idle (templates/pick-agent-job.yml),
+# and on a Microsoft-hosted agent otherwise. A change that builds only the frontend always builds
+# it on a Microsoft-hosted agent, because the self-hosted agent only helps when the backend build
+# runs at the same time. The backend build always runs on a Microsoft-hosted agent, so the two builds
+# use separate parallel jobs and run side by side. The other two values force the pool for both
+# builds.
 - name: agentPool
   displayName: Build agent pool
   type: string
