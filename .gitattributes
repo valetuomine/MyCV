@@ -1,2 +1,4 @@
+# Store and check out every text file with LF, whatever the machine's core.autocrlf setting is.
+* text=auto eol=lf
 # Skills lock files are written with LF by the skills CLI; keep them LF on every platform.
 **/skills-lock.json text eol=lf

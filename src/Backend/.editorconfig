@@ -1,5 +1,7 @@
 # Backend code style. Services use explicit constructors (see the create-cv-skills service patterns),
 # so the IDE must not suggest converting them to primary constructors (IDE0290).
 [*.cs]
+# C# files are a mix of UTF-8 with and without a BOM; do not check the charset the root .editorconfig sets.
+charset = unset
 csharp_style_prefer_primary_constructors = false
 dotnet_diagnostic.IDE0290.severity = none
