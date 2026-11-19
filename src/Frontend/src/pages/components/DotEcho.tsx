@@ -154,9 +154,9 @@ const restBandStops: Array<[number, number]> = [
 /**
  * The elements whose text the traces keep away from: the children of an
  * element marked with `data-cv-trace-avoid`: the CV's eyebrow, name, title and
- * buttons, and the page's controls in the top corner. The resting band's mask
- * hides the dots behind the CV's text on a wide screen, but on a phone the
- * text sits above it.
+ * buttons, the home page's hero columns, and the page's controls in the top
+ * corner. The resting band's mask hides the dots behind the CV's text on a
+ * wide screen, but on a phone the text sits above it.
  */
 const avoidSelector = "[data-cv-trace-avoid] > *"
 /** How far the traces keep from that text, in CSS pixels: half a cell. */
@@ -268,16 +268,18 @@ function bandLight(bands: Band[], x: number, y: number): number {
  * the left, in step with `LightSweep`, and every echo in `nameEchoAtom` carries
  * one from the bottom up, in step with `LightEcho`. The dots under a band
  * light up in the accent, at most as strongly as the lit dots, with a smaller
- * hot core in their middle near the band's crest, and grow without moving. While the CV shows, the dots under a mouse's spotlight also grow from
- * 1px to 1.6px in their own colours, on the spotlight's spring, without moving, and turn
- * toward the hot core the nearer they are to the pointer.
+ * hot core in their middle near the band's crest, and grow without moving.
+ * While the CV's name or the home page's heading shows, the dots under a
+ * mouse's spotlight also grow from 1px to 1.6px in their own colours, on the
+ * spotlight's spring, without moving, and turn toward the hot core the nearer
+ * they are to the pointer.
  *
  * Each band also sends a few traces of light (`lightTraces.ts`) where its
  * light is about to reach: short pieces of light with a hot head and a fading
  * accent tail that run once along the dot grid with right angles, the sweep's
- * to the right along the grid, and keep away from the name and the small text
- * as the static dots do, and from the boxes of the CV's text
- * (`data-cv-trace-avoid`).
+ * to the right along the grid, and keep away from the CV's name or the home
+ * page's heading and the small text as the static dots do, and from the boxes
+ * of the text marked with `data-cv-trace-avoid`.
  *
  * It draws on Framer Motion's frame loop, after the spring has moved, so the
  * dots keep up with the spotlight, and only while something moves. At rest

@@ -32,9 +32,25 @@ export const fi: Translation = {
     toDark: "Vaihda tummaan teemaan",
   },
   home: {
-    heading: "CV, jolla on oma osoite",
+    heading: "Yksi linkki CV:hen, joka pysyy ajan tasalla",
     intro:
-      "MyCV julkaisee CV:n verkkosivuna, jolla on oma linkki, ja PDF:nä tulostamista varten. Omistaja kirjautuu sisään ja pitää sen ajan tasalla.",
+      "CV on verkkosivu omassa osoitteessaan. Omistaja päivittää sen itse, ja saman sisällön saa myös PDF:nä.",
+    factsHeading: "Mitä linkin takana on",
+    addressLabel: "CV:n osoite",
+    facts: {
+      address: {
+        title: "Oma osoite",
+        body: "Jokaisella CV:llä on oma verkko-osoite, joka aukeaa missä tahansa selaimessa ilman kirjautumista.",
+      },
+      current: {
+        title: "Aina uusin versio",
+        body: "Omistaja päivittää CV:n itse, joten sama linkki näyttää aina sen tämänhetkisen sisällön.",
+      },
+      pdf: {
+        title: "Sama sisältö PDF:nä",
+        body: "CV:n saa tulostettavana PDF:nä suoraan sen sivulta, samalla sisällöllä kuin sivulla on nyt.",
+      },
+    },
     featuredLabel: "Esittelyssä",
     featuredLoading: "Ladataan esittelyssä olevaa CV:tä…",
     viewCv: "Näytä CV",

@@ -10,7 +10,11 @@ import { ButtonSize, ButtonVariant } from "../../../../types"
 import Button from "../../../components/Button"
 import Eyebrow from "../../../components/Eyebrow"
 import LitCard from "../../../components/LitCard"
-import { getInitials, toExternalUrl } from "../../utils/profileFormUtils"
+import {
+  formatProfileDate,
+  getInitials,
+  toExternalUrl,
+} from "../../utils/profileFormUtils"
 import LocationIcon from "../LocationIcon"
 import FeaturedCvAvatar from "./FeaturedCvAvatar"
 import { featuredCvGridClassName, featuredCvReveal } from "./featuredCvLayout"
@@ -21,7 +25,9 @@ interface FeaturedCvCardProps {
 }
 
 /**
- * The home page's card for the featured CV: its name, title, location and
+ * The home page's card for the featured CV: a live eyebrow with the date the
+ * CV last changed, which shows that the link always leads to the latest
+ * version, then its name, title, location and
  * portrait, a button that opens the CV, and its GitHub and LinkedIn links.
  * It is a `LitCard`, so its surface lights up like the edit view's preview
  * card. Its content rises in on the reveal that `FeaturedCvSection` starts,
@@ -37,8 +43,13 @@ export default function FeaturedCvCard({
   profile,
   publicUrlSegment,
 }: Readonly<FeaturedCvCardProps>): JSX.Element {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const nameId = useId()
+  /** When the profile last changed, falling back to when it was created. */
+  const updatedAt = formatProfileDate(
+    profile.updatedAt ?? profile.createdAt,
+    i18n.language,
+  )
 
   return (
     <LitCard
@@ -51,7 +62,12 @@ export default function FeaturedCvCard({
         variants={featuredCvReveal}
         className="grid min-w-0 justify-items-start [grid-area:text]"
       >
-        <Eyebrow>{t("home.featuredLabel")}</Eyebrow>
+        <Eyebrow
+          pulse
+          meta={updatedAt ? t("cv.updated", { date: updatedAt }) : undefined}
+        >
+          {t("home.featuredLabel")}
+        </Eyebrow>
         <h2
           id={nameId}
           dir="auto"

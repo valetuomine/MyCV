@@ -40,9 +40,10 @@ const beamLeanShare = 0.35
 const maxBeamLean = 9
 
 /**
- * Picks the classes that keep the wash and the beam dark while the CV waits
- * for its reveal and light them from dark once the last hold is let go. Pages
- * that never hold the light, and reduced motion, show it at once.
+ * Picks the classes that keep the wash and the beam dark while the CV's name
+ * or the home page's heading waits for its reveal and light them from dark
+ * once the last hold is let go. Pages that never hold the light, and reduced
+ * motion, show it at once.
  *
  * @param isHeld - Whether something holds the light dark now.
  * @param hasBeenHeld - Whether anything has held the light on this visit.
@@ -71,13 +72,14 @@ function lightClass(isHeld: boolean, hasBeenHeld: boolean): string {
  * diagonal wash and a beam past the first screen, one band of it rests across
  * the page with no dots under it, and the light theme fades into a faint shade
  * in the far corner. With a mouse, a spotlight follows the pointer on a spring
- * and lights up the dots beneath it, and the beam leans toward the pointer around
- * its source, as the card tilts. On the CV, the wash and the beam stay dark
- * while the page loads and come on as the name's reveal starts
- * (`useDirectedLight`); other pages, and reduced motion, show them at once.
- * While the CV shows, `LightSweep` carries one band of light across the page
- * from the left, `LightEcho` carries another one from the bottom up, and
- * `DotEcho` lights the dots under both, sends a few traces of light along
+ * and lights up the dots beneath it, and the beam leans toward the pointer
+ * around its source, as the card tilts. On the CV and on the home page, the
+ * wash and the beam stay dark while the page loads and come on as the name's
+ * or the heading's reveal starts (`useDirectedLight`); other pages, and
+ * reduced motion, show them at once. When that reveal starts, `LightSweep`
+ * carries one band of light across the page from the left, `LightEcho`
+ * carries another one from the bottom up, and `DotEcho` lights the dots
+ * under both, sends a few traces of light along
  * the dot grid with them and swells the dots under the spotlight. Forced
  * colours leave the light out.
  *

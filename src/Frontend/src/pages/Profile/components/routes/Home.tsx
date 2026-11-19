@@ -1,40 +1,22 @@
-import { zodResolver } from "@hookform/resolvers/zod"
 import { m as motion, type Variants } from "framer-motion"
-import {
-  useEffect,
-  useId,
-  useRef,
-  useState,
-  type JSX,
-  type SubmitEvent,
-} from "react"
-import { FormProvider, useForm } from "react-hook-form"
+import { useEffect, useRef, useState, type JSX } from "react"
 import { useTranslation } from "react-i18next"
 import { Navigate, useNavigate } from "react-router-dom"
-import { useLazyGetCandidateQuery } from "../../../../api/candidateQueries"
 import {
   clearAuthReturnPaths,
   logoutReturnPublicUrlSegmentKey,
   readSignOutReason,
 } from "../../../../auth/adminLoginStorage"
-import {
-  isSignInConfigured,
-  useAuthSession,
-} from "../../../../auth/authSession"
 import { signedOutLocationState } from "../../../../auth/signedOutState"
-import Button from "../../../components/Button"
 import Eyebrow from "../../../components/Eyebrow"
-import { headingClassName } from "../../../components/headingClassName"
-import RHFInput from "../../../components/RHFInput"
 import { RoutePaths } from "../../../../routePaths"
-import { ButtonVariant } from "../../../../types"
-import { describeCvLookupError } from "../../utils/describeCvLookupError"
+import { FeaturedCvStatus } from "../../../../types"
+import FeaturedCvAddress from "../FeaturedCv/FeaturedCvAddress"
 import FeaturedCvSection from "../FeaturedCv/FeaturedCvSection"
-import {
-  openCvDefaultValues,
-  openCvSchema,
-  type OpenCvSchema,
-} from "../../schemas/open-cv-schema"
+import useFeaturedCv from "../FeaturedCv/useFeaturedCv"
+import HomeFacts from "../Home/HomeFacts"
+import OpenCvSection from "../Home/OpenCvSection"
+import ProfileName from "../ProfileName"
 
 /** Staggers the home page's parts in one after another. */
 const container: Variants = {
@@ -53,9 +35,18 @@ const item: Variants = {
 }
 
 /**
- * Lets the open form's part rise into place without a fade: its field is a
- * blurred Pane, and a fading ancestor would switch off the blur until the
- * fade ends, so the dot grid would show through and then snap away.
+ * The hero's two columns from `lg` up, the text and the featured card, which
+ * widens at `xl` so its buttons stay on one row. Without a featured CV the
+ * hero keeps one column, so no empty track is left beside the text.
+ */
+const heroColumnsClassName =
+  "lg:grid-cols-[minmax(0,1fr)_minmax(0,34rem)] lg:gap-14 xl:grid-cols-[minmax(0,1fr)_minmax(0,40rem)] xl:gap-16"
+
+/**
+ * Lets a part with a blurred Pane rise into place without a fade, such as
+ * the open form's field, the address pill and the featured card: a fading
+ * ancestor would switch off the blur until the fade ends, so the dot grid
+ * would show through and then snap away.
  */
 const rise: Variants = {
   hidden: { y: 18 },
@@ -66,38 +57,31 @@ const rise: Variants = {
 }
 
 /**
- * The home page: what MyCV is, a card for the CV the API features, and a
- * form that opens any CV by its link or public address. The card shows a
- * skeleton while it loads and quietly stays away when no CV is featured or
- * the request fails. The form looks the CV up before leaving, so a wrong
- * address shows its error under the field instead of an error page. Under
- * the form, a quiet link takes a CV's owner to sign in and manage it, or
- * straight to managing it when they are signed in already. While MSAL is
- * busy, for example starting up or handling a redirect, the link stays
- * hidden in its place, so its wording never switches before the eyes and
- * the form doesn't shift when it appears. Without any sign-in method set up
- * it isn't shown at all.
+ * The home page as a landing page for a CV's viewers. The hero says what
+ * MyCV is: its heading assembles letter by letter like a CV's name
+ * (`ProfileName`) and lights the background with the sweep and the echo,
+ * and under the intro the featured CV's link stands as an address to copy.
+ * From `lg` up the featured CV's card, whose View CV is the page's one
+ * primary action, stands beside the text, and from `xl` up it widens so its
+ * buttons stay on one row. Without a featured CV the hero is the text alone,
+ * with neither the address nor the card. A language switch remounts the
+ * heading, so its reveal, the sweep and the echo play again as a whole
+ * instead of re-revealing only the letters whose keys changed, while the
+ * directed light stays on (`useLightHold`). Below the hero come the facts
+ * about the link and, last and quiet, the form that opens any CV and the
+ * owner's sign-in link. The hero keeps the light traces
+ * away (`data-cv-trace-avoid`).
  *
- * It is also where a sign-out lands: it returns to the CV the user
- * signed out from, or stays here, and flags the sign-out for the notice.
+ * A sign-out lands here first: it redirects to the CV it started from, or,
+ * when it started here, replaces the entry with Home and the signed-out
+ * notice's state, once.
  *
  * @returns A redirect to the CV after sign-out, otherwise the home page.
  */
 export default function Home(): JSX.Element {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
-  const form = useForm<OpenCvSchema>({
-    resolver: zodResolver(openCvSchema),
-    defaultValues: openCvDefaultValues,
-  })
-  const {
-    handleSubmit,
-    setError,
-    formState: { isSubmitting },
-  } = form
-  const openHeadingId = useId()
-  const [lookUpCandidate] = useLazyGetCandidateQuery()
-  const { isSignedIn, isBusy } = useAuthSession()
+  const hasFeaturedCv = useFeaturedCv().status !== FeaturedCvStatus.None
 
   /**
    * Set before a sign-out lands here: the CV to return to, or "" to stay on
@@ -132,106 +116,52 @@ export default function Home(): JSX.Element {
     )
   }
 
-  /**
-   * Looks up the CV the field points to, once the schema has turned it into
-   * a public URL segment that isn't empty, and opens it. A missing CV or a
-   * failed request becomes the field's error instead, which the submit's
-   * shake then shows.
-   */
-  const lookUpAndOpen = handleSubmit(async ({ cvAddress }) => {
-    const { error } = await lookUpCandidate(cvAddress, true)
-    if (error) {
-      setError(
-        "cvAddress",
-        { type: "lookup", message: describeCvLookupError(error) },
-        { shouldFocus: true },
-      )
-      return
-    }
-
-    void navigate(RoutePaths.CandidateProfile(cvAddress))
-  })
-
-  /**
-   * Submits the form unless a look-up is already running. The loading button
-   * blocks clicks but not a second Enter in the field, which would start
-   * another look-up and end the first one's loading state early.
-   *
-   * @param event - The form's submit event.
-   */
-  const submit = (event: SubmitEvent<HTMLFormElement>): void => {
-    if (isSubmitting) {
-      event.preventDefault()
-      return
-    }
-
-    void lookUpAndOpen(event)
-  }
-
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-6xl items-center pt-20 pb-12 lg:pt-4">
+    <main className="mx-auto w-full max-w-7xl pt-24 pb-24 lg:pt-32">
       <motion.div
         variants={container}
         initial="hidden"
         animate="visible"
-        className="grid w-full max-w-2xl justify-items-start gap-10"
+        className="grid gap-24 lg:gap-32"
       >
-        <motion.div variants={item} className="grid gap-6">
-          <Eyebrow>{t("common.brand")}</Eyebrow>
-          <div className="grid gap-4">
-            <h1 className="m-0 min-w-0 font-cv-display text-4xl leading-tight font-semibold tracking-tighter wrap-break-word text-balance sm:text-5xl">
-              {t("home.heading")}
-            </h1>
-            <p className="m-0 max-w-[52ch] text-lg leading-relaxed text-pretty text-cv-copy">
-              {t("home.intro")}
-            </p>
-          </div>
-        </motion.div>
-        <FeaturedCvSection />
-        <motion.section
-          variants={rise}
-          aria-labelledby={openHeadingId}
-          className="grid w-full gap-4"
+        <div
+          data-cv-trace-avoid=""
+          className={`grid items-center gap-12 ${hasFeaturedCv ? heroColumnsClassName : ""}`}
         >
-          <h2 id={openHeadingId} className={headingClassName}>
-            {t("home.openHeading")}
-          </h2>
-          <FormProvider {...form}>
-            <form noValidate onSubmit={submit} className="grid w-full">
-              <RHFInput<OpenCvSchema>
-                name="cvAddress"
-                label={t("home.inputLabel")}
-                required
-                autoComplete="off"
-                autoCapitalize="none"
-                spellCheck={false}
-                action={
-                  <Button
-                    type="submit"
-                    variant={ButtonVariant.Primary}
-                    loading={isSubmitting}
-                    loadingText={t("home.opening")}
-                  >
-                    {t("home.submit")}
-                  </Button>
-                }
-              />
-            </form>
-          </FormProvider>
-          {isSignInConfigured && (
-            <p
-              className={`m-0 flex flex-wrap items-center gap-x-3.5 text-sm text-cv-copy transition-[opacity,visibility] duration-200 ease-out motion-reduce:transition-none ${isBusy ? "invisible opacity-0" : "visible opacity-100"}`}
+          <div className="grid min-w-0 justify-items-start gap-7">
+            <motion.div variants={item}>
+              <Eyebrow>{t("common.brand")}</Eyebrow>
+            </motion.div>
+            <ProfileName
+              key={i18n.language}
+              fullName={t("home.heading")}
+              className="m-0 text-[clamp(2.75rem,4.8vw,4.5rem)] leading-[1.02] text-balance"
+            />
+            <motion.p
+              variants={item}
+              className="m-0 max-w-[46ch] text-lg leading-relaxed text-pretty text-cv-copy sm:text-xl"
             >
-              {!isSignedIn && t("home.ownerPrompt")}
-              <Button
-                to={RoutePaths.AdminCreateProfile}
-                variant={ButtonVariant.Text}
-              >
-                {isSignedIn ? t("home.ownerManage") : t("home.ownerSignIn")}
-              </Button>
-            </p>
+              {t("home.intro")}
+            </motion.p>
+            {hasFeaturedCv && (
+              <motion.div variants={rise} className="mt-2 w-full min-w-0">
+                <FeaturedCvAddress />
+              </motion.div>
+            )}
+          </div>
+          {hasFeaturedCv && (
+            <motion.div variants={rise} className="min-w-0">
+              <FeaturedCvSection />
+            </motion.div>
           )}
-        </motion.section>
+        </div>
+        <div className="grid max-w-5xl gap-20">
+          <HomeFacts variants={item} />
+          <OpenCvSection
+            variants={rise}
+            className="max-w-2xl border-t border-cv-field-border pt-10"
+          />
+        </div>
       </motion.div>
     </main>
   )

@@ -9,8 +9,9 @@ import {
 /**
  * Stands for the featured CV's card while it loads: the same grid, rows,
  * portrait and buttons, so nothing moves when the card arrives. The button
- * shapes are at least as wide as the real buttons, so both wrap at the same
- * width. The shapes hold back for 300 ms. The wrapper is busy, and the
+ * shapes are at least as wide as the real buttons, and the eyebrow has one
+ * shape for its label and one for its date, so both wrap at the same width.
+ * The shapes hold back for 300 ms. The wrapper is busy, and the
  * status inside it tells screen readers about the load at once.
  *
  * @returns The card's skeleton.
@@ -28,8 +29,13 @@ export default function FeaturedCvSkeleton(): JSX.Element {
         className={`animate-cv-fade-in-delayed rounded-3xl border-2 border-cv-field-border bg-cv-pane shadow-cv-card inset-shadow-cv-rim forced-colors:shadow-none print:shadow-none ${featuredCvGridClassName}`}
       >
         <div className="grid w-full min-w-0 [grid-area:text]">
-          <div className="flex h-lh items-center text-xs">
-            <div className="cv-skeleton h-3 w-28 rounded-full" />
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs leading-4">
+            <div className="flex h-lh items-center">
+              <div className="cv-skeleton h-3 w-28 rounded-full" />
+            </div>
+            <div className="flex h-lh items-center">
+              <div className="cv-skeleton h-3 w-38 rounded-full" />
+            </div>
           </div>
           <div className="mt-4 flex h-lh items-center text-3xl leading-tight sm:text-4xl">
             <div className="cv-skeleton h-[0.7em] w-3/4 rounded-full" />

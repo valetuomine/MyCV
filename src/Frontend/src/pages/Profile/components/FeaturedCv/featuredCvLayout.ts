@@ -31,3 +31,12 @@ export const featuredCvReveal: Variants = {
     transition: { type: "spring", stiffness: 100, damping: 20 },
   },
 }
+
+/**
+ * The featured CV address's pill: as tall as the copy button beside it, on
+ * the Pane with the Field Border hairline, the rim and the edge glow, like
+ * the language track. It is never wider than its row, so a long address is
+ * cut short inside it. The address and its skeleton share it.
+ */
+export const featuredCvAddressFrameClassName =
+  "m-0 flex h-11 max-w-full min-w-0 items-center rounded-full border border-cv-field-border bg-cv-pane px-5 text-sm shadow-cv-edge inset-shadow-cv-rim forced-colors:shadow-none print:shadow-none"

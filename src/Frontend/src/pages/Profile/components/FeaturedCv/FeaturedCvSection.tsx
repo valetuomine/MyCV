@@ -1,51 +1,35 @@
-import { skipToken } from "@reduxjs/toolkit/query"
 import { m as motion } from "framer-motion"
-import { useAtomValue } from "jotai"
 import type { JSX } from "react"
-import { useGetFeaturedCandidateQuery } from "../../../../api/candidateQueries"
-import { useGetProfileQuery } from "../../../../api/profileQueries"
-import { languageAtom } from "../../../../state/languageAtoms"
 import FeaturedCvCard from "./FeaturedCvCard"
 import FeaturedCvSkeleton from "./FeaturedCvSkeleton"
+import useFeaturedCv from "./useFeaturedCv"
+import { FeaturedCvStatus } from "../../../../types"
 
 /**
- * The home page's featured CV: fetches the CV the API features and then its
- * profile in the current language, and shows a skeleton while either is on
- * its first load. When no CV is featured or a request fails, it renders
- * nothing, so the home page works without it. The wrapper only starts the
- * card's reveal: the card's content rises in (`featuredCvReveal`) while the
- * card itself stays where the skeleton was.
+ * The home page's featured CV card (`useFeaturedCv`), with a skeleton while
+ * it loads. When no CV is featured or a request fails, it renders nothing,
+ * so the home page works without it. The wrapper only starts the card's
+ * reveal: the card's content rises in (`featuredCvReveal`) while the card
+ * itself stays where the skeleton was.
  *
  * @returns The featured CV's card, its skeleton, or nothing.
  */
 export default function FeaturedCvSection(): JSX.Element | null {
-  const language = useAtomValue(languageAtom)
-  const featuredQuery = useGetFeaturedCandidateQuery()
-  const candidate = featuredQuery.currentData
-  const profileId = candidate?.profileId
-  const profileQuery = useGetProfileQuery(
-    profileId ? { profileId, languageCode: language } : skipToken,
-  )
-  /**
-   * The featured CV's profile once it has loaded. It keeps the previous
-   * language's profile while another language loads, so the card doesn't
-   * blink, and drops it when the request fails.
-   */
-  const profile = profileQuery.isError ? undefined : profileQuery.data
+  const featured = useFeaturedCv()
 
-  if (featuredQuery.isLoading || profileQuery.isLoading) {
+  if (featured.status === FeaturedCvStatus.Loading) {
     return <FeaturedCvSkeleton />
   }
 
-  if (!candidate?.publicUrlSegment || !profileId || !profile) {
+  if (featured.status === FeaturedCvStatus.None) {
     return null
   }
 
   return (
     <motion.div initial="hidden" animate="visible" className="w-full">
       <FeaturedCvCard
-        profile={profile}
-        publicUrlSegment={candidate.publicUrlSegment}
+        profile={featured.profile}
+        publicUrlSegment={featured.publicUrlSegment}
       />
     </motion.div>
   )

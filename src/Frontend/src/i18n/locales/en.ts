@@ -30,9 +30,25 @@ export const en = {
     toDark: "Switch to dark theme",
   },
   home: {
-    heading: "A CV that lives at its own address",
+    heading: "One link to a CV that stays up to date",
     intro:
-      "MyCV publishes a CV as a web page with its own link, and as a PDF for printing. Its owner signs in to keep it up to date.",
+      "Each CV is a web page at its own address. Its owner keeps it current, and the same content is available as a PDF.",
+    factsHeading: "What the link gives you",
+    addressLabel: "CV address",
+    facts: {
+      address: {
+        title: "Its own address",
+        body: "Every CV has its own web address that opens in any browser, with no sign-in.",
+      },
+      current: {
+        title: "Always the latest version",
+        body: "The owner updates the CV themselves, so the same link always shows what it says today.",
+      },
+      pdf: {
+        title: "The same content as a PDF",
+        body: "The CV opens as a printable PDF straight from its page, with the same content the page shows today.",
+      },
+    },
     featuredLabel: "Featured CV",
     featuredLoading: "Loading the featured CV…",
     viewCv: "View CV",

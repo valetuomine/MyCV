@@ -14,7 +14,12 @@ import useNameWeightPlay, { restWeight, weightStep } from "./useNameWeightPlay"
 
 interface ProfileNameProps {
   fullName: string
+  className?: string
 }
+
+/** The CV's name heading: its size and its gap under the eyebrow. */
+const nameClassName =
+  "mt-8 text-[clamp(3rem,8.5vw,7rem)] leading-[0.95] text-balance"
 
 interface Glyph {
   letter: string
@@ -179,11 +184,15 @@ function splitAtHyphens(word: Glyph[]): Glyph[][] {
  * the glow and the sheen off.
  *
  * @param props - The component props.
- * @param props.fullName - The candidate's name.
+ * @param props.fullName - The candidate's name, or another text shown as
+ *   the page's exhibit, such as the home page's heading.
+ * @param props.className - Size, leading and margin classes in place of the
+ *   CV name's.
  * @returns The name heading.
  */
 export default function ProfileName({
   fullName,
+  className = nameClassName,
 }: Readonly<ProfileNameProps>): JSX.Element {
   const prefersReducedMotion = useReducedMotion()
   const fontLoaded = useFontLoaded(kerningFont, fullName)
@@ -241,7 +250,7 @@ export default function ProfileName({
       onAnimationStart={startReveal}
       onAnimationComplete={finishReveal}
       dir="auto"
-      className="relative mt-8 min-w-0 font-cv-display text-[clamp(3rem,8.5vw,7rem)] leading-[0.95] font-semibold tracking-tighter wrap-break-word text-balance"
+      className={`relative min-w-0 font-cv-display font-semibold tracking-tighter wrap-break-word ${className}`}
     >
       <span className="sr-only">{fullName}</span>
       <span ref={lettersRef} aria-hidden="true" className="block">

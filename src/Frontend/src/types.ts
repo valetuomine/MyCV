@@ -1,3 +1,5 @@
+import type { Profile } from "./api/profileQueries"
+
 export const InputType = {
   Text: "text",
   Email: "email",
@@ -176,3 +178,31 @@ export const LinkOutcome = {
 } as const
 
 export type LinkOutcome = (typeof LinkOutcome)[keyof typeof LinkOutcome]
+
+export const FeaturedCvStatus = {
+  Loading: "loading",
+  None: "none",
+  Ready: "ready",
+} as const
+
+export type FeaturedCvStatus =
+  (typeof FeaturedCvStatus)[keyof typeof FeaturedCvStatus]
+
+/** The featured CV as the home page shows it (`useFeaturedCv`). */
+export type FeaturedCv =
+  | { status: typeof FeaturedCvStatus.Loading }
+  | { status: typeof FeaturedCvStatus.None }
+  | {
+      status: typeof FeaturedCvStatus.Ready
+      profile: Profile
+      publicUrlSegment: string
+    }
+
+/** The facts the home page tells about a CV's link, in reading order. */
+export const HomeFact = {
+  Address: "address",
+  Current: "current",
+  Pdf: "pdf",
+} as const
+
+export type HomeFact = (typeof HomeFact)[keyof typeof HomeFact]
