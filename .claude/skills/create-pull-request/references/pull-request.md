@@ -51,14 +51,14 @@ Every description update (`Muutokset`, `Toteutusohje`, a decision or departure t
 
 Only when the change is a Frontend UI change and [checks.md](checks.md) produced screenshots. Otherwise skip this part and leave the *Kuvakaappaukset* section out of the comment. Do it right after creating the PR, because the upload needs the PR ID.
 
-The images go to the reviewer comment, never to the description, because the description ends up in the public GitHub mirror through the squash commit. Name each file `us-<id>-<view>-<device>.png`, in ASCII and unique within the PR. Upload each image as a pull request attachment, with the Bash tool (Git Bash), because the command uses bash syntax:
+The images go to the reviewer comment, never to the description, because the description ends up in the public GitHub mirror through the squash commit. Name each file `us-<id>-<view>-<device>.png` (a Task uses `task-<id>-…`), in ASCII and unique within the PR. It sits in the ticket's folder `.playwright-mcp/US-<id>/` (a Task: `.playwright-mcp/Task-<id>/`). Upload each image as a pull request attachment, with the Bash tool (Git Bash), because the command uses bash syntax:
 
 ```bash
 project=$(node -p "require('./.claude/azure-devops.json').projectUrl")
 curl -sS -X POST \
   -H "Authorization: Basic $AZURE_DEVOPS_MCP" \
   -H "Content-Type: application/octet-stream" \
-  --data-binary @.playwright-mcp/<file>.png \
+  --data-binary @.playwright-mcp/<ticket folder>/<file>.png \
   "$project/_apis/git/repositories/MyCV/pullRequests/<pr id>/attachments/<file>.png?api-version=7.1"
 ```
 

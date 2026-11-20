@@ -7,7 +7,7 @@ user-invocable: true
 
 # Record A Demo Video
 
-Records the running app in the `playwright` MCP server's own Chrome window and encodes a 60 fps H.264 MP4. The result goes to `.playwright-mcp/` (git-ignored). Nothing is committed, and no tracked file stores the video.
+Records the running app in the `playwright` MCP server's own Chrome window and encodes a 60 fps H.264 MP4. The result goes to `.playwright-mcp/US-<id>/demo.mp4` (git-ignored; `.playwright-mcp/demo.mp4` when there is no work item). Nothing is committed, and no tracked file stores the video.
 
 ## Why this way
 
@@ -69,23 +69,23 @@ The three scripts in `scripts/` (`recv.mjs`, `build.mjs`, `record.template.js`) 
    - starts the mouse at the viewport's lower middle, and returns `scale` for the encoder.
 
    Re-inject the cursor after any full page load (`injectCursor` is idempotent). An open edit form raises a `beforeunload` dialog on `goto`, and the template accepts dialogs. If a dialog is raised while the script runs, the tool call may return early while the script keeps running, so wait until the frame count in the directory stops growing before encoding.
-5. **Encode.** `concat.txt` goes to the scratchpad, never the repository root, because it holds local paths. Take `scale` from the `scale` value that the recording returned (the page size scaled to fit 2560 pixels, even numbers):
+5. **Encode.** First create the folder (`mkdir -p .playwright-mcp/US-<id>`), because ffmpeg does not create output folders. `concat.txt` goes to the scratchpad, never the repository root, because it holds local paths. Take `scale` from the `scale` value that the recording returned (the page size scaled to fit 2560 pixels, even numbers):
 
    ```bash
    node .claude/skills/record-demo-video/scripts/build.mjs "<frames dir>" "$S/concat.txt"
    "$S/ff/node_modules/ffmpeg-static/ffmpeg.exe" -y -f concat -safe 0 -i "$S/concat.txt" \
      -vf "fps=60,scale=<scale>:flags=lanczos,format=yuv420p" \
-     -c:v libx264 -preset medium -crf 16 -movflags +faststart -r 60 .playwright-mcp/demo.mp4
+     -c:v libx264 -preset medium -crf 16 -movflags +faststart -r 60 .playwright-mcp/US-<id>/demo.mp4
    ```
 
    Encoding takes about as long as the video lasts, so run it in the background.
 6. **Check** a few frames and look at them: no overlay text, no browser chrome, error states and PDFs rendered, no personal data. Re-record if something is wrong.
 
    ```bash
-   "$S/ff/node_modules/ffmpeg-static/ffmpeg.exe" -ss <s> -i .playwright-mcp/demo.mp4 -frames:v 1 -vf scale=1280:-2 "$S/frame.png"
+   "$S/ff/node_modules/ffmpeg-static/ffmpeg.exe" -ss <s> -i .playwright-mcp/US-<id>/demo.mp4 -frames:v 1 -vf scale=1280:-2 "$S/frame.png"
    ```
 
-7. **Clean up:** stop the receiver (find it with `netstat -ano | grep :5599`, then `taskkill //F //PID <pid>`), and delete the frames, `concat.txt` and the probe images. Leave the ffmpeg in the scratchpad.
+7. **Clean up:** call `browser_close` of the `playwright` server so that no window stays open, stop the receiver (find it with `netstat -ano | grep :5599`, then `taskkill //F //PID <pid>`), and delete the frames, `concat.txt` and the probe images. Leave the ffmpeg in the scratchpad.
 
 ## Flow notes for this app
 

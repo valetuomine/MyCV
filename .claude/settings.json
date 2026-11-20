@@ -11,6 +11,19 @@
     "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/usage-statusline.mjs\""
   },
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/clean-playwright-mcp.mjs\"",
+            "timeout": 10,
+            "async": true
+          }
+        ]
+      }
+    ],
     "UserPromptSubmit": [
       {
         "hooks": [

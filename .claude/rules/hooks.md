@@ -29,3 +29,7 @@ Only a running local Claude Code CLI session reports usage, and a missing file o
 - `/handoff` writes the work state as a `Handoff` comment on the work item and prints a start message for a new chat.
 - Subagent context is not limited (tool calls with an `agent_id` are ignored), and the hook does nothing on any failure.
 - The auto-compact threshold is left alone: a new chat with a handoff loses less detail than a compact.
+
+## Playwright folder cleanup
+
+`.claude/hooks/clean-playwright-mcp.mjs` (`SessionStart`, matcher `startup|resume`, `async` so it never delays the session start) deletes the files in the git-ignored `.playwright-mcp/` folder whose modification time is older than `retentionDays` (14 by default, set in `.claude/hooks/clean-playwright-mcp.json`; a missing file or bad value falls back to the default), then the folders left empty. Retention is by age and not by work item state, because the state would need an Azure DevOps call. It never follows symbolic links, never touches anything outside `.playwright-mcp/`, prints nothing and does nothing on any failure. Run it by hand with `node .claude/hooks/clean-playwright-mcp.mjs --report` to see how many files it deleted. Browser checks save their files in `.playwright-mcp/US-<id>/` or `.playwright-mcp/Task-<id>/` (*Screenshots* in `references/checks.md` of `/create-pull-request`).
