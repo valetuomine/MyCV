@@ -6,20 +6,58 @@ import {
   useSpring,
   type Variants,
 } from "framer-motion"
-import { Fragment, useMemo, type JSX } from "react"
+import { Fragment, useLayoutEffect, useMemo, useRef, type JSX } from "react"
 import useFontLoaded from "../../components/useFontLoaded"
-import { kerningFont, measureKerning } from "../utils/nameKerning"
+import {
+  measureInkBleed,
+  measureKerning,
+  tokenFont,
+} from "../utils/nameKerning"
 import { splitGraphemes } from "../utils/profileFormUtils"
-import useNameWeightPlay, { restWeight, weightStep } from "./useNameWeightPlay"
+import useNameWeightPlay, {
+  boldWeight,
+  restWeight,
+  weightStep,
+} from "./useNameWeightPlay"
 
 interface ProfileNameProps {
   fullName: string
+  typeface?: keyof typeof typefaces
   className?: string
 }
 
-/** The CV's name heading: its size and its gap under the eyebrow. */
+/**
+ * The heading's typefaces. The CV's name is set in the name script, which has
+ * one weight, so it plays light but not weight. The display serif is
+ * variable, so a heading in it, such as the home page's, also reveals
+ * through its weight and plays it. `weight` is the resting weight that the
+ * kerning is measured at, and `inkWeight` the heaviest weight shown, whose
+ * ink reaches furthest.
+ */
+const typefaces = {
+  name: {
+    className: "font-cv-name font-normal",
+    token: "--font-cv-name",
+    weightPlay: false,
+    weight: 400,
+    inkWeight: 400,
+  },
+  display: {
+    className: "font-cv-display font-semibold tracking-tighter",
+    token: "--font-cv-display",
+    weightPlay: true,
+    weight: restWeight,
+    inkWeight: boldWeight,
+  },
+} as const
+
+/**
+ * The CV's name heading: its size and its gap under the eyebrow. The script
+ * reads best as one line, like a signature, so the size lets a usual two-part
+ * name fit on one line on a phone too; a longer name still wraps.
+ */
 const nameClassName =
-  "mt-8 text-[clamp(3rem,8.5vw,7rem)] leading-[0.95] text-balance"
+  "mt-8 text-[clamp(3rem,7vw,6rem)] leading-[1.1] text-balance"
 
 interface Glyph {
   letter: string
@@ -94,6 +132,25 @@ const letterReveal: Variants = {
 }
 
 /**
+ * The reveal for a typeface with one weight: `letterReveal` without the
+ * weight.
+ */
+const letterRevealFixedWeight: Variants = {
+  hidden: {
+    transform: "translateY(110%)",
+    opacity: 0,
+    filter: "blur(14px)",
+  },
+  visible: (delay: number) => ({
+    transform: "translateY(0%)",
+    opacity: 1,
+    filter: "blur(0px)",
+    transition: { duration: revealDuration, ease: revealEase, delay },
+    transitionEnd: { transform: "none", filter: "none" },
+  }),
+}
+
+/**
  * The reveal for reduced motion: the rise alone, which `MotionConfig` then
  * skips, so the letters show straight away at the heading's weight. It must
  * animate `y`, not a `transform` string as `letterReveal` does: `MotionConfig`
@@ -124,13 +181,19 @@ const sheenReveal: Variants = {
 }
 
 /**
- * Room for glyph ink outside the tight boxes: accents and descenders above and
- * below the line, and edges that the negative tracking pushes past each
- * letter's advance. Background-clipped text is only painted inside its own
- * box. Negative margins give the room back, so layout stays the same.
+ * Room for glyph ink outside the tight boxes: swashes, accents and descenders
+ * above and below the line, and edges that reach past each letter's advance.
+ * Background-clipped text is only painted inside its own box. The room comes
+ * from the `--name-bleed-*` properties, which the heading measures from its
+ * font and letters (`measureInkBleed`); `defaultBleed` holds until the font
+ * is ready. Negative margins give the room back, so layout stays the same.
  */
 const bleed =
-  "px-[0.1em] pt-[0.15em] pb-[0.08em] -mx-[0.1em] -mt-[0.15em] -mb-[0.08em]"
+  "px-(--name-bleed-x) pt-(--name-bleed-top) pb-(--name-bleed-bottom) -mx-(--name-bleed-x) -mt-(--name-bleed-top) -mb-(--name-bleed-bottom)"
+
+/** The bleed's fallbacks until the font is measured: a sans-serif's room. */
+const defaultBleed =
+  "[--name-bleed-x:0.1em] [--name-bleed-top:0.15em] [--name-bleed-bottom:0.08em]"
 
 /**
  * The bleed for the word part that clips the reveal, with more vertical room
@@ -139,7 +202,7 @@ const bleed =
  * margins give the room back, so layout stays the same.
  */
 const clipRoom =
-  "px-[0.1em] pt-[0.3em] pb-[0.22em] -mx-[0.1em] -mt-[0.3em] -mb-[0.22em]"
+  "px-(--name-bleed-x) pt-[calc(var(--name-bleed-top)+0.15em)] pb-[calc(var(--name-bleed-bottom)+0.14em)] -mx-(--name-bleed-x) -mt-[calc(var(--name-bleed-top)+0.15em)] -mb-[calc(var(--name-bleed-bottom)+0.14em)]"
 
 /**
  * Builds a letter's end margin, which carries both the bleed and the
@@ -149,7 +212,7 @@ const clipRoom =
  * @returns The inline style with the end margin.
  */
 function letterMargin(kerning: number): { marginInlineEnd: string } {
-  return { marginInlineEnd: `${kerning - 0.1}em` }
+  return { marginInlineEnd: `calc(${kerning}em - var(--name-bleed-x))` }
 }
 
 /**
@@ -173,29 +236,61 @@ function splitAtHyphens(word: Glyph[]): Glyph[][] {
 
 /**
  * The candidate's name, revealed letter by letter: each letter rises from
- * behind its word's clipped bottom edge while it sharpens from a thin blur
- * into its full weight. Afterwards the name plays its weight axis in a
- * wave on touch screens, and sends light across the background when the
- * reveal starts and when it is clicked or tapped (`useNameWeightPlay`). With
+ * behind its word's clipped bottom edge while it sharpens from a thin blur,
+ * and in a variable typeface into its full weight. Afterwards a variable
+ * typeface plays its weight axis in a wave on touch screens, and the name
+ * sends light across the background when the reveal starts and when it is
+ * clicked or tapped (`useNameWeightPlay`). With
  * a mouse, an accent sheen follows the pointer across the name on the
  * background spotlight's spring, and the letters nearest it glow softly. The
  * sheen repeats the letters' layout, weights and widths, so it lands on each
- * glyph. Reduced motion shows the letters at once and turns the weight wave,
- * the glow and the sheen off.
+ * glyph. Every letter box bleeds as far as the font's ink reaches, measured
+ * once the font is ready and before the letter widths are locked, so no
+ * swash or descender is cut off. The bleed's layout effect must stay above
+ * the `useNameWeightPlay` call: effects run in call order, and the width
+ * lock measures each letter with its bleed already set. Reduced motion shows the letters at once
+ * and turns the weight wave, the glow and the sheen off.
  *
  * @param props - The component props.
  * @param props.fullName - The candidate's name, or another text shown as
  *   the page's exhibit, such as the home page's heading.
+ * @param props.typeface - The heading's typeface: the CV name's script, or
+ *   the display serif for another text.
  * @param props.className - Size, leading and margin classes in place of the
  *   CV name's.
  * @returns The name heading.
  */
 export default function ProfileName({
   fullName,
+  typeface = "name",
   className = nameClassName,
 }: Readonly<ProfileNameProps>): JSX.Element {
   const prefersReducedMotion = useReducedMotion()
-  const fontLoaded = useFontLoaded(kerningFont, fullName)
+  const {
+    className: typefaceClassName,
+    token,
+    weightPlay,
+    weight,
+    inkWeight,
+  } = typefaces[typeface]
+  const headingRef = useRef<HTMLHeadingElement>(null)
+  /** The letters' reveal: the rise alone for reduced motion. */
+  let reveal = letterRise
+  if (!prefersReducedMotion) {
+    reveal = weightPlay ? letterReveal : letterRevealFixedWeight
+  }
+  /**
+   * The typeface's shorthand at its resting weight, for the kerning, and at
+   * its heaviest weight shown, for the ink's reach. Read once from its token.
+   */
+  const { font, inkFont } = useMemo(
+    () => ({
+      font: tokenFont(token, weight),
+      inkFont: tokenFont(token, inkWeight),
+    }),
+    [token, weight, inkWeight],
+  )
+  const fontLoaded = useFontLoaded(font, fullName)
 
   /**
    * Splits the name into words of letters, each with its kerning, reveal
@@ -205,7 +300,7 @@ export default function ProfileName({
    */
   const { words, letterCount, sheenDelay } = useMemo(() => {
     const letters = fullName.split(/\s+/).filter(Boolean).map(splitGraphemes)
-    const kerning = fontLoaded ? measureKerning(letters) : null
+    const kerning = fontLoaded ? measureKerning(letters, font) : null
     const count = letters.flat().length
     const stagger = Math.min(
       maxLetterStagger,
@@ -226,10 +321,30 @@ export default function ProfileName({
       sheenDelay:
         revealDelay + Math.max(count - 1, 0) * stagger + revealDuration,
     }
-  }, [fullName, fontLoaded])
+  }, [fullName, font, fontLoaded])
+
+  useLayoutEffect(() => {
+    const heading = headingRef.current
+    if (!fontLoaded || !heading) {
+      return
+    }
+
+    const style = getComputedStyle(heading)
+    /** The heading's line height in em, 1.2 when it is `normal`. */
+    const lineHeight =
+      Number.parseFloat(style.lineHeight) / Number.parseFloat(style.fontSize)
+    /** How far the letters' ink reaches past their boxes, in em. */
+    const room = measureInkBleed(
+      words.flat(2).map(({ letter }) => letter),
+      inkFont,
+      Number.isFinite(lineHeight) ? lineHeight : 1.2,
+    )
+    heading.style.setProperty("--name-bleed-x", `${room.x}em`)
+    heading.style.setProperty("--name-bleed-top", `${room.top}em`)
+    heading.style.setProperty("--name-bleed-bottom", `${room.bottom}em`)
+  }, [fontLoaded, words, inkFont, headingRef])
 
   const {
-    headingRef,
     lettersRef,
     registerLetter,
     registerSheen,
@@ -237,7 +352,8 @@ export default function ProfileName({
     pointerY,
     startReveal,
     finishReveal,
-  } = useNameWeightPlay(letterCount, words)
+  } = useNameWeightPlay(headingRef, letterCount, words, weightPlay)
+
   const sheenX = useSpring(pointerX, sheenSpring)
   const sheenY = useSpring(pointerY, sheenSpring)
   /** A soft oval light centred on the spring-following pointer position. */
@@ -250,7 +366,7 @@ export default function ProfileName({
       onAnimationStart={startReveal}
       onAnimationComplete={finishReveal}
       dir="auto"
-      className={`relative min-w-0 font-cv-display font-semibold tracking-tighter wrap-break-word ${className}`}
+      className={`relative min-w-0 wrap-break-word ${typefaceClassName} ${defaultBleed} ${className}`}
     >
       <span className="sr-only">{fullName}</span>
       <span ref={lettersRef} aria-hidden="true" className="block">
@@ -270,7 +386,7 @@ export default function ProfileName({
                     }
                     data-letter=""
                     custom={delay}
-                    variants={prefersReducedMotion ? letterRise : letterReveal}
+                    variants={reveal}
                     style={letterMargin(kerning)}
                     className={`inline-block bg-linear-to-b from-cv-ink to-cv-muted bg-clip-text text-transparent print:bg-none print:text-cv-ink print:filter-none! forced-colors:bg-none forced-colors:text-[CanvasText] forced-colors:filter-none! ${bleed}`}
                   >

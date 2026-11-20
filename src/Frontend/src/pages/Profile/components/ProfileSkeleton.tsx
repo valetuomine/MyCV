@@ -11,7 +11,7 @@ const line = "flex h-lh w-full items-center"
 
 /**
  * A placeholder in the CV's exact layout while the CV loads, so nothing moves
- * when it arrives: the eyebrow, a two-line name at the name's size, the title,
+ * when it arrives: the eyebrow, a one-line name at the name's size, the title,
  * the location, the summary and the row of actions, beside a see-through
  * portrait card the height of the photo card. Each line carries its text's
  * classes, so it is as tall as the text's line. The summary has four lines,
@@ -46,10 +46,7 @@ export default function ProfileSkeleton(): JSX.Element {
               <div className={`${line} text-xs`}>
                 <div className="h-2.5 w-56 max-w-full rounded-md cv-skeleton" />
               </div>
-              <div className="mt-8 w-full text-[clamp(3rem,8.5vw,7rem)] leading-[0.95]">
-                <div className={line}>
-                  <div className="h-[0.7em] w-[4.6em] max-w-full rounded-xl cv-skeleton" />
-                </div>
+              <div className="mt-8 w-full text-[clamp(3rem,7vw,6rem)] leading-[1.1]">
                 <div className={line}>
                   <div className="h-[0.7em] w-[5.8em] max-w-full rounded-xl cv-skeleton" />
                 </div>

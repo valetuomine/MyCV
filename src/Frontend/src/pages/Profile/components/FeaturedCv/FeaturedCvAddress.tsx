@@ -23,8 +23,11 @@ import { FeaturedCvStatus } from "../../../../types"
  * faster than the path rather than the path shrinking a thousand times
  * slower, because once the host is gone, flex shrink factors that sum to less
  * than one would take only that share of the overflow from the path, and it
- * would be clipped without an ellipsis. It shows nothing when no CV is
- * featured, like the card.
+ * would be clipped without an ellipsis. Below `lg` the button wraps under a
+ * pill that does not fit beside it; in the two-column hero from `lg` up it
+ * stays beside the pill, which cuts the address short instead, so the row
+ * keeps one line and the card beside it stays low. It shows nothing when no
+ * CV is featured, like the card.
  *
  * @returns The address and its copy button, their skeleton, or nothing.
  */
@@ -46,7 +49,7 @@ export default function FeaturedCvAddress(): JSX.Element | null {
     <motion.div
       initial="hidden"
       animate="visible"
-      className="flex min-w-0 flex-wrap items-start gap-3"
+      className="flex min-w-0 flex-wrap items-start gap-3 lg:flex-nowrap"
     >
       <p className={featuredCvAddressFrameClassName}>
         <span className="sr-only">{t("home.addressLabel")}: </span>
@@ -62,7 +65,7 @@ export default function FeaturedCvAddress(): JSX.Element | null {
           </span>
         </motion.span>
       </p>
-      <motion.div variants={featuredCvReveal}>
+      <motion.div variants={featuredCvReveal} className="shrink-0">
         <CopyLinkButton
           url={`${window.location.origin}${path}`}
           label={t("cv.copyLink")}

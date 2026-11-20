@@ -46,7 +46,7 @@ export default function FeaturedCvAvatar({
           onError={() => setFailedUrl(imageUrl)}
         />
       ) : (
-        <span className="font-cv-display text-3xl font-semibold tracking-tighter text-cv-accent select-none sm:text-5xl">
+        <span className="font-cv-profile text-3xl font-semibold tracking-tighter text-cv-accent select-none sm:text-5xl">
           {initials}
         </span>
       )}

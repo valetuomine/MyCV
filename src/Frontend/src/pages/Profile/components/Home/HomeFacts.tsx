@@ -13,7 +13,9 @@ interface HomeFactsProps {
  * version, and the same content as a PDF. Each fact sits under a Field
  * Border hairline, because a plain Hairline fades into the background's
  * light and reads as a smudge; the three stand side by side with equal
- * weight from `lg` up and stack below.
+ * weight from `lg` up and stack below. From `lg` up the section shares the
+ * facts' three columns, so the heading starts over the middle fact and spans
+ * the last two, standing over the row instead of only its first column.
  *
  * @param props - The component props.
  * @param props.variants - The section's entrance, started by the page.
@@ -29,12 +31,15 @@ export default function HomeFacts({
     <motion.section
       variants={variants}
       aria-labelledby={headingId}
-      className="grid gap-8"
+      className="grid gap-8 lg:grid-cols-3 lg:gap-x-12"
     >
-      <h2 id={headingId} className={headingClassName}>
+      <h2
+        id={headingId}
+        className={`${headingClassName} lg:col-span-2 lg:col-start-2`}
+      >
         {t("home.factsHeading")}
       </h2>
-      <dl className="m-0 grid gap-y-10 lg:grid-cols-3 lg:gap-x-12">
+      <dl className="col-span-full m-0 grid gap-y-10 lg:grid-cols-3 lg:gap-x-12">
         {Object.values(HomeFact).map((key) => (
           <div
             key={key}

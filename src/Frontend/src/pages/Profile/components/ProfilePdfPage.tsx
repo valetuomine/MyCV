@@ -112,7 +112,7 @@ export default function ProfilePdfPage({
               <Eyebrow>{t("pdf.eyebrow")}</Eyebrow>
               <h1
                 dir="auto"
-                className="m-0 font-cv-display text-3xl leading-tight font-semibold tracking-tight text-balance wrap-anywhere text-cv-ink sm:text-4xl"
+                className="m-0 font-cv-profile text-3xl leading-tight font-semibold tracking-tight text-balance wrap-anywhere text-cv-ink sm:text-4xl"
               >
                 {values.fullName}
               </h1>

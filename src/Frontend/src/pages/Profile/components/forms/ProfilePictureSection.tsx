@@ -306,7 +306,7 @@ export default function ProfilePictureSection({
             {!showPreview && !isPreviewLoading && (
               <div
                 aria-hidden="true"
-                className="grid size-full place-items-center bg-linear-to-br from-cv-accent/20 via-transparent to-transparent font-cv-display text-3xl font-semibold tracking-tighter text-cv-accent select-none"
+                className="grid size-full place-items-center bg-linear-to-br from-cv-accent/20 via-transparent to-transparent font-cv-profile text-3xl font-semibold tracking-tighter text-cv-accent select-none"
               >
                 {getInitials(fullName)}
               </div>

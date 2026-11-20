@@ -26,7 +26,7 @@ export default function FeaturedCvSection(): JSX.Element | null {
   }
 
   return (
-    <motion.div initial="hidden" animate="visible" className="w-full">
+    <motion.div initial="hidden" animate="visible" className="w-full lg:h-full">
       <FeaturedCvCard
         profile={featured.profile}
         publicUrlSegment={featured.publicUrlSegment}

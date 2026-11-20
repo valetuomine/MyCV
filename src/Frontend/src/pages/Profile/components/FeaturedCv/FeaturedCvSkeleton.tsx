@@ -3,7 +3,9 @@ import { useTranslation } from "react-i18next"
 import useSkeletonTiming from "../useSkeletonTiming"
 import {
   featuredCvGridClassName,
+  featuredCvNameSizeClassName,
   featuredCvPortraitClassName,
+  featuredCvTextClassName,
 } from "./featuredCvLayout"
 
 /**
@@ -21,14 +23,14 @@ export default function FeaturedCvSkeleton(): JSX.Element {
   const timing = useSkeletonTiming()
 
   return (
-    <div aria-busy="true" className="w-full">
+    <div aria-busy="true" className="w-full lg:h-full">
       <output className="sr-only">{t("home.featuredLoading")}</output>
       <div
         aria-hidden="true"
         style={timing}
         className={`animate-cv-fade-in-delayed rounded-3xl border-2 border-cv-field-border bg-cv-pane shadow-cv-card inset-shadow-cv-rim forced-colors:shadow-none print:shadow-none ${featuredCvGridClassName}`}
       >
-        <div className="grid w-full min-w-0 [grid-area:text]">
+        <div className={`w-full ${featuredCvTextClassName}`}>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs leading-4">
             <div className="flex h-lh items-center">
               <div className="cv-skeleton h-3 w-28 rounded-full" />
@@ -37,14 +39,18 @@ export default function FeaturedCvSkeleton(): JSX.Element {
               <div className="cv-skeleton h-3 w-38 rounded-full" />
             </div>
           </div>
-          <div className="mt-4 flex h-lh items-center text-3xl leading-tight sm:text-4xl">
-            <div className="cv-skeleton h-[0.7em] w-3/4 rounded-full" />
-          </div>
-          <div className="mt-1 flex h-lh items-center text-lg">
-            <div className="cv-skeleton h-[0.7em] w-1/2 rounded-full" />
-          </div>
-          <div className="mt-2 flex h-lh items-center text-sm">
-            <div className="cv-skeleton h-[0.7em] w-1/3 rounded-full" />
+          <div className="mt-4 grid min-w-0">
+            <div
+              className={`flex h-lh items-center ${featuredCvNameSizeClassName}`}
+            >
+              <div className="cv-skeleton h-[0.7em] w-3/4 rounded-full" />
+            </div>
+            <div className="mt-1 flex h-lh items-center text-lg">
+              <div className="cv-skeleton h-[0.7em] w-1/2 rounded-full" />
+            </div>
+            <div className="mt-2 flex h-lh items-center text-sm">
+              <div className="cv-skeleton h-[0.7em] w-1/3 rounded-full" />
+            </div>
           </div>
         </div>
         <div className={`cv-skeleton ${featuredCvPortraitClassName}`} />

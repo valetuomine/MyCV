@@ -15,7 +15,10 @@ export default function FeaturedCvAddressSkeleton(): JSX.Element {
   const timing = useSkeletonTiming()
 
   return (
-    <div aria-hidden="true" className="flex flex-wrap items-start gap-3">
+    <div
+      aria-hidden="true"
+      className="flex flex-wrap items-start gap-3 lg:flex-nowrap"
+    >
       <div className={featuredCvAddressFrameClassName}>
         <div
           style={timing}
@@ -24,7 +27,7 @@ export default function FeaturedCvAddressSkeleton(): JSX.Element {
       </div>
       <div
         style={timing}
-        className="cv-skeleton h-11 w-32 animate-cv-fade-in-delayed rounded-full"
+        className="cv-skeleton h-11 w-32 shrink-0 animate-cv-fade-in-delayed rounded-full"
       />
     </div>
   )

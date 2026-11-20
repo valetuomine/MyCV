@@ -35,12 +35,16 @@ const item: Variants = {
 }
 
 /**
- * The hero's two columns from `lg` up, the text and the featured card, which
- * widens at `xl` so its buttons stay on one row. Without a featured CV the
- * hero keeps one column, so no empty track is left beside the text.
+ * The hero's two columns from `lg` up, the text and the featured card: 30rem
+ * for the card at `lg` and 36rem from `xl` up. The text column keeps room for
+ * the heading on at most three lines and the address on one row, so the
+ * card, which is as tall as the text column, stays low, and the card keeps
+ * room for a usual two-part name on one line beside its portrait. Without a
+ * featured CV the hero keeps one column, so no empty track is left beside
+ * the text.
  */
 const heroColumnsClassName =
-  "lg:grid-cols-[minmax(0,1fr)_minmax(0,34rem)] lg:gap-14 xl:grid-cols-[minmax(0,1fr)_minmax(0,40rem)] xl:gap-16"
+  "lg:grid-cols-[minmax(0,1fr)_minmax(0,30rem)] lg:gap-12 xl:grid-cols-[minmax(0,1fr)_minmax(0,36rem)] xl:gap-16"
 
 /**
  * Lets a part with a blurred Pane rise into place without a fade, such as
@@ -62,15 +66,16 @@ const rise: Variants = {
  * (`ProfileName`) and lights the background with the sweep and the echo,
  * and under the intro the featured CV's link stands as an address to copy.
  * From `lg` up the featured CV's card, whose View CV is the page's one
- * primary action, stands beside the text, and from `xl` up it widens so its
- * buttons stay on one row. Without a featured CV the hero is the text alone,
- * with neither the address nor the card. A language switch remounts the
- * heading, so its reveal, the sweep and the echo play again as a whole
- * instead of re-revealing only the letters whose keys changed, while the
- * directed light stays on (`useLightHold`). Below the hero come the facts
- * about the link and, last and quiet, the form that opens any CV and the
- * owner's sign-in link. The hero keeps the light traces
- * away (`data-cv-trace-avoid`).
+ * primary action, stands beside the text, as tall as the text column, so
+ * its edges line up with the eyebrow and the address row; a card taller
+ * than the text keeps the text's rows together at the top. Without a
+ * featured CV the hero is the text alone, with neither the address nor the
+ * card. A language switch remounts the heading, so its reveal, the sweep and
+ * the echo play again as a whole instead of re-revealing only the letters
+ * whose keys changed, while the directed light stays on (`useLightHold`).
+ * Below the hero come the facts about the link and, last and quiet, the form
+ * that opens any CV and the owner's sign-in link. The hero keeps the light
+ * traces away (`data-cv-trace-avoid`).
  *
  * A sign-out lands here first: it redirects to the CV it started from, or,
  * when it started here, replaces the entry with Home and the signed-out
@@ -126,15 +131,16 @@ export default function Home(): JSX.Element {
       >
         <div
           data-cv-trace-avoid=""
-          className={`grid items-center gap-12 ${hasFeaturedCv ? heroColumnsClassName : ""}`}
+          className={`grid items-center gap-12 lg:items-stretch ${hasFeaturedCv ? heroColumnsClassName : ""}`}
         >
-          <div className="grid min-w-0 justify-items-start gap-7">
+          <div className="grid min-w-0 content-start justify-items-start gap-7">
             <motion.div variants={item}>
               <Eyebrow>{t("common.brand")}</Eyebrow>
             </motion.div>
             <ProfileName
               key={i18n.language}
               fullName={t("home.heading")}
+              typeface="display"
               className="m-0 text-[clamp(2.75rem,4.8vw,4.5rem)] leading-[1.02] text-balance"
             />
             <motion.p

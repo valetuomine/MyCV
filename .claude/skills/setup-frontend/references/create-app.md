@@ -30,13 +30,24 @@ npx create-vite@6.5.0 . --template react-ts
 npm install
 npm install tailwindcss @tailwindcss/vite
 npm install -D @types/node
+npm install @fontsource-variable/geist @fontsource-variable/geist-mono @fontsource-variable/fraunces @fontsource-variable/sora @fontsource/great-vibes
 Pop-Location
+```
+
+The fonts are self-hosted from Fontsource, never loaded from Google Fonts. Import them at the top of `src/main.tsx`, before `index.css`; Fraunces takes its optical size axis too:
+
+```ts
+import "@fontsource-variable/geist"
+import "@fontsource-variable/geist-mono"
+import "@fontsource-variable/fraunces/opsz.css"
+import "@fontsource-variable/sora"
+import "@fontsource/great-vibes"
+import "./index.css"
 ```
 
 Configure the Vite alias `@` to resolve to `src`, add `@/*` to `tsconfig.app.json`, and import Tailwind in `src/index.css`:
 
 ```css
-@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap");
 @import "tailwindcss";
 ```
 

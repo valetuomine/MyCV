@@ -1,5 +1,8 @@
 import "@fontsource-variable/geist"
 import "@fontsource-variable/geist-mono"
+import "@fontsource-variable/fraunces/opsz.css"
+import "@fontsource-variable/sora"
+import "@fontsource/great-vibes"
 import "./index.css"
 import { readPopupCallback } from "./auth/signInPopupState"
 import { isSilentRenewalFrame } from "./auth/silentRenewalFrame"
@@ -15,15 +18,19 @@ import { isSilentRenewalFrame } from "./auth/silentRenewalFrame"
 const popupCallback = readPopupCallback()
 
 if (popupCallback) {
-  void import("./auth/relayPopupCallback").then(({ relayPopupCallback }) =>
-    relayPopupCallback(popupCallback),
-  )
+  try {
+    const { relayPopupCallback } = await import("./auth/relayPopupCallback")
+    await relayPopupCallback(popupCallback)
+  } catch (error: unknown) {
+    console.error("Relaying the sign-in popup's response failed", error)
+  }
 } else if (isSilentRenewalFrame()) {
-  import("./auth/relaySilentRenewal")
-    .then(({ relaySilentRenewal }) => relaySilentRenewal())
-    .catch((error: unknown) => {
-      console.error("Loading the silent Microsoft token renewal failed", error)
-    })
+  try {
+    const { relaySilentRenewal } = await import("./auth/relaySilentRenewal")
+    await relaySilentRenewal()
+  } catch (error: unknown) {
+    console.error("Loading the silent Microsoft token renewal failed", error)
+  }
 } else {
-  void import("./startApp")
+  await import("./startApp")
 }

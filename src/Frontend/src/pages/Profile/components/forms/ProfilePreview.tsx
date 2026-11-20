@@ -11,6 +11,8 @@ const pill =
 /**
  * Shows the Finnish CV as it will look while the form is being filled in. It
  * repeats what the fields already say, so it is hidden from assistive tech.
+ * The name is set in the CV name's script, with room round the background-
+ * clipped text for its swashes and descenders.
  *
  * The card is a `LitCard`, so it lights up like the form's fields, and its
  * drifting light also runs while any field of the edit form has focus, so
@@ -50,14 +52,14 @@ export default function ProfilePreview(): JSX.Element {
       >
         <p
           dir="auto"
-          className={`m-0 font-cv-display text-[2.75rem] leading-[0.95] font-semibold tracking-tighter text-balance wrap-anywhere ${fullName?.trim() ? "bg-linear-to-b from-cv-ink to-cv-muted bg-clip-text pt-[0.15em] pb-[0.08em] text-transparent" : "text-cv-meta"}`}
+          className={`m-0 -mx-[0.35em] px-[0.35em] pt-[0.3em] pb-[0.35em] font-cv-name text-[3.25rem] leading-[1.1] font-normal text-balance wrap-anywhere ${fullName?.trim() ? "bg-linear-to-b from-cv-ink to-cv-muted bg-clip-text text-transparent" : "text-cv-meta"}`}
         >
           {fullName?.trim() || t("profileForm.previewName")}
         </p>
         {title?.trim() && (
           <p
             dir="auto"
-            className="mt-4 mb-0 font-cv-display text-lg font-medium tracking-tight wrap-anywhere text-cv-accent"
+            className="mt-4 mb-0 font-cv-profile text-lg font-medium tracking-tight wrap-anywhere text-cv-accent"
           >
             {title}
           </p>

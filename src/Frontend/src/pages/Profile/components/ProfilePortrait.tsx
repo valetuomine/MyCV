@@ -26,7 +26,7 @@ const hoverSpring = { stiffness: 120, damping: 20 }
 const initialsDash = 1000
 /** The monogram's size and type, shared by the initials and their shadow. */
 const monogramClassName =
-  "h-[1em] w-[1.6em] overflow-visible font-cv-display text-[clamp(4.5rem,12vw,8rem)] font-semibold tracking-tighter text-cv-accent select-none"
+  "h-[1em] w-[1.6em] overflow-visible font-cv-profile text-[clamp(4.5rem,12vw,8rem)] font-semibold tracking-tighter text-cv-accent select-none"
 /** Thin accent and ink bands, the foil that slides across with the tilt. */
 const foilBands =
   "repeating-linear-gradient(105deg, transparent 0%, color-mix(in srgb, var(--cv-accent) 14%, transparent) 4%, transparent 8%, color-mix(in srgb, var(--cv-ink) 6%, transparent) 10%, transparent 13%)"

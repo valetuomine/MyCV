@@ -137,7 +137,7 @@ export default function ReadOnlyProfileForm({
           <motion.p
             variants={item}
             dir="auto"
-            className="mt-6 font-cv-display text-xl font-medium tracking-tight wrap-anywhere text-cv-accent-strong sm:text-2xl"
+            className="mt-6 font-cv-profile text-xl font-medium tracking-tight wrap-anywhere text-cv-accent-strong sm:text-2xl"
           >
             {values.title}
           </motion.p>

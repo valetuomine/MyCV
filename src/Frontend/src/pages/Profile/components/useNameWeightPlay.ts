@@ -16,7 +16,6 @@ import { nameEchoAtom } from "../../../state/nameEchoAtom"
 import useLightHold from "../../components/useLightHold"
 
 interface NameWeightPlay {
-  headingRef: RefObject<HTMLHeadingElement | null>
   lettersRef: RefObject<HTMLSpanElement | null>
   registerLetter: (index: number, element: HTMLElement | null) => void
   registerSheen: (index: number, element: HTMLElement | null) => void
@@ -37,7 +36,8 @@ export const restWeight = 600
  */
 export const weightStep = 10
 const thinWeight = 540
-const boldWeight = 800
+/** The wave's heaviest weight, the heaviest the heading is ever drawn at. */
+export const boldWeight = 800
 const waveMs = 1500
 /** One frame at 60 Hz, the step the easing factors are tuned for. */
 const frameMs = 1000 / 60
@@ -77,20 +77,26 @@ function easeStep(factor: number, elapsed: number): number {
  * Every letter, and its sheen copy, keeps the width it has at the heading's
  * weight, measured from a hidden copy of the letters once the font is ready
  * and whenever the heading resizes, so the weight changes never reflow the
- * lines, as the touch wave changes the weights. Reduced motion turns it all
- * off, the echo included.
+ * lines, as the touch wave changes the weights. A typeface with one weight
+ * leaves the weights alone: no wave runs, and the glow and the echo stay.
+ * Reduced motion turns it all off, the echo included.
  *
+ * @param headingRef - The heading. The caller owns it, so its own layout
+ *   effects, such as the ink bleed, run before the widths are measured.
  * @param letterCount - How many letters the name has.
  * @param layout - Anything that changes when the letters' layout does, such
  *   as the words with their kerning, so the widths are measured again.
+ * @param weightPlay - Whether the typeface is variable, so the touch wave
+ *   plays its weight.
  * @returns The refs and element callbacks for the heading and its letters,
  *   the pointer position for the sheen, and the handler for the reveal's end.
  */
 export default function useNameWeightPlay(
+  headingRef: RefObject<HTMLHeadingElement | null>,
   letterCount: number,
   layout: unknown,
+  weightPlay: boolean,
 ): NameWeightPlay {
-  const headingRef = useRef<HTMLHeadingElement>(null)
   const lettersRef = useRef<HTMLSpanElement>(null)
   const letterRefs = useRef<HTMLElement[]>([])
   const sheenRefs = useRef<HTMLElement[]>([])
@@ -186,7 +192,7 @@ export default function useNameWeightPlay(
         const weight = String(
           Math.round(weights[index] / weightStep) * weightStep,
         )
-        if (weight !== paintedWeights[index]) {
+        if (weightPlay && weight !== paintedWeights[index]) {
           paintedWeights[index] = weight
           letter.style.fontWeight = weight
           if (sheens[index]) {
@@ -308,9 +314,12 @@ export default function useNameWeightPlay(
       requestTick()
     }
 
-    /** Sends one weight wave through the name, once the letters are in. */
+    /**
+     * Sends one weight wave through the name, once the letters are in, when
+     * the typeface has a weight axis.
+     */
     const startWave = (): void => {
-      if (!revealedRef.current) {
+      if (!revealedRef.current || !weightPlay) {
         return
       }
 
@@ -367,7 +376,16 @@ export default function useNameWeightPlay(
         sheen.style.fontWeight = ""
       })
     }
-  }, [layout, letterCount, prefersReducedMotion, pointerX, pointerY, sendEcho])
+  }, [
+    headingRef,
+    layout,
+    letterCount,
+    weightPlay,
+    prefersReducedMotion,
+    pointerX,
+    pointerY,
+    sendEcho,
+  ])
 
   useEffect(() => () => setEcho(null), [setEcho])
 
@@ -430,7 +448,6 @@ export default function useNameWeightPlay(
   }
 
   return {
-    headingRef,
     lettersRef,
     registerLetter,
     registerSheen,

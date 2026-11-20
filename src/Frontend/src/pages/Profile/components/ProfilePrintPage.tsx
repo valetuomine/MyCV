@@ -148,14 +148,14 @@ export default function ProfilePrintPage({
           </p>
           <h1
             dir="auto"
-            className="m-0 mt-2 font-cv-display text-4xl leading-tight font-semibold tracking-tight wrap-anywhere text-cv-ink"
+            className="m-0 mt-2 font-cv-profile text-4xl leading-tight font-semibold tracking-tight wrap-anywhere text-cv-ink"
           >
             {values.fullName}
           </h1>
           {values.title && (
             <p
               dir="auto"
-              className="m-0 font-cv-display text-lg font-medium wrap-anywhere text-cv-accent"
+              className="m-0 font-cv-profile text-lg font-medium wrap-anywhere text-cv-accent"
             >
               {values.title}
             </p>

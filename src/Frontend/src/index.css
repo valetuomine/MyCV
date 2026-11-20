@@ -204,7 +204,16 @@
 }
 
 @theme {
-  --font-cv-display: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  /* Headings and the home page's text: a variable serif whose weight axis
+     (100-900) carries the home heading's reveal and weight play. */
+  --font-cv-display: "Fraunces Variable", ui-serif, Georgia, serif;
+  /* The CV's name: a script with one weight, so the name plays light, not
+     weight. Great Vibes covers Latin letters only, so other scripts fall back
+     to Sora rather than the system's cursive. */
+  --font-cv-name: "Great Vibes", "Sora Variable", ui-sans-serif, sans-serif;
+  /* The profile's details beside the name: the CV title, cards, initials and
+     the printed CV. */
+  --font-cv-profile: "Sora Variable", ui-sans-serif, system-ui, sans-serif;
   --font-cv-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
   --font-cv-mono: "Geist Mono Variable", ui-monospace, monospace;
 
