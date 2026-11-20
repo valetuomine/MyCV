@@ -1,8 +1,13 @@
 import { Fragment, useEffect, useLayoutEffect, useState, type JSX } from "react"
 import { useTranslation } from "react-i18next"
 import { getProfilePictureUrl, type Profile } from "../../../api/profileQueries"
-import type { LanguageCode } from "../../../types"
-import { formatProfileDate, toExternalUrl } from "../utils/profileFormUtils"
+import { Brand, type LanguageCode } from "../../../types"
+import BrandIcon from "../../components/BrandIcon"
+import {
+  formatProfileDate,
+  profileLinkHandle,
+  toExternalUrl,
+} from "../utils/profileFormUtils"
 
 interface ProfilePrintPageProps {
   values: Profile
@@ -11,6 +16,7 @@ interface ProfilePrintPageProps {
 
 interface ProfileLink {
   label: string
+  brand: Brand
   url: string
 }
 
@@ -105,8 +111,8 @@ export default function ProfilePrintPage({
   )
   /** The profile links that are set, with their labels. */
   const links = [
-    { label: "LinkedIn", url: values.linkedInUrl },
-    { label: "GitHub", url: values.gitHubUrl },
+    { label: "LinkedIn", brand: Brand.LinkedIn, url: values.linkedInUrl },
+    { label: "GitHub", brand: Brand.GitHub, url: values.gitHubUrl },
   ].filter((link): link is ProfileLink => Boolean(link.url))
   /** The page setup and footer, in the print's language. */
   const pageCss = pageFooterCss(
@@ -188,15 +194,16 @@ export default function ProfilePrintPage({
         <section className="grid gap-2">
           <h2 className={sectionHeading}>{t("print.links")}</h2>
           <dl className="m-0 grid grid-cols-[6rem_minmax(0,1fr)] gap-x-4 gap-y-1">
-            {links.map(({ label, url }) => (
+            {links.map(({ label, brand, url }) => (
               <Fragment key={label}>
                 <dt className="text-cv-meta">{label}</dt>
                 <dd className="m-0">
                   <a
                     href={toExternalUrl(url)}
-                    className="text-cv-accent underline underline-offset-2 wrap-anywhere focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cv-accent"
+                    className="inline-flex items-center gap-1.5 text-cv-accent underline underline-offset-2 wrap-anywhere focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cv-accent"
                   >
-                    {url}
+                    <BrandIcon brand={brand} />
+                    {profileLinkHandle(url)}
                   </a>
                 </dd>
               </Fragment>

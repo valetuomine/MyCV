@@ -5,7 +5,8 @@ import {
   getProfilePictureUrl,
   type Profile,
 } from "../../../../api/profileQueries"
-import { ButtonVariant } from "../../../../types"
+import { Brand, ButtonVariant } from "../../../../types"
+import BrandIcon from "../../../components/BrandIcon"
 import Button from "../../../components/Button"
 import CopyLinkButton from "../../../components/CopyLinkButton"
 import Eyebrow from "../../../components/Eyebrow"
@@ -175,6 +176,7 @@ export default function ReadOnlyProfileForm({
                     variant={ButtonVariant.Primary}
                     href={toExternalUrl(values.gitHubUrl)}
                   >
+                    <BrandIcon brand={Brand.GitHub} />
                     GitHub
                   </Button>
                 </Magnetic>
@@ -182,6 +184,7 @@ export default function ReadOnlyProfileForm({
               {values.linkedInUrl && (
                 <Magnetic>
                   <Button href={toExternalUrl(values.linkedInUrl)}>
+                    <BrandIcon brand={Brand.LinkedIn} />
                     LinkedIn
                   </Button>
                 </Magnetic>

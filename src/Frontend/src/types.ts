@@ -78,6 +78,13 @@ export const ButtonSize = {
 
 export type ButtonSize = (typeof ButtonSize)[keyof typeof ButtonSize]
 
+export const Brand = {
+  GitHub: "github",
+  LinkedIn: "linkedin",
+} as const
+
+export type Brand = (typeof Brand)[keyof typeof Brand]
+
 export const SignInFailure = {
   Cancelled: "cancelled",
   Failed: "failed",

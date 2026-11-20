@@ -69,6 +69,92 @@ export function toExternalUrl(value: string): string {
   return /^https?:\/\//i.test(value) ? value : `https://${value}`
 }
 
+/** The first GitHub path segments, in lower case, that are pages and not user names. */
+const githubReservedPaths = new Set([
+  "about",
+  "apps",
+  "codespaces",
+  "collections",
+  "contact",
+  "enterprise",
+  "explore",
+  "features",
+  "issues",
+  "join",
+  "login",
+  "marketplace",
+  "new",
+  "notifications",
+  "orgs",
+  "organizations",
+  "pricing",
+  "pulls",
+  "readme",
+  "search",
+  "security",
+  "settings",
+  "sponsors",
+  "stars",
+  "team",
+  "topics",
+  "trending",
+])
+
+/**
+ * Names a profile link by its address as typed, without the scheme, a leading
+ * `www.` and trailing slashes. The typed text is kept as it is, so a port, a
+ * hash and non-ASCII characters are not rewritten the way `URL` would.
+ *
+ * @param value - The link as saved.
+ * @returns The address for display.
+ */
+function addressWithoutScheme(value: string): string {
+  /** The address without its scheme and a leading `www.`. */
+  const bare = value
+    .trim()
+    .replace(/^https?:\/\//i, "")
+    .replace(/^www\./i, "")
+
+  return trimEnds(bare, (code) => code === slashCode)
+}
+
+/**
+ * Picks the text that names a profile link: the user name of a GitHub or
+ * LinkedIn profile, or the address without scheme, `www.` and a trailing
+ * slash for any other link, such as a GitHub page that is not a profile.
+ *
+ * @param value - The link as saved.
+ * @returns The handle, or the address as typed when the link can't be parsed.
+ */
+export function profileLinkHandle(value: string): string {
+  try {
+    const { hostname, pathname } = new URL(toExternalUrl(value.trim()))
+    /** The host without `www.`; `URL` has already lower-cased it. */
+    const host = hostname.replace(/^www\./, "")
+    /** The path's segments, which name the profile on GitHub and LinkedIn. */
+    const [first, second] = pathname.split("/").filter(Boolean)
+    if (
+      host === "github.com" &&
+      first &&
+      !githubReservedPaths.has(first.toLowerCase())
+    ) {
+      return decodeURIComponent(first)
+    }
+
+    if (
+      (host === "linkedin.com" || host.endsWith(".linkedin.com")) &&
+      first?.toLowerCase() === "in" &&
+      second
+    ) {
+      return decodeURIComponent(second)
+    }
+
+    return addressWithoutScheme(value)
+  } catch {
+    return addressWithoutScheme(value)
+  }
+}
+
 /** Matches a leading URL scheme such as `https:` or `javascript:`. */
 const urlScheme = /^[a-z][a-z0-9+.-]*:/i
 

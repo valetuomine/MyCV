@@ -6,7 +6,8 @@ import {
   type Profile,
 } from "../../../../api/profileQueries"
 import { RoutePaths } from "../../../../routePaths"
-import { ButtonSize, ButtonVariant } from "../../../../types"
+import { Brand, ButtonSize, ButtonVariant } from "../../../../types"
+import BrandIcon from "../../../components/BrandIcon"
 import Button from "../../../components/Button"
 import Eyebrow from "../../../components/Eyebrow"
 import LitCard from "../../../components/LitCard"
@@ -126,6 +127,7 @@ export default function FeaturedCvCard({
             size={ButtonSize.Small}
             href={toExternalUrl(profile.gitHubUrl)}
           >
+            <BrandIcon brand={Brand.GitHub} />
             GitHub
           </Button>
         )}
@@ -134,6 +136,7 @@ export default function FeaturedCvCard({
             size={ButtonSize.Small}
             href={toExternalUrl(profile.linkedInUrl)}
           >
+            <BrandIcon brand={Brand.LinkedIn} />
             LinkedIn
           </Button>
         )}

@@ -1,6 +1,8 @@
 import type { JSX } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
+import { Brand } from "../../../../types"
+import BrandIcon from "../../../components/BrandIcon"
 import Eyebrow from "../../../components/Eyebrow"
 import LitCard from "../../../components/LitCard"
 import type { ProfileSchema } from "../../schemas/profile-form-schema"
@@ -81,11 +83,13 @@ export default function ProfilePreview(): JSX.Element {
           <div className="mt-6 flex flex-wrap gap-2">
             {gitHubUrl?.trim() && (
               <span className={`${pill} bg-cv-accent text-cv-accent-ink`}>
+                <BrandIcon brand={Brand.GitHub} />
                 GitHub ↗
               </span>
             )}
             {linkedInUrl?.trim() && (
               <span className={`${pill} border border-cv-line text-cv-ink`}>
+                <BrandIcon brand={Brand.LinkedIn} />
                 LinkedIn ↗
               </span>
             )}
