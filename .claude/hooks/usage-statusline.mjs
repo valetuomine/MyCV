@@ -53,7 +53,8 @@ const buildLine = async () => {
   }
   if (isNumber(fiveHour?.used_percentage)) {
     const resetTime = formatResetTime(fiveHour.resets_at);
-    parts.push(`5 h ${Math.round(fiveHour.used_percentage)} %${resetTime ? ` (nollautuu ${resetTime})` : ''}`);
+    const resetNote = resetTime ? ` (nollautuu ${resetTime})` : '';
+    parts.push(`5 h ${Math.round(fiveHour.used_percentage)} %${resetNote}`);
   }
   const contextTokens = data?.context_window?.total_input_tokens;
   if (isNumber(contextTokens)) parts.push(`Konteksti ${Math.round(contextTokens / 1000)}k`);

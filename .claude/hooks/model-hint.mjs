@@ -24,7 +24,7 @@ const readStdin = async () => {
  */
 const claimFirstMessage = (sessionId) => {
   try {
-    const name = `mycv-model-hint-${sessionId.replace(/[^\w-]/g, '_')}`;
+    const name = `mycv-model-hint-${sessionId.replaceAll(/[^\w-]/g, '_')}`;
     closeSync(openSync(join(tmpdir(), name), 'wx'));
     return true;
   } catch {
@@ -58,13 +58,13 @@ const fetchDescription = async (id) => {
  */
 const parseEstimate = (html) => {
   const text = html
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&')
-    .replace(/\s+/g, ' ');
-  const match = text.match(/Työmäärä:\s*(XS|S|M|L|XL)\b.{0,200}?malli (Sonnet|Opus)(?:, effort-taso (\w+))?/);
+    .replaceAll(/<[^<>]*>/g, ' ')
+    .replaceAll('&nbsp;', ' ')
+    .replaceAll('&lt;', '<')
+    .replaceAll('&gt;', '>')
+    .replaceAll('&amp;', '&')
+    .replaceAll(/\s+/g, ' ');
+  const match = /Työmäärä:\s*(XS|S|M|L|XL)\b.{0,200}?malli (Sonnet|Opus)(?:, effort-taso (\w+))?/.exec(text);
   return match ? { size: match[1], model: match[2], effort: match[3] } : null;
 };
 
@@ -77,7 +77,7 @@ const main = async () => {
   const prompt = String(input.prompt ?? '');
   if (prompt.trimStart().startsWith('/')) return;
   if (!claimFirstMessage(String(input.session_id ?? ''))) return;
-  const ticket = prompt.match(/\b(User Story|Task) (\d+)/);
+  const ticket = /\b(User Story|Task) (\d+)/.exec(prompt);
   if (!ticket) return;
   const html = await fetchDescription(ticket[2]);
   const estimate = html && parseEstimate(html);

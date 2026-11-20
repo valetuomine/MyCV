@@ -1,3 +1,4 @@
 {
-  "retentionDays": 14
+  "retentionDays": 14,
+  "looseFileRetentionHours": 1
 }

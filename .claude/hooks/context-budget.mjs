@@ -112,7 +112,7 @@ const readContextTokens = (path) => {
  * @param {string} sessionId The session id.
  * @returns {string} The file path.
  */
-const statePath = (sessionId) => join(tmpdir(), `mycv-context-${sessionId.replace(/[^\w-]/g, '_')}.json`);
+const statePath = (sessionId) => join(tmpdir(), `mycv-context-${sessionId.replaceAll(/[^\w-]/g, '_')}.json`);
 
 /**
  * Reads the per-session notice state.
