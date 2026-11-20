@@ -123,7 +123,7 @@ export default function ReadOnlyProfileForm({
     >
       <section
         data-cv-trace-avoid
-        className={`grid min-w-0 grid-cols-[minmax(0,1fr)] content-center justify-items-start ${showPortrait ? "" : "max-w-5xl"}`}
+        className={`@container grid min-w-0 grid-cols-[minmax(0,1fr)] content-center justify-items-start ${showPortrait ? "" : "max-w-5xl"}`}
       >
         <Eyebrow
           variants={item}

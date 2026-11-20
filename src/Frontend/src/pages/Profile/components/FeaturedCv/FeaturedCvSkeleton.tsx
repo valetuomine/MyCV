@@ -1,9 +1,9 @@
 import type { JSX } from "react"
 import { useTranslation } from "react-i18next"
+import { featuredCvNameSizeClassName } from "../displayTypeClassNames"
 import useSkeletonTiming from "../useSkeletonTiming"
 import {
   featuredCvGridClassName,
-  featuredCvNameSizeClassName,
   featuredCvPortraitClassName,
   featuredCvTextClassName,
 } from "./featuredCvLayout"

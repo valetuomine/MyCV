@@ -11,9 +11,11 @@ import useFontLoaded from "../../components/useFontLoaded"
 import {
   measureInkBleed,
   measureKerning,
+  measureLineWidth,
   tokenFont,
 } from "../utils/nameKerning"
 import { splitGraphemes } from "../utils/profileFormUtils"
+import { cvNameSizeClassName } from "./displayTypeClassNames"
 import useNameWeightPlay, {
   boldWeight,
   restWeight,
@@ -32,7 +34,9 @@ interface ProfileNameProps {
  * variable, so a heading in it, such as the home page's, also reveals
  * through its weight and plays it. `weight` is the resting weight that the
  * kerning is measured at, and `inkWeight` the heaviest weight shown, whose
- * ink reaches furthest.
+ * ink reaches furthest. `fitsLine` tells whether the heading measures its
+ * one-line width (`--name-width`) for a size that fits it on one line, as
+ * the CV name's does (`cvNameSizeClassName`).
  */
 const typefaces = {
   name: {
@@ -41,6 +45,7 @@ const typefaces = {
     weightPlay: false,
     weight: 400,
     inkWeight: 400,
+    fitsLine: true,
   },
   display: {
     className: "font-cv-display font-semibold tracking-tighter",
@@ -48,16 +53,15 @@ const typefaces = {
     weightPlay: true,
     weight: restWeight,
     inkWeight: boldWeight,
+    fitsLine: false,
   },
 } as const
 
 /**
- * The CV's name heading: its size and its gap under the eyebrow. The script
- * reads best as one line, like a signature, so the size lets a usual two-part
- * name fit on one line on a phone too; a longer name still wraps.
+ * The CV's name heading: its size, which fits the name on one line in its
+ * container (`cvNameSizeClassName`), and its gap under the eyebrow.
  */
-const nameClassName =
-  "mt-8 text-[clamp(3rem,7vw,6rem)] leading-[1.1] text-balance"
+const nameClassName = `mt-8 leading-[1.1] text-balance ${cvNameSizeClassName}`
 
 interface Glyph {
   letter: string
@@ -246,10 +250,17 @@ function splitAtHyphens(word: Glyph[]): Glyph[][] {
  * sheen repeats the letters' layout, weights and widths, so it lands on each
  * glyph. Every letter box bleeds as far as the font's ink reaches, measured
  * once the font is ready and before the letter widths are locked, so no
- * swash or descender is cut off. The bleed's layout effect must stay above
- * the `useNameWeightPlay` call: effects run in call order, and the width
- * lock measures each letter with its bleed already set. Reduced motion shows the letters at once
- * and turns the weight wave, the glow and the sheen off.
+ * swash or descender is cut off. In the name script, the same effect
+ * measures how wide the name is on one line (`--name-width`), which the CV
+ * name's size fits to its container (`cvNameSizeClassName`), and drops it
+ * when that fails, so the size's fallback holds. The size follows the
+ * container in CSS, and the bleed, the kerning and the locked letter widths
+ * are all in em, so a resize scales the name without reflowing it; only the
+ * pointer's letter centres are measured again. The bleed's layout effect
+ * must stay above the `useNameWeightPlay` call: effects run in call order,
+ * and the width lock measures each letter with its bleed already set.
+ * Reduced motion shows the letters at once and turns the weight wave, the
+ * glow and the sheen off.
  *
  * @param props - The component props.
  * @param props.fullName - The candidate's name, or another text shown as
@@ -272,6 +283,7 @@ export default function ProfileName({
     weightPlay,
     weight,
     inkWeight,
+    fitsLine,
   } = typefaces[typeface]
   const headingRef = useRef<HTMLHeadingElement>(null)
   /** The letters' reveal: the rise alone for reduced motion. */
@@ -342,7 +354,18 @@ export default function ProfileName({
     heading.style.setProperty("--name-bleed-x", `${room.x}em`)
     heading.style.setProperty("--name-bleed-top", `${room.top}em`)
     heading.style.setProperty("--name-bleed-bottom", `${room.bottom}em`)
-  }, [fontLoaded, words, inkFont, headingRef])
+    const lineWidth = fitsLine
+      ? measureLineWidth(
+          words.map((parts) => parts.flat()),
+          font,
+        )
+      : null
+    if (lineWidth) {
+      heading.style.setProperty("--name-width", String(lineWidth))
+    } else {
+      heading.style.removeProperty("--name-width")
+    }
+  }, [fontLoaded, words, font, inkFont, fitsLine, headingRef])
 
   const {
     lettersRef,

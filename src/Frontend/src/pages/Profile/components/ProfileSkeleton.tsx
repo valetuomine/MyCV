@@ -1,6 +1,7 @@
 import type { JSX } from "react"
 import { useTranslation } from "react-i18next"
 import useLightHold from "../../components/useLightHold"
+import { cvNameSizeClassName } from "./displayTypeClassNames"
 import useSkeletonTiming from "./useSkeletonTiming"
 
 /**
@@ -42,11 +43,13 @@ export default function ProfileSkeleton(): JSX.Element {
             style={timing}
             className="grid w-full animate-cv-fade-in-delayed grid-cols-[minmax(0,1fr)] items-center gap-14 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-16"
           >
-            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] content-center justify-items-start">
+            <div className="@container grid min-w-0 grid-cols-[minmax(0,1fr)] content-center justify-items-start">
               <div className={`${line} text-xs`}>
                 <div className="h-2.5 w-56 max-w-full rounded-md cv-skeleton" />
               </div>
-              <div className="mt-8 w-full text-[clamp(3rem,7vw,6rem)] leading-[1.1]">
+              <div
+                className={`mt-8 w-full leading-[1.1] ${cvNameSizeClassName}`}
+              >
                 <div className={line}>
                   <div className="h-[0.7em] w-[5.8em] max-w-full rounded-xl cv-skeleton" />
                 </div>

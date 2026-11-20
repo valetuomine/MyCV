@@ -11,6 +11,7 @@ import { signedOutLocationState } from "../../../../auth/signedOutState"
 import Eyebrow from "../../../components/Eyebrow"
 import { RoutePaths } from "../../../../routePaths"
 import { FeaturedCvStatus } from "../../../../types"
+import { homeHeadingClassName } from "../displayTypeClassNames"
 import FeaturedCvAddress from "../FeaturedCv/FeaturedCvAddress"
 import FeaturedCvSection from "../FeaturedCv/FeaturedCvSection"
 import useFeaturedCv from "../FeaturedCv/useFeaturedCv"
@@ -133,7 +134,7 @@ export default function Home(): JSX.Element {
           data-cv-trace-avoid=""
           className={`grid items-center gap-12 lg:items-stretch ${hasFeaturedCv ? heroColumnsClassName : ""}`}
         >
-          <div className="grid min-w-0 content-start justify-items-start gap-7">
+          <div className="@container grid min-w-0 content-start justify-items-start gap-7">
             <motion.div variants={item}>
               <Eyebrow>{t("common.brand")}</Eyebrow>
             </motion.div>
@@ -141,7 +142,7 @@ export default function Home(): JSX.Element {
               key={i18n.language}
               fullName={t("home.heading")}
               typeface="display"
-              className="m-0 text-[clamp(2.75rem,4.8vw,4.5rem)] leading-[1.02] text-balance"
+              className={homeHeadingClassName}
             />
             <motion.p
               variants={item}

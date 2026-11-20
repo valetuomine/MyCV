@@ -94,6 +94,69 @@ function atLeast(minimum: number, measured: number): number {
   return Number.isFinite(measured) ? Math.max(minimum, measured) : minimum
 }
 
+/** A letter of a name and its kerning against the next one, in em. */
+export interface KernedLetter {
+  letter: string
+  kerning: number
+}
+
+/**
+ * Room kept on top of a name's measured width, so rounding in the layout
+ * never pushes the last word onto a second line.
+ */
+const lineWidthRoom = 1.02
+
+/**
+ * Measures how wide a name is on one line, in em: each letter's advance and
+ * kerning, as the heading sets them, and a space between the words. The
+ * size that fits the name on one line is its container's width divided by
+ * this. Returns null without a canvas context.
+ *
+ * @param words - The name's words, each as its letters with their kerning.
+ * @param font - The heading's font shorthand at 100px (`tokenFont`).
+ * @returns The name's width in em, with `lineWidthRoom`, or null.
+ */
+export function measureLineWidth(
+  words: KernedLetter[][],
+  font: string,
+): number | null {
+  const context = document.createElement("canvas").getContext("2d")
+  if (!context || words.length === 0) {
+    return null
+  }
+
+  context.font = font
+  const space = context.measureText(" ").width / 100
+  const letters = words
+    .flat()
+    .reduce(
+      (sum, { letter, kerning }) =>
+        sum + context.measureText(letter).width / 100 + kerning,
+      0,
+    )
+  return (letters + space * (words.length - 1)) * lineWidthRoom
+}
+
+/**
+ * Measures how wide a text set as plain text is on one line, in em, as one
+ * run, so the font's own kerning and ligatures count, as they do in a
+ * heading that isn't split into letters, such as the featured card's name.
+ * Returns null without a canvas context or for an empty text.
+ *
+ * @param text - The text, its spaces collapsed as the page collapses them.
+ * @param font - The text's font shorthand at 100px (`tokenFont`).
+ * @returns The text's width in em, with `lineWidthRoom`, or null.
+ */
+export function measureTextWidth(text: string, font: string): number | null {
+  const context = document.createElement("canvas").getContext("2d")
+  if (!context || !text) {
+    return null
+  }
+
+  context.font = font
+  return (context.measureText(text).width / 100) * lineWidthRoom
+}
+
 /**
  * Measures each letter's kerning against the next one, in em. One element
  * per letter drops the font's kerning, so each letter gets its pair

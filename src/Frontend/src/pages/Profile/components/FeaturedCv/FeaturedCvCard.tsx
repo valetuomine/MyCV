@@ -15,11 +15,12 @@ import {
   getInitials,
   toExternalUrl,
 } from "../../utils/profileFormUtils"
+import { featuredCvNameSizeClassName } from "../displayTypeClassNames"
 import LocationIcon from "../LocationIcon"
+import useNameLineWidth from "../useNameLineWidth"
 import FeaturedCvAvatar from "./FeaturedCvAvatar"
 import {
   featuredCvGridClassName,
-  featuredCvNameSizeClassName,
   featuredCvReveal,
   featuredCvTextClassName,
 } from "./featuredCvLayout"
@@ -34,7 +35,9 @@ interface FeaturedCvCardProps {
  * CV last changed, which shows that the link always leads to the latest
  * version, then its name, signed in the CV name's script like on the CV it
  * opens, its title, location and portrait, a button that opens the CV, and
- * its GitHub and LinkedIn links. When the hero stretches the card, the name,
+ * its GitHub and LinkedIn links. The name's size fits it on one line beside
+ * the portrait, from the name's measured width (`useNameLineWidth`,
+ * `featuredCvNameSizeClassName`). When the hero stretches the card, the name,
  * title and location stay together on the buttons (`featuredCvTextClassName`).
  * It is a `LitCard`, so its surface lights up like the edit view's preview
  * card. Its content rises in on the reveal that `FeaturedCvSection` starts,
@@ -52,6 +55,7 @@ export default function FeaturedCvCard({
 }: Readonly<FeaturedCvCardProps>): JSX.Element {
   const { t, i18n } = useTranslation()
   const nameId = useId()
+  const nameWidth = useNameLineWidth(profile.fullName ?? "")
   /** When the profile last changed, falling back to when it was created. */
   const updatedAt = formatProfileDate(
     profile.updatedAt ?? profile.createdAt,
@@ -79,6 +83,7 @@ export default function FeaturedCvCard({
           <h2
             id={nameId}
             dir="auto"
+            style={nameWidth}
             className={`m-0 font-cv-name font-normal text-balance wrap-anywhere ${featuredCvNameSizeClassName}`}
           >
             {profile.fullName}

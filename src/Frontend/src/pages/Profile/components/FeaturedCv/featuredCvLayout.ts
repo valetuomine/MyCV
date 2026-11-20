@@ -17,10 +17,11 @@ export const featuredCvGridClassName =
  * The featured card's text area in `featuredCvGridClassName`: the eyebrow at
  * the top and the name, title and location at the bottom, so the room that a
  * tall card leaves goes under the eyebrow instead of between the location and
- * the buttons. The card and its skeleton share it.
+ * the buttons. It is the name's container (`featuredCvNameSizeClassName`).
+ * The card and its skeleton share it.
  */
 export const featuredCvTextClassName =
-  "grid min-w-0 content-between [grid-area:text]"
+  "@container grid min-w-0 content-between [grid-area:text]"
 
 /**
  * The portrait's place and size in `featuredCvGridClassName`: an 80 px
@@ -31,15 +32,6 @@ export const featuredCvTextClassName =
  */
 export const featuredCvPortraitClassName =
   "size-20 self-start rounded-2xl [grid-area:portrait] sm:h-auto sm:w-48 sm:self-stretch lg:w-36 xl:w-40"
-
-/**
- * The featured card's name size, in the CV name's script: 2.25rem on phones,
- * 3rem from `sm`, 2.25rem in the hero's 30rem card at `lg` and 3rem again in
- * its 36rem card from `xl` up, so a usual two-part name of about 17 letters
- * stays on one line; a longer one wraps. The card and its skeleton share it.
- */
-export const featuredCvNameSizeClassName =
-  "text-4xl leading-[1.1] sm:text-5xl lg:text-4xl xl:text-5xl"
 
 /**
  * Lets the card's content rise into place once its data has arrived. Only

@@ -138,14 +138,22 @@ export default function useNameWeightPlay(
 
     /**
      * Locks every letter, and its sheen copy, to the width it has at the
-     * heading's weight, and records where each letter's centre sits. The
-     * widths come from a hidden copy of the letters, so a reveal or weight
-     * change in progress never skews them, and the name stays once in the
-     * page text. The heading is positioned, so each letter's offsets are
-     * relative to it and ignore the reveal's transforms.
+     * heading's weight, in em, so a heading whose size follows its container
+     * scales its letters without reflowing them, and records where each
+     * letter's centre sits. The widths come from a hidden copy of the
+     * letters, so a reveal or weight change in progress never skews them,
+     * and the name stays once in the page text. The heading is positioned,
+     * so each letter's offsets are relative to it and ignore the reveal's
+     * transforms. A heading whose font size isn't a positive number is
+     * skipped, so no letter gets an invalid width.
      */
     const measure = (): void => {
       if (!active) {
+        return
+      }
+
+      const fontSize = Number.parseFloat(getComputedStyle(heading).fontSize)
+      if (!Number.isFinite(fontSize) || fontSize <= 0) {
         return
       }
 
@@ -159,7 +167,7 @@ export default function useNameWeightPlay(
       heading.append(copy)
       const widths = Array.from(
         copies,
-        (letter) => `${letter.getBoundingClientRect().width}px`,
+        (letter) => `${letter.getBoundingClientRect().width / fontSize}em`,
       )
       copy.remove()
       letters.forEach((letter, index) => {
@@ -172,7 +180,7 @@ export default function useNameWeightPlay(
         x: letter.offsetLeft + letter.offsetWidth / 2,
         y: letter.offsetTop + letter.offsetHeight / 2,
       }))
-      radius = Number.parseFloat(getComputedStyle(heading).fontSize) * 1.35
+      radius = fontSize * 1.35
     }
     measure()
     void document.fonts.ready.then(measure)
