@@ -21,7 +21,7 @@ namespace CV.LogicInterface.ServiceInterfaces
             CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Retrieves the profile using the requested language, defaulting to Finnish.
+        /// Retrieves the profile using the requested language, falling back to the profile's default language when it is missing, and to Finnish when none is requested.
         /// </summary>
         /// <param name="profileId">The identifier of the profile to retrieve.</param>
         /// <param name="languageCode">The requested language code, either "fi" or "en".</param>

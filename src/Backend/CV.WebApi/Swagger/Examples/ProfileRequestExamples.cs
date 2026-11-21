@@ -16,6 +16,7 @@ namespace CV.WebApi.Swagger.Examples
             {
                 PublicUrlSegment = "valtteri-tuominen",
                 FullName = "Jane Doe",
+                DefaultLanguageCode = "en",
                 Translations =
                 [
                     new ProfileTranslationRequest
@@ -46,6 +47,7 @@ namespace CV.WebApi.Swagger.Examples
             return new UpdateProfileRequest
             {
                 FullName = "Jane Doe",
+                DefaultLanguageCode = "en",
                 Translations =
                 [
                     new ProfileTranslationRequest

@@ -8,7 +8,7 @@ namespace CV.LogicInterface.ServiceInterfaces
     public interface IProfilePdfService
     {
         /// <summary>
-        /// Renders the profile as a PDF using the requested language, defaulting to Finnish.
+        /// Renders the profile as a PDF using the requested language, falling back to the profile's default language when it is missing, and to Finnish when none is requested.
         /// </summary>
         /// <param name="profileId">The identifier of the profile to render.</param>
         /// <param name="languageCode">The requested language code, either "fi" or "en".</param>

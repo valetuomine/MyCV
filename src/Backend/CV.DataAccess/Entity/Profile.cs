@@ -3,6 +3,7 @@
     public class Profile : BaseEntity
     {
         public string FullName { get; set; } = null!;
+        public string DefaultLanguageCode { get; set; } = "fi";
         public string? LinkedInUrl { get; set; }
         public string? GitHubUrl { get; set; }
         public string? PictureBlobName { get; set; }

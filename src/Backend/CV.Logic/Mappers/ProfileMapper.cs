@@ -9,19 +9,19 @@ namespace CV.Logic.Mappers
     /// </summary>
     public static class ProfileMapper
     {
-        public const string DefaultLanguageCode = "fi";
+        public const string FallbackLanguageCode = "fi";
 
-        private static readonly HashSet<string> SupportedLanguageCodes = [DefaultLanguageCode, "en"];
+        private static readonly HashSet<string> SupportedLanguageCodes = [FallbackLanguageCode, "en"];
 
         /// <summary>
-        /// Trims and lowercases a language code, falling back to the default for a blank one.
+        /// Trims and lowercases a language code, falling back to Finnish for a blank one.
         /// </summary>
         /// <param name="languageCode">The language code to normalize, or null.</param>
         /// <returns>The normalized language code.</returns>
         public static string NormalizeLanguageCode(string? languageCode)
         {
             return string.IsNullOrWhiteSpace(languageCode)
-                ? DefaultLanguageCode
+                ? FallbackLanguageCode
                 : languageCode.Trim().ToLowerInvariant();
         }
 
@@ -58,6 +58,7 @@ namespace CV.Logic.Mappers
             return new Profile
             {
                 FullName = request.FullName,
+                DefaultLanguageCode = NormalizeLanguageCode(request.DefaultLanguageCode),
                 LinkedInUrl = request.LinkedInUrl,
                 GitHubUrl = request.GitHubUrl,
                 Translations = [.. request.Translations
@@ -79,6 +80,10 @@ namespace CV.Logic.Mappers
         public static void MapRequestToEntity(this UpdateProfileRequest request, Profile dbProfile)
         {
             dbProfile.FullName = request.FullName;
+            if (!string.IsNullOrWhiteSpace(request.DefaultLanguageCode))
+            {
+                dbProfile.DefaultLanguageCode = NormalizeLanguageCode(request.DefaultLanguageCode);
+            }
             dbProfile.LinkedInUrl = request.LinkedInUrl;
             dbProfile.GitHubUrl = request.GitHubUrl;
             dbProfile.UpdatedAt = DateTime.UtcNow;
@@ -128,14 +133,15 @@ namespace CV.Logic.Mappers
             var normalizedLanguageCode = NormalizeLanguageCode(languageCode);
 
             var translation = dbProfile.Translations.FirstOrDefault(item => item.LanguageCode == normalizedLanguageCode)
-                ?? dbProfile.Translations.FirstOrDefault(item => item.LanguageCode == DefaultLanguageCode);
+                ?? dbProfile.Translations.FirstOrDefault(item => item.LanguageCode == dbProfile.DefaultLanguageCode);
 
             return new ProfileDto
             {
                 Id = dbProfile.Id,
                 CreatedAt = TimestampMapper.ToFinlandTime(dbProfile.CreatedAt),
                 UpdatedAt = TimestampMapper.ToFinlandTime(dbProfile.UpdatedAt),
-                LanguageCode = translation?.LanguageCode ?? DefaultLanguageCode,
+                LanguageCode = translation?.LanguageCode ?? dbProfile.DefaultLanguageCode,
+                DefaultLanguageCode = dbProfile.DefaultLanguageCode,
                 FullName = dbProfile.FullName,
                 Title = translation?.Title ?? string.Empty,
                 Summary = translation?.Summary,
@@ -160,6 +166,7 @@ namespace CV.Logic.Mappers
                 CreatedAt = TimestampMapper.ToFinlandTime(dbProfile.CreatedAt),
                 UpdatedAt = TimestampMapper.ToFinlandTime(dbProfile.UpdatedAt),
                 FullName = dbProfile.FullName,
+                DefaultLanguageCode = dbProfile.DefaultLanguageCode,
                 LinkedInUrl = dbProfile.LinkedInUrl,
                 GitHubUrl = dbProfile.GitHubUrl,
                 ShowPicture = dbProfile.ShowPicture,

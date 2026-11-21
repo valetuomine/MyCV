@@ -20,6 +20,11 @@ namespace CV.DataAccess.Configurations
                 .IsRequired()
                 .HasMaxLength(100);
 
+            builder.Property(profile => profile.DefaultLanguageCode)
+                .IsRequired()
+                .HasMaxLength(5)
+                .HasDefaultValue("fi");
+
             builder.Property(profile => profile.LinkedInUrl)
                 .HasMaxLength(500);
 

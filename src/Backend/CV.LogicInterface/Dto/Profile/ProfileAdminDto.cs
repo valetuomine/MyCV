@@ -26,6 +26,11 @@ namespace CV.LogicInterface.Dto.Profile
         public string FullName { get; set; } = null!;
 
         /// <summary>
+        /// Gets or sets the profile's default language, which stands in for a missing translation.
+        /// </summary>
+        public string DefaultLanguageCode { get; set; } = null!;
+
+        /// <summary>
         /// Gets or sets the identifier of the associated candidate, when one exists.
         /// </summary>
         public Guid? CandidateId { get; set; }

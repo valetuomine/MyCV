@@ -4,937 +4,947 @@
  */
 
 export interface paths {
-    "/api/Candidate/{publicUrlSegment}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    publicUrlSegment: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["CandidateDto"];
-                        "application/json": components["schemas"]["CandidateDto"];
-                        "text/json": components["schemas"]["CandidateDto"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/Candidate/{candidateId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    candidateId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/FeaturedCandidate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["CandidateDto"];
-                        "application/json": components["schemas"]["CandidateDto"];
-                        "text/json": components["schemas"]["CandidateDto"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/me/candidate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["CandidateDto"];
-                        "application/json": components["schemas"]["CandidateDto"];
-                        "text/json": components["schemas"]["CandidateDto"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/me/logins": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["LoginDto"][];
-                        "application/json": components["schemas"]["LoginDto"][];
-                        "text/json": components["schemas"]["LoginDto"][];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    /**
-                     * @example {
-                     *       "linkToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6Ii4uLiJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20ifQ.signature"
-                     *     }
-                     */
-                    "application/json": components["schemas"]["LinkLoginRequest"];
-                    /**
-                     * @example {
-                     *       "linkToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6Ii4uLiJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20ifQ.signature"
-                     *     }
-                     */
-                    "text/json": components["schemas"]["LinkLoginRequest"];
-                    /**
-                     * @example {
-                     *       "linkToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6Ii4uLiJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20ifQ.signature"
-                     *     }
-                     */
-                    "application/*+json": components["schemas"]["LinkLoginRequest"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["LoginDto"];
-                        "application/json": components["schemas"]["LoginDto"];
-                        "text/json": components["schemas"]["LoginDto"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/me/logins/{loginId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    loginId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/Profile": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    /**
-                     * @example {
-                     *       "publicUrlSegment": "valtteri-tuominen",
-                     *       "fullName": "Jane Doe",
-                     *       "translations": [
-                     *         {
-                     *           "languageCode": "fi",
-                     *           "title": "Ohjelmistokehittäjä",
-                     *           "summary": "Rakennan verkkopalveluita.",
-                     *           "location": "Tampere, Suomi"
-                     *         },
-                     *         {
-                     *           "languageCode": "en",
-                     *           "title": "Software Developer",
-                     *           "summary": "I build web applications.",
-                     *           "location": "Tampere, Finland"
-                     *         }
-                     *       ],
-                     *       "linkedInUrl": "https://www.linkedin.com/in/jane-doe",
-                     *       "gitHubUrl": "https://github.com/jane-doe"
-                     *     }
-                     */
-                    "application/json": components["schemas"]["CreateProfileRequest"];
-                    /**
-                     * @example {
-                     *       "publicUrlSegment": "valtteri-tuominen",
-                     *       "fullName": "Jane Doe",
-                     *       "translations": [
-                     *         {
-                     *           "languageCode": "fi",
-                     *           "title": "Ohjelmistokehittäjä",
-                     *           "summary": "Rakennan verkkopalveluita.",
-                     *           "location": "Tampere, Suomi"
-                     *         },
-                     *         {
-                     *           "languageCode": "en",
-                     *           "title": "Software Developer",
-                     *           "summary": "I build web applications.",
-                     *           "location": "Tampere, Finland"
-                     *         }
-                     *       ],
-                     *       "linkedInUrl": "https://www.linkedin.com/in/jane-doe",
-                     *       "gitHubUrl": "https://github.com/jane-doe"
-                     *     }
-                     */
-                    "text/json": components["schemas"]["CreateProfileRequest"];
-                    /**
-                     * @example {
-                     *       "publicUrlSegment": "valtteri-tuominen",
-                     *       "fullName": "Jane Doe",
-                     *       "translations": [
-                     *         {
-                     *           "languageCode": "fi",
-                     *           "title": "Ohjelmistokehittäjä",
-                     *           "summary": "Rakennan verkkopalveluita.",
-                     *           "location": "Tampere, Suomi"
-                     *         },
-                     *         {
-                     *           "languageCode": "en",
-                     *           "title": "Software Developer",
-                     *           "summary": "I build web applications.",
-                     *           "location": "Tampere, Finland"
-                     *         }
-                     *       ],
-                     *       "linkedInUrl": "https://www.linkedin.com/in/jane-doe",
-                     *       "gitHubUrl": "https://github.com/jane-doe"
-                     *     }
-                     */
-                    "application/*+json": components["schemas"]["CreateProfileRequest"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["ProfileAdminDto"];
-                        "application/json": components["schemas"]["ProfileAdminDto"];
-                        "text/json": components["schemas"]["ProfileAdminDto"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/Profile/{profileId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: {
-                    lang?: string;
-                };
-                header?: never;
-                path: {
-                    profileId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["ProfileDto"];
-                        "application/json": components["schemas"]["ProfileDto"];
-                        "text/json": components["schemas"]["ProfileDto"];
-                    };
-                };
-            };
-        };
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    profileId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    /**
-                     * @example {
-                     *       "fullName": "Jane Doe",
-                     *       "translations": [
-                     *         {
-                     *           "languageCode": "fi",
-                     *           "title": "Ohjelmistokehittäjä",
-                     *           "summary": "Rakennan verkkopalveluita.",
-                     *           "location": "Tampere, Suomi"
-                     *         },
-                     *         {
-                     *           "languageCode": "en",
-                     *           "title": "Software Developer",
-                     *           "summary": "I build web applications.",
-                     *           "location": "Tampere, Finland"
-                     *         }
-                     *       ],
-                     *       "linkedInUrl": "https://www.linkedin.com/in/jane-doe",
-                     *       "gitHubUrl": "https://github.com/jane-doe"
-                     *     }
-                     */
-                    "application/json": components["schemas"]["UpdateProfileRequest"];
-                    /**
-                     * @example {
-                     *       "fullName": "Jane Doe",
-                     *       "translations": [
-                     *         {
-                     *           "languageCode": "fi",
-                     *           "title": "Ohjelmistokehittäjä",
-                     *           "summary": "Rakennan verkkopalveluita.",
-                     *           "location": "Tampere, Suomi"
-                     *         },
-                     *         {
-                     *           "languageCode": "en",
-                     *           "title": "Software Developer",
-                     *           "summary": "I build web applications.",
-                     *           "location": "Tampere, Finland"
-                     *         }
-                     *       ],
-                     *       "linkedInUrl": "https://www.linkedin.com/in/jane-doe",
-                     *       "gitHubUrl": "https://github.com/jane-doe"
-                     *     }
-                     */
-                    "text/json": components["schemas"]["UpdateProfileRequest"];
-                    /**
-                     * @example {
-                     *       "fullName": "Jane Doe",
-                     *       "translations": [
-                     *         {
-                     *           "languageCode": "fi",
-                     *           "title": "Ohjelmistokehittäjä",
-                     *           "summary": "Rakennan verkkopalveluita.",
-                     *           "location": "Tampere, Suomi"
-                     *         },
-                     *         {
-                     *           "languageCode": "en",
-                     *           "title": "Software Developer",
-                     *           "summary": "I build web applications.",
-                     *           "location": "Tampere, Finland"
-                     *         }
-                     *       ],
-                     *       "linkedInUrl": "https://www.linkedin.com/in/jane-doe",
-                     *       "gitHubUrl": "https://github.com/jane-doe"
-                     *     }
-                     */
-                    "application/*+json": components["schemas"]["UpdateProfileRequest"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["ProfileAdminDto"];
-                        "application/json": components["schemas"]["ProfileAdminDto"];
-                        "text/json": components["schemas"]["ProfileAdminDto"];
-                    };
-                };
-            };
-        };
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/Profile/{profileId}/admin": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    profileId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["ProfileAdminDto"];
-                        "application/json": components["schemas"]["ProfileAdminDto"];
-                        "text/json": components["schemas"]["ProfileAdminDto"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/Profile/{profileId}/pdf": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: {
-                    lang?: string;
-                    download?: boolean;
-                };
-                header?: never;
-                path: {
-                    profileId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/pdf": string;
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head: {
-            parameters: {
-                query?: {
-                    lang?: string;
-                    download?: boolean;
-                };
-                header?: never;
-                path: {
-                    profileId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/pdf": string;
-                    };
-                };
-            };
-        };
-        patch?: never;
-        trace?: never;
-    };
-    "/api/Profile/{profileId}/picture": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: {
-                    v?: string;
-                };
-                header?: never;
-                path: {
-                    profileId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "image/webp": string;
-                    };
-                };
-            };
-        };
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    profileId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["ProfilePictureDto"];
-                        "application/json": components["schemas"]["ProfilePictureDto"];
-                        "text/json": components["schemas"]["ProfilePictureDto"];
-                    };
-                };
-            };
-        };
-        post?: never;
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    profileId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/Profile/{profileId}/picture/preview": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    profileId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "image/webp": string;
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/Profile/{profileId}/picture/google": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    profileId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["ProfilePictureDto"];
-                        "application/json": components["schemas"]["ProfilePictureDto"];
-                        "text/json": components["schemas"]["ProfilePictureDto"];
-                    };
-                };
-            };
-        };
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/Profile/{profileId}/picture/visibility": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    profileId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    /**
-                     * @example {
-                     *       "isVisible": false
-                     *     }
-                     */
-                    "application/json": components["schemas"]["UpdateProfilePictureVisibilityRequest"];
-                    /**
-                     * @example {
-                     *       "isVisible": false
-                     *     }
-                     */
-                    "text/json": components["schemas"]["UpdateProfilePictureVisibilityRequest"];
-                    /**
-                     * @example {
-                     *       "isVisible": false
-                     *     }
-                     */
-                    "application/*+json": components["schemas"]["UpdateProfilePictureVisibilityRequest"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["ProfilePictureVisibilityDto"];
-                        "application/json": components["schemas"]["ProfilePictureVisibilityDto"];
-                        "text/json": components["schemas"]["ProfilePictureVisibilityDto"];
-                    };
-                };
-            };
-        };
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
+  "/api/Candidate/{publicUrlSegment}": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: {
+      parameters: {
+        query?: never
+        header?: never
+        path: {
+          publicUrlSegment: string
+        }
+        cookie?: never
+      }
+      requestBody?: never
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown
+          }
+          content: {
+            "text/plain": components["schemas"]["CandidateDto"]
+            "application/json": components["schemas"]["CandidateDto"]
+            "text/json": components["schemas"]["CandidateDto"]
+          }
+        }
+      }
+    }
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/Candidate/{candidateId}": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post?: never
+    delete: {
+      parameters: {
+        query?: never
+        header?: never
+        path: {
+          candidateId: string
+        }
+        cookie?: never
+      }
+      requestBody?: never
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown
+          }
+          content?: never
+        }
+      }
+    }
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/FeaturedCandidate": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: {
+      parameters: {
+        query?: never
+        header?: never
+        path?: never
+        cookie?: never
+      }
+      requestBody?: never
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown
+          }
+          content: {
+            "text/plain": components["schemas"]["CandidateDto"]
+            "application/json": components["schemas"]["CandidateDto"]
+            "text/json": components["schemas"]["CandidateDto"]
+          }
+        }
+      }
+    }
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/me/candidate": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: {
+      parameters: {
+        query?: never
+        header?: never
+        path?: never
+        cookie?: never
+      }
+      requestBody?: never
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown
+          }
+          content: {
+            "text/plain": components["schemas"]["CandidateDto"]
+            "application/json": components["schemas"]["CandidateDto"]
+            "text/json": components["schemas"]["CandidateDto"]
+          }
+        }
+      }
+    }
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/me/logins": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: {
+      parameters: {
+        query?: never
+        header?: never
+        path?: never
+        cookie?: never
+      }
+      requestBody?: never
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown
+          }
+          content: {
+            "text/plain": components["schemas"]["LoginDto"][]
+            "application/json": components["schemas"]["LoginDto"][]
+            "text/json": components["schemas"]["LoginDto"][]
+          }
+        }
+      }
+    }
+    put?: never
+    post: {
+      parameters: {
+        query?: never
+        header?: never
+        path?: never
+        cookie?: never
+      }
+      requestBody?: {
+        content: {
+          /**
+           * @example {
+           *       "linkToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6Ii4uLiJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20ifQ.signature"
+           *     }
+           */
+          "application/json": components["schemas"]["LinkLoginRequest"]
+          /**
+           * @example {
+           *       "linkToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6Ii4uLiJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20ifQ.signature"
+           *     }
+           */
+          "text/json": components["schemas"]["LinkLoginRequest"]
+          /**
+           * @example {
+           *       "linkToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6Ii4uLiJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20ifQ.signature"
+           *     }
+           */
+          "application/*+json": components["schemas"]["LinkLoginRequest"]
+        }
+      }
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown
+          }
+          content: {
+            "text/plain": components["schemas"]["LoginDto"]
+            "application/json": components["schemas"]["LoginDto"]
+            "text/json": components["schemas"]["LoginDto"]
+          }
+        }
+      }
+    }
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/me/logins/{loginId}": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post?: never
+    delete: {
+      parameters: {
+        query?: never
+        header?: never
+        path: {
+          loginId: string
+        }
+        cookie?: never
+      }
+      requestBody?: never
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown
+          }
+          content?: never
+        }
+      }
+    }
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/Profile": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post: {
+      parameters: {
+        query?: never
+        header?: never
+        path?: never
+        cookie?: never
+      }
+      requestBody?: {
+        content: {
+          /**
+           * @example {
+           *       "publicUrlSegment": "valtteri-tuominen",
+           *       "fullName": "Jane Doe",
+           *       "defaultLanguageCode": "en",
+           *       "translations": [
+           *         {
+           *           "languageCode": "fi",
+           *           "title": "Ohjelmistokehittäjä",
+           *           "summary": "Rakennan verkkopalveluita.",
+           *           "location": "Tampere, Suomi"
+           *         },
+           *         {
+           *           "languageCode": "en",
+           *           "title": "Software Developer",
+           *           "summary": "I build web applications.",
+           *           "location": "Tampere, Finland"
+           *         }
+           *       ],
+           *       "linkedInUrl": "https://www.linkedin.com/in/jane-doe",
+           *       "gitHubUrl": "https://github.com/jane-doe"
+           *     }
+           */
+          "application/json": components["schemas"]["CreateProfileRequest"]
+          /**
+           * @example {
+           *       "publicUrlSegment": "valtteri-tuominen",
+           *       "fullName": "Jane Doe",
+           *       "defaultLanguageCode": "en",
+           *       "translations": [
+           *         {
+           *           "languageCode": "fi",
+           *           "title": "Ohjelmistokehittäjä",
+           *           "summary": "Rakennan verkkopalveluita.",
+           *           "location": "Tampere, Suomi"
+           *         },
+           *         {
+           *           "languageCode": "en",
+           *           "title": "Software Developer",
+           *           "summary": "I build web applications.",
+           *           "location": "Tampere, Finland"
+           *         }
+           *       ],
+           *       "linkedInUrl": "https://www.linkedin.com/in/jane-doe",
+           *       "gitHubUrl": "https://github.com/jane-doe"
+           *     }
+           */
+          "text/json": components["schemas"]["CreateProfileRequest"]
+          /**
+           * @example {
+           *       "publicUrlSegment": "valtteri-tuominen",
+           *       "fullName": "Jane Doe",
+           *       "defaultLanguageCode": "en",
+           *       "translations": [
+           *         {
+           *           "languageCode": "fi",
+           *           "title": "Ohjelmistokehittäjä",
+           *           "summary": "Rakennan verkkopalveluita.",
+           *           "location": "Tampere, Suomi"
+           *         },
+           *         {
+           *           "languageCode": "en",
+           *           "title": "Software Developer",
+           *           "summary": "I build web applications.",
+           *           "location": "Tampere, Finland"
+           *         }
+           *       ],
+           *       "linkedInUrl": "https://www.linkedin.com/in/jane-doe",
+           *       "gitHubUrl": "https://github.com/jane-doe"
+           *     }
+           */
+          "application/*+json": components["schemas"]["CreateProfileRequest"]
+        }
+      }
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown
+          }
+          content: {
+            "text/plain": components["schemas"]["ProfileAdminDto"]
+            "application/json": components["schemas"]["ProfileAdminDto"]
+            "text/json": components["schemas"]["ProfileAdminDto"]
+          }
+        }
+      }
+    }
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/Profile/{profileId}": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: {
+      parameters: {
+        query?: {
+          lang?: string
+        }
+        header?: never
+        path: {
+          profileId: string
+        }
+        cookie?: never
+      }
+      requestBody?: never
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown
+          }
+          content: {
+            "text/plain": components["schemas"]["ProfileDto"]
+            "application/json": components["schemas"]["ProfileDto"]
+            "text/json": components["schemas"]["ProfileDto"]
+          }
+        }
+      }
+    }
+    put: {
+      parameters: {
+        query?: never
+        header?: never
+        path: {
+          profileId: string
+        }
+        cookie?: never
+      }
+      requestBody?: {
+        content: {
+          /**
+           * @example {
+           *       "fullName": "Jane Doe",
+           *       "defaultLanguageCode": "en",
+           *       "translations": [
+           *         {
+           *           "languageCode": "fi",
+           *           "title": "Ohjelmistokehittäjä",
+           *           "summary": "Rakennan verkkopalveluita.",
+           *           "location": "Tampere, Suomi"
+           *         },
+           *         {
+           *           "languageCode": "en",
+           *           "title": "Software Developer",
+           *           "summary": "I build web applications.",
+           *           "location": "Tampere, Finland"
+           *         }
+           *       ],
+           *       "linkedInUrl": "https://www.linkedin.com/in/jane-doe",
+           *       "gitHubUrl": "https://github.com/jane-doe"
+           *     }
+           */
+          "application/json": components["schemas"]["UpdateProfileRequest"]
+          /**
+           * @example {
+           *       "fullName": "Jane Doe",
+           *       "defaultLanguageCode": "en",
+           *       "translations": [
+           *         {
+           *           "languageCode": "fi",
+           *           "title": "Ohjelmistokehittäjä",
+           *           "summary": "Rakennan verkkopalveluita.",
+           *           "location": "Tampere, Suomi"
+           *         },
+           *         {
+           *           "languageCode": "en",
+           *           "title": "Software Developer",
+           *           "summary": "I build web applications.",
+           *           "location": "Tampere, Finland"
+           *         }
+           *       ],
+           *       "linkedInUrl": "https://www.linkedin.com/in/jane-doe",
+           *       "gitHubUrl": "https://github.com/jane-doe"
+           *     }
+           */
+          "text/json": components["schemas"]["UpdateProfileRequest"]
+          /**
+           * @example {
+           *       "fullName": "Jane Doe",
+           *       "defaultLanguageCode": "en",
+           *       "translations": [
+           *         {
+           *           "languageCode": "fi",
+           *           "title": "Ohjelmistokehittäjä",
+           *           "summary": "Rakennan verkkopalveluita.",
+           *           "location": "Tampere, Suomi"
+           *         },
+           *         {
+           *           "languageCode": "en",
+           *           "title": "Software Developer",
+           *           "summary": "I build web applications.",
+           *           "location": "Tampere, Finland"
+           *         }
+           *       ],
+           *       "linkedInUrl": "https://www.linkedin.com/in/jane-doe",
+           *       "gitHubUrl": "https://github.com/jane-doe"
+           *     }
+           */
+          "application/*+json": components["schemas"]["UpdateProfileRequest"]
+        }
+      }
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown
+          }
+          content: {
+            "text/plain": components["schemas"]["ProfileAdminDto"]
+            "application/json": components["schemas"]["ProfileAdminDto"]
+            "text/json": components["schemas"]["ProfileAdminDto"]
+          }
+        }
+      }
+    }
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/Profile/{profileId}/admin": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: {
+      parameters: {
+        query?: never
+        header?: never
+        path: {
+          profileId: string
+        }
+        cookie?: never
+      }
+      requestBody?: never
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown
+          }
+          content: {
+            "text/plain": components["schemas"]["ProfileAdminDto"]
+            "application/json": components["schemas"]["ProfileAdminDto"]
+            "text/json": components["schemas"]["ProfileAdminDto"]
+          }
+        }
+      }
+    }
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/Profile/{profileId}/pdf": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: {
+      parameters: {
+        query?: {
+          lang?: string
+          download?: boolean
+        }
+        header?: never
+        path: {
+          profileId: string
+        }
+        cookie?: never
+      }
+      requestBody?: never
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown
+          }
+          content: {
+            "application/pdf": string
+          }
+        }
+      }
+    }
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head: {
+      parameters: {
+        query?: {
+          lang?: string
+          download?: boolean
+        }
+        header?: never
+        path: {
+          profileId: string
+        }
+        cookie?: never
+      }
+      requestBody?: never
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown
+          }
+          content: {
+            "application/pdf": string
+          }
+        }
+      }
+    }
+    patch?: never
+    trace?: never
+  }
+  "/api/Profile/{profileId}/picture": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: {
+      parameters: {
+        query?: {
+          v?: string
+        }
+        header?: never
+        path: {
+          profileId: string
+        }
+        cookie?: never
+      }
+      requestBody?: never
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown
+          }
+          content: {
+            "image/webp": string
+          }
+        }
+      }
+    }
+    put: {
+      parameters: {
+        query?: never
+        header?: never
+        path: {
+          profileId: string
+        }
+        cookie?: never
+      }
+      requestBody?: never
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown
+          }
+          content: {
+            "text/plain": components["schemas"]["ProfilePictureDto"]
+            "application/json": components["schemas"]["ProfilePictureDto"]
+            "text/json": components["schemas"]["ProfilePictureDto"]
+          }
+        }
+      }
+    }
+    post?: never
+    delete: {
+      parameters: {
+        query?: never
+        header?: never
+        path: {
+          profileId: string
+        }
+        cookie?: never
+      }
+      requestBody?: never
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown
+          }
+          content?: never
+        }
+      }
+    }
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/Profile/{profileId}/picture/preview": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: {
+      parameters: {
+        query?: never
+        header?: never
+        path: {
+          profileId: string
+        }
+        cookie?: never
+      }
+      requestBody?: never
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown
+          }
+          content: {
+            "image/webp": string
+          }
+        }
+      }
+    }
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/Profile/{profileId}/picture/google": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put: {
+      parameters: {
+        query?: never
+        header?: never
+        path: {
+          profileId: string
+        }
+        cookie?: never
+      }
+      requestBody?: never
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown
+          }
+          content: {
+            "text/plain": components["schemas"]["ProfilePictureDto"]
+            "application/json": components["schemas"]["ProfilePictureDto"]
+            "text/json": components["schemas"]["ProfilePictureDto"]
+          }
+        }
+      }
+    }
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/Profile/{profileId}/picture/visibility": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put: {
+      parameters: {
+        query?: never
+        header?: never
+        path: {
+          profileId: string
+        }
+        cookie?: never
+      }
+      requestBody?: {
+        content: {
+          /**
+           * @example {
+           *       "isVisible": false
+           *     }
+           */
+          "application/json": components["schemas"]["UpdateProfilePictureVisibilityRequest"]
+          /**
+           * @example {
+           *       "isVisible": false
+           *     }
+           */
+          "text/json": components["schemas"]["UpdateProfilePictureVisibilityRequest"]
+          /**
+           * @example {
+           *       "isVisible": false
+           *     }
+           */
+          "application/*+json": components["schemas"]["UpdateProfilePictureVisibilityRequest"]
+        }
+      }
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown
+          }
+          content: {
+            "text/plain": components["schemas"]["ProfilePictureVisibilityDto"]
+            "application/json": components["schemas"]["ProfilePictureVisibilityDto"]
+            "text/json": components["schemas"]["ProfilePictureVisibilityDto"]
+          }
+        }
+      }
+    }
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
 }
-export type webhooks = Record<string, never>;
+export type webhooks = Record<string, never>
 export interface components {
-    schemas: {
-        CandidateDto: {
-            /** Format: uuid */
-            id?: string;
-            publicUrlSegment?: string | null;
-            /** Format: date-time */
-            createdAt?: string;
-            /** Format: date-time */
-            updatedAt?: string | null;
-            /** Format: uuid */
-            profileId?: string | null;
-        };
-        CreateProfileRequest: {
-            publicUrlSegment?: string | null;
-            fullName?: string | null;
-            translations?: components["schemas"]["ProfileTranslationRequest"][] | null;
-            linkedInUrl?: string | null;
-            gitHubUrl?: string | null;
-        };
-        LinkLoginRequest: {
-            linkToken?: string | null;
-        };
-        LoginDto: {
-            /** Format: uuid */
-            id?: string;
-            provider?: string | null;
-            /** Format: date-time */
-            createdAt?: string;
-            /** Format: date-time */
-            lastSignInAt?: string | null;
-            isCurrent?: boolean;
-        };
-        ProfileAdminDto: {
-            /** Format: uuid */
-            id?: string;
-            /** Format: date-time */
-            createdAt?: string;
-            /** Format: date-time */
-            updatedAt?: string | null;
-            fullName?: string | null;
-            /** Format: uuid */
-            candidateId?: string | null;
-            publicUrlSegment?: string | null;
-            isOwner?: boolean;
-            linkedInUrl?: string | null;
-            gitHubUrl?: string | null;
-            showPicture?: boolean;
-            pictureUrl?: string | null;
-            translations?: components["schemas"]["ProfileTranslationDto"][] | null;
-        };
-        ProfileDto: {
-            /** Format: uuid */
-            id?: string;
-            /** Format: date-time */
-            createdAt?: string;
-            /** Format: date-time */
-            updatedAt?: string | null;
-            languageCode?: string | null;
-            fullName?: string | null;
-            title?: string | null;
-            summary?: string | null;
-            location?: string | null;
-            linkedInUrl?: string | null;
-            gitHubUrl?: string | null;
-            showPicture?: boolean;
-            pictureUrl?: string | null;
-        };
-        ProfilePictureDto: {
-            pictureUrl?: string | null;
-        };
-        ProfilePictureVisibilityDto: {
-            isVisible?: boolean;
-        };
-        ProfileTranslationDto: {
-            languageCode?: string | null;
-            /** Format: date-time */
-            createdAt?: string;
-            /** Format: date-time */
-            updatedAt?: string | null;
-            title?: string | null;
-            summary?: string | null;
-            location?: string | null;
-        };
-        ProfileTranslationRequest: {
-            languageCode?: string | null;
-            title?: string | null;
-            summary?: string | null;
-            location?: string | null;
-        };
-        UpdateProfilePictureVisibilityRequest: {
-            isVisible: boolean;
-        };
-        UpdateProfileRequest: {
-            fullName?: string | null;
-            translations?: components["schemas"]["ProfileTranslationRequest"][] | null;
-            linkedInUrl?: string | null;
-            gitHubUrl?: string | null;
-        };
-    };
-    responses: never;
-    parameters: never;
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
+  schemas: {
+    CandidateDto: {
+      /** Format: uuid */
+      id?: string
+      publicUrlSegment?: string | null
+      /** Format: date-time */
+      createdAt?: string
+      /** Format: date-time */
+      updatedAt?: string | null
+      /** Format: uuid */
+      profileId?: string | null
+    }
+    CreateProfileRequest: {
+      publicUrlSegment?: string | null
+      fullName?: string | null
+      defaultLanguageCode?: string | null
+      translations?: components["schemas"]["ProfileTranslationRequest"][] | null
+      linkedInUrl?: string | null
+      gitHubUrl?: string | null
+    }
+    LinkLoginRequest: {
+      linkToken?: string | null
+    }
+    LoginDto: {
+      /** Format: uuid */
+      id?: string
+      provider?: string | null
+      /** Format: date-time */
+      createdAt?: string
+      /** Format: date-time */
+      lastSignInAt?: string | null
+      isCurrent?: boolean
+    }
+    ProfileAdminDto: {
+      /** Format: uuid */
+      id?: string
+      /** Format: date-time */
+      createdAt?: string
+      /** Format: date-time */
+      updatedAt?: string | null
+      fullName?: string | null
+      defaultLanguageCode?: string | null
+      /** Format: uuid */
+      candidateId?: string | null
+      publicUrlSegment?: string | null
+      isOwner?: boolean
+      linkedInUrl?: string | null
+      gitHubUrl?: string | null
+      showPicture?: boolean
+      pictureUrl?: string | null
+      translations?: components["schemas"]["ProfileTranslationDto"][] | null
+    }
+    ProfileDto: {
+      /** Format: uuid */
+      id?: string
+      /** Format: date-time */
+      createdAt?: string
+      /** Format: date-time */
+      updatedAt?: string | null
+      languageCode?: string | null
+      defaultLanguageCode?: string | null
+      fullName?: string | null
+      title?: string | null
+      summary?: string | null
+      location?: string | null
+      linkedInUrl?: string | null
+      gitHubUrl?: string | null
+      showPicture?: boolean
+      pictureUrl?: string | null
+    }
+    ProfilePictureDto: {
+      pictureUrl?: string | null
+    }
+    ProfilePictureVisibilityDto: {
+      isVisible?: boolean
+    }
+    ProfileTranslationDto: {
+      languageCode?: string | null
+      /** Format: date-time */
+      createdAt?: string
+      /** Format: date-time */
+      updatedAt?: string | null
+      title?: string | null
+      summary?: string | null
+      location?: string | null
+    }
+    ProfileTranslationRequest: {
+      languageCode?: string | null
+      title?: string | null
+      summary?: string | null
+      location?: string | null
+    }
+    UpdateProfilePictureVisibilityRequest: {
+      isVisible: boolean
+    }
+    UpdateProfileRequest: {
+      fullName?: string | null
+      defaultLanguageCode?: string | null
+      translations?: components["schemas"]["ProfileTranslationRequest"][] | null
+      linkedInUrl?: string | null
+      gitHubUrl?: string | null
+    }
+  }
+  responses: never
+  parameters: never
+  requestBodies: never
+  headers: never
+  pathItems: never
 }
-export type $defs = Record<string, never>;
-export type operations = Record<string, never>;
+export type $defs = Record<string, never>
+export type operations = Record<string, never>

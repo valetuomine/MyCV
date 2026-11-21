@@ -33,7 +33,7 @@ namespace CV.Logic.Services
             ExternalIdentity owner,
             CancellationToken cancellationToken = default)
         {
-            ValidateRequest(request.FullName, request.Translations, request.LinkedInUrl, request.GitHubUrl);
+            ValidateRequest(request.FullName, request.DefaultLanguageCode, request.Translations, request.LinkedInUrl, request.GitHubUrl);
 
             var dbProfile = request.MapRequestToEntity();
             if (await _dataContext.CandidateLogin.ForIdentity(owner).AnyAsync(cancellationToken))
@@ -119,13 +119,25 @@ namespace CV.Logic.Services
         {
             var isOwner = await EnsureCanManageProfile(profileId, actor, canManageAny, cancellationToken);
 
-            ValidateRequest(request.FullName, request.Translations, request.LinkedInUrl, request.GitHubUrl);
-
             var dbProfile = await _dataContext.Profile
                 .Include(profile => profile.Translations)
                 .FirstOrDefaultAsync(profile => profile.Id == profileId, cancellationToken) ?? throw new NotFoundException($"Profile not found with Id: {profileId}");
 
+            var effectiveDefaultLanguageCode = string.IsNullOrWhiteSpace(request.DefaultLanguageCode)
+                ? dbProfile.DefaultLanguageCode
+                : request.DefaultLanguageCode;
+
+            ValidateRequest(request.FullName, effectiveDefaultLanguageCode, request.Translations, request.LinkedInUrl, request.GitHubUrl);
+
+            var existingTranslationIds = dbProfile.Translations.Select(translation => translation.Id).ToHashSet();
             request.MapRequestToEntity(dbProfile);
+
+            // A new translation arrives with a preset Guid, which EF would otherwise treat as an existing row.
+            foreach (var addedTranslation in dbProfile.Translations
+                .Where(translation => !existingTranslationIds.Contains(translation.Id)))
+            {
+                _dataContext.Entry(addedTranslation).State = EntityState.Added;
+            }
 
             await _dataContext.SaveChangesAsync(cancellationToken);
 
@@ -161,6 +173,7 @@ namespace CV.Logic.Services
 
         private static void ValidateRequest(
             string fullName,
+            string? defaultLanguageCode,
             IReadOnlyCollection<ProfileTranslationRequest> translations,
             string? linkedInUrl,
             string? gitHubUrl)
@@ -185,11 +198,15 @@ namespace CV.Logic.Services
                 throw new BadRequestException("At least one profile translation is required.");
             }
 
-            ValidateTranslations(translations);
+            ValidateTranslations(translations, defaultLanguageCode);
         }
 
-        private static void ValidateTranslations(IReadOnlyCollection<ProfileTranslationRequest> translations)
+        private static void ValidateTranslations(
+            IReadOnlyCollection<ProfileTranslationRequest> translations,
+            string? defaultLanguageCode)
         {
+            var normalizedDefaultLanguageCode = NormalizeAndValidateLanguageCode(defaultLanguageCode);
+
             var normalizedLanguageCodes = new HashSet<string>(StringComparer.Ordinal);
             foreach (var translation in translations)
             {
@@ -215,9 +232,10 @@ namespace CV.Logic.Services
                 }
             }
 
-            if (!normalizedLanguageCodes.Contains(ProfileMapper.DefaultLanguageCode))
+            if (!normalizedLanguageCodes.Contains(normalizedDefaultLanguageCode))
             {
-                throw new BadRequestException("A Finnish (fi) translation is required.");
+                throw new BadRequestException(
+                    $"A translation in the default language ({normalizedDefaultLanguageCode}) is required.");
             }
         }
 

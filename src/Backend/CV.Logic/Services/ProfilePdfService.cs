@@ -39,7 +39,7 @@ namespace CV.Logic.Services
             CancellationToken cancellationToken = default)
         {
             // GetProfile validates the ID and language and resolves the translation,
-            // falling back to Finnish when the requested one is missing.
+            // falling back to the profile's default language when the requested one is missing.
             var profile = await _profileService.GetProfile(profileId, languageCode, cancellationToken);
             var lastModified = profile.UpdatedAt ?? profile.CreatedAt;
 

@@ -109,6 +109,13 @@ namespace CV.DataAccess.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("DefaultLanguageCode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(5)
+                        .HasColumnType("nvarchar(5)")
+                        .HasDefaultValue("fi");
+
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasMaxLength(100)
