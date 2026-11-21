@@ -18,13 +18,34 @@ function isLanguageCode(value: unknown): value is LanguageCode {
   return Object.values<unknown>(LanguageCode).includes(value)
 }
 
+const finlandTimeZone = "Europe/Helsinki"
+
 /**
- * Reads the browser's language.
+ * Reads the visitor's time zone, which stands in for their location without
+ * asking for it or sending it anywhere.
  *
- * @returns Finnish when the browser's language is Finnish, otherwise English.
+ * @returns The IANA time zone, or an empty string when the browser has none.
  */
-function getBrowserLanguage(): LanguageCode {
-  return navigator.language.toLowerCase().startsWith(LanguageCode.Finnish)
+function getTimeZone(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone ?? ""
+  } catch {
+    return ""
+  }
+}
+
+/**
+ * Detects the language for a visitor who hasn't chosen one: the browser's
+ * language first, then the location from the time zone, so a Finnish visitor
+ * with an English browser still gets Finnish.
+ *
+ * @returns Finnish when the browser's language is Finnish or the time zone is
+ * Finland's, otherwise English.
+ */
+function getDetectedLanguage(): LanguageCode {
+  const isFinnishBrowser =
+    navigator.language?.toLowerCase().startsWith(LanguageCode.Finnish) ?? false
+  return isFinnishBrowser || getTimeZone() === finlandTimeZone
     ? LanguageCode.Finnish
     : LanguageCode.English
 }
@@ -73,21 +94,23 @@ const languageStorage: typeof validatedLanguageStorage = {
  * Reads the language the app starts in, so i18next can start in it before
  * the first render.
  *
- * @returns The saved language, or the browser's when none is saved.
+ * @returns The saved language, or the detected one (`getDetectedLanguage`)
+ * when none is saved. The detected language is never saved.
  */
 export function readLanguage(): LanguageCode {
-  return languageStorage.getItem(languageStorageKey, getBrowserLanguage())
+  return languageStorage.getItem(languageStorageKey, getDetectedLanguage())
 }
 
 /**
  * The UI language and its only source, saved in local storage. Reads the
- * saved choice on init and falls back to the browser's language. i18next
- * starts in the same language (`readLanguage`), and every write, here or in
- * another tab, switches it (`languageStorage`).
+ * saved choice on init and falls back to the detected language (the
+ * browser's, then the time zone's), which is not saved. i18next starts in the
+ * same language (`readLanguage`), and every write, here or in another tab,
+ * switches it (`languageStorage`).
  */
 export const languageAtom = atomWithStorage<LanguageCode>(
   languageStorageKey,
-  getBrowserLanguage(),
+  getDetectedLanguage(),
   languageStorage,
   { getOnInit: true },
 )
