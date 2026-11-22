@@ -1,5 +1,5 @@
-import { m as motion, type Variants } from "framer-motion"
-import { useId, useState, type JSX } from "react"
+import { AnimatePresence, m as motion, type Variants } from "framer-motion"
+import { useId, useRef, useState, type JSX } from "react"
 import { useTranslation } from "react-i18next"
 import {
   getProfilePictureUrl,
@@ -18,15 +18,18 @@ import {
   toExternalUrl,
 } from "../../utils/profileFormUtils"
 import LocationIcon from "../LocationIcon"
+import MissingLanguageNotice from "../MissingLanguageNotice"
 import ProfileName from "../ProfileName"
 import ProfilePortrait from "../ProfilePortrait"
 
 interface ReadOnlyProfileFormProps {
   values: Profile
-  onEdit?: () => void
+  onEdit?: (language?: LanguageCode) => void
   focusEdit?: boolean
   pdfPath?: string
   fallbackLanguage?: LanguageCode
+  missingLanguages?: readonly LanguageCode[]
+  onCloseMissingLanguages?: () => void
 }
 
 const container: Variants = {
@@ -92,18 +95,24 @@ function ExpandableSummary({ text }: Readonly<{ text: string }>): JSX.Element {
  * shows in the default language, with a quiet note under the eyebrow saying
  * so in the UI language. The owner's Edit profile sits on its own row under
  * the visitors' actions, so the rows break the same way in every language
- * rather than by the length of the labels.
+ * rather than by the length of the labels. Under it, the owner sees the
+ * notice about the CV's missing language versions; when the notice closes,
+ * focus moves to Edit profile, so it isn't lost with the notice.
  *
  * @param props - The component props.
  * @param props.values - The public profile.
- * @param props.onEdit - Enters edit mode; the Edit profile button shows only
- *   when given.
+ * @param props.onEdit - Enters edit mode, in the given language or the
+ *   default one; the Edit profile button shows only when given.
  * @param props.focusEdit - Whether to focus Edit profile, after editing.
  * @param props.pdfPath - The path of the CV's PDF view; the View as PDF link
  *   shows only when given.
  * @param props.fallbackLanguage - The language the content fell back to,
  *   when the CV has no translation in the UI language; the note shows only
  *   when given.
+ * @param props.missingLanguages - The language versions the owner's CV
+ *   lacks; the notice about them shows only when there are some and
+ *   `onEdit` is given.
+ * @param props.onCloseMissingLanguages - Hides the missing-language notice.
  * @returns The CV.
  */
 export default function ReadOnlyProfileForm({
@@ -112,8 +121,11 @@ export default function ReadOnlyProfileForm({
   focusEdit = false,
   pdfPath,
   fallbackLanguage,
+  missingLanguages = [],
+  onCloseMissingLanguages,
 }: Readonly<ReadOnlyProfileFormProps>): JSX.Element {
   const { t, i18n } = useTranslation()
+  const editButtonRef = useRef<HTMLButtonElement>(null)
   const publicUrl = `${window.location.origin}${window.location.pathname}`
   /** When the profile last changed, falling back to when it was created. */
   const updatedAt = formatProfileDate(
@@ -122,6 +134,12 @@ export default function ReadOnlyProfileForm({
   )
   /** Whether the owner shows the portrait; profiles from before the choice do. */
   const showPortrait = values.showPicture !== false
+
+  /** Hides the missing-language notice and moves focus to Edit profile. */
+  const closeMissingLanguages = (): void => {
+    onCloseMissingLanguages?.()
+    editButtonRef.current?.focus()
+  }
 
   return (
     <motion.div
@@ -209,14 +227,25 @@ export default function ReadOnlyProfileForm({
           {onEdit && (
             <Magnetic>
               <Button
+                ref={editButtonRef}
                 autoFocus={focusEdit}
-                onClick={onEdit}
+                onClick={() => onEdit()}
                 className="border-dashed"
               >
                 {t("cv.editProfile")}
               </Button>
             </Magnetic>
           )}
+          <AnimatePresence>
+            {onEdit && missingLanguages.length > 0 && (
+              <MissingLanguageNotice
+                key="missing-language"
+                languages={missingLanguages}
+                onEditLanguage={onEdit}
+                onClose={closeMissingLanguages}
+              />
+            )}
+          </AnimatePresence>
         </motion.div>
       </section>
       {showPortrait && (

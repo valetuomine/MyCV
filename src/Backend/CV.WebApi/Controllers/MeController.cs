@@ -11,7 +11,8 @@ using RouteAttribute = Microsoft.AspNetCore.Mvc.RouteAttribute;
 namespace CV.WebApi.Controllers
 {
     /// <summary>
-    /// Reads the caller's own CV and manages the caller's own sign-in methods.
+    /// Reads the caller's own CV, saves the caller's own CV settings and
+    /// manages the caller's own sign-in methods.
     /// <c>CvAdmin</c> gets no extra rights here.
     /// </summary>
     [Route("api/me")]
@@ -29,7 +30,7 @@ namespace CV.WebApi.Controllers
         private readonly ICurrentUser _currentUser = currentUser;
 
         [HttpGet("candidate")]
-        public async Task<ActionResult<CandidateDto>> GetOwnCandidate(CancellationToken cancellationToken)
+        public async Task<ActionResult<OwnCandidateDto>> GetOwnCandidate(CancellationToken cancellationToken)
         {
             if (_currentUser.Identity is not { } owner)
             {
@@ -38,6 +39,18 @@ namespace CV.WebApi.Controllers
 
             var result = await _candidateService.GetOwnCandidate(owner, cancellationToken);
             return Ok(result);
+        }
+
+        [HttpPut("missing-language-notice")]
+        public async Task<IActionResult> HideMissingLanguageNotice(CancellationToken cancellationToken)
+        {
+            if (_currentUser.Identity is not { } owner)
+            {
+                return Unauthorized();
+            }
+
+            await _candidateService.HideMissingLanguageNotice(owner, cancellationToken);
+            return NoContent();
         }
 
         [HttpGet("logins")]

@@ -137,14 +137,47 @@ export interface paths {
             [name: string]: unknown
           }
           content: {
-            "text/plain": components["schemas"]["CandidateDto"]
-            "application/json": components["schemas"]["CandidateDto"]
-            "text/json": components["schemas"]["CandidateDto"]
+            "text/plain": components["schemas"]["OwnCandidateDto"]
+            "application/json": components["schemas"]["OwnCandidateDto"]
+            "text/json": components["schemas"]["OwnCandidateDto"]
           }
         }
       }
     }
     put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/me/missing-language-notice": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put: {
+      parameters: {
+        query?: never
+        header?: never
+        path?: never
+        cookie?: never
+      }
+      requestBody?: never
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown
+          }
+          content?: never
+        }
+      }
+    }
     post?: never
     delete?: never
     options?: never
@@ -869,6 +902,18 @@ export interface components {
       /** Format: date-time */
       lastSignInAt?: string | null
       isCurrent?: boolean
+    }
+    OwnCandidateDto: {
+      /** Format: uuid */
+      id?: string
+      publicUrlSegment?: string | null
+      /** Format: date-time */
+      createdAt?: string
+      /** Format: date-time */
+      updatedAt?: string | null
+      /** Format: uuid */
+      profileId?: string | null
+      hideMissingLanguageNotice?: boolean
     }
     ProfileAdminDto: {
       /** Format: uuid */

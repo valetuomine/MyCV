@@ -12,7 +12,7 @@ namespace CV.Logic.Tests.Services
 {
     /// <summary>
     /// Checks that <see cref="CandidateService.GetOwnCandidate"/> returns the CV linked to the sign-in identity
-    /// and nobody else's. The queries run against an in-memory SQLite database, so the identity filter and the
+    /// and nobody else's, and that <see cref="CandidateService.HideMissingLanguageNotice"/> changes only that CV. The queries run against an in-memory SQLite database, so the identity filter and the
     /// projection to the candidate are translated to real SQL. SQLite compares text case-sensitively, unlike
     /// SQL Server's default collation, so these tests don't cover identities that differ only in case.
     /// </summary>
@@ -100,6 +100,54 @@ namespace CV.Logic.Tests.Services
         public async Task GetOwnCandidateRequiresAnIdentity()
         {
             await Assert.ThrowsExactlyAsync<ArgumentNullException>(() => _service.GetOwnCandidate(null!));
+        }
+
+        [TestMethod]
+        public async Task GetOwnCandidateShowsTheMissingLanguageNoticeByDefault()
+        {
+            var result = await _service.GetOwnCandidate(Owner);
+
+            Assert.IsFalse(result.HideMissingLanguageNotice);
+        }
+
+        [TestMethod]
+        public async Task HideMissingLanguageNoticeHidesItForTheOwnersCvOnly()
+        {
+            await _service.HideMissingLanguageNotice(Owner);
+
+            Assert.IsTrue((await _service.GetOwnCandidate(Owner)).HideMissingLanguageNotice);
+            Assert.IsFalse((await _service.GetOwnCandidate(OtherOwner)).HideMissingLanguageNotice);
+        }
+
+        [TestMethod]
+        public async Task HideMissingLanguageNoticeLeavesUpdatedAtAndCanRepeat()
+        {
+            var updatedAtBefore = (await _service.GetOwnCandidate(Owner)).UpdatedAt;
+
+            await _service.HideMissingLanguageNotice(Owner);
+            await _service.HideMissingLanguageNotice(Owner);
+            var result = await _service.GetOwnCandidate(Owner);
+
+            Assert.AreEqual(updatedAtBefore, result.UpdatedAt);
+            Assert.IsTrue(result.HideMissingLanguageNotice);
+        }
+
+        [TestMethod]
+        public async Task HideMissingLanguageNoticeIsNotFoundWithoutALinkedCv()
+        {
+            var identity = new ExternalIdentity(LoginProvider.Entra, "tenant", "no-cv", null, false);
+
+            var exception = await Assert.ThrowsExactlyAsync<NotFoundException>(
+                () => _service.HideMissingLanguageNotice(identity));
+
+            Assert.AreEqual("No CV is linked to this sign-in.", exception.Message);
+        }
+
+        [TestMethod]
+        public async Task HideMissingLanguageNoticeRequiresAnIdentity()
+        {
+            await Assert.ThrowsExactlyAsync<ArgumentNullException>(
+                () => _service.HideMissingLanguageNotice(null!));
         }
 
         private static CandidateLogin CreateLogin(ExternalIdentity identity)

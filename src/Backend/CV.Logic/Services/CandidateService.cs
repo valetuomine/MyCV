@@ -59,7 +59,7 @@ namespace CV.Logic.Services
             return await GetCandidateByPublicUrlSegment(_featuredOptions.PublicUrlSegment, cancellationToken);
         }
 
-        public async Task<CandidateDto> GetOwnCandidate(
+        public async Task<OwnCandidateDto> GetOwnCandidate(
             ExternalIdentity owner,
             CancellationToken cancellationToken = default)
         {
@@ -71,8 +71,29 @@ namespace CV.Logic.Services
                 .Select(login => login.Candidate)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            return dbCandidate?.MapEntityToDto()
+            return dbCandidate?.MapEntityToOwnDto()
                 ?? throw new NotFoundException("No CV is linked to this sign-in.");
+        }
+
+        public async Task HideMissingLanguageNotice(
+            ExternalIdentity owner,
+            CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(owner);
+
+            var candidateId = await _dataContext.CandidateLogin
+                .AsNoTracking()
+                .ForIdentity(owner)
+                .Select(login => (Guid?)login.CandidateId)
+                .FirstOrDefaultAsync(cancellationToken)
+                ?? throw new NotFoundException("No CV is linked to this sign-in.");
+
+            // A UI setting, not a change to the CV, so the CV's public UpdatedAt stays as it is.
+            await _dataContext.Candidate
+                .Where(candidate => candidate.Id == candidateId)
+                .ExecuteUpdateAsync(
+                    setters => setters.SetProperty(candidate => candidate.HideMissingLanguageNotice, true),
+                    cancellationToken);
         }
 
         public async Task DeleteCandidate(

@@ -11,13 +11,19 @@ import {
   type FormLanguage,
 } from "./formLanguageContext"
 
+interface FormLanguageProviderProps {
+  initialLanguage?: LanguageCode
+  children: ReactNode
+}
+
 /** The translated fields, in the order a failed submit looks for an error. */
 const translationFields = ["title", "summary", "location"] as const
 
 /**
  * Holds the language the profile form shows, one at a time, so the fields
  * and the edit view's preview follow the same language. It starts in the
- * default language.
+ * language it is given, such as one the missing-language notice asked to
+ * add, and otherwise in the default language.
  *
  * After a failed submit with translation errors, it shows the active
  * language when that has errors, and otherwise the first language with
@@ -33,16 +39,18 @@ const translationFields = ["title", "summary", "location"] as const
  * its input changes.
  *
  * @param props - The component props.
+ * @param props.initialLanguage - The language to show first, if not the default.
  * @param props.children - The form content that reads the language.
  * @returns The children with the shown language.
  */
 export default function FormLanguageProvider({
+  initialLanguage,
   children,
-}: Readonly<{ children: ReactNode }>): JSX.Element {
+}: Readonly<FormLanguageProviderProps>): JSX.Element {
   const { control, getValues } = useFormContext<ProfileSchema>()
   const { errors, submitCount } = useFormState({ control })
-  const [activeLanguage, setActiveLanguage] = useState<LanguageCode>(() =>
-    getValues("defaultLanguageCode"),
+  const [activeLanguage, setActiveLanguage] = useState<LanguageCode>(
+    () => initialLanguage ?? getValues("defaultLanguageCode"),
   )
   const [checkedSubmitCount, setCheckedSubmitCount] = useState(submitCount)
   const [autoFocusField, setAutoFocusField] = useState<string | null>(null)

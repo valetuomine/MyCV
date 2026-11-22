@@ -32,6 +32,9 @@ namespace CV.DataAccess.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("HideMissingLanguageNotice")
+                        .HasColumnType("bit");
+
                     b.Property<Guid?>("ProfileId")
                         .HasColumnType("uniqueidentifier");
 

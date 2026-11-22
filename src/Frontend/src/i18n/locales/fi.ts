@@ -87,6 +87,26 @@ export const fi: Translation = {
       fi: "Tämä CV on saatavilla vain suomeksi.",
       en: "Tämä CV on saatavilla vain englanniksi.",
     },
+    missingLanguage: {
+      label: "Puuttuvat kieliversiot",
+      message_one: "CV:stäsi puuttuu {{languages}} kieliversio.",
+      message_other: "CV:stäsi puuttuvat {{languages}} kieliversiot.",
+      hint_one: "Kunnes lisäät sen, vierailijat näkevät CV:si oletuskielellä.",
+      hint_other: "Kunnes lisäät ne, vierailijat näkevät CV:si oletuskielellä.",
+      names: {
+        fi: "suomen",
+        en: "englannin",
+      },
+      add: {
+        fi: "Lisää suomenkielinen versio",
+        en: "Lisää englanninkielinen versio",
+      },
+      dontShowAgain: "Älä näytä uudelleen",
+      hiding: "Tallennetaan…",
+      hideFailed:
+        "Valintaa ei voitu tallentaa. Tarkista yhteys ja yritä uudelleen.",
+      close: "Sulje ilmoitus",
+    },
   },
   pdf: {
     eyebrow: "Ansioluettelo · PDF",

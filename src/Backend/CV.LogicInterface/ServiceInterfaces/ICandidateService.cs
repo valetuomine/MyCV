@@ -39,7 +39,21 @@ namespace CV.LogicInterface.ServiceInterfaces
         /// <exception cref="CV.Common.Exceptions.NotFoundException">
         /// No candidate is linked to the sign-in identity.
         /// </exception>
-        Task<CandidateDto> GetOwnCandidate(
+        Task<OwnCandidateDto> GetOwnCandidate(
+            ExternalIdentity owner,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Hides the notice about the profile's missing languages for good, on every device, for the candidate
+        /// that the sign-in identity is one of the logins of. Repeating it changes nothing.
+        /// <c>CvAdmin</c> gets no extra rights here.
+        /// </summary>
+        /// <param name="owner">The caller's validated sign-in identity.</param>
+        /// <param name="cancellationToken">The token used to cancel the operation.</param>
+        /// <exception cref="CV.Common.Exceptions.NotFoundException">
+        /// No candidate is linked to the sign-in identity.
+        /// </exception>
+        Task HideMissingLanguageNotice(
             ExternalIdentity owner,
             CancellationToken cancellationToken = default);
 

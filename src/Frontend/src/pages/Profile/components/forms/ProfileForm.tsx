@@ -17,13 +17,16 @@ import {
   getLinkSignInResult,
   type LinkSignInResult,
 } from "../../../../auth/signInLocationState"
+import { useAuthSession } from "../../../../auth/authSession"
 import useCanEditProfile from "../../../../auth/useCanEditProfile"
+import { useGetOwnCandidateQuery } from "../../../../api/candidateQueries"
 import {
   useGetProfileAdminQuery,
   useUpdateProfileMutation,
   type Profile,
 } from "../../../../api/profileQueries"
 import {
+  profileLanguages,
   profileSchema,
   type ProfileSchema,
 } from "../../schemas/profile-form-schema"
@@ -75,6 +78,7 @@ interface EditViewProps {
   linkResult: LinkSignInResult | null
   isSaving: boolean
   saveFailure: SaveFailure | null
+  initialLanguage?: LanguageCode
   onSubmit: SubmitEventHandler<HTMLFormElement>
   onCancel: () => void
 }
@@ -91,6 +95,7 @@ interface EditViewProps {
  * @param props.linkResult - How adding a sign-in method ended, when the view opened on the way back from it.
  * @param props.isSaving - Whether a save is in flight.
  * @param props.saveFailure - Why the last save failed, if it did.
+ * @param props.initialLanguage - The language to edit first, if not the default.
  * @param props.onSubmit - Validates and saves the profile.
  * @param props.onCancel - Discards the changes and leaves edit mode.
  * @returns The edit form, or its loading or error status.
@@ -102,6 +107,7 @@ function EditView({
   linkResult,
   isSaving,
   saveFailure,
+  initialLanguage,
   onSubmit,
   onCancel,
 }: Readonly<EditViewProps>): JSX.Element {
@@ -140,6 +146,7 @@ function EditView({
         pictureUrl={adminProfile.pictureUrl}
         showPicture={adminProfile.showPicture !== false}
         savedFullName={adminProfile.fullName}
+        initialLanguage={initialLanguage}
       />
       {adminProfile.isOwner && (
         <SignInMethodsSection
@@ -164,6 +171,15 @@ function EditView({
  * language change. The edit view carries `data-edit-view`, which
  * `ProfilePage` reads to widen the page for it.
  *
+ * The owner, and not a `CvAdmin` editing someone else's CV, sees a notice
+ * in the CV view while the profile lacks a language version, unless they
+ * chose Don't show again, which their own candidate record carries so it
+ * holds on every device. The notice waits for both the access check's admin
+ * profile and that record, so it never flashes before the choice is known.
+ * Its close button hides it in this component's state, so it comes back on
+ * the next page load but not after a round trip to the edit view, and its
+ * add buttons open the edit view in that language.
+ *
  * @param props - The component props.
  * @param props.values - The public profile.
  * @param props.pdfPath - The path of the CV's PDF view, for the CV's link to it.
@@ -184,7 +200,53 @@ export default function ProfileForm({
     getLinkSignInResult(location.state),
   )
   const [isEditing, setIsEditing] = useState(linkResult !== null)
-  const { canEdit, publicUrlSegment } = useCanEditProfile(values.id, isEditing)
+  const { canEdit, publicUrlSegment, adminProfile, isRefreshing } =
+    useCanEditProfile(values.id, isEditing)
+  /**
+   * Whether the access check has shown the user to be the owner. It stays
+   * set while the check pauses, in the edit view or during a sign-in
+   * renewal, so the owner's settings stay cached for the CV view, and
+   * clears on signing out.
+   */
+  const [isKnownOwner, setIsKnownOwner] = useState(false)
+  const { isSignedIn } = useAuthSession()
+  if (adminProfile?.isOwner && !isKnownOwner) {
+    setIsKnownOwner(true)
+  } else if (!isSignedIn && isKnownOwner) {
+    setIsKnownOwner(false)
+  }
+  /**
+   * The owner's own settings, read in the background so that a refused
+   * request never interrupts reading the CV.
+   */
+  const ownCandidateQuery = useGetOwnCandidateQuery(
+    isKnownOwner ? { reportsRefusal: false } : skipToken,
+  )
+  const [isLanguageNoticeClosed, setIsLanguageNoticeClosed] = useState(false)
+  /** Hides the missing-language notice until the next page load. */
+  const closeLanguageNotice = useCallback(
+    () => setIsLanguageNoticeClosed(true),
+    [],
+  )
+  /** The language the edit view opens in, when the notice asked for one. */
+  const [editLanguage, setEditLanguage] = useState<LanguageCode>()
+  /**
+   * The language versions the owner's CV lacks, while the notice about them
+   * may show; empty otherwise, and while a refetch after a save may still
+   * hold the old translations.
+   */
+  const missingLanguages =
+    adminProfile?.isOwner &&
+    !isRefreshing &&
+    ownCandidateQuery.data?.hideMissingLanguageNotice === false &&
+    !isLanguageNoticeClosed
+      ? profileLanguages.filter(
+          (code) =>
+            !adminProfile.translations?.some(
+              (translation) => translation.languageCode?.toLowerCase() === code,
+            ),
+        )
+      : []
   /** After leaving edit mode, focus goes back to the Edit profile button. */
   const [hasEdited, setHasEdited] = useState(false)
   const [savedNotice, setSavedNotice] = useState<string | null>(null)
@@ -258,9 +320,15 @@ export default function ProfileForm({
     setLinkResult(null)
   }
 
-  /** Enters edit mode, which starts loading the admin profile. */
-  const startEditing = (): void => {
+  /**
+   * Enters edit mode, which starts loading the admin profile.
+   *
+   * @param language - The language to edit first, or the default one when
+   *   not given.
+   */
+  const startEditing = (language?: LanguageCode): void => {
     setSaveFailure(null)
+    setEditLanguage(language)
     setIsEditing(true)
   }
 
@@ -291,6 +359,7 @@ export default function ProfileForm({
                 linkResult={linkResult}
                 isSaving={updateProfileState.isLoading}
                 saveFailure={saveFailure}
+                initialLanguage={editLanguage}
                 onSubmit={saveProfile}
                 onCancel={cancelEditing}
               />
@@ -301,6 +370,8 @@ export default function ProfileForm({
                 focusEdit={hasEdited}
                 pdfPath={pdfPath}
                 fallbackLanguage={fallbackLanguage}
+                missingLanguages={missingLanguages}
+                onCloseMissingLanguages={closeLanguageNotice}
               />
             )}
           </motion.div>

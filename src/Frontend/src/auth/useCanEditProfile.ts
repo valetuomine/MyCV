@@ -1,10 +1,15 @@
 import { skipToken } from "@reduxjs/toolkit/query"
-import { useGetProfileAdminQuery } from "../api/profileQueries"
+import {
+  useGetProfileAdminQuery,
+  type ProfileAdmin,
+} from "../api/profileQueries"
 import { useAuthSession } from "./authSession"
 
 interface EditableProfileAccess {
   canEdit: boolean
   publicUrlSegment?: string
+  adminProfile?: ProfileAdmin
+  isRefreshing: boolean
 }
 
 /**
@@ -22,7 +27,9 @@ interface EditableProfileAccess {
  * @param profileId - The profile to check, once it is known.
  * @param skip - Whether to leave the check out, such as while the edit view
  * loads the same entry itself.
- * @returns Whether the user can edit, and the profile's public URL segment.
+ * @returns Whether the user can edit, the profile's public URL segment, the
+ *   admin profile once the check has loaded it, and whether that profile is
+ *   being fetched again, as after a save, when it may be out of date.
  */
 export default function useCanEditProfile(
   profileId?: string,
@@ -39,5 +46,7 @@ export default function useCanEditProfile(
   return {
     canEdit: canCheckAccess && Boolean(profileQuery.data),
     publicUrlSegment: profileQuery.data?.publicUrlSegment ?? undefined,
+    adminProfile: canCheckAccess ? profileQuery.data : undefined,
+    isRefreshing: canCheckAccess && profileQuery.isFetching,
   }
 }

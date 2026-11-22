@@ -8,7 +8,7 @@ import {
 import { flushSync } from "react-dom"
 import { useFormState } from "react-hook-form"
 import { useTranslation } from "react-i18next"
-import { ButtonVariant } from "../../../../types"
+import { ButtonVariant, type LanguageCode } from "../../../../types"
 import Button from "../../../components/Button"
 import CopyLinkButton from "../../../components/CopyLinkButton"
 import Eyebrow from "../../../components/Eyebrow"
@@ -29,6 +29,7 @@ interface EditableProfileFormProps {
   pictureUrl?: string | null
   showPicture: boolean
   savedFullName?: string | null
+  initialLanguage?: LanguageCode
 }
 
 /**
@@ -57,6 +58,7 @@ interface EditableProfileFormProps {
  * @param props.pictureUrl - The current picture's path from the API, if any.
  * @param props.showPicture - Whether the CV shows the picture section.
  * @param props.savedFullName - The saved name, for the picture's initials.
+ * @param props.initialLanguage - The language to edit first, if not the default.
  * @returns The edit form.
  */
 export default function EditableProfileForm({
@@ -69,6 +71,7 @@ export default function EditableProfileForm({
   pictureUrl,
   showPicture,
   savedFullName,
+  initialLanguage,
 }: Readonly<EditableProfileFormProps>): JSX.Element {
   const { t } = useTranslation()
   const headingRef = useRef<HTMLHeadingElement>(null)
@@ -129,7 +132,7 @@ export default function EditableProfileForm({
       aria-busy={isSaving}
       className="group/edit grid w-full items-start gap-14 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-16 2xl:grid-cols-[45.6rem_minmax(0,1fr)]"
     >
-      <FormLanguageProvider>
+      <FormLanguageProvider initialLanguage={initialLanguage}>
         <div className="grid min-w-0 gap-6">
           <div className="grid gap-4">
             <Eyebrow>{t("profileForm.editing")}</Eyebrow>

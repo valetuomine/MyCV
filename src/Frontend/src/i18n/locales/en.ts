@@ -84,6 +84,28 @@ export const en = {
       fi: "This CV is only available in Finnish.",
       en: "This CV is only available in English.",
     },
+    missingLanguage: {
+      label: "Missing language versions",
+      message_one: "Your CV has no {{languages}} version.",
+      message_other: "Your CV has no {{languages}} versions.",
+      hint_one:
+        "Until you add it, visitors see your CV in its default language.",
+      hint_other:
+        "Until you add them, visitors see your CV in its default language.",
+      names: {
+        fi: "Finnish",
+        en: "English",
+      },
+      add: {
+        fi: "Add the Finnish version",
+        en: "Add the English version",
+      },
+      dontShowAgain: "Don't show again",
+      hiding: "Saving…",
+      hideFailed:
+        "Your choice couldn't be saved. Check your connection and try again.",
+      close: "Close notice",
+    },
   },
   pdf: {
     eyebrow: "Curriculum vitae · PDF",
