@@ -1,11 +1,23 @@
 import { z } from "zod"
 import { validationMessage } from "../../../i18n/validationMessage"
 import { LanguageCode } from "../../../types"
-import { isAllowedProfileLink } from "../utils/profileFormUtils"
+import {
+  hasTranslationContent,
+  isAllowedProfileLink,
+} from "../utils/profileFormUtils"
+
+/** The languages a profile can have, in the order the form lists them. */
+export const profileLanguages = [
+  LanguageCode.Finnish,
+  LanguageCode.English,
+] as const
+
+/** A language the profile can have. */
+const languageCodeSchema = z.enum(profileLanguages)
 
 /** One language's title, summary and location, with their length limits. */
 const profileTranslationSchema = z.object({
-  languageCode: z.enum([LanguageCode.Finnish, LanguageCode.English]),
+  languageCode: languageCodeSchema,
   title: z.string().max(100, validationMessage("titleMax")),
   summary: z.string().max(2500, validationMessage("summaryMax")).nullable(),
   location: z.string().max(100, validationMessage("locationMax")).nullable(),
@@ -22,10 +34,10 @@ const urlSchema = z
   .nullable()
 
 /**
- * The profile form. Requires a full name and a Finnish translation with a
- * title, allows each language only once, and requires a title for any
- * translation that has content. Its messages are translation keys, which
- * the fields translate when they show them.
+ * The profile form. Requires a full name, a default language and that
+ * language's translation with a title, allows each language only once, and
+ * requires a title for any other translation that has content. Its messages
+ * are translation keys, which the fields translate when they show them.
  */
 export const profileSchema = z
   .object({
@@ -36,9 +48,10 @@ export const profileSchema = z
       .max(100, validationMessage("fullNameMax")),
     linkedInUrl: urlSchema,
     gitHubUrl: urlSchema,
+    defaultLanguageCode: languageCodeSchema,
     translations: z.array(profileTranslationSchema),
   })
-  .superRefine(({ translations }, context) => {
+  .superRefine(({ defaultLanguageCode, translations }, context) => {
     const languageCodes = new Set<string>()
 
     for (const [index, translation] of translations.entries()) {
@@ -51,13 +64,17 @@ export const profileSchema = z
       }
       languageCodes.add(translation.languageCode)
 
-      const hasContent = [
-        translation.title,
-        translation.summary,
-        translation.location,
-      ].some((value) => Boolean(value?.trim()))
+      if (translation.title.trim()) {
+        continue
+      }
 
-      if (hasContent && !translation.title.trim()) {
+      if (translation.languageCode === defaultLanguageCode) {
+        context.addIssue({
+          code: "custom",
+          message: validationMessage("defaultTitleRequired"),
+          path: ["translations", index, "title"],
+        })
+      } else if (hasTranslationContent(translation)) {
         context.addIssue({
           code: "custom",
           message: validationMessage("titleRequired"),
@@ -66,25 +83,15 @@ export const profileSchema = z
       }
     }
 
-    const finnishTranslation = translations.find(
-      ({ languageCode }) => languageCode === LanguageCode.Finnish,
-    )
-
-    if (!finnishTranslation) {
+    if (
+      !translations.some(
+        ({ languageCode }) => languageCode === defaultLanguageCode,
+      )
+    ) {
       context.addIssue({
         code: "custom",
-        message: validationMessage("finnishRequired"),
+        message: validationMessage("defaultRequired"),
         path: ["translations"],
-      })
-    } else if (!finnishTranslation.title.trim()) {
-      context.addIssue({
-        code: "custom",
-        message: validationMessage("finnishTitleRequired"),
-        path: [
-          "translations",
-          translations.indexOf(finnishTranslation),
-          "title",
-        ],
       })
     }
   })
@@ -117,23 +124,20 @@ export const createProfileSchema = profileSchema.safeExtend({
 export type ProfileSchema = z.infer<typeof profileSchema>
 export type CreateProfileSchema = z.infer<typeof createProfileSchema>
 
+/**
+ * The create form's values: English as the default language, because the
+ * app is not only for Finnish users, and an empty row for every language.
+ */
 export const createProfileDefaultValues: CreateProfileSchema = {
   publicUrlSegment: "",
   fullName: "",
   linkedInUrl: "",
   gitHubUrl: "",
-  translations: [
-    {
-      languageCode: LanguageCode.Finnish,
-      title: "",
-      summary: "",
-      location: "",
-    },
-    {
-      languageCode: LanguageCode.English,
-      title: "",
-      summary: "",
-      location: "",
-    },
-  ],
+  defaultLanguageCode: LanguageCode.English,
+  translations: profileLanguages.map((languageCode) => ({
+    languageCode,
+    title: "",
+    summary: "",
+    location: "",
+  })),
 }

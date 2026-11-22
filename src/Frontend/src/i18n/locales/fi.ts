@@ -83,6 +83,10 @@ export const fi: Translation = {
     editProfile: "Muokkaa profiilia",
     portraitOf: "Kuva: {{name}}",
     portrait: "Profiilikuva",
+    onlyAvailableIn: {
+      fi: "Tämä CV on saatavilla vain suomeksi.",
+      en: "Tämä CV on saatavilla vain englanniksi.",
+    },
   },
   pdf: {
     eyebrow: "Ansioluettelo · PDF",
@@ -126,7 +130,6 @@ export const fi: Translation = {
     missingIdUpdate: "Profiilia ei voi päivittää, koska sen tunniste puuttuu.",
     missingIdEdit: "Profiilia ei voi muokata, koska sen tunniste puuttuu.",
     livePreview: "Esikatselu",
-    previewLanguage: "Suomi",
     previewName: "Nimesi",
   },
   profileFields: {
@@ -135,9 +138,23 @@ export const fi: Translation = {
     fullNamePlaceholder: "Maija Virtanen",
     gitHubPlaceholder: "https://github.com/kayttajanimi",
     linkedInPlaceholder: "https://www.linkedin.com/in/kayttajanimi",
-    finnish: "Suomi",
-    english: "Englanti",
-    required: "Pakollinen",
+    languages: "Kielet",
+    defaultLanguage: "Oletuskieli",
+    editingLanguage: "Muokattava kieli",
+    defaultLanguageHint:
+      "CV näytetään oletuskielellä, kun vierailijan kielellä ei ole käännöstä. Muut kielet ovat valinnaisia.",
+    defaultLanguagePrompt:
+      "Tämä on oletuskielesi, joten täytä sen tiedot. Nimike tarvitaan ennen tallennusta.",
+    languageLabels: {
+      fi: "Suomi",
+      en: "Englanti",
+    },
+    languageNames: {
+      fi: "Suomi",
+      en: "English",
+    },
+    languageHasErrors: "(sisältää virheitä)",
+    defaultBadge: "Oletuskieli",
     optional: "Valinnainen",
     titleFi: "Ammattinimike (suomeksi)",
     summaryFi: "Tiivistelmä (suomeksi)",
@@ -254,8 +271,8 @@ export const fi: Translation = {
       "Linkin pitää alkaa http:// tai https://, tai olla ilman alkua, kuten github.com/nimi",
     duplicateTranslation: "Kullakin kielellä voi olla vain yksi käännös",
     titleRequired: "Nimike on pakollinen, kun käännöksellä on sisältöä",
-    finnishRequired: "Suomenkielinen käännös on pakollinen",
-    finnishTitleRequired: "Suomenkielinen nimike on pakollinen",
+    defaultRequired: "Oletuskielellä on oltava käännös",
+    defaultTitleRequired: "Nimike on pakollinen oletuskielellä",
     cvLinkRequired: "CV:n linkki on pakollinen",
     cvLinkMax: "CV:n linkki voi olla enintään 100 merkkiä",
     cvLinkFormat:

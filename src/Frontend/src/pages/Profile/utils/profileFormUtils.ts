@@ -226,6 +226,25 @@ export function isAllowedProfileLink(value: string | null): boolean {
   return httpAddress.test(normalized) && URL.canParse(normalized)
 }
 
+/**
+ * Tells whether a profile translation has any content.
+ *
+ * @param translation - The translation's form values.
+ * @param translation.title - The title.
+ * @param translation.summary - The summary.
+ * @param translation.location - The location.
+ * @returns Whether its title, summary or location has text.
+ */
+export function hasTranslationContent(translation: {
+  title: string
+  summary?: string | null
+  location?: string | null
+}): boolean {
+  return [translation.title, translation.summary, translation.location].some(
+    (value) => Boolean(value?.trim()),
+  )
+}
+
 /** The UTF-16 code of `/`. */
 const slashCode = 0x2f
 

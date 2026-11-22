@@ -22,6 +22,7 @@ interface FormFieldProps extends FieldFrameProps {
   required?: boolean
   description?: ReactNode
   action?: ReactNode
+  shakeOnMount?: boolean
   children: ReactNode
 }
 
@@ -96,7 +97,9 @@ function pickCountTone(length: number, maxLength: number): string {
  * The field shakes once (`animate-cv-shake`) when a submit leaves it
  * invalid, but not when its error changes while typing, and not for reduced
  * motion. A new `submitCount` starts the shake during render, without an
- * effect, and the shake's end clears it.
+ * effect, and the shake's end clears it. A field that a failed submit
+ * mounts, such as one in a language the submit switched to, never sees its
+ * `submitCount` change, so `shakeOnMount` shakes it when it mounts invalid.
  *
  * @param props - The component props.
  * @param props.id - The field element's ID, which the label points to.
@@ -116,6 +119,8 @@ function pickCountTone(length: number, maxLength: number): string {
  * submit button. It shares the field's row, so it stays level with the field
  * and as tall as it whatever the label does, and focusing it doesn't light
  * the label or the count.
+ * @param props.shakeOnMount - Whether a failed submit mounted the field, so
+ * it shakes when it mounts with an error.
  * @param props.children - The field.
  * @returns The labelled field with its count, message and description.
  */
@@ -132,12 +137,15 @@ export default function FormField({
   submitCount,
   description,
   action,
+  shakeOnMount = false,
   children,
 }: Readonly<FormFieldProps>): JSX.Element {
   const { t } = useTranslation()
   const trackPointer = usePointerLight()
   const [handledSubmitCount, setHandledSubmitCount] = useState(submitCount)
-  const [isShaking, setIsShaking] = useState(false)
+  const [isShaking, setIsShaking] = useState(
+    () => shakeOnMount && Boolean(error) && !prefersReducedMotion(),
+  )
 
   if (submitCount !== handledSubmitCount) {
     setHandledSubmitCount(submitCount)

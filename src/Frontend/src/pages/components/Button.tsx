@@ -71,7 +71,14 @@ const variantShapes: Record<ButtonVariant, ButtonShape> = {
  * sign-in providers' own, so its hover is a faint layer of its own text colour
  * (`::after`, `bg-current`), which shows on any brand colours in both themes.
  * Segment is one option of a choice inside a pill track, such as the
- * language: `aria-pressed` marks the chosen one with the accent fill.
+ * language: `aria-pressed` marks the chosen one with the accent fill, and
+ * `data-invalid` turns a segment whose fields fail validation danger red,
+ * like an invalid field: a danger tint with a danger edge, or a danger fill
+ * when it is chosen, and a danger-coloured glow. On hover the tint deepens,
+ * and the fill mixes in 15% of the ink colour, so it darkens in the light
+ * theme and lightens in the dark one, like `accent-strong`, and its label's
+ * contrast rises. The tinted segment keeps the ink colour for its label,
+ * which stays readable on the tint.
  * Switch is the track of a `role="switch"` button, whose child is the thumb:
  * `aria-checked` fills it with the accent. Primary, Secondary, Danger, Icon
  * and Switch carry the resting edge glow (`shadow-cv-edge`); Danger's is
@@ -117,9 +124,9 @@ const variantClasses: Record<
       "hover:text-cv-ink hover:decoration-cv-ink not-print:hover:text-shadow-cv-edge-hover active:scale-[0.97]",
   },
   [ButtonVariant.Segment]: {
-    rest: "rounded-full text-cv-copy aria-pressed:bg-cv-accent aria-pressed:text-cv-accent-ink",
+    rest: "rounded-full text-cv-copy aria-pressed:bg-cv-accent aria-pressed:text-cv-accent-ink data-invalid:bg-cv-danger/15 data-invalid:text-cv-ink data-invalid:inset-ring data-invalid:inset-ring-cv-danger/60 data-invalid:[--edge:var(--cv-danger)] data-invalid:aria-pressed:bg-cv-danger data-invalid:aria-pressed:text-cv-accent-ink",
     interactive:
-      "hover:bg-cv-accent/8 hover:text-cv-ink not-print:hover:shadow-cv-edge-hover aria-pressed:hover:bg-cv-accent-strong aria-pressed:hover:text-cv-accent-ink active:scale-[0.97]",
+      "hover:bg-cv-accent/8 hover:text-cv-ink not-print:hover:shadow-cv-edge-hover aria-pressed:hover:bg-cv-accent-strong aria-pressed:hover:text-cv-accent-ink data-invalid:hover:bg-cv-danger/25 data-invalid:hover:text-cv-ink data-invalid:aria-pressed:hover:bg-[color-mix(in_oklab,var(--color-cv-danger),var(--color-cv-ink)_15%)] data-invalid:aria-pressed:hover:text-cv-accent-ink active:scale-[0.97]",
   },
   [ButtonVariant.Switch]: {
     rest: "rounded-full border border-cv-field-border bg-cv-field-surface shadow-cv-edge aria-checked:border-cv-accent aria-checked:bg-cv-accent",

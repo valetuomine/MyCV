@@ -26,6 +26,8 @@ interface RHFTextareaProps<TFieldValues extends FieldValues> extends Omit<
   name: Path<TFieldValues>
   label: string
   description?: ReactNode
+  deps?: Path<TFieldValues>
+  shakeOnMount?: boolean
 }
 
 /** Tells whether the browser can size a textarea to its content in CSS. */
@@ -61,6 +63,10 @@ function fitToContent(textarea: HTMLTextAreaElement): void {
  * @param props.required - Whether the field is required, marked with `*`.
  * @param props.description - A hint below the field, which also describes it
  * to screen readers.
+ * @param props.deps - Another field that validates again when this one
+ * changes, because its rule reads this field's value.
+ * @param props.shakeOnMount - Whether a failed submit mounted the field, so
+ * it shakes when it mounts with an error.
  * @returns The labelled textarea.
  */
 export default function RHFTextarea<TFieldValues extends FieldValues>({
@@ -70,10 +76,12 @@ export default function RHFTextarea<TFieldValues extends FieldValues>({
   maxLength,
   required,
   description,
+  deps,
+  shakeOnMount,
   ...textareaAttributes
 }: Readonly<RHFTextareaProps<TFieldValues>>): JSX.Element {
   const { id, error, describedBy, value, frameProps, registration } =
-    useFormField(name, maxLength, description)
+    useFormField(name, maxLength, description, deps)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const { ref: registerRef, ...textareaProps } = registration
   /**
@@ -122,6 +130,7 @@ export default function RHFTextarea<TFieldValues extends FieldValues>({
       label={label}
       required={required}
       description={description}
+      shakeOnMount={shakeOnMount}
     >
       <textarea
         {...textareaAttributes}

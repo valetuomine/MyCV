@@ -12,13 +12,15 @@ import RouteMessage from "../RouteMessage"
 import { Tone } from "../../../../types"
 import { describeRouteError } from "../../utils/describeRouteError"
 import { RoutePaths } from "../../../../routePaths"
+import { profileLanguages } from "../../schemas/profile-form-schema"
 
 /**
  * The public CV route. Looks up the candidate by its public URL segment, then
  * loads and shows their profile in the UI language, with a skeleton while
  * loading and a message for a missing profile or a failed request. After a
  * language change, the CV in the previous language stays on screen until the
- * new one arrives.
+ * new one arrives. When the CV has no translation in the UI language, it
+ * shows in its default language with a note saying so.
  *
  * @returns The CV, its skeleton, or a message.
  */
@@ -32,6 +34,17 @@ export default function CandidateProfileRoute(): JSX.Element {
   const profileId = candidateQuery.data?.profileId
   const profileQuery = useGetProfileQuery(
     profileId ? { profileId, languageCode: language } : skipToken,
+  )
+  /**
+   * The language the CV fell back to, when it has no translation in the UI
+   * language. It reads only the answer for the current language, so the
+   * previous language's CV, which stays on screen after a language change,
+   * shows no note until the new answer arrives.
+   */
+  const fallbackLanguage = profileLanguages.find(
+    (code) =>
+      code !== language &&
+      code === profileQuery.currentData?.languageCode?.toLowerCase(),
   )
 
   if (candidateQuery.isLoading) {
@@ -74,6 +87,7 @@ export default function CandidateProfileRoute(): JSX.Element {
     <ProfilePage
       values={profileQuery.data}
       pdfPath={RoutePaths.CandidatePdf(publicUrlSegment)}
+      fallbackLanguage={fallbackLanguage}
     />
   )
 }

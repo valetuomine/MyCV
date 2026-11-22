@@ -5,11 +5,12 @@ import {
   getProfilePictureUrl,
   type Profile,
 } from "../../../../api/profileQueries"
-import { Brand, ButtonVariant } from "../../../../types"
+import { Brand, ButtonVariant, type LanguageCode } from "../../../../types"
 import BrandIcon from "../../../components/BrandIcon"
 import Button from "../../../components/Button"
 import CopyLinkButton from "../../../components/CopyLinkButton"
 import Eyebrow from "../../../components/Eyebrow"
+import LanguageFlag from "../../../components/LanguageFlag"
 import Magnetic from "../../../components/Magnetic"
 import {
   formatProfileDate,
@@ -25,6 +26,7 @@ interface ReadOnlyProfileFormProps {
   onEdit?: () => void
   focusEdit?: boolean
   pdfPath?: string
+  fallbackLanguage?: LanguageCode
 }
 
 const container: Variants = {
@@ -86,7 +88,11 @@ function ExpandableSummary({ text }: Readonly<{ text: string }>): JSX.Element {
  * the CV mounts again then, so the button's `autoFocus` applies.
  * When the owner hides the picture section, the portrait and its initials are
  * left out and the text takes the whole width, capped so its lines stay
- * readable.
+ * readable. When the CV has no translation in the UI language, its content
+ * shows in the default language, with a quiet note under the eyebrow saying
+ * so in the UI language. The owner's Edit profile sits on its own row under
+ * the visitors' actions, so the rows break the same way in every language
+ * rather than by the length of the labels.
  *
  * @param props - The component props.
  * @param props.values - The public profile.
@@ -95,6 +101,9 @@ function ExpandableSummary({ text }: Readonly<{ text: string }>): JSX.Element {
  * @param props.focusEdit - Whether to focus Edit profile, after editing.
  * @param props.pdfPath - The path of the CV's PDF view; the View as PDF link
  *   shows only when given.
+ * @param props.fallbackLanguage - The language the content fell back to,
+ *   when the CV has no translation in the UI language; the note shows only
+ *   when given.
  * @returns The CV.
  */
 export default function ReadOnlyProfileForm({
@@ -102,6 +111,7 @@ export default function ReadOnlyProfileForm({
   onEdit,
   focusEdit = false,
   pdfPath,
+  fallbackLanguage,
 }: Readonly<ReadOnlyProfileFormProps>): JSX.Element {
   const { t, i18n } = useTranslation()
   const publicUrl = `${window.location.origin}${window.location.pathname}`
@@ -110,8 +120,6 @@ export default function ReadOnlyProfileForm({
     values.updatedAt ?? values.createdAt,
     i18n.language,
   )
-  /** Whether there is a profile link or an edit action to show. */
-  const hasActions = Boolean(values.gitHubUrl || values.linkedInUrl || onEdit)
   /** Whether the owner shows the portrait; profiles from before the choice do. */
   const showPortrait = values.showPicture !== false
 
@@ -133,6 +141,15 @@ export default function ReadOnlyProfileForm({
         >
           {t("cv.eyebrow")}
         </Eyebrow>
+        {fallbackLanguage && (
+          <motion.p
+            variants={item}
+            className="mt-3 mb-0 flex items-center gap-2 text-sm text-cv-muted"
+          >
+            <LanguageFlag language={fallbackLanguage} />
+            {t(`cv.onlyAvailableIn.${fallbackLanguage}`)}
+          </motion.p>
+        )}
         <ProfileName fullName={values.fullName ?? ""} />
         {values.title && (
           <motion.p
@@ -160,47 +177,45 @@ export default function ReadOnlyProfileForm({
         )}
         <motion.div
           variants={item}
-          className="mt-10 flex flex-wrap items-start gap-3"
+          className="mt-10 grid justify-items-start gap-3"
         >
-          <CopyLinkButton url={publicUrl} label={t("cv.copyLink")} magnetic />
-          {pdfPath && (
+          <div className="flex flex-wrap items-start gap-3">
+            <CopyLinkButton url={publicUrl} label={t("cv.copyLink")} magnetic />
+            {pdfPath && (
+              <Magnetic>
+                <Button to={pdfPath}>{t("cv.viewPdf")}</Button>
+              </Magnetic>
+            )}
+            {values.gitHubUrl && (
+              <Magnetic>
+                <Button
+                  variant={ButtonVariant.Primary}
+                  href={toExternalUrl(values.gitHubUrl)}
+                >
+                  <BrandIcon brand={Brand.GitHub} />
+                  GitHub
+                </Button>
+              </Magnetic>
+            )}
+            {values.linkedInUrl && (
+              <Magnetic>
+                <Button href={toExternalUrl(values.linkedInUrl)}>
+                  <BrandIcon brand={Brand.LinkedIn} />
+                  LinkedIn
+                </Button>
+              </Magnetic>
+            )}
+          </div>
+          {onEdit && (
             <Magnetic>
-              <Button to={pdfPath}>{t("cv.viewPdf")}</Button>
+              <Button
+                autoFocus={focusEdit}
+                onClick={onEdit}
+                className="border-dashed"
+              >
+                {t("cv.editProfile")}
+              </Button>
             </Magnetic>
-          )}
-          {hasActions && (
-            <>
-              {values.gitHubUrl && (
-                <Magnetic>
-                  <Button
-                    variant={ButtonVariant.Primary}
-                    href={toExternalUrl(values.gitHubUrl)}
-                  >
-                    <BrandIcon brand={Brand.GitHub} />
-                    GitHub
-                  </Button>
-                </Magnetic>
-              )}
-              {values.linkedInUrl && (
-                <Magnetic>
-                  <Button href={toExternalUrl(values.linkedInUrl)}>
-                    <BrandIcon brand={Brand.LinkedIn} />
-                    LinkedIn
-                  </Button>
-                </Magnetic>
-              )}
-              {onEdit && (
-                <Magnetic>
-                  <Button
-                    autoFocus={focusEdit}
-                    onClick={onEdit}
-                    className="border-dashed"
-                  >
-                    {t("cv.editProfile")}
-                  </Button>
-                </Magnetic>
-              )}
-            </>
           )}
         </motion.div>
       </section>

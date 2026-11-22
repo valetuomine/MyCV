@@ -178,9 +178,7 @@ setup(
       await page.goto("/admin")
       await page.getByLabel("Your CV link").fill(testCv)
       await page.getByLabel("Full name").fill("Playwright")
-      await page
-        .getByLabel("Professional title (Finnish)")
-        .fill("Testiprofiili")
+      await page.getByLabel("Professional title (English)").fill("Test profile")
       await createButton.click()
       await page.waitForURL(`**${testCvPath}`)
     }

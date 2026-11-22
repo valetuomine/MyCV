@@ -80,6 +80,10 @@ export const en = {
     editProfile: "Edit profile",
     portraitOf: "Portrait of {{name}}",
     portrait: "Profile portrait",
+    onlyAvailableIn: {
+      fi: "This CV is only available in Finnish.",
+      en: "This CV is only available in English.",
+    },
   },
   pdf: {
     eyebrow: "Curriculum vitae · PDF",
@@ -123,7 +127,6 @@ export const en = {
     missingIdUpdate: "Profile cannot be updated because its ID is missing.",
     missingIdEdit: "Profile cannot be edited because its ID is missing.",
     livePreview: "Live preview",
-    previewLanguage: "Finnish",
     previewName: "Your name",
   },
   profileFields: {
@@ -132,9 +135,23 @@ export const en = {
     fullNamePlaceholder: "Maija Virtanen",
     gitHubPlaceholder: "https://github.com/username",
     linkedInPlaceholder: "https://www.linkedin.com/in/username",
-    finnish: "Finnish",
-    english: "English",
-    required: "Required",
+    languages: "Languages",
+    defaultLanguage: "Default language",
+    editingLanguage: "Editing language",
+    defaultLanguageHint:
+      "Your CV is shown in the default language when a visitor's language has no translation. Other languages are optional.",
+    defaultLanguagePrompt:
+      "This is your default language, so fill in its details. A title is needed before you can save.",
+    languageLabels: {
+      fi: "Finnish",
+      en: "English",
+    },
+    languageNames: {
+      fi: "Suomi",
+      en: "English",
+    },
+    languageHasErrors: "(has errors)",
+    defaultBadge: "Default language",
     optional: "Optional",
     titleFi: "Professional title (Finnish)",
     summaryFi: "Summary (Finnish)",
@@ -249,8 +266,8 @@ export const en = {
       "Link must start with http:// or https://, or have no prefix, such as github.com/name",
     duplicateTranslation: "Each language can have only one translation",
     titleRequired: "A title is required when translation content is provided",
-    finnishRequired: "A Finnish translation is required",
-    finnishTitleRequired: "Finnish title is required",
+    defaultRequired: "The default language needs a translation",
+    defaultTitleRequired: "A title is required in the default language",
     cvLinkRequired: "Your CV link is required",
     cvLinkMax: "Your CV link must be 100 characters or fewer",
     cvLinkFormat: "Use letters and numbers separated by single hyphens",

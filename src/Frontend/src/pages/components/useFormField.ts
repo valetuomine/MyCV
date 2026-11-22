@@ -32,6 +32,8 @@ interface FormFieldState<TFieldValues extends FieldValues> {
  * count to the field's description.
  * @param description - The field's description, if any. `FormField` shows it
  * when it is truthy, and the same test adds it to `aria-describedby`.
+ * @param deps - Another field that validates again whenever this one changes
+ * once validation runs, because its rule reads this field's value.
  * @returns The field element's ID, its message, `aria-describedby` and text,
  * the props for its `FormField` frame, and its React Hook Form registration.
  */
@@ -39,6 +41,7 @@ export default function useFormField<TFieldValues extends FieldValues>(
   name: Path<TFieldValues>,
   maxLength?: number,
   description?: ReactNode,
+  deps?: Path<TFieldValues>,
 ): FormFieldState<TFieldValues> {
   const id = useId()
   const { t } = useTranslation()
@@ -75,6 +78,6 @@ export default function useFormField<TFieldValues extends FieldValues>(
       descriptionId,
       submitCount: formState.submitCount,
     },
-    registration: register(name),
+    registration: register(name, { deps }),
   }
 }

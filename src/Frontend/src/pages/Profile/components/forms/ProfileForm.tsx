@@ -33,6 +33,7 @@ import {
   toUpdateProfileRequest,
 } from "../../mappers/profileFormMapper"
 import { getProfileFormError } from "../../utils/profileFormUtils"
+import type { LanguageCode } from "../../../../types"
 import EditableProfileForm from "./EditableProfileForm"
 import ProfileFormStatus from "./ProfileFormStatus"
 import Notice from "../../../components/Notice"
@@ -42,6 +43,7 @@ import SignInMethodsSection from "../SignInMethods/SignInMethodsSection"
 interface ProfileFormProps {
   values: Profile
   pdfPath?: string
+  fallbackLanguage?: LanguageCode
 }
 
 /** Why the last save failed: the profile had no ID, or the request failed. */
@@ -165,11 +167,14 @@ function EditView({
  * @param props - The component props.
  * @param props.values - The public profile.
  * @param props.pdfPath - The path of the CV's PDF view, for the CV's link to it.
+ * @param props.fallbackLanguage - The language the CV fell back to, when it
+ *   has no translation in the UI language.
  * @returns The CV or the edit form, with the saved notice.
  */
 export default function ProfileForm({
   values,
   pdfPath,
+  fallbackLanguage,
 }: Readonly<ProfileFormProps>): JSX.Element {
   const { t } = useTranslation()
   const location = useLocation()
@@ -199,9 +204,14 @@ export default function ProfileForm({
     [profileAdminQuery.data, values],
   )
 
+  /**
+   * The edit form. Every field validates on each change, so a required field
+   * shows its message as soon as it is emptied, before Save.
+   */
   const profileForm = useForm<ProfileSchema>({
     resolver: zodResolver(profileSchema),
     values: formValues,
+    mode: "onChange",
   })
 
   const { handleSubmit, reset } = profileForm
@@ -290,6 +300,7 @@ export default function ProfileForm({
                 onEdit={canEdit ? startEditing : undefined}
                 focusEdit={hasEdited}
                 pdfPath={pdfPath}
+                fallbackLanguage={fallbackLanguage}
               />
             )}
           </motion.div>

@@ -47,10 +47,27 @@ interface SignInContext {
 }
 
 /**
+ * Shows the app in English in the context, before any page script runs, so
+ * the script finds its English buttons: without a saved choice, the app picks
+ * its language from the time zone, and `locale` does not change that. Only
+ * the app's own origin is touched, never the provider's sign-in pages.
+ *
+ * @param context - The browser context.
+ */
+async function showAppInEnglish(context: BrowserContext): Promise<void> {
+  await context.addInitScript((appOrigin) => {
+    if (location.origin === appOrigin) {
+      localStorage.setItem("cv-language", JSON.stringify("en"))
+    }
+  }, new URL(baseURL).origin)
+}
+
+/**
  * Opens the browser context that a session is recorded in: the sign-in
  * method's persistent Chrome profile when it has one, otherwise a new, empty
  * context. It drops Playwright's automation flag and `navigator.webdriver`,
- * because Google's sign-in page refuses a browser that reports automation.
+ * because Google's sign-in page refuses a browser that reports automation,
+ * and shows the app in English.
  *
  * @param provider - The sign-in method, which picks the browser channel and profile.
  * @param headless - Whether to run without a window.
@@ -79,10 +96,12 @@ async function openSignInContext(
           `Couldn't open the ${provider.label} Chrome profile at ${provider.profileDir}. Close any browser window that still uses it, then try again. ${error instanceof Error ? error.message.split("\n")[0] : ""}`,
         )
       })
+    await showAppInEnglish(context)
     return { context, close: () => context.close() }
   }
   const browser = await chromium.launch(options)
   const context = await browser.newContext({ locale: "en-US" })
+  await showAppInEnglish(context)
   return { context, close: () => browser.close() }
 }
 

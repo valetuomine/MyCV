@@ -19,6 +19,7 @@ import { RoutePaths } from "../../../routePaths"
 import { ButtonVariant, SubmitFailureReason, Tone } from "../../../types"
 import Button from "../../components/Button"
 import RHFInput from "../../components/RHFInput"
+import FormLanguageProvider from "../../Profile/components/forms/FormLanguageProvider"
 import ProfileFields from "../../Profile/components/forms/ProfileFields"
 import RouteMessage from "../../Profile/components/RouteMessage"
 import {
@@ -112,9 +113,14 @@ export default function AdminCreateProfileRoute(): JSX.Element {
     storageValue: RoutePaths.AdminCreateProfile,
   })
 
+  /**
+   * The create form. Every field validates on each change, so a required
+   * field shows its message as soon as it is emptied, before Save.
+   */
   const form = useForm<CreateProfileSchema>({
     resolver: zodResolver(createProfileSchema),
     defaultValues: createProfileDefaultValues,
+    mode: "onChange",
   })
 
   const { handleSubmit } = form
@@ -232,7 +238,9 @@ export default function AdminCreateProfileRoute(): JSX.Element {
               }
             />
           </fieldset>
-          <ProfileFields isDisabled={createState.isLoading} />
+          <FormLanguageProvider>
+            <ProfileFields isDisabled={createState.isLoading} isNew />
+          </FormLanguageProvider>
           {submitError && (
             <p role="alert" className="m-0 text-sm text-cv-danger">
               {submitError}

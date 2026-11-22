@@ -6,12 +6,14 @@ import BrandIcon from "../../../components/BrandIcon"
 import Eyebrow from "../../../components/Eyebrow"
 import LitCard from "../../../components/LitCard"
 import type { ProfileSchema } from "../../schemas/profile-form-schema"
+import { useFormLanguage } from "./formLanguageContext"
 
 const pill =
   "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium"
 
 /**
- * Shows the Finnish CV as it will look while the form is being filled in. It
+ * Shows the CV in the language being edited as it will look while the form
+ * is being filled in, named by that language above the card. It
  * repeats what the fields already say, so it is hidden from assistive tech.
  * The name is set in the CV name's script, with room round the background-
  * clipped text for its swashes and descenders.
@@ -25,26 +27,25 @@ const pill =
 export default function ProfilePreview(): JSX.Element {
   const { t } = useTranslation()
   const { control } = useFormContext<ProfileSchema>()
-  const [fullName, title, location, summary, gitHubUrl, linkedInUrl] = useWatch(
-    {
-      control,
-      name: [
-        "fullName",
-        "translations.0.title",
-        "translations.0.location",
-        "translations.0.summary",
-        "gitHubUrl",
-        "linkedInUrl",
-      ],
-    },
+  const { activeLanguage } = useFormLanguage()
+  const [fullName, translations, gitHubUrl, linkedInUrl] = useWatch({
+    control,
+    name: ["fullName", "translations", "gitHubUrl", "linkedInUrl"],
+  })
+  /** The translation in the language being edited. */
+  const translation = translations?.find(
+    ({ languageCode }) => languageCode === activeLanguage,
   )
+  const title = translation?.title
+  const location = translation?.location
+  const summary = translation?.summary
 
   return (
     <aside
       aria-hidden="true"
       className="sticky top-24 hidden self-start lg:block"
     >
-      <Eyebrow meta={t("profileForm.previewLanguage")}>
+      <Eyebrow meta={t(`profileFields.languageLabels.${activeLanguage}`)}>
         {t("profileForm.livePreview")}
       </Eyebrow>
       <LitCard

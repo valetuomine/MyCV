@@ -14,6 +14,7 @@ import CopyLinkButton from "../../../components/CopyLinkButton"
 import Eyebrow from "../../../components/Eyebrow"
 import { labelClassName } from "../../../components/labelClassName"
 import type { ProfileSchema } from "../../schemas/profile-form-schema"
+import FormLanguageProvider from "./FormLanguageProvider"
 import ProfileFields from "./ProfileFields"
 import ProfilePictureSection from "./ProfilePictureSection"
 import ProfilePreview from "./ProfilePreview"
@@ -43,7 +44,8 @@ interface EditableProfileFormProps {
  * browser warns before the tab is closed or reloaded, and Cancel asks before
  * discarding them. The profile picture comes before the fields, at every
  * width rather than in the preview, and is saved on its own, so Save and
- * Cancel leave it alone.
+ * Cancel leave it alone. The fields and the preview share the language
+ * being edited through `FormLanguageProvider`, so the preview follows it.
  *
  * @param props - The component props.
  * @param props.onCancel - Leaves edit mode without saving.
@@ -127,97 +129,101 @@ export default function EditableProfileForm({
       aria-busy={isSaving}
       className="group/edit grid w-full items-start gap-14 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-16 2xl:grid-cols-[45.6rem_minmax(0,1fr)]"
     >
-      <div className="grid min-w-0 gap-6">
-        <div className="grid gap-4">
-          <Eyebrow>{t("profileForm.editing")}</Eyebrow>
-          <h1
-            ref={headingRef}
-            tabIndex={-1}
-            className="m-0 min-w-0 font-cv-display text-4xl font-semibold tracking-tighter wrap-break-word outline-none"
-          >
-            {t("profileForm.heading")}
-          </h1>
-        </div>
-        {publicUrl && (
-          <div className="grid gap-2">
-            <p className={`m-0 ${labelClassName}`}>{t("profileForm.cvLink")}</p>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-              <a
-                href={publicUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="group/cv-link min-w-0 text-cv-ink transition-colors duration-200 wrap-anywhere hover:text-cv-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cv-accent motion-safe:hover:[--underline:100%]"
-              >
-                <span className="bg-cv-underline pb-0.5 transition-[background-size,filter] duration-250 ease-[cubic-bezier(0.23,1,0.32,1)] not-print:not-forced-colors:group-hover/cv-link:drop-shadow-cv-edge-hover not-print:not-forced-colors:group-focus-visible/cv-link:drop-shadow-cv-edge-focus motion-reduce:transition-none">
-                  {publicUrl.replace(/^https?:\/\//, "")}
-                </span>
-              </a>
-              <CopyLinkButton
-                url={publicUrl}
-                label={t("profileForm.copyLink")}
-              />
-            </div>
+      <FormLanguageProvider>
+        <div className="grid min-w-0 gap-6">
+          <div className="grid gap-4">
+            <Eyebrow>{t("profileForm.editing")}</Eyebrow>
+            <h1
+              ref={headingRef}
+              tabIndex={-1}
+              className="m-0 min-w-0 font-cv-display text-4xl font-semibold tracking-tighter wrap-break-word outline-none"
+            >
+              {t("profileForm.heading")}
+            </h1>
           </div>
-        )}
-        <ProfilePictureSection
-          profileId={profileId}
-          pictureUrl={pictureUrl}
-          showPicture={showPicture}
-          fullName={savedFullName}
-        />
-        <ProfileFields isDisabled={isSaving} />
-        {saveError && (
-          <p role="alert" className="m-0 text-sm text-cv-danger">
-            {saveError}
-          </p>
-        )}
-        <div className="sticky bottom-[max(1rem,env(safe-area-inset-bottom))] z-20 flex min-h-17 flex-wrap items-center gap-3 rounded-3xl border border-cv-line bg-cv-pane bg-cv-pane-dense p-3 shadow-cv-panel inset-shadow-cv-rim">
-          {confirmingDiscard ? (
-            <>
-              <p className="m-0 mr-auto px-2 text-sm text-cv-ink">
-                {t("profileForm.discardQuestion")}
+          {publicUrl && (
+            <div className="grid gap-2">
+              <p className={`m-0 ${labelClassName}`}>
+                {t("profileForm.cvLink")}
               </p>
-              <Button
-                ref={keepEditingButtonRef}
-                variant={ButtonVariant.Primary}
-                onClick={keepEditing}
-              >
-                {t("profileForm.keepEditing")}
-              </Button>
-              <Button onClick={onCancel}>{t("profileForm.discard")}</Button>
-            </>
-          ) : (
-            <>
-              <Button
-                type="submit"
-                variant={ButtonVariant.Primary}
-                loading={isSaving}
-                loadingText={t("profileForm.saving")}
-                disabled={!isDirty}
-              >
-                {t("profileForm.save")}
-              </Button>
-              <Button
-                ref={cancelButtonRef}
-                onClick={requestCancel}
-                disabled={isSaving}
-              >
-                {t("common.cancel")}
-              </Button>
-              <output className="m-0 ml-auto flex items-center gap-2 px-2 font-cv-mono text-xs tracking-wide text-cv-copy uppercase">
-                <span
-                  aria-hidden="true"
-                  className={`size-2 rounded-full transition-colors ${isDirty ? "bg-cv-accent" : "bg-cv-line"}`}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                <a
+                  href={publicUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group/cv-link min-w-0 text-cv-ink transition-colors duration-200 wrap-anywhere hover:text-cv-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cv-accent motion-safe:hover:[--underline:100%]"
+                >
+                  <span className="bg-cv-underline pb-0.5 transition-[background-size,filter] duration-250 ease-[cubic-bezier(0.23,1,0.32,1)] not-print:not-forced-colors:group-hover/cv-link:drop-shadow-cv-edge-hover not-print:not-forced-colors:group-focus-visible/cv-link:drop-shadow-cv-edge-focus motion-reduce:transition-none">
+                    {publicUrl.replace(/^https?:\/\//, "")}
+                  </span>
+                </a>
+                <CopyLinkButton
+                  url={publicUrl}
+                  label={t("profileForm.copyLink")}
                 />
-                {isDirty
-                  ? t("profileForm.unsavedChanges")
-                  : t("profileForm.noChanges")}
-              </output>
-            </>
+              </div>
+            </div>
           )}
+          <ProfilePictureSection
+            profileId={profileId}
+            pictureUrl={pictureUrl}
+            showPicture={showPicture}
+            fullName={savedFullName}
+          />
+          <ProfileFields isDisabled={isSaving} />
+          {saveError && (
+            <p role="alert" className="m-0 text-sm text-cv-danger">
+              {saveError}
+            </p>
+          )}
+          <div className="sticky bottom-[max(1rem,env(safe-area-inset-bottom))] z-20 flex min-h-17 flex-wrap items-center gap-3 rounded-3xl border border-cv-line bg-cv-pane bg-cv-pane-dense p-3 shadow-cv-panel inset-shadow-cv-rim">
+            {confirmingDiscard ? (
+              <>
+                <p className="m-0 mr-auto px-2 text-sm text-cv-ink">
+                  {t("profileForm.discardQuestion")}
+                </p>
+                <Button
+                  ref={keepEditingButtonRef}
+                  variant={ButtonVariant.Primary}
+                  onClick={keepEditing}
+                >
+                  {t("profileForm.keepEditing")}
+                </Button>
+                <Button onClick={onCancel}>{t("profileForm.discard")}</Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  type="submit"
+                  variant={ButtonVariant.Primary}
+                  loading={isSaving}
+                  loadingText={t("profileForm.saving")}
+                  disabled={!isDirty}
+                >
+                  {t("profileForm.save")}
+                </Button>
+                <Button
+                  ref={cancelButtonRef}
+                  onClick={requestCancel}
+                  disabled={isSaving}
+                >
+                  {t("common.cancel")}
+                </Button>
+                <output className="m-0 ml-auto flex items-center gap-2 px-2 font-cv-mono text-xs tracking-wide text-cv-copy uppercase">
+                  <span
+                    aria-hidden="true"
+                    className={`size-2 rounded-full transition-colors ${isDirty ? "bg-cv-accent" : "bg-cv-line"}`}
+                  />
+                  {isDirty
+                    ? t("profileForm.unsavedChanges")
+                    : t("profileForm.noChanges")}
+                </output>
+              </>
+            )}
+          </div>
         </div>
-      </div>
-      <ProfilePreview />
+        <ProfilePreview />
+      </FormLanguageProvider>
     </form>
   )
 }

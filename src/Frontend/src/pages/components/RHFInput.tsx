@@ -24,6 +24,8 @@ interface RHFInputProps<TFieldValues extends FieldValues> extends Omit<
   type?: InputType
   description?: ReactNode
   action?: ReactNode
+  deps?: Path<TFieldValues>
+  shakeOnMount?: boolean
 }
 
 /**
@@ -41,6 +43,10 @@ interface RHFInputProps<TFieldValues extends FieldValues> extends Omit<
  * to screen readers.
  * @param props.action - A control beside the field, such as its form's
  * submit button, kept level with the field.
+ * @param props.deps - Another field that validates again when this one
+ * changes, because its rule reads this field's value.
+ * @param props.shakeOnMount - Whether a failed submit mounted the field, so
+ * it shakes when it mounts with an error.
  * @returns The labelled input.
  */
 export default function RHFInput<TFieldValues extends FieldValues>({
@@ -51,12 +57,15 @@ export default function RHFInput<TFieldValues extends FieldValues>({
   required,
   description,
   action,
+  deps,
+  shakeOnMount,
   ...inputAttributes
 }: Readonly<RHFInputProps<TFieldValues>>): JSX.Element {
   const { id, error, describedBy, frameProps, registration } = useFormField(
     name,
     maxLength,
     description,
+    deps,
   )
 
   return (
@@ -66,6 +75,7 @@ export default function RHFInput<TFieldValues extends FieldValues>({
       required={required}
       description={description}
       action={action}
+      shakeOnMount={shakeOnMount}
     >
       <input
         {...inputAttributes}

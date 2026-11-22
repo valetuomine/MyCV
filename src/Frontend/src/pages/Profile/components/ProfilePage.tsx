@@ -1,11 +1,13 @@
 import { useEffect, type JSX } from "react"
 import { useTranslation } from "react-i18next"
 import type { Profile } from "../../../api/profileQueries"
+import type { LanguageCode } from "../../../types"
 import ProfileForm from "./forms/ProfileForm"
 
 interface ProfilePageProps {
   values: Profile
   pdfPath?: string
+  fallbackLanguage?: LanguageCode
 }
 
 /**
@@ -23,11 +25,14 @@ interface ProfilePageProps {
  * @param props - The component props.
  * @param props.values - The public profile to show.
  * @param props.pdfPath - The path of the CV's PDF view, for the CV's link to it.
+ * @param props.fallbackLanguage - The language the CV fell back to, when it
+ *   has no translation in the UI language.
  * @returns The page's main landmark with the CV.
  */
 export default function ProfilePage({
   values,
   pdfPath,
+  fallbackLanguage,
 }: Readonly<ProfilePageProps>): JSX.Element {
   const { t, i18n } = useTranslation()
 
@@ -44,7 +49,11 @@ export default function ProfilePage({
     <main className="mx-auto flex min-h-dvh w-full max-w-7xl flex-col pt-20 lg:pt-4 2xl:has-data-edit-view:max-w-[84.6rem]">
       <div className="flex flex-1 items-center overflow-y-clip py-12 sm:py-16">
         <div className="w-full">
-          <ProfileForm values={values} pdfPath={pdfPath} />
+          <ProfileForm
+            values={values}
+            pdfPath={pdfPath}
+            fallbackLanguage={fallbackLanguage}
+          />
         </div>
       </div>
     </main>

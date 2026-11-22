@@ -5,83 +5,90 @@ import type {
   UpdateProfileRequest,
 } from "../../../api/profileQueries"
 import { LanguageCode } from "../../../types"
-import type {
-  CreateProfileSchema,
-  ProfileSchema,
+import {
+  profileLanguages,
+  type CreateProfileSchema,
+  type ProfileSchema,
 } from "../schemas/profile-form-schema"
+import { hasTranslationContent } from "../utils/profileFormUtils"
 
 /**
- * Maps the admin profile to form values, with the Finnish and then the
- * English translation, empty where one is missing.
+ * Reads a language code from the API, ignoring its case.
+ *
+ * @param value - The language code as the API sent it.
+ * @returns The matching profile language, or Finnish, the API's own fallback,
+ *   when it is missing or unknown.
+ */
+function toProfileLanguage(value: string | null | undefined): LanguageCode {
+  const code = value?.toLowerCase()
+  return (
+    profileLanguages.find((language) => language === code) ??
+    LanguageCode.Finnish
+  )
+}
+
+/**
+ * Maps the admin profile to form values, with a row for every language in
+ * the form's order, empty where a translation is missing.
  *
  * @param profile - The profile with all its translations.
  * @returns The form values.
  */
 export function mapAdminProfileToForm(profile: ProfileAdmin): ProfileSchema {
-  /**
-   * Finds a language's translation, ignoring the language code's case.
-   *
-   * @param languageCode - The language to find.
-   * @returns The translation's form fields, empty when it is missing.
-   */
-  const translationFor = (languageCode: LanguageCode) => {
-    const translation = profile.translations?.find(
-      (item) => item.languageCode?.toLowerCase() === languageCode,
-    )
-
-    return {
-      languageCode,
-      title: translation?.title ?? "",
-      summary: translation?.summary ?? "",
-      location: translation?.location ?? "",
-    }
-  }
-
   return {
     fullName: profile.fullName ?? "",
     linkedInUrl: profile.linkedInUrl ?? "",
     gitHubUrl: profile.gitHubUrl ?? "",
-    translations: [
-      translationFor(LanguageCode.Finnish),
-      translationFor(LanguageCode.English),
-    ],
+    defaultLanguageCode: toProfileLanguage(profile.defaultLanguageCode),
+    translations: profileLanguages.map((languageCode) => {
+      const translation = profile.translations?.find(
+        (item) => item.languageCode?.toLowerCase() === languageCode,
+      )
+
+      return {
+        languageCode,
+        title: translation?.title ?? "",
+        summary: translation?.summary ?? "",
+        location: translation?.location ?? "",
+      }
+    }),
   }
 }
 
 /**
  * Maps the public profile to form values until the admin profile loads. The
- * public profile holds one language, so it fills the Finnish fields and
- * leaves English empty.
+ * public profile holds one language, so it fills that language's row and
+ * leaves the others empty.
  *
  * @param profile - The public profile.
  * @returns The form values.
  */
 export function mapProfileToForm(profile: Profile): ProfileSchema {
+  /** The language the public profile's content is in, which fills its row. */
+  const contentLanguage = toProfileLanguage(profile.languageCode)
+
   return {
     fullName: profile.fullName ?? "",
     linkedInUrl: profile.linkedInUrl ?? "",
     gitHubUrl: profile.gitHubUrl ?? "",
-    translations: [
-      {
-        languageCode: LanguageCode.Finnish,
-        title: profile.title ?? "",
-        summary: profile.summary ?? "",
-        location: profile.location ?? "",
-      },
-      {
-        languageCode: LanguageCode.English,
-        title: "",
-        summary: "",
-        location: "",
-      },
-    ],
+    defaultLanguageCode: toProfileLanguage(profile.defaultLanguageCode),
+    translations: profileLanguages.map((languageCode) =>
+      languageCode === contentLanguage
+        ? {
+            languageCode,
+            title: profile.title ?? "",
+            summary: profile.summary ?? "",
+            location: profile.location ?? "",
+          }
+        : { languageCode, title: "", summary: "", location: "" },
+    ),
   }
 }
 
 /**
  * Builds the update request from form values: trims text, sends empty
- * optional fields as null, and drops translations other than Finnish that
- * have no content.
+ * optional fields as null, always names the default language, and sends
+ * only the translations with content, so the API removes an emptied one.
  *
  * @param data - The validated form values.
  * @returns The request body for saving the profile.
@@ -93,16 +100,9 @@ export function toUpdateProfileRequest(
     fullName: data.fullName.trim(),
     linkedInUrl: data.linkedInUrl?.trim() || null,
     gitHubUrl: data.gitHubUrl?.trim() || null,
+    defaultLanguageCode: data.defaultLanguageCode,
     translations: data.translations
-      .filter(
-        (translation) =>
-          translation.languageCode === LanguageCode.Finnish ||
-          Boolean(
-            translation.title.trim() ||
-            translation.summary?.trim() ||
-            translation.location?.trim(),
-          ),
-      )
+      .filter(hasTranslationContent)
       .map((translation) => ({
         languageCode: translation.languageCode,
         title: translation.title.trim(),
