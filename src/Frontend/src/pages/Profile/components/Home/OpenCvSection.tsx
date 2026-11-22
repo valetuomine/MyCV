@@ -35,8 +35,12 @@ interface OpenCvSectionProps {
  * starting up or handling a redirect, the owner link stays hidden in its
  * place, so its wording never switches before the eyes and nothing shifts
  * when it appears. Without any sign-in method set up it isn't shown at all.
- * The section rises in without a fade, because its field is a blurred Pane
- * and a fading ancestor would switch off the blur until the fade ends.
+ * A Field Border rule tops the section. The section rises in with the
+ * page's pane-safe entrance (`paneReveal`): the rule, the heading, the
+ * field's pieces and the owner link each fade on their own rather than the
+ * section as a whole, because the field is a blurred Pane and a fading
+ * ancestor would switch off the blur until the fade ends. The owner link's
+ * wrapper takes that fade, so its own busy fade stays free.
  *
  * @param props - The component props.
  * @param props.variants - The section's entrance, started by the page.
@@ -104,7 +108,11 @@ export default function OpenCvSection({
       aria-labelledby={headingId}
       className={`grid w-full gap-4 ${className}`}
     >
-      <h2 id={headingId} className={headingClassName}>
+      <div
+        aria-hidden="true"
+        className="mb-6 h-px bg-cv-field-border opacity-reveal"
+      />
+      <h2 id={headingId} className={`opacity-reveal ${headingClassName}`}>
         {t("home.openHeading")}
       </h2>
       <FormProvider {...form}>
@@ -130,17 +138,19 @@ export default function OpenCvSection({
         </form>
       </FormProvider>
       {isSignInConfigured && (
-        <p
-          className={`m-0 flex flex-wrap items-center gap-x-3.5 text-sm text-cv-copy transition-[opacity,visibility] duration-200 ease-out motion-reduce:transition-none ${isBusy ? "invisible opacity-0" : "visible opacity-100"}`}
-        >
-          {!isSignedIn && t("home.ownerPrompt")}
-          <Button
-            to={RoutePaths.AdminCreateProfile}
-            variant={ButtonVariant.Text}
+        <div className="opacity-reveal">
+          <p
+            className={`m-0 flex flex-wrap items-center gap-x-3.5 text-sm text-cv-copy transition-[opacity,visibility] duration-200 ease-out motion-reduce:transition-none ${isBusy ? "invisible opacity-0" : "visible opacity-100"}`}
           >
-            {isSignedIn ? t("home.ownerManage") : t("home.ownerSignIn")}
-          </Button>
-        </p>
+            {!isSignedIn && t("home.ownerPrompt")}
+            <Button
+              to={RoutePaths.AdminCreateProfile}
+              variant={ButtonVariant.Text}
+            >
+              {isSignedIn ? t("home.ownerManage") : t("home.ownerSignIn")}
+            </Button>
+          </p>
+        </div>
       )}
     </motion.section>
   )

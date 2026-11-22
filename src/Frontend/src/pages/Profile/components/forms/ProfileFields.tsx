@@ -1,9 +1,11 @@
+import { m as motion } from "framer-motion"
 import type { JSX } from "react"
 import { useFormContext, useFormState, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import type { LanguageCode } from "../../../../types"
 import RHFInput from "../../../components/RHFInput"
 import RHFTextarea from "../../../components/RHFTextarea"
+import { paneReveal } from "../../../components/reveal"
 import { labelClassName } from "../../../components/labelClassName"
 import {
   profileLanguages,
@@ -52,6 +54,12 @@ const fieldTexts = {
  * title validates itself, and its required mark shows only while it is
  * required. Fields that a failed submit shows shake like the ones it found
  * on screen.
+ *
+ * Each of the three groups takes its turn in the form's staggered entrance
+ * (`paneReveal`), so the fields fade in without switching off their blur;
+ * the languages' divider is a fading rule rather than a border for the same
+ * reason. The translation's group wraps its fieldset, which a language
+ * change remounts, so a language change never plays the entrance again.
  *
  * @param props - The component props.
  * @param props.isDisabled - Whether the fields are disabled, such as while saving.
@@ -157,7 +165,8 @@ export default function ProfileFields({
 
   return (
     <>
-      <fieldset
+      <motion.fieldset
+        variants={paneReveal}
         disabled={isDisabled}
         className="m-0 grid min-w-0 gap-5 border-0 p-0 sm:grid-cols-2"
       >
@@ -188,12 +197,14 @@ export default function ProfileFields({
           autoComplete="url"
           placeholder={t("profileFields.linkedInPlaceholder")}
         />
-      </fieldset>
-      <fieldset
+      </motion.fieldset>
+      <motion.fieldset
+        variants={paneReveal}
         disabled={isDisabled}
-        className="m-0 grid min-w-0 gap-6 border-0 border-t border-cv-line p-0 pt-6"
+        className="m-0 grid min-w-0 gap-6 border-0 p-0"
       >
         <legend className="sr-only">{t("profileFields.languages")}</legend>
+        <div aria-hidden="true" className="h-px bg-cv-line opacity-reveal" />
         <div className="flex flex-wrap gap-x-10 gap-y-6">
           <FormLanguageSwitch
             label={t("profileFields.defaultLanguage")}
@@ -207,59 +218,63 @@ export default function ProfileFields({
             erroredLanguages={erroredLanguages}
           />
         </div>
-        <p className="m-0 max-w-[60ch] text-sm text-pretty text-cv-muted">
+        <p className="m-0 max-w-[60ch] text-sm text-pretty text-cv-muted opacity-reveal">
           {t("profileFields.defaultLanguageHint")}
         </p>
-      </fieldset>
-      <fieldset
-        key={`${activeLanguage}-${focusRound}`}
-        disabled={isDisabled}
-        className="m-0 grid min-w-0 gap-5 border-0 p-0"
-      >
-        <legend className="mb-2 flex w-full items-baseline gap-3 font-cv-display text-xl font-semibold tracking-tight text-cv-ink">
-          {t(`profileFields.languageLabels.${activeLanguage}`)}
-          <span className={labelClassName}>
-            {isDefault
-              ? t("profileFields.defaultBadge")
-              : t("profileFields.optional")}
-          </span>
-        </legend>
-        {showDefaultPrompt && (
-          <p className="m-0 rounded-lg border border-cv-accent/40 bg-cv-accent/8 px-4 py-3 text-sm text-pretty text-cv-ink">
-            {t("profileFields.defaultLanguagePrompt")}
-          </p>
-        )}
-        <RHFInput<ProfileSchema>
-          name={`translations.${activeIndex}.title`}
-          label={t(texts.title)}
-          placeholder={t(texts.titlePlaceholder)}
-          lang={activeLanguage}
-          required={isTitleRequired}
-          maxLength={100}
-          autoFocus={autoFocusField === titleName}
-          shakeOnMount={isShownBySubmit}
-        />
-        <RHFTextarea<ProfileSchema>
-          name={`translations.${activeIndex}.summary`}
-          label={t(texts.summary)}
-          placeholder={t(texts.summaryPlaceholder)}
-          lang={activeLanguage}
-          maxLength={2500}
-          deps={titleDeps}
-          autoFocus={autoFocusField === `translations.${activeIndex}.summary`}
-          shakeOnMount={isShownBySubmit}
-        />
-        <RHFInput<ProfileSchema>
-          name={`translations.${activeIndex}.location`}
-          label={t(texts.location)}
-          placeholder={t(texts.locationPlaceholder)}
-          lang={activeLanguage}
-          maxLength={100}
-          deps={titleDeps}
-          autoFocus={autoFocusField === `translations.${activeIndex}.location`}
-          shakeOnMount={isShownBySubmit}
-        />
-      </fieldset>
+      </motion.fieldset>
+      <motion.div variants={paneReveal} className="grid min-w-0">
+        <fieldset
+          key={`${activeLanguage}-${focusRound}`}
+          disabled={isDisabled}
+          className="m-0 grid min-w-0 gap-5 border-0 p-0"
+        >
+          <legend className="mb-2 flex w-full opacity-reveal items-baseline gap-3 font-cv-display text-xl font-semibold tracking-tight text-cv-ink">
+            {t(`profileFields.languageLabels.${activeLanguage}`)}
+            <span className={labelClassName}>
+              {isDefault
+                ? t("profileFields.defaultBadge")
+                : t("profileFields.optional")}
+            </span>
+          </legend>
+          {showDefaultPrompt && (
+            <p className="m-0 rounded-lg border border-cv-accent/40 opacity-reveal bg-cv-accent/8 px-4 py-3 text-sm text-pretty text-cv-ink">
+              {t("profileFields.defaultLanguagePrompt")}
+            </p>
+          )}
+          <RHFInput<ProfileSchema>
+            name={`translations.${activeIndex}.title`}
+            label={t(texts.title)}
+            placeholder={t(texts.titlePlaceholder)}
+            lang={activeLanguage}
+            required={isTitleRequired}
+            maxLength={100}
+            autoFocus={autoFocusField === titleName}
+            shakeOnMount={isShownBySubmit}
+          />
+          <RHFTextarea<ProfileSchema>
+            name={`translations.${activeIndex}.summary`}
+            label={t(texts.summary)}
+            placeholder={t(texts.summaryPlaceholder)}
+            lang={activeLanguage}
+            maxLength={2500}
+            deps={titleDeps}
+            autoFocus={autoFocusField === `translations.${activeIndex}.summary`}
+            shakeOnMount={isShownBySubmit}
+          />
+          <RHFInput<ProfileSchema>
+            name={`translations.${activeIndex}.location`}
+            label={t(texts.location)}
+            placeholder={t(texts.locationPlaceholder)}
+            lang={activeLanguage}
+            maxLength={100}
+            deps={titleDeps}
+            autoFocus={
+              autoFocusField === `translations.${activeIndex}.location`
+            }
+            shakeOnMount={isShownBySubmit}
+          />
+        </fieldset>
+      </motion.div>
     </>
   )
 }

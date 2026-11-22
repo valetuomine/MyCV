@@ -20,9 +20,9 @@ import { featuredCvNameSizeClassName } from "../displayTypeClassNames"
 import LocationIcon from "../LocationIcon"
 import useNameLineWidth from "../useNameLineWidth"
 import FeaturedCvAvatar from "./FeaturedCvAvatar"
+import { revealItem } from "../../../components/reveal"
 import {
   featuredCvGridClassName,
-  featuredCvReveal,
   featuredCvTextClassName,
 } from "./featuredCvLayout"
 
@@ -71,7 +71,7 @@ export default function FeaturedCvCard({
       contentClassName={featuredCvGridClassName}
     >
       <motion.div
-        variants={featuredCvReveal}
+        variants={revealItem}
         className={`justify-items-start ${featuredCvTextClassName}`}
       >
         <Eyebrow
@@ -113,7 +113,7 @@ export default function FeaturedCvCard({
         imageUrl={getProfilePictureUrl(profile.pictureUrl)}
       />
       <motion.div
-        variants={featuredCvReveal}
+        variants={revealItem}
         className="flex flex-wrap items-center gap-3 [grid-area:actions]"
       >
         <Button

@@ -1,4 +1,4 @@
-import { m as motion, type Variants } from "framer-motion"
+import { m as motion } from "framer-motion"
 import { useEffect, useRef, useState, type JSX } from "react"
 import { useTranslation } from "react-i18next"
 import { Navigate, useNavigate } from "react-router-dom"
@@ -9,6 +9,11 @@ import {
 } from "../../../../auth/adminLoginStorage"
 import { signedOutLocationState } from "../../../../auth/signedOutState"
 import Eyebrow from "../../../components/Eyebrow"
+import {
+  paneReveal,
+  revealItem,
+  revealStagger,
+} from "../../../components/reveal"
 import { RoutePaths } from "../../../../routePaths"
 import { FeaturedCvStatus } from "../../../../types"
 import { homeHeadingClassName } from "../displayTypeClassNames"
@@ -18,22 +23,6 @@ import useFeaturedCv from "../FeaturedCv/useFeaturedCv"
 import HomeFacts from "../Home/HomeFacts"
 import OpenCvSection from "../Home/OpenCvSection"
 import ProfileName from "../ProfileName"
-
-/** Staggers the home page's parts in one after another. */
-const container: Variants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
-}
-
-/** Lets each part of the home page rise into place. */
-const item: Variants = {
-  hidden: { opacity: 0, y: 18 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { type: "spring", stiffness: 100, damping: 20 },
-  },
-}
 
 /**
  * The hero's two columns from `lg` up, the text and the featured card: 30rem
@@ -48,20 +37,6 @@ const heroColumnsClassName =
   "lg:grid-cols-[minmax(0,1fr)_minmax(0,30rem)] lg:gap-12 xl:grid-cols-[minmax(0,1fr)_minmax(0,36rem)] xl:gap-16"
 
 /**
- * Lets a part with a blurred Pane rise into place without a fade, such as
- * the open form's field, the address pill and the featured card: a fading
- * ancestor would switch off the blur until the fade ends, so the dot grid
- * would show through and then snap away.
- */
-const rise: Variants = {
-  hidden: { y: 18 },
-  visible: {
-    y: 0,
-    transition: { type: "spring", stiffness: 100, damping: 20 },
-  },
-}
-
-/**
  * The home page as a landing page for a CV's viewers. The hero says what
  * MyCV is: its heading assembles letter by letter like a CV's name
  * (`ProfileName`) and lights the background with the sweep and the echo,
@@ -71,12 +46,18 @@ const rise: Variants = {
  * its edges line up with the eyebrow and the address row; a card taller
  * than the text keeps the text's rows together at the top. Without a
  * featured CV the hero is the text alone, with neither the address nor the
- * card. A language switch remounts the heading, so its reveal, the sweep and
- * the echo play again as a whole instead of re-revealing only the letters
- * whose keys changed, while the directed light stays on (`useLightHold`).
- * Below the hero come the facts about the link and, last and quiet, the form
- * that opens any CV and the owner's sign-in link. The hero keeps the light
- * traces away (`data-cv-trace-avoid`).
+ * card, and so it is while the featured CV's request is still checking
+ * whether one exists: the second column and the skeletons come only once
+ * it does. The parts rise in one after another (`revealStagger`); the parts
+ * with a blurred Pane (the address, the card and the open form) fade only
+ * their Panes and the pieces beside them (`paneReveal`), so none of them
+ * shows before its turn and their blur never switches off. A language
+ * switch remounts the heading, so its reveal, the sweep and the echo play
+ * again as a whole instead of re-revealing only the letters whose keys
+ * changed, while the directed light stays on (`useLightHold`). Below the
+ * hero come the facts about the link and, last and quiet, the form that
+ * opens any CV and the owner's sign-in link. The hero keeps the light traces
+ * away (`data-cv-trace-avoid`).
  *
  * A sign-out lands here first: it redirects to the CV it started from, or,
  * when it started here, replaces the entry with Home and the signed-out
@@ -87,7 +68,15 @@ const rise: Variants = {
 export default function Home(): JSX.Element {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
-  const hasFeaturedCv = useFeaturedCv().status !== FeaturedCvStatus.None
+  const featuredStatus = useFeaturedCv().status
+  /**
+   * Whether a featured CV is known to exist, loading or loaded. While its
+   * request is still checking, the hero keeps one column and shows no
+   * skeleton, so a page without a featured CV never jumps.
+   */
+  const hasFeaturedCv =
+    featuredStatus === FeaturedCvStatus.Loading ||
+    featuredStatus === FeaturedCvStatus.Ready
 
   /**
    * Set before a sign-out lands here: the CV to return to, or "" to stay on
@@ -125,7 +114,7 @@ export default function Home(): JSX.Element {
   return (
     <main className="mx-auto w-full max-w-7xl pt-24 pb-24 lg:pt-32">
       <motion.div
-        variants={container}
+        variants={revealStagger}
         initial="hidden"
         animate="visible"
         className="grid gap-24 lg:gap-32"
@@ -135,7 +124,7 @@ export default function Home(): JSX.Element {
           className={`grid items-center gap-12 lg:items-stretch ${hasFeaturedCv ? heroColumnsClassName : ""}`}
         >
           <div className="@container grid min-w-0 content-start justify-items-start gap-7">
-            <motion.div variants={item}>
+            <motion.div variants={revealItem}>
               <Eyebrow>{t("common.brand")}</Eyebrow>
             </motion.div>
             <ProfileName
@@ -145,29 +134,26 @@ export default function Home(): JSX.Element {
               className={homeHeadingClassName}
             />
             <motion.p
-              variants={item}
+              variants={revealItem}
               className="m-0 max-w-[46ch] text-lg leading-relaxed text-pretty text-cv-copy sm:text-xl"
             >
               {t("home.intro")}
             </motion.p>
             {hasFeaturedCv && (
-              <motion.div variants={rise} className="mt-2 w-full min-w-0">
+              <motion.div variants={paneReveal} className="mt-2 w-full min-w-0">
                 <FeaturedCvAddress />
               </motion.div>
             )}
           </div>
           {hasFeaturedCv && (
-            <motion.div variants={rise} className="min-w-0">
+            <motion.div variants={paneReveal} className="min-w-0">
               <FeaturedCvSection />
             </motion.div>
           )}
         </div>
         <div className="grid max-w-5xl gap-20">
-          <HomeFacts variants={item} />
-          <OpenCvSection
-            variants={rise}
-            className="max-w-2xl border-t border-cv-field-border pt-10"
-          />
+          <HomeFacts variants={revealItem} />
+          <OpenCvSection variants={paneReveal} className="max-w-2xl" />
         </div>
       </motion.div>
     </main>

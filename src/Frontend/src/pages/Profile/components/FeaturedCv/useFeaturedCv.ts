@@ -7,11 +7,13 @@ import { FeaturedCvStatus, type FeaturedCv } from "../../../../types"
 
 /**
  * Fetches the CV the API features and then its profile in the current
- * language. It is loading while either request is on its first load, and
- * `none` when no CV is featured or a request fails, so the home page works
- * without it. It keeps the previous language's profile while another
- * language loads, so nothing blinks. The hero's address and the card call it
- * both and share the cached requests, so they always show the same CV.
+ * language. It is `checking` while the featured CV's request is on its
+ * first load, because the CV may not exist at all, and `loading` once the
+ * CV is known and its profile is on its first load. It is `none` when no
+ * CV is featured or a request fails, so the home page works without it. It
+ * keeps the previous language's profile while another language loads, so
+ * nothing blinks. The hero's address and the card call it both and share
+ * the cached requests, so they always show the same CV.
  *
  * @returns The featured CV's state.
  */
@@ -30,7 +32,11 @@ export default function useFeaturedCv(): FeaturedCv {
    */
   const profile = profileQuery.isError ? undefined : profileQuery.data
 
-  if (featuredQuery.isLoading || profileQuery.isLoading) {
+  if (featuredQuery.isLoading) {
+    return { status: FeaturedCvStatus.Checking }
+  }
+
+  if (profileQuery.isLoading) {
     return { status: FeaturedCvStatus.Loading }
   }
 

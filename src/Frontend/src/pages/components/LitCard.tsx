@@ -22,8 +22,11 @@ interface LitCardProps {
  * border and faintly tints the surface beneath the content, and while the
  * card is hovered a soft light drifts slowly from side to side inside it,
  * pausing where it is otherwise. Touch gets no pointer light, and reduced
- * motion none of the lights. The edit view's preview and the home page's
- * featured CV share it, so the two cards stay alike.
+ * motion none of the lights. The glow, the ring and the Pane are separate
+ * layers that each fade with a pane-safe entrance (`paneReveal`), and the
+ * outer frame draws nothing itself, so the card fades in without switching
+ * off its blur. The edit view's preview and the home page's featured CV
+ * share it, so the two cards stay alike.
  *
  * @param props - The component props.
  * @param props.children - The card's content.
@@ -54,17 +57,21 @@ export default function LitCard({
       aria-labelledby={labelledBy}
       onPointerEnter={trackPointer}
       onPointerMove={trackPointer}
-      className={`group/lit relative rounded-3xl p-0.5 shadow-cv-card transition-shadow duration-200 ease-out not-print:hover:shadow-cv-card-hover motion-reduce:transition-none forced-colors:shadow-none print:shadow-none ${className}`}
+      className={`group/lit relative rounded-3xl p-0.5 ${className}`}
     >
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit] bg-cv-field-border p-0.5 mask-cv-ring"
+        className="pointer-events-none absolute inset-0 rounded-[inherit] shadow-cv-card opacity-reveal transition-shadow duration-200 ease-out not-print:group-hover/lit:shadow-cv-card-hover motion-reduce:transition-none forced-colors:shadow-none print:shadow-none"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit] bg-cv-field-border p-0.5 opacity-reveal mask-cv-ring"
       >
         <div className="absolute top-1/2 left-1/2 aspect-square w-[200%] -translate-1/2 bg-cv-sweep animate-cv-sweep motion-reduce:hidden" />
         <div className="absolute inset-0 bg-cv-field-edge opacity-0 transition-opacity duration-200 group-hover/lit:opacity-100 motion-reduce:hidden" />
       </div>
       <div
-        className={`relative isolate rounded-[calc(1.5rem-2px)] bg-cv-pane inset-shadow-cv-rim ${contentClassName}`}
+        className={`relative isolate rounded-[calc(1.5rem-2px)] bg-cv-pane opacity-reveal inset-shadow-cv-rim ${contentClassName}`}
       >
         <div
           className={`pointer-events-none absolute inset-0 -z-10 overflow-hidden rounded-[inherit] opacity-0 transition-opacity duration-300 group-hover/lit:opacity-100 motion-reduce:hidden ${wakesWithEditForm ? "group-has-[[data-field-frame]:focus-within]/edit:opacity-100" : ""}`}

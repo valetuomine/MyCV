@@ -1,6 +1,6 @@
 import { skipToken } from "@reduxjs/toolkit/query"
 import type { TFunction } from "i18next"
-import { AnimatePresence, m as motion, type Transition } from "framer-motion"
+import { m as motion } from "framer-motion"
 import {
   useCallback,
   useEffect,
@@ -40,6 +40,7 @@ import type { LanguageCode } from "../../../../types"
 import EditableProfileForm from "./EditableProfileForm"
 import ProfileFormStatus from "./ProfileFormStatus"
 import Notice from "../../../components/Notice"
+import { revealItem, revealStagger } from "../../../components/reveal"
 import ReadOnlyProfileForm from "./ReadOnlyProfileForm"
 import SignInMethodsSection from "../SignInMethods/SignInMethodsSection"
 
@@ -66,11 +67,6 @@ function describeSaveFailure(failure: SaveFailure, t: TFunction): string {
     : getProfileFormError(failure.error, t("formErrors.update"), t)
 }
 
-const viewTransition: Transition = {
-  duration: 0.25,
-  ease: [0.23, 1, 0.32, 1],
-}
-
 interface EditViewProps {
   adminQuery: ReturnType<typeof useGetProfileAdminQuery>
   profileId: Profile["id"]
@@ -86,7 +82,10 @@ interface EditViewProps {
 /**
  * The edit view: the form, with the owner's sign-in methods, once the admin
  * profile has loaded, otherwise its loading or error status. It renders only
- * while editing, so the CV view never builds its messages.
+ * while editing, so the CV view never builds its messages. Each of them
+ * plays its own entrance when it mounts: the status fades in, and the form
+ * and the sign-in methods rise in one after another (`revealStagger`), so
+ * the fields that arrive with the admin profile never just appear.
  *
  * @param props - The component props.
  * @param props.adminQuery - The admin profile's query.
@@ -124,16 +123,23 @@ function EditView({
       : undefined
 
     return (
-      <ProfileFormStatus
-        error={profileId ? adminLoadError : t("profileForm.missingIdEdit")}
-        isLoading={adminQuery.isLoading}
-        onCancel={onCancel}
-      />
+      <motion.div variants={revealItem} initial="hidden" animate="visible">
+        <ProfileFormStatus
+          error={profileId ? adminLoadError : t("profileForm.missingIdEdit")}
+          isLoading={adminQuery.isLoading}
+          onCancel={onCancel}
+        />
+      </motion.div>
     )
   }
 
   return (
-    <div className="grid gap-20">
+    <motion.div
+      variants={revealStagger}
+      initial="hidden"
+      animate="visible"
+      className="grid gap-20"
+    >
       <EditableProfileForm
         onCancel={onCancel}
         onSubmit={onSubmit}
@@ -150,20 +156,25 @@ function EditView({
         initialLanguage={initialLanguage}
       />
       {adminProfile.isOwner && (
-        <SignInMethodsSection
-          publicUrlSegment={urlSegment}
-          linkResult={linkResult}
-        />
+        <motion.div variants={revealItem}>
+          <SignInMethodsSection
+            publicUrlSegment={urlSegment}
+            linkResult={linkResult}
+          />
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   )
 }
 
 /**
  * The CV with its edit mode. Users who may edit get an Edit profile action
  * that loads the full profile into the form, and a notice confirms each save.
- * One view shows at a time: the outgoing view leaves before the next one
- * enters. The CV plays its entrance on load and again when returning to it.
+ * One view shows at a time, and the swap is immediate: the outgoing view
+ * leaves at once instead of fading, because a fading view would switch off
+ * the blur of every Pane inside it, and the incoming view staggers its own
+ * parts in. The CV plays its entrance on load and again when returning to
+ * it; the edit view's fields fade themselves (`paneReveal` in `EditView`).
  * The edit view also lists the CV's sign-in methods, for its owner only:
  * a `CvAdmin` editing someone else's CV doesn't manage their sign-in. Returning from adding
  * one, the CV opens in the edit view with the outcome, and the router state
@@ -333,50 +344,37 @@ export default function ProfileForm({
     setIsEditing(true)
   }
 
-  /**
-   * The view's rise-in, skipped on first load so only the CV's own entrance
-   * plays. It is set here rather than as `initial={false}` on
-   * `AnimatePresence`, which would block every entrance inside the CV.
-   */
-  const viewEntrance = isEditing || hasEdited ? { opacity: 0, y: 24 } : false
-
   return (
     <FormProvider {...profileForm}>
       <div className="grid w-full gap-8">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={isEditing ? "edit" : "view"}
-            data-edit-view={isEditing ? true : undefined}
-            initial={viewEntrance}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -16 }}
-            transition={viewTransition}
-          >
-            {isEditing ? (
-              <EditView
-                adminQuery={profileAdminQuery}
-                profileId={values.id}
-                publicUrlSegment={publicUrlSegment}
-                linkResult={linkResult}
-                isSaving={updateProfileState.isLoading}
-                saveFailure={saveFailure}
-                initialLanguage={editLanguage}
-                onSubmit={saveProfile}
-                onCancel={cancelEditing}
-              />
-            ) : (
-              <ReadOnlyProfileForm
-                values={values}
-                onEdit={canEdit ? startEditing : undefined}
-                focusEdit={hasEdited}
-                pdfPath={pdfPath}
-                fallbackLanguage={fallbackLanguage}
-                missingLanguages={missingLanguages}
-                onCloseMissingLanguages={closeLanguageNotice}
-              />
-            )}
-          </motion.div>
-        </AnimatePresence>
+        <div
+          key={isEditing ? "edit" : "view"}
+          data-edit-view={isEditing ? true : undefined}
+        >
+          {isEditing ? (
+            <EditView
+              adminQuery={profileAdminQuery}
+              profileId={values.id}
+              publicUrlSegment={publicUrlSegment}
+              linkResult={linkResult}
+              isSaving={updateProfileState.isLoading}
+              saveFailure={saveFailure}
+              initialLanguage={editLanguage}
+              onSubmit={saveProfile}
+              onCancel={cancelEditing}
+            />
+          ) : (
+            <ReadOnlyProfileForm
+              values={values}
+              onEdit={canEdit ? startEditing : undefined}
+              focusEdit={hasEdited}
+              pdfPath={pdfPath}
+              fallbackLanguage={fallbackLanguage}
+              missingLanguages={missingLanguages}
+              onCloseMissingLanguages={closeLanguageNotice}
+            />
+          )}
+        </div>
       </div>
       <Notice noticeKey={savedNotice} onDismiss={dismissSavedNotice}>
         {t("profileForm.saved")}

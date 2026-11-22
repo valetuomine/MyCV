@@ -5,6 +5,7 @@ import {
   type JSX,
   type SubmitEventHandler,
 } from "react"
+import { m as motion } from "framer-motion"
 import { flushSync } from "react-dom"
 import { useFormState } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -13,6 +14,7 @@ import Button from "../../../components/Button"
 import CopyLinkButton from "../../../components/CopyLinkButton"
 import Eyebrow from "../../../components/Eyebrow"
 import { labelClassName } from "../../../components/labelClassName"
+import { revealItem, revealStagger } from "../../../components/reveal"
 import type { ProfileSchema } from "../../schemas/profile-form-schema"
 import FormLanguageProvider from "./FormLanguageProvider"
 import ProfileFields from "./ProfileFields"
@@ -48,6 +50,10 @@ interface EditableProfileFormProps {
  * width rather than in the preview, and is saved on its own, so Save and
  * Cancel leave it alone. The fields and the preview share the language
  * being edited through `FormLanguageProvider`, so the preview follows it.
+ * The form's parts rise in one after another (`revealStagger`) when it
+ * mounts, like the home page's; the fields and the preview fade only their
+ * Panes and the pieces beside them (`paneReveal`), so their blur never
+ * switches off, and the sticky actions bar, a Pane itself, fades on its own.
  *
  * @param props - The component props.
  * @param props.onCancel - Leaves edit mode without saving.
@@ -129,7 +135,8 @@ export default function EditableProfileForm({
   }
 
   return (
-    <form
+    <motion.form
+      variants={revealStagger}
       onSubmit={onSubmit}
       noValidate
       aria-busy={isSaving}
@@ -137,7 +144,7 @@ export default function EditableProfileForm({
     >
       <FormLanguageProvider initialLanguage={initialLanguage}>
         <div className="grid min-w-0 gap-6">
-          <div className="grid gap-4">
+          <motion.div variants={revealItem} className="grid gap-4">
             <Eyebrow>{t("profileForm.editing")}</Eyebrow>
             <h1
               ref={headingRef}
@@ -146,9 +153,9 @@ export default function EditableProfileForm({
             >
               {t("profileForm.heading")}
             </h1>
-          </div>
+          </motion.div>
           {publicUrl && (
-            <div className="grid gap-2">
+            <motion.div variants={revealItem} className="grid gap-2">
               <p className={`m-0 ${labelClassName}`}>
                 {t("profileForm.cvLink")}
               </p>
@@ -168,22 +175,27 @@ export default function EditableProfileForm({
                   label={t("profileForm.copyLink")}
                 />
               </div>
-            </div>
+            </motion.div>
           )}
-          <ProfilePictureSection
-            profileId={profileId}
-            pictureUrl={pictureUrl}
-            showPicture={showPicture}
-            canUseGooglePicture={canUseGooglePicture}
-            fullName={savedFullName}
-          />
+          <motion.div variants={revealItem} className="grid min-w-0">
+            <ProfilePictureSection
+              profileId={profileId}
+              pictureUrl={pictureUrl}
+              showPicture={showPicture}
+              canUseGooglePicture={canUseGooglePicture}
+              fullName={savedFullName}
+            />
+          </motion.div>
           <ProfileFields isDisabled={isSaving} />
           {saveError && (
             <p role="alert" className="m-0 text-sm text-cv-danger">
               {saveError}
             </p>
           )}
-          <div className="sticky bottom-[max(1rem,env(safe-area-inset-bottom))] z-20 flex min-h-17 flex-wrap items-center gap-3 rounded-3xl border border-cv-line bg-cv-pane bg-cv-pane-dense p-3 shadow-cv-panel inset-shadow-cv-rim">
+          <motion.div
+            variants={revealItem}
+            className="sticky bottom-[max(1rem,env(safe-area-inset-bottom))] z-20 flex min-h-17 flex-wrap items-center gap-3 rounded-3xl border border-cv-line bg-cv-pane bg-cv-pane-dense p-3 shadow-cv-panel inset-shadow-cv-rim"
+          >
             {confirmingDiscard ? (
               <>
                 <p className="m-0 mr-auto px-2 text-sm text-cv-ink">
@@ -227,10 +239,10 @@ export default function EditableProfileForm({
                 </output>
               </>
             )}
-          </div>
+          </motion.div>
         </div>
         <ProfilePreview />
       </FormLanguageProvider>
-    </form>
+    </motion.form>
   )
 }

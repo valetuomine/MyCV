@@ -1,5 +1,3 @@
-import type { Variants } from "framer-motion"
-
 /**
  * The featured CV card's grid: its text and portrait side by side, with the
  * buttons under them. On phones and in the hero from `lg` up the buttons take
@@ -34,24 +32,11 @@ export const featuredCvPortraitClassName =
   "size-20 self-start rounded-2xl [grid-area:portrait] sm:h-auto sm:w-48 sm:self-stretch lg:w-36 xl:w-40"
 
 /**
- * Lets the card's content rise into place once its data has arrived. Only
- * the content fades, never the card or anything around it: a fading
- * ancestor would switch off the Pane's backdrop blur until it ends.
- */
-export const featuredCvReveal: Variants = {
-  hidden: { opacity: 0, y: 18 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { type: "spring", stiffness: 100, damping: 20 },
-  },
-}
-
-/**
  * The featured CV address's pill: as tall as the copy button beside it, on
  * the Pane with the Field Border hairline, the rim and the edge glow, like
  * the language track. It is never wider than its row, so a long address is
- * cut short inside it. The address and its skeleton share it.
+ * cut short inside it. It fades with a pane-safe entrance (`paneReveal`).
+ * The address and its skeleton share it.
  */
 export const featuredCvAddressFrameClassName =
-  "m-0 flex h-11 max-w-full min-w-0 items-center rounded-full border border-cv-field-border bg-cv-pane px-5 text-sm shadow-cv-edge inset-shadow-cv-rim forced-colors:shadow-none print:shadow-none"
+  "m-0 flex h-11 max-w-full min-w-0 items-center rounded-full border border-cv-field-border bg-cv-pane px-5 text-sm opacity-reveal shadow-cv-edge inset-shadow-cv-rim forced-colors:shadow-none print:shadow-none"

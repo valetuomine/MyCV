@@ -1,9 +1,7 @@
 import { m as motion } from "framer-motion"
 import { useState, type JSX } from "react"
-import {
-  featuredCvPortraitClassName,
-  featuredCvReveal,
-} from "./featuredCvLayout"
+import { revealItem } from "../../../components/reveal"
+import { featuredCvPortraitClassName } from "./featuredCvLayout"
 
 interface FeaturedCvAvatarProps {
   initials: string
@@ -16,7 +14,7 @@ interface FeaturedCvAvatarProps {
  * `portrait` area: beside the name on phones, and from the top of the card's
  * content to the bottom of its buttons on wider screens. The photo is placed
  * absolutely and cropped to fit, so a tall photo never makes the card taller.
- * It rises in with the card's content (`featuredCvReveal`). The name
+ * It rises in with the card's content (`revealItem`). The name
  * already says whose CV it is, so assistive tech skips it.
  *
  * @param props - The component props.
@@ -35,7 +33,7 @@ export default function FeaturedCvAvatar({
   return (
     <motion.div
       aria-hidden="true"
-      variants={featuredCvReveal}
+      variants={revealItem}
       className={`relative grid place-items-center overflow-hidden border border-cv-line bg-cv-wash ${featuredCvPortraitClassName}`}
     >
       {showPhoto ? (

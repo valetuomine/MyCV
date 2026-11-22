@@ -20,7 +20,9 @@ interface FormLanguageSwitchProps {
  * `aria-pressed`. Each segment carries its language's `lang`, so a screen
  * reader pronounces the name right. A language whose fields fail validation
  * turns its whole segment danger red (`data-invalid`), like an invalid
- * field, and its name says so to screen readers.
+ * field, and its name says so to screen readers. The label and the track
+ * each fade with a pane-safe entrance (`paneReveal`), so the track's blur
+ * stays on.
  *
  * @param props - The component props.
  * @param props.label - The choice's visible label, which also names the group.
@@ -39,8 +41,10 @@ export default function FormLanguageSwitch({
 
   return (
     <fieldset className="m-0 grid min-w-0 justify-items-start gap-2 border-0 p-0">
-      <legend className={`mb-2 p-0 ${labelClassName}`}>{label}</legend>
-      <div className="flex h-11 items-center gap-0.5 rounded-full border border-cv-field-border bg-cv-pane p-1 shadow-cv-edge forced-colors:shadow-none">
+      <legend className={`mb-2 p-0 opacity-reveal ${labelClassName}`}>
+        {label}
+      </legend>
+      <div className="flex h-11 items-center gap-0.5 rounded-full border border-cv-field-border bg-cv-pane p-1 opacity-reveal shadow-cv-edge forced-colors:shadow-none">
         {profileLanguages.map((code) => {
           const hasError = erroredLanguages.includes(code)
 

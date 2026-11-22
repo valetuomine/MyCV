@@ -1,4 +1,5 @@
 import type { Profile } from "./api/profileQueries"
+import type { CreateProfileSchema } from "./pages/Profile/schemas/profile-form-schema"
 
 export const InputType = {
   Text: "text",
@@ -109,6 +110,26 @@ export type SubmitFailureReason =
   (typeof SubmitFailureReason)[keyof typeof SubmitFailureReason]
 
 /**
+ * Why the last profile creation failed: no public URL came back, or the
+ * request failed with the error it carries.
+ */
+export type SubmitFailure =
+  | { reason: typeof SubmitFailureReason.NoPublicUrl }
+  | { reason: typeof SubmitFailureReason.Request; error: unknown }
+
+/**
+ * What the user had entered in the create-profile form when it last
+ * unmounted, with the session it was entered in, so the form offers it again
+ * only to the same account.
+ */
+export interface CreateProfileDraft {
+  /** The sign-in method and account of the session the draft belongs to. */
+  owner: string
+  /** The form's values when it unmounted. */
+  values: CreateProfileSchema
+}
+
+/**
  * Why the API refused the signed-in session: it expired, so signing in
  * again may help, or it was refused again right after signing in again.
  */
@@ -187,6 +208,7 @@ export const LinkOutcome = {
 export type LinkOutcome = (typeof LinkOutcome)[keyof typeof LinkOutcome]
 
 export const FeaturedCvStatus = {
+  Checking: "checking",
   Loading: "loading",
   None: "none",
   Ready: "ready",
@@ -197,6 +219,7 @@ export type FeaturedCvStatus =
 
 /** The featured CV as the home page shows it (`useFeaturedCv`). */
 export type FeaturedCv =
+  | { status: typeof FeaturedCvStatus.Checking }
   | { status: typeof FeaturedCvStatus.Loading }
   | { status: typeof FeaturedCvStatus.None }
   | {

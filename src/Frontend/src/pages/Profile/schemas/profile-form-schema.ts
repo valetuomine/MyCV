@@ -125,19 +125,28 @@ export type ProfileSchema = z.infer<typeof profileSchema>
 export type CreateProfileSchema = z.infer<typeof createProfileSchema>
 
 /**
- * The create form's values: English as the default language, because the
- * app is not only for Finnish users, and an empty row for every language.
+ * Builds the create form's values: an empty row for every language, and as
+ * the default language the one the user is using the app in, so a profile
+ * started in Finnish starts in Finnish and one started in English in
+ * English.
+ *
+ * @param defaultLanguageCode - The UI language when the form is created.
+ * @returns The create form's starting values.
  */
-export const createProfileDefaultValues: CreateProfileSchema = {
-  publicUrlSegment: "",
-  fullName: "",
-  linkedInUrl: "",
-  gitHubUrl: "",
-  defaultLanguageCode: LanguageCode.English,
-  translations: profileLanguages.map((languageCode) => ({
-    languageCode,
-    title: "",
-    summary: "",
-    location: "",
-  })),
+export function createProfileDefaultValues(
+  defaultLanguageCode: LanguageCode,
+): CreateProfileSchema {
+  return {
+    publicUrlSegment: "",
+    fullName: "",
+    linkedInUrl: "",
+    gitHubUrl: "",
+    defaultLanguageCode,
+    translations: profileLanguages.map((languageCode) => ({
+      languageCode,
+      title: "",
+      summary: "",
+      location: "",
+    })),
+  }
 }

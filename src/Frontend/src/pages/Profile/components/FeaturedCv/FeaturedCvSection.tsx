@@ -7,10 +7,12 @@ import { FeaturedCvStatus } from "../../../../types"
 
 /**
  * The home page's featured CV card (`useFeaturedCv`), with a skeleton while
- * it loads. When no CV is featured or a request fails, it renders nothing,
- * so the home page works without it. The wrapper only starts the card's
- * reveal: the card's content rises in (`featuredCvReveal`) while the card
- * itself stays where the skeleton was.
+ * its profile loads. While it is still unknown whether a CV is featured, it
+ * renders nothing, so no card stands for a CV that may not exist. When no CV
+ * is featured or a request fails, it renders nothing too, so the home page
+ * works without it. The wrapper only starts the card's reveal: the card's
+ * content rises in (`revealItem`) while the card itself stays where
+ * the skeleton was.
  *
  * @returns The featured CV's card, its skeleton, or nothing.
  */
@@ -21,7 +23,10 @@ export default function FeaturedCvSection(): JSX.Element | null {
     return <FeaturedCvSkeleton />
   }
 
-  if (featured.status === FeaturedCvStatus.None) {
+  if (
+    featured.status === FeaturedCvStatus.Checking ||
+    featured.status === FeaturedCvStatus.None
+  ) {
     return null
   }
 

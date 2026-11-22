@@ -1,11 +1,8 @@
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useState, type JSX } from "react"
-import { FormProvider, useForm, useWatch } from "react-hook-form"
+import { useRef, type JSX } from "react"
 import { useTranslation } from "react-i18next"
 import type { TFunction } from "i18next"
 import { Navigate, useNavigate } from "react-router-dom"
 import { useGetOwnCandidateQuery } from "../../../api/candidateQueries"
-import { useCreateProfileMutation } from "../../../api/profileQueries"
 import { returnAdminPathKey } from "../../../auth/adminLoginStorage"
 import {
   isGoogleRenewalPending,
@@ -16,28 +13,10 @@ import SignInMessage from "../../../auth/SignInMessage"
 import SignInRouteFallback from "../../../auth/SignInRouteFallback"
 import useLoginRedirect from "../../../auth/useLoginRedirect"
 import { RoutePaths } from "../../../routePaths"
-import { ButtonVariant, SubmitFailureReason, Tone } from "../../../types"
-import Button from "../../components/Button"
-import RHFInput from "../../components/RHFInput"
-import FormLanguageProvider from "../../Profile/components/forms/FormLanguageProvider"
-import ProfileFields from "../../Profile/components/forms/ProfileFields"
+import { Tone, type CreateProfileDraft } from "../../../types"
+import CreateProfileForm from "../components/CreateProfileForm"
 import RouteMessage from "../../Profile/components/RouteMessage"
-import {
-  createProfileSchema,
-  createProfileDefaultValues,
-  type CreateProfileSchema,
-} from "../../Profile/schemas/profile-form-schema"
-import { toCreateProfileRequest } from "../../Profile/mappers/profileFormMapper"
-import { getProfileFormError } from "../../Profile/utils/profileFormUtils"
 import { errorStatus } from "../../Profile/utils/describeRouteError"
-
-/**
- * Why the last creation failed: no public URL came back, or the request
- * failed.
- */
-type SubmitFailure =
-  | { reason: typeof SubmitFailureReason.NoPublicUrl }
-  | { reason: typeof SubmitFailureReason.Request; error: unknown }
 
 /**
  * Turns a failed look-up of the user's own CV into a message. A missing CV
@@ -59,31 +38,19 @@ function describeOwnCvError(status: unknown, t: TFunction): string {
 }
 
 /**
- * Words a failed creation.
- *
- * @param failure - Why the creation failed.
- * @param t - The translation function.
- * @returns The message to show under the form.
- */
-function describeSubmitFailure(failure: SubmitFailure, t: TFunction): string {
-  return failure.reason === SubmitFailureReason.NoPublicUrl
-    ? t("createProfile.noPublicUrl")
-    : getProfileFormError(failure.error, t("formErrors.creation"), t)
-}
-
-/**
  * The `/admin` route for creating a profile. Lets the user choose a sign-in
  * method and signs them in first. Once signed in, it looks up the user's own
  * CV and sends an owner straight on to managing it; only a user without a CV
- * sees the form, with a preview of the CV link, and the new CV opens once it
- * is created. The form stays hidden during the look-up, so it never flashes
- * before the redirect. When the API no longer accepts the sign-in (401),
- * the shared `SessionExpiredMessage` offers to sign in again over the
- * route, and signing in again refetches the look-up through its `Session`
- * tag. A 401 while a silent Google renewal is leaving for Google keeps the
- * loader. A failed creation
- * is kept as its cause and worded at render, so its message follows a
- * language change.
+ * sees the form (`CreateProfileForm`), which mounts only then, so it takes
+ * its default language from the UI language at that moment. The form stays
+ * hidden during the look-up, so it never flashes before the redirect. The
+ * route keeps what the user has entered (`draft`) while the form is hidden
+ * for signing in again or a new look-up, so the form comes back as it was for
+ * the same account (`draftOwner`), and empty for another one. When
+ * the API no longer accepts the sign-in (401), the shared
+ * `SessionExpiredMessage` offers to sign in again over the route, and
+ * signing in again refetches the look-up through its `Session` tag. A 401
+ * while a silent Google renewal is leaving for Google keeps the loader.
  *
  * @returns The sign-in screen until signed in, a loader during the look-up,
  *   a redirect to the user's own CV, an error message when the look-up fails,
@@ -91,10 +58,11 @@ function describeSubmitFailure(failure: SubmitFailure, t: TFunction): string {
  */
 export default function AdminCreateProfileRoute(): JSX.Element {
   const { t } = useTranslation()
-  const { isSignedIn, isBusy } = useAuthSession()
+  const { isSignedIn, isBusy, method, account } = useAuthSession()
   const navigate = useNavigate()
-  const [submitFailure, setSubmitFailure] = useState<SubmitFailure | null>(null)
-  const [createProfile, createState] = useCreateProfileMutation()
+  const draft = useRef<CreateProfileDraft | null>(null)
+  /** The session's method and account, which the form's draft belongs to. */
+  const draftOwner = `${method}:${account?.username ?? ""}`
   /** Whether the user is signed in and settled, so their own CV can be looked up. */
   const canLookUpOwnCv = isSignInConfigured && isSignedIn && !isBusy
   const ownCandidate = useGetOwnCandidateQuery(undefined, {
@@ -112,50 +80,6 @@ export default function AdminCreateProfileRoute(): JSX.Element {
     storageKey: returnAdminPathKey,
     storageValue: RoutePaths.AdminCreateProfile,
   })
-
-  /**
-   * The create form. Every field validates on each change, so a required
-   * field shows its message as soon as it is emptied, before Save.
-   */
-  const form = useForm<CreateProfileSchema>({
-    resolver: zodResolver(createProfileSchema),
-    defaultValues: createProfileDefaultValues,
-    mode: "onChange",
-  })
-
-  const { handleSubmit } = form
-
-  const publicUrlSegment = useWatch({
-    control: form.control,
-    name: "publicUrlSegment",
-  })
-
-  /**
-   * Validates and creates the profile, then opens it at its public URL.
-   * Shows an error when creation fails or no public URL comes back.
-   */
-  const submit = handleSubmit(async (data) => {
-    setSubmitFailure(null)
-
-    try {
-      const result = await createProfile(toCreateProfileRequest(data)).unwrap()
-      if (!result.publicUrlSegment) {
-        setSubmitFailure({ reason: SubmitFailureReason.NoPublicUrl })
-        return
-      }
-
-      void navigate(RoutePaths.CandidateProfile(result.publicUrlSegment), {
-        replace: true,
-      })
-    } catch (error: unknown) {
-      setSubmitFailure({ reason: SubmitFailureReason.Request, error })
-    }
-  })
-
-  /** The failed creation's message, in the active language. */
-  const submitError = submitFailure
-    ? describeSubmitFailure(submitFailure, t)
-    : undefined
 
   if (!canLookUpOwnCv) {
     return (
@@ -200,70 +124,5 @@ export default function AdminCreateProfileRoute(): JSX.Element {
     )
   }
 
-  return (
-    <main className="mx-auto w-full max-w-6xl px-6 pt-20 pb-12 text-cv-copy lg:pt-12">
-      <FormProvider {...form}>
-        <form
-          onSubmit={submit}
-          noValidate
-          aria-busy={createState.isLoading}
-          className="grid w-full max-w-3xl gap-6"
-        >
-          <h1 className="m-0 min-w-0 font-cv-display text-4xl font-semibold tracking-tight wrap-break-word text-cv-ink">
-            {t("createProfile.heading")}
-          </h1>
-          <fieldset
-            disabled={createState.isLoading}
-            className="m-0 grid min-w-0 gap-5 border-0 p-0"
-          >
-            <legend className="sr-only">
-              {t("createProfile.publicAddress")}
-            </legend>
-            <RHFInput<CreateProfileSchema>
-              name="publicUrlSegment"
-              label={t("createProfile.cvLink")}
-              maxLength={100}
-              required
-              autoComplete="off"
-              autoCapitalize="none"
-              spellCheck={false}
-              description={
-                <>
-                  {t("createProfile.cvLinkPreview")}{" "}
-                  <span className="break-all text-cv-ink">
-                    {window.location.origin}/
-                    {publicUrlSegment || t("createProfile.cvLinkPlaceholder")}
-                  </span>
-                </>
-              }
-            />
-          </fieldset>
-          <FormLanguageProvider>
-            <ProfileFields isDisabled={createState.isLoading} isNew />
-          </FormLanguageProvider>
-          {submitError && (
-            <p role="alert" className="m-0 text-sm text-cv-danger">
-              {submitError}
-            </p>
-          )}
-          <div className="flex flex-wrap gap-3">
-            <Button
-              type="submit"
-              variant={ButtonVariant.Primary}
-              loading={createState.isLoading}
-              loadingText={t("createProfile.creating")}
-            >
-              {t("createProfile.submit")}
-            </Button>
-            <Button
-              onClick={() => navigate(RoutePaths.Home)}
-              disabled={createState.isLoading}
-            >
-              {t("common.cancel")}
-            </Button>
-          </div>
-        </form>
-      </FormProvider>
-    </main>
-  )
+  return <CreateProfileForm draft={draft} draftOwner={draftOwner} />
 }

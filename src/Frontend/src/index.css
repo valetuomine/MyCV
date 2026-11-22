@@ -369,6 +369,24 @@
   mask-composite: exclude;
 }
 
+/* How far a pane-safe entrance (paneReveal in src/pages/components/reveal.ts)
+   has faded in, from 0 to 1. Framer Motion animates it on a part that holds
+   a blurred Pane, and opacity-reveal fades that part's pieces with it: the
+   Panes themselves and the pieces without one, never an ancestor of a Pane,
+   because an ancestor with an opacity below 1 switches off the Pane's
+   backdrop blur until the fade ends. It is 1 everywhere else. */
+@property --cv-reveal {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+
+/* Fades a piece of a pane-safe entrance with --cv-reveal. Put it on a Pane
+   or on a piece without a Pane inside, never on an ancestor of a Pane. */
+@utility opacity-reveal {
+  opacity: var(--cv-reveal);
+}
+
 /* A skeleton shape: the overlay fill with one band of the background's light
    at the portrait foil's 105deg angle. Every shape paints the band against the
    viewport (background-attachment: fixed), so a single light crosses the whole

@@ -4,10 +4,8 @@ import { useTranslation } from "react-i18next"
 import { RoutePaths } from "../../../../routePaths"
 import CopyLinkButton from "../../../components/CopyLinkButton"
 import FeaturedCvAddressSkeleton from "./FeaturedCvAddressSkeleton"
-import {
-  featuredCvAddressFrameClassName,
-  featuredCvReveal,
-} from "./featuredCvLayout"
+import { revealItem } from "../../../components/reveal"
+import { featuredCvAddressFrameClassName } from "./featuredCvLayout"
 import useFeaturedCv from "./useFeaturedCv"
 import { FeaturedCvStatus } from "../../../../types"
 
@@ -15,9 +13,8 @@ import { FeaturedCvStatus } from "../../../../types"
  * The featured CV's link in the home page's hero, shown as something to use
  * rather than as a technical address: a pill on the Pane with the edge glow,
  * the site's host in Muted and the CV's path in Ink, and beside it the Copy
- * link button. The pill's frame stays put from its skeleton on, and only the
- * address and the button rise in once the CV has loaded
- * (`featuredCvReveal`), because a fading Pane would switch off its blur. A
+ * link button. The pill's frame stays put from its skeleton on, and the
+ * address rises in inside it once the CV has loaded (`revealItem`). A
  * long host is cut short first, and the path only once the host is gone, so
  * the address never spills out of the pill. The host shrinks a thousand times
  * faster than the path rather than the path shrinking a thousand times
@@ -26,7 +23,9 @@ import { FeaturedCvStatus } from "../../../../types"
  * would be clipped without an ellipsis. Below `lg` the button wraps under a
  * pill that does not fit beside it; in the two-column hero from `lg` up it
  * stays beside the pill, which cuts the address short instead, so the row
- * keeps one line and the card beside it stays low. It shows nothing when no
+ * keeps one line and the card beside it stays low. The pill's frame fades
+ * in with the hero's pane-safe entrance (`paneReveal`). It shows nothing
+ * while it is still unknown whether a CV is featured, and when no
  * CV is featured, like the card.
  *
  * @returns The address and its copy button, their skeleton, or nothing.
@@ -39,7 +38,10 @@ export default function FeaturedCvAddress(): JSX.Element | null {
     return <FeaturedCvAddressSkeleton />
   }
 
-  if (featured.status === FeaturedCvStatus.None) {
+  if (
+    featured.status === FeaturedCvStatus.Checking ||
+    featured.status === FeaturedCvStatus.None
+  ) {
     return null
   }
 
@@ -54,7 +56,7 @@ export default function FeaturedCvAddress(): JSX.Element | null {
       <p className={featuredCvAddressFrameClassName}>
         <span className="sr-only">{t("home.addressLabel")}: </span>
         <motion.span
-          variants={featuredCvReveal}
+          variants={revealItem}
           className="flex min-w-0 items-baseline"
         >
           <span className="min-w-0 shrink-1000 truncate text-cv-muted">
@@ -65,12 +67,12 @@ export default function FeaturedCvAddress(): JSX.Element | null {
           </span>
         </motion.span>
       </p>
-      <motion.div variants={featuredCvReveal} className="shrink-0">
+      <div className="shrink-0 opacity-reveal">
         <CopyLinkButton
           url={`${window.location.origin}${path}`}
           label={t("cv.copyLink")}
         />
-      </motion.div>
+      </div>
     </motion.div>
   )
 }

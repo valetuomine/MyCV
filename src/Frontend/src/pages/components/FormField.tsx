@@ -79,9 +79,12 @@ function pickCountTone(length: number, maxLength: number): string {
  * focus inside strengthens most (neither in print, and no hover glow on a
  * disabled field). An invalid field gets the neutral Pane and a
  * danger-coloured glow.
- * The frame also fades the whole field while it is disabled. With a
- * mouse, a light follows the pointer around the field's border and faintly
- * tints the surface beneath the transparent field. The position goes to CSS
+ * The frame also fades the whole field while it is disabled. The label
+ * row, the frame, the action and the description each fade with a
+ * pane-safe entrance (`paneReveal`), so a field fades in without switching
+ * off the frame's blur. With a mouse, a light follows the pointer around
+ * the field's border and faintly tints the surface beneath the transparent
+ * field. The position goes to CSS
  * variables once per frame, so moving the pointer doesn't re-render. Touch
  * and reduced motion get no light. While the field has focus the label turns
  * accent and a light travels around its border, paused on every other field.
@@ -190,7 +193,7 @@ export default function FormField({
       data-invalid={error ? true : undefined}
       className="group/field grid min-w-0 content-start gap-2"
     >
-      <div className="flex items-baseline justify-between gap-3">
+      <div className="flex items-baseline justify-between gap-3 opacity-reveal">
         <label
           htmlFor={id}
           className={`${labelClassName} transition-colors duration-200 group-has-[[data-field-frame]:focus-within]/field:text-cv-accent-strong`}
@@ -220,7 +223,7 @@ export default function FormField({
           ref={listenForCancelledShake}
           onPointerEnter={trackPointer}
           onPointerMove={trackPointer}
-          className={`group/frame relative isolate min-w-0 flex-1 rounded-lg bg-cv-pane ${isShaking ? "animate-cv-shake" : ""} shadow-cv-edge transition-[background-color,box-shadow] duration-200 ease-out not-print:hover:not-has-disabled:not-has-focus-visible:shadow-cv-edge-hover not-print:has-focus-visible:shadow-cv-edge-focus group-data-invalid/field:bg-cv-pane-neutral group-data-invalid/field:bg-none group-data-invalid/field:[--cv-autofill:var(--cv-surface)] group-data-invalid/field:[--edge:var(--cv-danger)] motion-reduce:transition-none forced-colors:shadow-none print:shadow-none group-data-invalid/field:[--spot:var(--cv-danger)] has-disabled:opacity-60`}
+          className={`group/frame relative isolate min-w-0 flex-1 rounded-lg bg-cv-pane ${isShaking ? "animate-cv-shake" : ""} shadow-cv-edge transition-[background-color,box-shadow] duration-200 ease-out not-print:hover:not-has-disabled:not-has-focus-visible:shadow-cv-edge-hover not-print:has-focus-visible:shadow-cv-edge-focus group-data-invalid/field:bg-cv-pane-neutral group-data-invalid/field:bg-none group-data-invalid/field:[--cv-autofill:var(--cv-surface)] group-data-invalid/field:[--edge:var(--cv-danger)] motion-reduce:transition-none forced-colors:shadow-none print:shadow-none group-data-invalid/field:[--spot:var(--cv-danger)] opacity-reveal has-disabled:opacity-[calc(var(--cv-reveal)*0.6)]`}
         >
           <span
             aria-hidden="true"
@@ -254,11 +257,14 @@ export default function FormField({
             ))}
           </span>
         </div>
-        {action}
+        {action && <div className="flex shrink-0 opacity-reveal">{action}</div>}
       </div>
       <FieldMessage id={errorId} error={error} />
       {description ? (
-        <div id={descriptionId} className="min-w-0 text-sm text-cv-muted">
+        <div
+          id={descriptionId}
+          className="min-w-0 text-sm text-cv-muted opacity-reveal"
+        >
           {description}
         </div>
       ) : null}

@@ -1,3 +1,4 @@
+import { m as motion } from "framer-motion"
 import type { JSX } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -5,6 +6,7 @@ import { Brand } from "../../../../types"
 import BrandIcon from "../../../components/BrandIcon"
 import Eyebrow from "../../../components/Eyebrow"
 import LitCard from "../../../components/LitCard"
+import { paneReveal } from "../../../components/reveal"
 import type { ProfileSchema } from "../../schemas/profile-form-schema"
 import { useFormLanguage } from "./formLanguageContext"
 
@@ -20,7 +22,9 @@ const pill =
  *
  * The card is a `LitCard`, so it lights up like the form's fields, and its
  * drifting light also runs while any field of the edit form has focus, so
- * the card wakes while the profile is edited.
+ * the card wakes while the profile is edited. It takes its turn in the edit
+ * form's entrance with the pane-safe fade (`paneReveal`), so the eyebrow and
+ * the card's layers fade while the card's blur stays on.
  *
  * @returns The preview card, shown on large screens.
  */
@@ -41,13 +45,16 @@ export default function ProfilePreview(): JSX.Element {
   const summary = translation?.summary
 
   return (
-    <aside
+    <motion.aside
+      variants={paneReveal}
       aria-hidden="true"
       className="sticky top-24 hidden self-start lg:block"
     >
-      <Eyebrow meta={t(`profileFields.languageLabels.${activeLanguage}`)}>
-        {t("profileForm.livePreview")}
-      </Eyebrow>
+      <div className="opacity-reveal">
+        <Eyebrow meta={t(`profileFields.languageLabels.${activeLanguage}`)}>
+          {t("profileForm.livePreview")}
+        </Eyebrow>
+      </div>
       <LitCard
         className="mt-5"
         contentClassName="grid justify-items-start p-8"
@@ -97,6 +104,6 @@ export default function ProfilePreview(): JSX.Element {
           </div>
         )}
       </LitCard>
-    </aside>
+    </motion.aside>
   )
 }
