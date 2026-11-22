@@ -9,8 +9,7 @@ import {
   useSaveProfilePictureMutation,
   useSetProfilePictureVisibilityMutation,
 } from "../../../../api/profileQueries"
-import { useAuthSession } from "../../../../auth/authSession"
-import { ButtonSize, ButtonVariant, SignInMethod } from "../../../../types"
+import { ButtonSize, ButtonVariant } from "../../../../types"
 import Button from "../../../components/Button"
 import { headingClassName } from "../../../components/headingClassName"
 import { labelClassName } from "../../../components/labelClassName"
@@ -26,6 +25,7 @@ interface ProfilePictureSectionProps {
   profileId: string
   pictureUrl?: string | null
   showPicture: boolean
+  canUseGooglePicture: boolean
   fullName?: string | null
 }
 
@@ -91,10 +91,12 @@ function describeOutcome(outcome: PictureOutcome, t: TFunction): string {
 
 /**
  * The edit view's profile picture: a preview, or the initials when there is
- * none, with Choose or Change picture, Use Google picture for a Google
- * sign-in only, and Remove picture, which asks first. Each change is saved
- * at once through its own request, apart from the form's Save and Cancel,
- * and leaves the form's unsaved changes as they are, which the section says.
+ * none, with Choose or Change picture, Use Google picture when the API says
+ * the CV has one (the Google sign-in's own picture, or in a Microsoft sign-in
+ * that of a linked Google sign-in), and Remove picture, which asks first.
+ * Each change is saved at once through its own request, apart from the
+ * form's Save and Cancel, and leaves the form's unsaved changes as they are,
+ * which the section says.
  * Choosing a picture opens the device's picker, which on a phone also offers
  * the camera; the browser shrinks the photo before uploading it. Its outcome
  * shows below the actions, and after a removal focus moves to Choose picture,
@@ -111,6 +113,7 @@ function describeOutcome(outcome: PictureOutcome, t: TFunction): string {
  * @param props.profileId - The profile whose picture this is.
  * @param props.pictureUrl - The current picture's path from the API, if any.
  * @param props.showPicture - Whether the CV shows the picture section.
+ * @param props.canUseGooglePicture - Whether the API can fetch a Google picture for this sign-in.
  * @param props.fullName - The saved name, for the initials without a picture.
  * @returns The section.
  */
@@ -118,6 +121,7 @@ export default function ProfilePictureSection({
   profileId,
   pictureUrl,
   showPicture,
+  canUseGooglePicture,
   fullName,
 }: Readonly<ProfilePictureSectionProps>): JSX.Element {
   const { t } = useTranslation()
@@ -127,7 +131,6 @@ export default function ProfilePictureSection({
   const chooseButtonRef = useRef<HTMLButtonElement>(null)
   const removeButtonRef = useRef<HTMLButtonElement>(null)
   const keepButtonRef = useRef<HTMLButtonElement>(null)
-  const session = useAuthSession()
   const [saveProfilePicture, uploadState] = useSaveProfilePictureMutation()
   const [saveGoogleProfilePicture, googleState] =
     useSaveGoogleProfilePictureMutation()
@@ -155,9 +158,6 @@ export default function ProfilePictureSection({
     remove: removeState.isLoading,
     visibility: visibilityState.isLoading,
   })
-  /** Whether the session is a Google sign-in, which alone has a Google picture. */
-  const canUseGoogle = session.method === SignInMethod.Google
-
   /**
    * Runs a change and records how it ended.
    *
@@ -368,7 +368,7 @@ export default function ProfilePictureSection({
                   ? t("profilePicture.change")
                   : t("profilePicture.choose")}
               </Button>
-              {canUseGoogle && (
+              {canUseGooglePicture && (
                 <Button
                   size={ButtonSize.Small}
                   onClick={applyGooglePicture}

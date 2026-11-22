@@ -28,6 +28,7 @@ interface EditableProfileFormProps {
   profileId: string
   pictureUrl?: string | null
   showPicture: boolean
+  canUseGooglePicture: boolean
   savedFullName?: string | null
   initialLanguage?: LanguageCode
 }
@@ -57,6 +58,7 @@ interface EditableProfileFormProps {
  * @param props.profileId - The profile being edited, for its picture.
  * @param props.pictureUrl - The current picture's path from the API, if any.
  * @param props.showPicture - Whether the CV shows the picture section.
+ * @param props.canUseGooglePicture - Whether Use Google picture is offered.
  * @param props.savedFullName - The saved name, for the picture's initials.
  * @param props.initialLanguage - The language to edit first, if not the default.
  * @returns The edit form.
@@ -70,6 +72,7 @@ export default function EditableProfileForm({
   profileId,
   pictureUrl,
   showPicture,
+  canUseGooglePicture,
   savedFullName,
   initialLanguage,
 }: Readonly<EditableProfileFormProps>): JSX.Element {
@@ -171,6 +174,7 @@ export default function EditableProfileForm({
             profileId={profileId}
             pictureUrl={pictureUrl}
             showPicture={showPicture}
+            canUseGooglePicture={canUseGooglePicture}
             fullName={savedFullName}
           />
           <ProfileFields isDisabled={isSaving} />

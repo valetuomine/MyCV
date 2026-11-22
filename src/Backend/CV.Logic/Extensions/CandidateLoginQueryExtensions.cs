@@ -40,5 +40,31 @@ namespace CV.Logic.Extensions
                     .ForIdentity(identity)
                     .AnyAsync(login => login.Candidate.ProfileId == profileId, cancellationToken);
         }
+
+        /// <summary>
+        /// Selects the stored Google picture addresses of the profile's candidate, but only when the sign-in
+        /// identity is one of that same candidate's logins, so that one CV never uses another CV's picture.
+        /// The most recently used Google login comes first.
+        /// </summary>
+        /// <param name="logins">The logins to search.</param>
+        /// <param name="identity">The validated sign-in identity of the caller.</param>
+        /// <param name="profileId">The identifier of the profile.</param>
+        /// <returns>The stored addresses, most recently used Google login first.</returns>
+        public static IQueryable<string> LinkedGooglePictureUrls(
+            this IQueryable<CandidateLogin> logins,
+            ExternalIdentity identity,
+            Guid profileId)
+        {
+            return logins
+                .Where(login => login.Provider == LoginProvider.Google
+                    && login.GooglePictureUrl != null
+                    && login.Candidate.ProfileId == profileId
+                    && login.Candidate.Logins.Any(own => own.Provider == identity.Provider
+                        && own.ProviderTenantId == identity.TenantId
+                        && own.ProviderUserId == identity.UserId))
+                .OrderByDescending(login => login.LastSignInAt)
+                .ThenByDescending(login => login.CreatedAt)
+                .Select(login => login.GooglePictureUrl!);
+        }
     }
 }

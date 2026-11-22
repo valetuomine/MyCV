@@ -1,4 +1,6 @@
+using CV.DataAccess.Configurations;
 using CV.DataAccess.Entity;
+using CV.Logic.Pictures;
 using CV.LogicInterface.Authentication;
 using CV.LogicInterface.Dto.Login;
 
@@ -10,7 +12,10 @@ namespace CV.Logic.Mappers
         /// Maps a sign-in identity to a new login entity.
         /// </summary>
         /// <param name="identity">The validated sign-in identity.</param>
-        /// <returns>A login entity with the identity's provider, tenant and user ID.</returns>
+        /// <returns>
+        /// A login entity with the identity's provider, tenant and user ID, and a Google sign-in's checked
+        /// picture address.
+        /// </returns>
         public static CandidateLogin MapIdentityToLogin(this ExternalIdentity identity)
         {
             return new CandidateLogin
@@ -18,8 +23,29 @@ namespace CV.Logic.Mappers
                 Provider = identity.Provider,
                 ProviderTenantId = identity.TenantId,
                 ProviderUserId = identity.UserId,
-                LastSignInAt = DateTime.UtcNow
+                LastSignInAt = DateTime.UtcNow,
+                GooglePictureUrl = identity.MapIdentityToGooglePictureUrl()
             };
+        }
+
+        /// <summary>
+        /// Picks the address that a Google login stores for its account picture: the checked, stored-size
+        /// address from the <c>picture</c> claim of a validated Google token.
+        /// </summary>
+        /// <param name="identity">The validated sign-in identity.</param>
+        /// <returns>
+        /// The address to store, or null for an Entra sign-in, a token without an accepted picture address,
+        /// or an address too long to store.
+        /// </returns>
+        public static string? MapIdentityToGooglePictureUrl(this ExternalIdentity identity)
+        {
+            if (identity.Provider != LoginProvider.Google)
+            {
+                return null;
+            }
+
+            var storedUrl = GooglePictureUri.ForStoredSize(identity.PictureUrl)?.AbsoluteUri;
+            return storedUrl?.Length <= CandidateLoginConfiguration.GooglePictureUrlMaxLength ? storedUrl : null;
         }
 
         /// <summary>

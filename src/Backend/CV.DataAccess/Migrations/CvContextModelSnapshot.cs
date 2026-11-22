@@ -71,6 +71,10 @@ namespace CV.DataAccess.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("GooglePictureUrl")
+                        .HasMaxLength(2048)
+                        .HasColumnType("nvarchar(2048)");
+
                     b.Property<DateTime?>("LastSignInAt")
                         .HasColumnType("datetime2");
 

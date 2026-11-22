@@ -43,7 +43,9 @@ export const loginQueries = baseApi.injectEndpoints({
     /**
      * Links a new method. Sends the session token itself, read without any
      * redirect, and the new method's token in the body. The API answers 201
-     * for a new link and 200 when it was already linked to this CV.
+     * for a new link and 200 when it was already linked to this CV. Also
+     * refetches the profile, whose Use Google picture depends on the linked
+     * methods.
      */
     linkLogin: builder.mutation<LinkLoginResponse, LinkLoginArgs>({
       query: ({ linkToken, sessionToken }) => ({
@@ -56,16 +58,19 @@ export const loginQueries = baseApi.injectEndpoints({
         login,
         created: meta?.response?.status === 201,
       }),
-      invalidatesTags: (_result, error) => (error ? [] : ["Login"]),
+      invalidatesTags: (_result, error) => (error ? [] : ["Login", "Profile"]),
     }),
-    /** Removes one of the signed-in user's methods. */
+    /**
+     * Removes one of the signed-in user's methods, and refetches the profile,
+     * whose Use Google picture depends on the linked methods.
+     */
     deleteLogin: builder.mutation<void, string>({
       query: (loginId) => ({
         url: `/api/me/logins/${encodeURIComponent(loginId)}`,
         method: "DELETE",
       }),
       extraOptions: { requiresSignIn: true },
-      invalidatesTags: (_result, error) => (error ? [] : ["Login"]),
+      invalidatesTags: (_result, error) => (error ? [] : ["Login", "Profile"]),
     }),
   }),
 })

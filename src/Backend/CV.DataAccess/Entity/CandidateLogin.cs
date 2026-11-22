@@ -9,5 +9,6 @@ namespace CV.DataAccess.Entity
         public string ProviderTenantId { get; set; } = null!;
         public string ProviderUserId { get; set; } = null!;
         public DateTime? LastSignInAt { get; set; }
+        public string? GooglePictureUrl { get; set; }
     }
 }

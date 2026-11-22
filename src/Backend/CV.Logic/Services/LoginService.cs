@@ -55,9 +55,28 @@ namespace CV.Logic.Services
 
             if (dbExisting is not null)
             {
-                return dbExisting.CandidateId == candidateId
-                    ? new LinkLoginResult(dbExisting.MapEntityToDto(actor), Created: false)
-                    : throw LinkedToAnotherCandidate();
+                if (dbExisting.CandidateId != candidateId)
+                {
+                    throw LinkedToAnotherCandidate();
+                }
+
+                // Linking a Google account again refreshes its stored picture address, and marks it as the
+                // most recently used Google login, so that the CV's other sign-ins use this fresh picture.
+                if (linked.Provider == LoginProvider.Google)
+                {
+                    var googlePictureUrl = linked.MapIdentityToGooglePictureUrl();
+                    var signedInAt = DateTime.UtcNow;
+                    await _dataContext.CandidateLogin
+                        .Where(login => login.Id == dbExisting.Id)
+                        .ExecuteUpdateAsync(
+                            setters => setters
+                                .SetProperty(login => login.GooglePictureUrl, googlePictureUrl)
+                                .SetProperty(login => login.LastSignInAt, signedInAt),
+                            cancellationToken);
+                    dbExisting.LastSignInAt = signedInAt;
+                }
+
+                return new LinkLoginResult(dbExisting.MapEntityToDto(actor), Created: false);
             }
 
             var dbLogin = linked.MapIdentityToLogin();

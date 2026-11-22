@@ -7,6 +7,11 @@ namespace CV.DataAccess.Configurations
 {
     public class CandidateLoginConfiguration : IEntityTypeConfiguration<CandidateLogin>
     {
+        /// <summary>
+        /// The longest Google profile picture address that a login stores; a longer one is not stored.
+        /// </summary>
+        public const int GooglePictureUrlMaxLength = 2048;
+
         public void Configure(EntityTypeBuilder<CandidateLogin> builder)
         {
             builder.ToTable("CandidateLogin");
@@ -27,6 +32,10 @@ namespace CV.DataAccess.Configurations
             builder.Property(login => login.ProviderUserId)
                 .IsRequired()
                 .HasMaxLength(255);
+
+            // Only a Google login has one, and only from the picture claim of a validated Google token.
+            builder.Property(login => login.GooglePictureUrl)
+                .HasMaxLength(GooglePictureUrlMaxLength);
 
             // One sign-in identity belongs to only one Candidate.
             builder.HasIndex(login => new { login.Provider, login.ProviderTenantId, login.ProviderUserId })

@@ -1,5 +1,6 @@
 using CV.Common.Exceptions;
 using CV.DataAccess;
+using CV.Logic.Extensions;
 using CV.Logic.Mappers;
 using CV.Logic.Pictures;
 using CV.LogicInterface.Authentication;
@@ -49,17 +50,10 @@ namespace CV.Logic.Services
             bool canManageAny,
             CancellationToken cancellationToken = default)
         {
-            if (actor?.Provider != LoginProvider.Google)
-            {
-                throw new BadRequestException("Only a Google sign-in can use its Google profile picture.");
-            }
-
-            // The URL comes from the validated Google token, never from the request, and is still
-            // limited to Google's picture host.
-            var pictureUri = GooglePictureUri.ForStoredSize(actor.PictureUrl)
-                ?? throw new BadRequestException("This Google account has no profile picture.");
-
             await EnsureCanChangePicture(profileId, actor, canManageAny, cancellationToken);
+
+            var pictureUri = await FindGooglePicture(profileId, actor, cancellationToken)
+                ?? throw new BadRequestException("This CV has no Google profile picture.");
 
             var download = await DownloadGooglePicture(pictureUri, cancellationToken);
             byte[] picture;
@@ -245,6 +239,36 @@ namespace CV.Logic.Services
             {
                 throw new ConflictException("The profile picture was changed at the same time. Try again.");
             }
+        }
+
+        /// <summary>
+        /// Finds the Google picture to fetch. A Google sign-in uses the <c>picture</c> claim of its fresh
+        /// token; any other sign-in uses the address stored for a Google login linked to the same CV. The
+        /// address never comes from the request, and is checked again so that only Google's picture host is
+        /// fetched from.
+        /// </summary>
+        /// <returns>The address to fetch, or null when the CV has no usable Google picture.</returns>
+        private async Task<Uri?> FindGooglePicture(
+            Guid profileId,
+            ExternalIdentity? actor,
+            CancellationToken cancellationToken)
+        {
+            if (actor is null)
+            {
+                return null;
+            }
+
+            if (actor.Provider == LoginProvider.Google)
+            {
+                return GooglePictureUri.ForStoredSize(actor.PictureUrl);
+            }
+
+            var storedUrl = await _dataContext.CandidateLogin
+                .AsNoTracking()
+                .LinkedGooglePictureUrls(actor, profileId)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            return GooglePictureUri.ForStoredSize(storedUrl);
         }
 
         private Task<string?> ReadPictureBlobName(Guid profileId, CancellationToken cancellationToken)

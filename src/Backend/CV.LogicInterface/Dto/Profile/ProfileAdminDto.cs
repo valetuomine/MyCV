@@ -69,6 +69,13 @@ namespace CV.LogicInterface.Dto.Profile
         public string? PictureUrl { get; set; }
 
         /// <summary>
+        /// Gets or sets whether the caller can use a Google account picture as the profile picture: in a
+        /// Google sign-in when its account has a picture, otherwise when a Google sign-in linked to the CV
+        /// has one. The picture's address is never returned.
+        /// </summary>
+        public bool CanUseGooglePicture { get; set; }
+
+        /// <summary>
         /// Gets or sets all language-specific profile content.
         /// </summary>
         public IReadOnlyCollection<ProfileTranslationDto> Translations { get; set; } = [];

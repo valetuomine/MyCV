@@ -145,6 +145,7 @@ function EditView({
         profileId={profileId}
         pictureUrl={adminProfile.pictureUrl}
         showPicture={adminProfile.showPicture !== false}
+        canUseGooglePicture={adminProfile.canUseGooglePicture === true}
         savedFullName={adminProfile.fullName}
         initialLanguage={initialLanguage}
       />

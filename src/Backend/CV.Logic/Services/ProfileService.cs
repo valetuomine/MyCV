@@ -2,6 +2,7 @@ using CV.Common.Exceptions;
 using CV.DataAccess;
 using CV.Logic.Extensions;
 using CV.Logic.Mappers;
+using CV.Logic.Pictures;
 using CV.Logic.Validation;
 using CV.LogicInterface.Authentication;
 using CV.LogicInterface.Dto.Profile;
@@ -61,6 +62,7 @@ namespace CV.Logic.Services
 
             var result = dbProfile.MapEntityToAdminDto();
             FillAdminDto(result, dbCandidate.Id, dbCandidate.PublicUrlSegment, isOwner: true);
+            result.CanUseGooglePicture = await CanUseGooglePicture(dbProfile.Id, owner, isOwner: true, cancellationToken);
             return result;
         }
 
@@ -91,11 +93,22 @@ namespace CV.Logic.Services
 
             if (actor is not null)
             {
+                // A Google sign-in also refreshes its stored picture address, or clears it when the token
+                // has none, so that the CV's other sign-ins can use the current picture.
+                var isGoogle = actor.Provider == LoginProvider.Google;
+                var googlePictureUrl = actor.MapIdentityToGooglePictureUrl();
                 await _dataContext.CandidateLogin
                     .ForIdentity(actor)
                     .Where(login => login.Candidate.ProfileId == profileId)
                     .ExecuteUpdateAsync(
-                        setters => setters.SetProperty(login => login.LastSignInAt, DateTime.UtcNow),
+                        setters =>
+                        {
+                            setters.SetProperty(login => login.LastSignInAt, DateTime.UtcNow);
+                            if (isGoogle)
+                            {
+                                setters.SetProperty(login => login.GooglePictureUrl, googlePictureUrl);
+                            }
+                        },
                         cancellationToken);
             }
 
@@ -106,7 +119,7 @@ namespace CV.Logic.Services
                 ?? throw new NotFoundException($"Profile not found with Id: {profileId}");
 
             var result = dbProfile.MapEntityToAdminDto();
-            await FillAdminDto(result, profileId, isOwner, cancellationToken);
+            await FillAdminDto(result, profileId, actor, isOwner, cancellationToken);
             return result;
         }
 
@@ -142,7 +155,7 @@ namespace CV.Logic.Services
             await _dataContext.SaveChangesAsync(cancellationToken);
 
             var result = dbProfile.MapEntityToAdminDto();
-            await FillAdminDto(result, profileId, isOwner, cancellationToken);
+            await FillAdminDto(result, profileId, actor, isOwner, cancellationToken);
             return result;
         }
 
@@ -159,6 +172,7 @@ namespace CV.Logic.Services
         private async Task FillAdminDto(
             ProfileAdminDto result,
             Guid profileId,
+            ExternalIdentity? actor,
             bool isOwner,
             CancellationToken cancellationToken)
         {
@@ -169,6 +183,35 @@ namespace CV.Logic.Services
                 .FirstOrDefaultAsync(cancellationToken);
 
             FillAdminDto(result, candidate?.Id, candidate?.PublicUrlSegment, isOwner);
+            result.CanUseGooglePicture = await CanUseGooglePicture(profileId, actor, isOwner, cancellationToken);
+        }
+
+        /// <summary>
+        /// Tells whether the caller can use a Google picture on the profile: a Google sign-in when its token
+        /// has an accepted picture address, and any other sign-in of the owner when a Google login linked to
+        /// the same CV has a stored one. The address itself is never returned.
+        /// </summary>
+        private async Task<bool> CanUseGooglePicture(
+            Guid profileId,
+            ExternalIdentity? actor,
+            bool isOwner,
+            CancellationToken cancellationToken)
+        {
+            if (actor is null)
+            {
+                return false;
+            }
+
+            if (actor.Provider == LoginProvider.Google)
+            {
+                return GooglePictureUri.ForStoredSize(actor.PictureUrl) is not null;
+            }
+
+            return isOwner
+                && await _dataContext.CandidateLogin
+                    .AsNoTracking()
+                    .LinkedGooglePictureUrls(actor, profileId)
+                    .AnyAsync(cancellationToken);
         }
 
         private static void ValidateRequest(

@@ -932,6 +932,7 @@ export interface components {
       gitHubUrl?: string | null
       showPicture?: boolean
       pictureUrl?: string | null
+      canUseGooglePicture?: boolean
       translations?: components["schemas"]["ProfileTranslationDto"][] | null
     }
     ProfileDto: {

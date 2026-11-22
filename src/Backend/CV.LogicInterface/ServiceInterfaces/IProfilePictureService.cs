@@ -27,11 +27,12 @@ namespace CV.LogicInterface.ServiceInterfaces
             CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Saves the caller's Google account picture, from the <c>picture</c> claim of their Google sign-in,
-        /// as the profile's picture, processed like an upload.
+        /// Saves a Google account picture as the profile's picture, processed like an upload. A Google
+        /// sign-in uses the <c>picture</c> claim of its token; any other sign-in uses the address stored for
+        /// a Google login linked to the same CV.
         /// </summary>
         /// <param name="profileId">The identifier of the profile.</param>
-        /// <param name="actor">The caller's sign-in identity, which must be a Google sign-in.</param>
+        /// <param name="actor">The caller's sign-in identity.</param>
         /// <param name="canManageAny">Whether the caller has the <c>CvAdmin</c> role.</param>
         /// <param name="cancellationToken">The token used to cancel the operation.</param>
         /// <returns>The new picture's URL.</returns>
