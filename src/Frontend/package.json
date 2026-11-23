@@ -14,7 +14,7 @@
     "build": "tsc -b && vite build",
     "generate-types": "openapi-typescript http://localhost:5062/swagger/v1/swagger.json -o src/generated/openapi.ts",
     "lint": "eslint . --max-warnings 0 && npm run lint:hooks",
-    "lint:hooks": "cd ../.. && eslint -c src/Frontend/eslint.hooks.config.js --max-warnings 0 .claude/hooks",
+    "lint:hooks": "cd ../.. && eslint -c src/Frontend/eslint.hooks.config.js --max-warnings 0 .claude/hooks .claude/skills/usage-band/hooks",
     "e2e": "playwright test",
     "e2e:auth": "node e2e/record-sessions.ts",
     "preview": "vite preview"

@@ -1,0 +1,9 @@
+{
+  "name": "usage-band",
+  "version": "0.1.0",
+  "description": "MyCV: weekly budget, five-hour window and context row, warnings and context stop where the status line does not run (desktop app, VS Code panel).",
+  "author": {
+    "name": "MyCV"
+  },
+  "types": "./types/index.d.ts"
+}

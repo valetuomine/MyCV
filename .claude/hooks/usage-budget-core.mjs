@@ -1,37 +1,26 @@
-// Shared by usage-statusline.mjs and usage-budget.mjs: reads the budget settings, stores the latest
-// weekly usage snapshot and computes the cumulative daily limit.
+// Shared by usage-statusline.mjs and usage-budget.mjs: reads the budget settings and stores the latest
+// weekly usage snapshot. The daily limit itself is computed in the usage-band plugin's core.mjs, which the
+// plugin shares with these scripts.
 import { closeSync, openSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isNonNegativeNumber, parseBudgetConfig } from '../skills/usage-band/hooks/core.mjs';
 
-const DAY_SECONDS = 86400;
-const WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-const DEFAULT_SHARE = 14;
-const DEFAULT_MARGIN = 3;
+export { budgetWarning, computeLimit } from '../skills/usage-band/hooks/core.mjs';
+
 const SNAPSHOT_FILE = join(tmpdir(), 'mycv-usage-snapshot.json');
-
-/**
- * Checks that a value is a finite non-negative number.
- * @param {unknown} value The value to check.
- * @returns {boolean} True when the value is a usable percentage or time.
- */
-const isNonNegativeNumber = (value) => typeof value === 'number' && Number.isFinite(value) && value >= 0;
 
 /**
  * Reads usage-budget.json; a missing file, bad JSON or a bad value falls back to the defaults.
  * @returns {{shares: number[], margin: number}} Daily shares indexed by weekday (0 = Sunday) and the warning margin.
  */
 export const loadConfig = () => {
-  let raw = {};
   try {
-    raw = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'usage-budget.json'), 'utf8')) ?? {};
+    return parseBudgetConfig(JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'usage-budget.json'), 'utf8')));
   } catch {
-    raw = {};
+    return parseBudgetConfig({});
   }
-  const shares = WEEKDAYS.map((day) => (isNonNegativeNumber(raw.dailyShare?.[day]) ? raw.dailyShare[day] : DEFAULT_SHARE));
-  const margin = isNonNegativeNumber(raw.warningMargin) ? raw.warningMargin : DEFAULT_MARGIN;
-  return { shares, margin };
 };
 
 /**
@@ -59,23 +48,6 @@ export const loadSnapshot = () => {
   } catch {
     return null;
   }
-};
-
-/**
- * Computes the cumulative limit for the current day of the usage week.
- * The week starts at `resetsAt` minus seven days and each day lasts 24 hours from that moment.
- * @param {number} resetsAt The Unix time in seconds when the week resets.
- * @param {number} nowSeconds The current Unix time in seconds.
- * @param {number[]} shares Daily shares indexed by weekday (0 = Sunday).
- * @returns {{dayIndex: number, limit: number}} The day of the week (0-6) and the limit in percent, capped at 100.
- */
-export const computeLimit = (resetsAt, nowSeconds, shares) => {
-  const start = resetsAt - 7 * DAY_SECONDS;
-  const dayIndex = Math.min(6, Math.max(0, Math.floor((nowSeconds - start) / DAY_SECONDS)));
-  const firstDay = new Date(start * 1000).getDay();
-  let limit = 0;
-  for (let i = 0; i <= dayIndex; i++) limit += shares[(firstDay + i) % 7];
-  return { dayIndex, limit: Math.min(100, limit) };
 };
 
 /**

@@ -2,6 +2,7 @@
 paths:
   - ".claude/hooks/**"
   - ".claude/settings.json"
+  - ".claude/skills/usage-band/**"
 ---
 
 # Hooks and status line
@@ -16,9 +17,22 @@ Implementation notes for the hooks in `.claude/hooks/` and their registration in
 
 The status line (`.claude/hooks/usage-statusline.mjs`, `statusLine` in `.claude/settings.json`) shows the weekly usage, today's cumulative limit and the five-hour window usage with the time the window resets, e.g. `Viikko 38 % / raja 42 % · 5 h 12 % (nollautuu 14:30) · Konteksti 182k` (the last part is the context size, `context_window.total_input_tokens`); the time is left out when `resets_at` is missing or already past. It stores the weekly usage in the temp directory, and the `UserPromptSubmit` hook `.claude/hooks/usage-budget.mjs` reads it and shows a `systemMessage` warning once a day when usage nears the limit and once when it passes it. It never blocks a message.
 
-Each weekday's share is set in `.claude/hooks/usage-budget.json` (default 14 % a day, warning margin 3 percentage points). The limit is cumulative from the week's start (`resets_at` minus 7 days), so an unused day moves its share to the following days. Both scripts share `usage-budget-core.mjs`.
+Each weekday's share is set in `.claude/hooks/usage-budget.json` (default 14 % a day, warning margin 3 percentage points). The limit is cumulative from the week's start (`resets_at` minus 7 days), so an unused day moves its share to the following days. Both scripts share `usage-budget-core.mjs`, which takes the limit and the warning from the usage-band plugin's `core.mjs` (*Usage band plugin*).
 
-Only a running local Claude Code CLI session reports usage, and a missing file or field is skipped silently. The VS Code chat panel does not run the status line, so it shows no numbers and the hook has nothing to read there: start sessions with `claude` in a terminal, or set `claudeCode.useTerminal` and use the "✻ Claude Code" status bar button (both need `claude` on PATH).
+The status line runs only in a local terminal Claude Code CLI session, and a missing file or field is skipped silently. The desktop app and the VS Code chat panel do not run it, so the hook has at most an old CLI snapshot to read there; the usage-band plugin draws the numbers and gives the warnings on those surfaces instead.
+
+## Usage band plugin
+
+`.claude/skills/usage-band/` is a Claude Code plugin (a mod: `.claude-plugin/plugin.json`, `hooks/hooks.json`, `hooks/register.tsx`). Claude Code loads a plugin from the project's skills folder by itself, as `usage-band@skills-dir`. It covers the surfaces that have no status line:
+
+- **Row above the prompt** (`ui.render` on `AbovePrompt`): `Viikko 22 % / 14 % · 5 h 64 % (nollautuu 00:30) · Konteksti 92k (9 %)`, in Finnish like the status line, from the session's own usage (`session.measure`), with the same cumulative daily limit as the status line. Parts that are not known are left out. It is not drawn on the `terminal` surface, where the status line already shows the numbers.
+- **Warnings** (`session.measure`, as toasts to the user only): the weekly budget warnings once a day (markers in `$.store`) and the context warning once a session, starting again after the context shrank (`$.state`). The plugin sends the model nothing, so the classic `PostToolUse` hook stays the only thing that tells Claude to stop.
+- **Context stop** (`prompt.submit`): over `stopTokens` a message that does not start with `/` is dropped and `/handoff` runs once, through `$.command.run` from a timer (a `prompt.submit` hook cannot run a command itself, and a submitted `/handoff` text is refused). Commands, meta messages and any error let the message through.
+- **No model hint:** the desktop app runs the classic `UserPromptSubmit` hooks under the plugin's `prompt.submit` hook, so `model-hint.mjs` already stops the first message there. A plugin hint stopped it a second time in the manual trial, so the plugin leaves the hint to the classic hook. The context stop is not doubled the same way: the plugin drops the message before the classic hooks run, so they never see it.
+- **Classic hooks run too:** the desktop app also runs the classic `context-budget.mjs` and `usage-budget.mjs`. Over `warnTokens` the user can get both the plugin's toast and the classic hook's `systemMessage`, if the app shows the latter. `usage-budget.mjs` reads the snapshot that only the CLI status line writes, so in the app it can warn from an old CLI reading, or not at all. The plugin's toast is the one to trust there.
+- **Worktree sessions:** the desktop app can run a session in a worktree under `.claude/worktrees/`. The plugin then loads from the main checkout and reads that checkout's settings files, while the classic hooks read the worktree's copies. Change the limits in both when testing.
+
+The row is left out only on the `terminal` surface itself (`e.surface`), so a Remote Control session still draws it on the phone. The warnings and the context stop are off whenever a terminal draws the session at all (`$.session.surfaces()` includes `terminal`, as it does under Remote Control), and also while no surface draws it, so the CLI keeps the status line and the settings hooks without anything shown twice. The settings stay in `.claude/hooks/usage-budget.json` and `context-budget.json`, which the plugin reads from `$.plugin.root + '/../../hooks/'`. The calculations live in `hooks/core.mjs` (plain JS with no Node imports, so the plugin can load it), and the scripts in `.claude/hooks/` import it, so both give the same limits and texts. The plugin's tests run with `claude plugin test .claude/skills/usage-band`, its manifest and module are checked with `claude plugin validate .claude/skills/usage-band`, and `core.mjs` is linted with the hooks (`lint:hooks`). The tracked `tsconfig.json` extends `.claude-plugin/types/tsconfig.json`, which holds the plugin API's types (`claude-code`, `claude-code/testing`) and the JSX settings. That folder is git-ignored, and Claude Code writes it only when it hot-reloads the plugin, not when it loads it from the skills folder. Until it exists, the editor reports `Cannot find module 'claude-code'` and `tsc -p .claude/skills/usage-band` fails. Write it once per clone, and again after a Claude Code update, by starting an interactive session with `claude --plugin-dir .claude/skills/usage-band` from the repository root and closing it; `claude -p` does not write it. Then type-check with `npx --prefix src/Frontend tsc -p .claude/skills/usage-band`.
 
 ## Context budget
 

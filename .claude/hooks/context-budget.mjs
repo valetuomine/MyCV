@@ -8,39 +8,23 @@ import { closeSync, fstatSync, openSync, readFileSync, readSync, writeFileSync }
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { contextStopReason, contextWarning, kilo, parseContextLimits } from '../skills/usage-band/hooks/core.mjs';
 
-const DEFAULTS = { warnTokens: 150000, stopTokens: 200000, repeatEveryTokens: 25000 };
 const TAIL_BYTES = 256 * 1024;
 const LARGE_TAIL_BYTES = 4 * 1024 * 1024;
 
 /**
- * Checks that a value is a finite positive number.
- * @param {unknown} value The value to check.
- * @returns {boolean} True for usable token limits.
- */
-const isPositive = (value) => typeof value === 'number' && Number.isFinite(value) && value > 0;
-
-/**
  * Reads context-budget.json; a missing file, bad JSON, a bad value or warnTokens at or above
- * stopTokens falls back to the defaults.
+ * stopTokens falls back to the defaults (parseContextLimits in the usage-band plugin's core.mjs).
  * @returns {{warnTokens: number, stopTokens: number, repeatEveryTokens: number}} The limits.
  */
 const loadConfig = () => {
-  let raw = {};
   try {
     const name = process.env.CONTEXT_BUDGET_CONFIG ?? 'context-budget.json';
-    raw = JSON.parse(readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), name), 'utf8')) ?? {};
+    return parseContextLimits(JSON.parse(readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), name), 'utf8')));
   } catch {
-    raw = {};
+    return parseContextLimits({});
   }
-  /**
-   * Picks a configured limit, or its default when the value is unusable.
-   * @param {string} key The setting name.
-   * @returns {number} The limit.
-   */
-  const pick = (key) => (isPositive(raw[key]) ? raw[key] : DEFAULTS[key]);
-  const limits = { warnTokens: pick('warnTokens'), stopTokens: pick('stopTokens'), repeatEveryTokens: pick('repeatEveryTokens') };
-  return limits.warnTokens < limits.stopTokens ? limits : { ...DEFAULTS };
 };
 
 /**
@@ -143,13 +127,6 @@ const saveState = (sessionId, state) => {
 };
 
 /**
- * Formats a token count as thousands, e.g. 182k.
- * @param {number} tokens The token count.
- * @returns {string} The text.
- */
-const kilo = (tokens) => `${Math.round(tokens / 1000)}k`;
-
-/**
  * Builds the hook output for the event and context size and updates the notice state, so a notice
  * is not repeated until the context grows again after it shrank (for example after /compact).
  * @param {string} event The hook event name.
@@ -173,7 +150,7 @@ const buildOutput = (event, sessionId, tokens, prompt, limits) => {
   if (tokens >= stopTokens && event === 'UserPromptSubmit' && !prompt.trimStart().startsWith('/')) {
     return {
       decision: 'block',
-      reason: `Konteksti on ${kilo(tokens)} tokenia (raja ${kilo(stopTokens)}). Aja /handoff ja jatka työtä uudessa chatissa annetulla aloitusviestillä. /-komennot (/handoff, /compact, /clear) sallitaan.`,
+      reason: contextStopReason(tokens, stopTokens),
     };
   }
   if (tokens >= stopTokens) {
@@ -190,7 +167,7 @@ const buildOutput = (event, sessionId, tokens, prompt, limits) => {
   if (state.warned) return null;
   saveState(sessionId, { ...state, warned: true });
   return {
-    systemMessage: `Konteksti on ${kilo(tokens)} tokenia. Rajalla ${kilo(stopTokens)} työ pitää jatkaa uudessa chatissa /handoff-skillin kautta.`,
+    systemMessage: contextWarning(tokens, stopTokens),
     hookSpecificOutput: {
       hookEventName: event,
       additionalContext: `Context is ${kilo(tokens)} tokens. Past ${kilo(stopTokens)} the work must continue in a new chat through /handoff, so plan a safe stopping point.`,
