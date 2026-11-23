@@ -8,7 +8,7 @@ Pick the review first, after `git fetch origin`:
 | --- | --- |
 | The branch has no active pull request yet | *Run The Review* below: the whole change against `origin/main` |
 | The branch has an active pull request (a follow-up push, such as fixes for the user's PR comments in Azure DevOps) | *Delta Review* below, with `origin/<branch>` as the base: only what changed since the last push, never the whole pull request again |
-| A round of fixes for the user's own comments in this chat (*Wait For The Decision*) | *Delta Review* below, with the review snapshot as the base: only the fixes of that round |
+| A round of fixes for the user's own comments or edits in this chat (*Wait For The Decision*) | *Delta Review* below, with the review snapshot as the base: only the fixes and the user's edits of that round |
 
 When the rows overlap, the last row wins: fixes for comments given in this chat are always reviewed against the snapshot, also on a branch with an active pull request.
 
@@ -51,12 +51,12 @@ Start the subagent first (it runs in the background), then run the skill while i
 
 A delta review looks only at what changed on top of code that was already reviewed: the fixes since the last push of an active pull request, or one round of fixes for the user's own comments in this chat. Code outside the delta was reviewed before, so it is not reviewed again.
 
-1. **Find the base.** On a follow-up push, it is `origin/<branch>`, so the delta also includes local commits that were not pushed yet. For a round of fixes in this chat, it is the review snapshot taken before the fixes (*Wait For The Decision*).
+1. **Find the base.** On a follow-up push, it is `origin/<branch>`, so the delta also includes local commits that were not pushed yet. For a round of fixes in this chat, it is the review snapshot taken before the questions (*Wait For The Decision*), so the delta also includes the user's own edits.
 2. **Show the delta.** Run `git add -N <files>` on new untracked files, then `git diff <base> --stat` and `git diff <base>`. If the delta is empty, there is nothing to review: say so and continue.
-3. **Collect what the delta answers.** On a follow-up push, read the pull request's comment threads with `repo_pull_request_thread` (the active ones, and the ones closed since the last push) and copy each comment with its file and line. For a round in this chat, copy the user's comments and the findings they chose to fix. Also copy the work item's acceptance criteria (`Valmis, kun`) and `Toteutusohje`, for the Spec axis.
+3. **Collect what the delta answers.** On a follow-up push, read the pull request's comment threads with `repo_pull_request_thread` (the active ones, and the ones closed since the last push) and copy each comment with its file and line. For a round in this chat, copy the user's comments, the files they edited themselves, and the findings they chose to fix. Also copy the work item's acceptance criteria (`Valmis, kun`) and `Toteutusohje`, for the Spec axis.
 4. **Run one review subagent** (`Agent`, `subagent_type: general-purpose`, in the background). Pick its `model` and `effort` from the size of the delta, not of the work item, with the table in *Run The Review*: a delta of a few files is XS or S (`sonnet`, `medium`). Paste the base and the diff commands into the prompt, and tell it to:
    - Review only the lines in the delta. Read the surrounding code only to judge them, and report a problem in unchanged code only when the delta causes it.
-   - Check that each change does what the comment or finding it answers asked, and changes nothing else.
+   - Check that each change does what the comment or finding it answers asked, and changes nothing else. The files the user edited themselves are intended changes: review them on their own merits, never as out of scope.
    - Run the Spec axis of *The Spec Axis* below only on the criteria and `Toteutus` steps that the delta touches, and return the Spec table with those rows only.
    - Apply the same rules as *Run The Review*: the `code-review-and-quality` axes, the MyCV rules of `CLAUDE.md`, the Sonar note, the categories and format of *Report The Findings*, and no file edits.
 5. **Do not run the `code-review` skill** in a delta review. Its targets cover a whole branch or a whole uncommitted diff, not a delta from a base of your choice, so it would review the whole pull request again.
@@ -108,36 +108,42 @@ Leave out empty categories. Add your recommendation at the end: which findings t
 
 ## Wait For The Decision
 
-Always stop here, after every review, full or delta, even with no findings, and end the message with two questions in Finnish:
+Always stop here, after every review, full or delta, even with no findings. First take the review snapshot, then end the message with two questions in Finnish.
+
+**Take the review snapshot** right before the questions. Before taking it, compare `git status --short` and `git diff --stat` with the state the review started from: a file that changed while the review ran, and that you did not change, was edited by the user and was not reviewed, so list it with the questions and treat it as the user's own edit in the next round. The snapshot records the reviewed state, so the next delta review sees everything that changed after it: this round's fixes, and the user's own edits while the review waited. It uses a temporary index and an unreferenced commit, so it moves no branch and leaves the real index and the working tree as they are:
+
+```bash
+tmp=$(mktemp); cp "$(git rev-parse --git-path index)" "$tmp"
+GIT_INDEX_FILE="$tmp" git add -A
+tree=$(GIT_INDEX_FILE="$tmp" git write-tree); rm "$tmp"
+snapshot=$(git commit-tree "$tree" -p HEAD -m "Review snapshot")
+echo "$snapshot"
+```
+
+Write the printed hash into your reply, so that it survives a compaction or a `/handoff`: it is the base of the next round's delta review when that round has comments or edits of the user's own.
+
+The questions:
 
 1. **Which findings to fix**, when there are Must, Should or Could fix findings. Numbers ("fix 1 and 3, leave the rest"), "all" and "none" are all valid answers.
 2. **Whether the user has their own comments on the code changes** before they are committed and pushed, for example: `Onko sinulla omia kommentteja koodimuutoksiin ennen kuin ne commitoidaan ja pusketaan? Kirjoita ne tähän, tai vastaa "ei".` The comments can point to a file and line or describe a change in words.
+
+In the Claude desktop app (`CLAUDE_CODE_ENTRYPOINT` is `claude-desktop`), open the diff pane with `show_pane` (`pane: diff`) right before the questions, and again after every round of fixes, so the user can read the changes there. Tell the user in the same message that they can also edit the files themselves before answering, in the diff pane or their editor.
 
 Do not fix anything, commit or push before the answer. If the answer leaves a Must fix finding as it is, confirm that once before continuing. If a comment is unclear or conflicts with the work item or a decision already made, ask about it before changing code.
 
 After the answer:
 
-1. **Take the review snapshot** at the start of every round of fixes, before changing any file. It records the reviewed state, so the next delta review sees only this round's fixes. It uses a temporary index and an unreferenced commit, so it moves no branch and leaves the real index and the working tree as they are:
-
-   ```bash
-   tmp=$(mktemp); cp "$(git rev-parse --git-path index)" "$tmp"
-   GIT_INDEX_FILE="$tmp" git add -A
-   tree=$(GIT_INDEX_FILE="$tmp" git write-tree); rm "$tmp"
-   snapshot=$(git commit-tree "$tree" -p HEAD -m "Review snapshot")
-   echo "$snapshot"
-   ```
-
-   Write the printed hash into your reply, so that it survives a compaction or a `/handoff`: it is the base of this round's delta review when the round has comments of the user's own.
+1. **Look for the user's own edits.** Run `git diff <snapshot> --stat` (after `git add -N` on new untracked files) before changing any file. Every file it lists was edited by the user while the review waited: treat those edits as comments of the user's own, and keep them as they are unless the user says otherwise.
 2. **Fix** the chosen findings and the user's comments, and nothing else.
 3. **Run the checks** of `checks.md` again for the areas the fixes touched. A UI change gets its browser check from a browser subagent, for the views the fixes touched only (*Browser subagent* in [checks.md](checks.md)).
 4. **Review the fixes.**
-   - When the round had comments of the user's own, run a *Delta Review* above against the snapshot, then *Report The Findings* and *Wait For The Decision* again. Repeat until the user has no more comments and picks no more findings to fix.
+   - When the round had comments or edits of the user's own, run a *Delta Review* above against the snapshot, then *Report The Findings* and *Wait For The Decision* again. Repeat until the user has no more comments and picks no more findings to fix.
    - When the round fixed only review findings, re-read the fixes in `git diff` and confirm each one addresses its finding and changes nothing else. Do not run another review.
 5. **Continue to the commits.** Fold the fixes into the commits they belong to instead of adding a separate "review fixes" commit. The snapshot commits are not on any branch: leave them, and never push or reference them.
 
 ## Record The Outcome
 
-Keep the outcome for the reviewer: which findings were fixed and which were left as they are, and the user's own comments with what changed for each one (in a word or two, no personal data).
+Keep the outcome for the reviewer: which findings were fixed and which were left as they are, the user's own comments with what changed for each one, and the files the user edited themselves (in a word or two, no personal data).
 
 - **New pull request:** it goes in the `Koodikatselmointi` section of the reviewer comment (`pull-request.md`).
 - **Follow-up push to an active pull request:** no new reviewer comment is posted, so post the outcome after the push as a new Finnish PR comment with `repo_pull_request_thread_write` (`action: create`, `status: Closed`), with the same `## Koodikatselmointi` section and a `## Huomioitavaa` section when it has something to say.

@@ -11,7 +11,7 @@ Implementation notes for the hooks in `.claude/hooks/` and their registration in
 
 ## Model hint hook
 
-`.claude/hooks/model-hint.mjs` (`UserPromptSubmit`) stops the first message of a chat once (later messages are never checked, and a failed lookup is not retried) when it names a `User Story <id>` or `Task <id>` whose `Työmäärä` line recommends a model and effort level. It shows the recommendation so the user can switch with `/model` and `/effort` before tokens are spent, and resending the message lets it through. It does nothing on any failure, and it cannot change the model itself.
+`.claude/hooks/model-hint.mjs` (`UserPromptSubmit`) stops the first message of a chat once (later messages are never checked, and a failed lookup is not retried) when it names a `User Story <id>` or `Task <id>` whose `Työmäärä` line recommends a model and effort level. It shows the recommendation so the user can switch with `/model` and `/effort` before tokens are spent, and resending the message lets it through. It does nothing on any failure, and it cannot change the model itself. A session that the Claude desktop app starts from another session cannot be told apart from one the user starts by hand: `CLAUDE_CODE_CHILD_SESSION` is `1` in both, and their environment and transcript header differ only in session ids. So the brief for such a session writes every work item as `US-<id>` or `Task-<id>`, which the hook does not match, and never as `User Story <id>` or `Task <id>` anywhere in the brief (*Workflow* in `CLAUDE.md`): its first message is the brief the parent session wrote, and nobody would resend it.
 
 ## Weekly usage budget
 

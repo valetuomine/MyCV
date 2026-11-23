@@ -172,6 +172,9 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+
+    // The Claude desktop app opens the API at its root, so send it to the Swagger UI.
+    app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
 }
 
 app.UseHttpsRedirection();

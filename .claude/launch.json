@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "src/Frontend", "run", "dev", "--", "--no-open"],
+      "port": 3000
+    },
+    {
+      "name": "api",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "src/Backend/CV.WebApi", "--launch-profile", "http"],
+      "port": 5062
+    }
+  ]
+}
