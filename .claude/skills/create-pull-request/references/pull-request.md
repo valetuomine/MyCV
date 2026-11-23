@@ -97,8 +97,11 @@ Right after creating the PR, post the additional information as a PR comment wit
 ## Koodikatselmointi
 - <The findings of the code review (`code-review.md`) by category, each marked "korjattu" or "jätetty ennalleen", then the user's own comments under "Omat kommentit", each with what changed. Write "Ei havaintoja." when there were none.>
 
+## Sivuhuomiot
+- <Each ticketed side note (*Sivuhuomiot* in `CLAUDE.md`) with the link of its ticket. Leave the section out when none was ticketed.>
+
 ## Huomioitavaa
-- <Anything the reviewer must know or do: new migrations, new configuration values or environment variables, manual setup steps, known limitations, a Must fix finding of the code review that the user chose to leave. Leave the section out when there is nothing.>
+- <Anything the reviewer must know or do: new migrations, new configuration values or environment variables, manual setup steps, known limitations, a Must fix finding of the code review that the user chose to leave, each side note whose ticketing the user rejected, with the reason. Leave the section out when there is nothing.>
 
 ## Korjausten aloituskomento
 Kopioi tämä komento uuteen chattiin, kun olet kommentoinut pull requestin:

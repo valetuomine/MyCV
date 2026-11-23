@@ -36,6 +36,7 @@ Tell the subagent to:
 - Check the MyCV rules in `CLAUDE.md`: the *Never* list (secrets, personal data, real tenant and client IDs, links to local-only files) and the *Conventions* table, such as JSDoc-only frontend comments and English code and docs. For backend and client integration changes, also the patterns in `create-cv-skills`; for frontend UI, `DESIGN.md` and `setup-frontend`. For frontend UI, also the *Layout, motion and copy rules* of [checks.md](checks.md), which show in the code (`overflow-x`, `minmax(0, 1fr)`, `transition-all`, animated `width`/`height`, `outline-none` without a replacement, trailing full stops in headings and labels).
 - For C#, do not check the Sonar rules by hand: the Release build runs `SonarAnalyzer.CSharp` (`src/Directory.Build.props`) and fails on any finding, including S3776, S6960 and S6932. Only review a `[SuppressMessage]` that the change adds: it must carry a `Justification` that really explains the exception, and a silent suppression (`#pragma`, `.editorconfig`) is a **Should fix**.
 - Report in the categories and format of *Report The Findings* below; give it the category table, the finding format and the Spec table.
+- Report problems that the change did not cause in a separate `Sivuhuomiot` section, one line each (what, where, evidence), instead of ignoring them as out of scope.
 - Not edit any file.
 
 The review does not re-run the lint and build, but it reads their output. Every warning in it is a **Must fix** finding with a proposed fix, or, when a fix is completely pointless, a proposed ignore-list entry (*A warning is a failed check* in [checks.md](checks.md)). An ignore entry that the user approved, such as a `<NoWarn>` entry, is not a silent suppression, provided its approval is recorded in the pull request or the work item discussion. An ignore entry with no recorded approval is a **Must fix**. The silent suppressions in the Sonar rule above (`#pragma`, `.editorconfig`) stay a **Should fix**, because the user has not approved them.
@@ -59,6 +60,7 @@ A delta review looks only at what changed on top of code that was already review
    - Check that each change does what the comment or finding it answers asked, and changes nothing else. The files the user edited themselves are intended changes: review them on their own merits, never as out of scope.
    - Run the Spec axis of *The Spec Axis* below only on the criteria and `Toteutus` steps that the delta touches, and return the Spec table with those rows only.
    - Apply the same rules as *Run The Review*: the `code-review-and-quality` axes, the MyCV rules of `CLAUDE.md`, the Sonar note, the categories and format of *Report The Findings*, and no file edits.
+   - Report problems that the delta did not cause in a separate `Sivuhuomiot` section, one line each (what, where, evidence), as in *Run The Review*.
 5. **Do not run the `code-review` skill** in a delta review. Its targets cover a whole branch or a whole uncommitted diff, not a delta from a base of your choice, so it would review the whole pull request again.
 6. **Check the UI part** if the delta changes what the user sees: a browser subagent checks only the views that the delta touches (*Browser subagent* in [checks.md](checks.md)).
 
@@ -103,6 +105,8 @@ Before the findings, show the Spec result as its own short table, one row per cr
 ```
 
 Give every *Not met* row its own numbered **Should fix** finding, so that the user can pick it by number. Update the *Not checkable from code* rows from the browser subagent's report when it settles them; keep the others as they are, with the reason.
+
+After the numbered list, show the side notes of the review subagent, the `code-review` skill, the browser subagent and your own work as their own `Sivuhuomiot` section, one line each (what, where, evidence), without numbers: they are not fixed in this PR unless the user asks. Then handle them by *Sivuhuomiot* in `CLAUDE.md`: ask for each whether to ticket it (a session card in the desktop app, `AskUserQuestion` in a terminal) and keep the outcome for the reviewer comment.
 
 Leave out empty categories. Add your recommendation at the end: which findings to fix and which to leave, with a reason for each one you would leave.
 

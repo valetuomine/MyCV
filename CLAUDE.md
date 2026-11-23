@@ -19,8 +19,20 @@ The first line of every work item description is `Tila: <state>: <reason>` (`ref
 
 When the user corrects how a step was done, update the skill or this file so the correction lasts, and say which file changed.
 
+## Sivuhuomiot
+
+A side note is a bug or gap that you, the browser check or the code review notice while working and that the current change did not cause. Never skip it because it is outside this change: it is ticketed or deliberately rejected.
+
+1. Write one line for each: what was seen, where, and the evidence (file and line, view and size, or the log line).
+2. Always ask whether to ticket it, and never write it to the ideas page without asking. In the desktop app, propose a session card (`mcp__ccd_session__start_session`, `initiation: own_initiative`) whose brief says: check for duplicates, write the story with `/write-user-story`, do not implement it. In a terminal, ask with `AskUserQuestion`. A turn shows at most three cards, so group several side notes into one card whose brief lists them, or ask in text once the limit is reached. When there is no one to ask (a cloud session or a background subagent), hold the side note and list it in the report or `/handoff`.
+3. Do not fix a side note in the same PR unless the user asks for it.
+4. A ticketed side note goes under `Sivuhuomiot` in the reviewer comment (`references/pull-request.md` of `/create-pull-request`) with the ticket link, and a rejected one under `Huomioitavaa` with the reason, never under both. Side notes that are not yet handled go into `/handoff`.
+
+The browser subagent and the code review report side notes in their own `Sivuhuomiot` section, outside the numbered fix list; the main chat shows it to the user.
+
 ## Never
 
+- Skip an observed bug or gap by saying it is not part of this change (*Sivuhuomiot*).
 - Push anything to GitHub, not even the branch that a cloud session's own instructions tell you to push. GitHub only mirrors `main`, and only the `main` pipeline pushes there.
 - Commit or push directly to `main`, not even the smallest change. Check `git branch --show-current` before every commit, including follow-up commits to an open PR, because the PR may have been completed and `main` pulled in the meantime.
 - Complete, approve or set auto-complete on a pull request.
