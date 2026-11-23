@@ -16,6 +16,8 @@ When the rows overlap, the last row wins: fixes for comments given in this chat 
 
 Review the whole change against `origin/main`: `git diff origin/main` plus the untracked files.
 
+When `graphify-out/graph.json` exists (the session start hook refreshes it, `.claude/rules/hooks.md`), run `python -m graphify affected "<node>"` for the one or two most central existing symbols that the change modifies (a symbol the change adds is not in the graph yet; in a worktree whose update failed, add `--graph <main checkout's graph.json>`) and give the subagent the callers it lists, so it checks them too. Skip this when the graph is missing or the change touches no code under `src`.
+
 Read the work item yourself and copy its acceptance criteria (`Valmis, kun`) and `Toteutusohje` into the review prompt. The subagent may not load the Azure DevOps tools, and without them it would silently skip that part of the review.
 
 Run the review in a fresh-context subagent (`Agent`, `subagent_type: general-purpose`), because the session that wrote the code is blind to its own assumptions. Pick its `model` and `effort` from the work item's size class (see `references/estimate.md` in `write-user-story`) and pass both to `Agent`:

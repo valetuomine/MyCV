@@ -20,6 +20,11 @@
             "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/clean-playwright-mcp.mjs\"",
             "timeout": 10,
             "async": true
+          },
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/graphify-session.mjs\"",
+            "timeout": 60
           }
         ]
       }
