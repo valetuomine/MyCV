@@ -60,8 +60,11 @@ const resetsText = (iso: string | undefined, nowSeconds: number) => {
   return ` (nollautuu ${pad(d.getHours())}:${pad(d.getMinutes())})`
 }
 
-/** `Viikko 22 % / 14 % · 5 h 64 % (nollautuu 00:30) · Konteksti 92k (9 %)`, leaving out what is not known. */
-export const formatLine = ({ context, rateLimits }: Figures, shares: number[], nowSeconds: number) => {
+/**
+ * `Viikko 22 % / 14 % · 5 h 64 % (nollautuu 00:30) · Konteksti 92k / 200k (46 %)`, leaving out what is not known.
+ * The context is shown against stopTokens, the limit where the work moves to a new chat, not the model's window.
+ */
+export const formatLine = ({ context, rateLimits }: Figures, shares: number[], nowSeconds: number, stopTokens: number) => {
   const week = rateLimits.find(r => r.kind === 'seven_day')
   const five = rateLimits.find(r => r.kind === 'five_hour')
   const parts: string[] = []
@@ -75,8 +78,7 @@ export const formatLine = ({ context, rateLimits }: Figures, shares: number[], n
   }
   if (five) parts.push(`5 h ${Math.round(five.percentUsed)} %${resetsText(five.resetsAt, nowSeconds)}`)
   if (context.tokens !== undefined) {
-    const percent = context.percent === undefined ? '' : ` (${Math.round(context.percent)} %)`
-    parts.push(`Konteksti ${kilo(context.tokens)}${percent}`)
+    parts.push(`Konteksti ${kilo(context.tokens)} / ${kilo(stopTokens)} (${Math.floor((context.tokens / stopTokens) * 100)} %)`)
   }
   return parts.join(' · ')
 }
@@ -124,14 +126,14 @@ export const register: Register = on => {
     const config = await loadConfig($)
     const nowSeconds = (await $.clock.now()) / 1000
     const usage = await $.session.usage()
-    await update($, line, () => formatLine(usage, config.budget.shares, nowSeconds))
+    await update($, line, () => formatLine(usage, config.budget.shares, nowSeconds, config.context.stopTokens))
     return next(e)
   })
 
   on('session.measure', async ($, e, next) => {
     const config = await loadConfig($)
     const nowSeconds = (await $.clock.now()) / 1000
-    await update($, line, () => formatLine(e, config.budget.shares, nowSeconds))
+    await update($, line, () => formatLine(e, config.budget.shares, nowSeconds, config.context.stopTokens))
     if (await isAppOnly($)) {
       await warnBudget($, e, config, nowSeconds)
       await warnContext($, e.context.tokens, config)

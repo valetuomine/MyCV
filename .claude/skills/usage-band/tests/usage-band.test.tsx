@@ -3,6 +3,7 @@ import type { Engine } from 'claude-code/testing'
 import type { On, RenderSurface, SessionUsage } from 'claude-code'
 
 import { budgetWarning, computeLimit } from '../hooks/core.mjs'
+import { formatLine } from '../hooks/register'
 
 const DAY = 86400
 /** Monday 2026-11-16 12:00 UTC: the same weekday in every time zone from UTC-11 to UTC+11. */
@@ -95,12 +96,27 @@ describe('the usage row', () => {
 
     const desktop = await $.ui.mount({ ...BAND, surface: 'desktop' })
     const row = await desktop.find({ type: 'Text', text: /Viikko/ })
-    expect(row?.text).toMatch(/^Viikko 22 % \/ 42 % · 5 h 64 % \(nollautuu \d\d:\d\d\) · Konteksti 92k \(9 %\)$/)
+    expect(row?.text).toMatch(/^Viikko 22 % \/ 42 % · 5 h 64 % \(nollautuu \d\d:\d\d\) · Konteksti 92k \/ 200k \(46 %\)$/)
     await desktop.unmount()
 
     const terminal = await $.ui.mount({ ...BAND, surface: 'terminal' })
     expect(await terminal.find({ type: 'Text', text: /Viikko/ })).toBeUndefined()
     await terminal.unmount()
+  })
+})
+
+describe('the context part of the row', () => {
+  const contextRow = (tokens: number, stopTokens: number) =>
+    formatLine({ context: { tokens, window: 1_000_000, percent: 1 }, rateLimits: [] }, SHARES, 0, stopTokens)
+
+  test('is measured against the configured stop limit', () => {
+    expect(contextRow(92_000, 100_000)).toBe('Konteksti 92k / 100k (92 %)')
+  })
+
+  test('reaches 100 % only at the stop limit and goes over it', () => {
+    expect(contextRow(199_600, 200_000)).toBe('Konteksti 200k / 200k (99 %)')
+    expect(contextRow(200_000, 200_000)).toBe('Konteksti 200k / 200k (100 %)')
+    expect(contextRow(210_000, 200_000)).toBe('Konteksti 210k / 200k (105 %)')
   })
 })
 
