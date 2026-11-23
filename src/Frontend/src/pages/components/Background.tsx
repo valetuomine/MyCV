@@ -6,6 +6,7 @@ import {
   useTransform,
 } from "framer-motion"
 import {
+  useState,
   useSyncExternalStore,
   type JSX,
   type PointerEvent,
@@ -23,6 +24,7 @@ import useSigningOutReason from "../../auth/useSigningOutReason"
 import DotEcho from "./DotEcho"
 import LightEcho from "./LightEcho"
 import LightSweep from "./LightSweep"
+import { OwnerToolsSlotContext } from "./ownerToolsSlot"
 import PageControls from "./PageControls"
 import useDirectedLight from "./useDirectedLight"
 
@@ -81,7 +83,11 @@ function lightClass(isHeld: boolean, hasBeenHeld: boolean): string {
  * carries another one from the bottom up, and `DotEcho` lights the dots
  * under both, sends a few traces of light along
  * the dot grid with them and swells the dots under the spotlight. Forced
- * colours leave the light out.
+ * colours leave the light out. The page controls' slot for the owner's
+ * tools is shared with the page through `OwnerToolsSlotContext`, so the
+ * CV can place its Edit profile there with `OwnerTools`. While the
+ * session-expired message hides the page, the slot is hidden too, so the
+ * owner's tools don't act on a page that can't be seen.
  *
  * @param props - The component props.
  * @param props.children - The page content.
@@ -109,6 +115,9 @@ export default function Background({
     [spotlightX, spotlightY],
     ([x, y]) => `calc(14rem - ${x}px) calc(14rem - ${y}px), 0 0`,
   )
+
+  /** The page controls' slot for the owner's tools, shared with the page. */
+  const [ownerToolsSlot, setOwnerToolsSlot] = useState<HTMLElement | null>(null)
 
   const prefersReducedMotion = useReducedMotion()
   const { isHeld, hasBeenHeld } = useDirectedLight()
@@ -189,27 +198,32 @@ export default function Background({
         <div className="absolute inset-0 bg-cv-grain opacity-[0.06]" />
       </div>
       <div className="relative z-10 min-h-dvh px-6 sm:px-[clamp(1.5rem,5vw,5.5rem)] print:min-h-0 print:px-0">
-        <PageControls />
-        {signingOutReason ? (
-          <div className="print:hidden">
-            <SignOutMessage reason={signingOutReason} />
-          </div>
-        ) : (
-          <>
-            {sessionRefusal && (
-              <div className="print:hidden">
-                <SessionExpiredMessage refusal={sessionRefusal} />
-              </div>
-            )}
-            <div
-              className={
-                sessionRefusal === null ? "contents" : "hidden print:contents"
-              }
-            >
-              {children}
+        <OwnerToolsSlotContext value={ownerToolsSlot}>
+          <PageControls
+            ownerToolsRef={setOwnerToolsSlot}
+            ownerToolsHidden={sessionRefusal !== null}
+          />
+          {signingOutReason ? (
+            <div className="print:hidden">
+              <SignOutMessage reason={signingOutReason} />
             </div>
-          </>
-        )}
+          ) : (
+            <>
+              {sessionRefusal && (
+                <div className="print:hidden">
+                  <SessionExpiredMessage refusal={sessionRefusal} />
+                </div>
+              )}
+              <div
+                className={
+                  sessionRefusal === null ? "contents" : "hidden print:contents"
+                }
+              >
+                {children}
+              </div>
+            </>
+          )}
+        </OwnerToolsSlotContext>
       </div>
       <div className="print:hidden">
         <SignedOutNotice />

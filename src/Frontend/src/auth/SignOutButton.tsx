@@ -1,4 +1,4 @@
-import { useState, type JSX } from "react"
+import { useState, type JSX, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 import { signInMethodNames, signOutInApp, useAuthSession } from "./authSession"
 import useSignOutReturnSegment from "./useSignOutReturnSegment"
@@ -6,15 +6,27 @@ import useSigningOutReason from "./useSigningOutReason"
 import Button from "../pages/components/Button"
 import { SignOutReason } from "../types"
 
+interface SignOutButtonProps {
+  tools?: ReactNode
+}
+
 /**
  * Shows the signed-in account and signs it out within the app, without
  * Microsoft's or Google's logout page. Renders nothing while nobody is signed in or a
  * sign-out is under way, when the sign-out screen takes over the page.
  * Remembers the CV being viewed, so Home can return to it after the sign-out.
+ * The name leads as the account's label and the account's actions follow it
+ * side by side: the given tools, such as the owner's Edit profile, and then
+ * the sign-out.
  *
- * @returns The account name with the sign-out button, or null.
+ * @param props - The component props.
+ * @param props.tools - The account's other actions, shown before the
+ *   sign-out.
+ * @returns The account name with its actions, or null.
  */
-export default function SignOutButton(): JSX.Element | null {
+export default function SignOutButton({
+  tools,
+}: Readonly<SignOutButtonProps>): JSX.Element | null {
   const { t } = useTranslation()
   const { account, isBusy, method } = useAuthSession()
   const signingOutReason = useSigningOutReason()
@@ -43,15 +55,18 @@ export default function SignOutButton(): JSX.Element | null {
           <span className="sr-only">{t("signOut.signedInAs")}</span>
           {account.name}
         </p>
-        <Button
-          onClick={handleSignOut}
-          disabled={isBusy}
-          aria-label={t("signOut.label", {
-            provider: signInMethodNames[method],
-          })}
-        >
-          {t("signOut.button")}
-        </Button>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {tools}
+          <Button
+            onClick={handleSignOut}
+            disabled={isBusy}
+            aria-label={t("signOut.label", {
+              provider: signInMethodNames[method],
+            })}
+          >
+            {t("signOut.button")}
+          </Button>
+        </div>
       </div>
       {signOutError && (
         <span role="alert" className="text-sm text-cv-danger">

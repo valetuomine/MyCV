@@ -12,6 +12,7 @@ import CopyLinkButton from "../../../components/CopyLinkButton"
 import Eyebrow from "../../../components/Eyebrow"
 import LanguageFlag from "../../../components/LanguageFlag"
 import Magnetic from "../../../components/Magnetic"
+import OwnerTools from "../../../components/OwnerTools"
 import {
   formatProfileDate,
   getInitials,
@@ -86,16 +87,18 @@ function ExpandableSummary({ text }: Readonly<{ text: string }>): JSX.Element {
 
 /**
  * The CV: name, title, location, summary, links and portrait, entering one
- * after another. With a mouse, the actions lean toward the pointer. Coming
- * back from editing, focus returns to the Edit profile button that started it:
- * the CV mounts again then, so the button's `autoFocus` applies.
+ * after another. With a mouse, the visitors' actions lean toward the
+ * pointer. The owner's Edit profile is not one of them: it sits in the
+ * page's top corner beside the sign-out (`OwnerTools`), and the CV carries
+ * `data-owner-tools` while it shows, so `ProfilePage` can make room for the
+ * taller controls on narrow screens. Coming back from editing, focus returns
+ * to Edit profile: the CV mounts again then, so the button's `autoFocus`
+ * applies.
  * When the owner hides the picture section, the portrait and its initials are
  * left out and the text takes the whole width, capped so its lines stay
  * readable. When the CV has no translation in the UI language, its content
  * shows in the default language, with a quiet note under the eyebrow saying
- * so in the UI language. The owner's Edit profile sits on its own row under
- * the visitors' actions, so the rows break the same way in every language
- * rather than by the length of the labels. Under it, the owner sees the
+ * so in the UI language. Under the visitors' actions, the owner sees the
  * notice about the CV's missing language versions; when the notice closes,
  * focus moves to Edit profile, so it isn't lost with the notice.
  *
@@ -146,6 +149,7 @@ export default function ReadOnlyProfileForm({
       variants={container}
       initial="hidden"
       animate="visible"
+      data-owner-tools={onEdit ? true : undefined}
       className={`grid w-full grid-cols-[minmax(0,1fr)] items-center gap-14 lg:gap-16 ${showPortrait ? "lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]" : ""}`}
     >
       <section
@@ -193,6 +197,17 @@ export default function ReadOnlyProfileForm({
             <ExpandableSummary text={values.summary} />
           </motion.div>
         )}
+        {onEdit && (
+          <OwnerTools>
+            <Button
+              ref={editButtonRef}
+              autoFocus={focusEdit}
+              onClick={() => onEdit()}
+            >
+              {t("cv.editProfile")}
+            </Button>
+          </OwnerTools>
+        )}
         <motion.div
           variants={item}
           className="mt-10 grid justify-items-start gap-3"
@@ -224,18 +239,6 @@ export default function ReadOnlyProfileForm({
               </Magnetic>
             )}
           </div>
-          {onEdit && (
-            <Magnetic>
-              <Button
-                ref={editButtonRef}
-                autoFocus={focusEdit}
-                onClick={() => onEdit()}
-                className="border-dashed"
-              >
-                {t("cv.editProfile")}
-              </Button>
-            </Magnetic>
-          )}
           <AnimatePresence>
             {onEdit && missingLanguages.length > 0 && (
               <MissingLanguageNotice
