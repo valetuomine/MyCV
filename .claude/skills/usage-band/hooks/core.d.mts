@@ -30,3 +30,26 @@ export declare const coldSessionWarning: (
   tokens: number | undefined,
   config: ColdConfig,
 ) => string | null
+
+/** One git command that the Never rules care about. */
+export type GitOperation = {
+  kind: 'push' | 'commit' | 'add' | 'switch'
+  dirs: string[]
+  remote?: string
+  refspecs: string[]
+  flags: string[]
+  files: string[]
+  target?: string | null
+  switchedTo?: string | null
+  switchUncertain?: boolean
+}
+export function isShellTool(tool: string): boolean
+export function isSecretFile(path: string): boolean
+export function isAzureUrl(url: string): boolean
+export function findGitOperations(command: string, tool?: string, depth?: number, inherited?: string[]): GitOperation[]
+export function needsBranch(operation: GitOperation): boolean
+export function operationDirectory(cwd: string, dirs: string[]): string
+export function checkGitOperation(
+  operation: GitOperation,
+  context: { branch?: string; originIsPublic?: boolean; azureIsPublic?: boolean },
+): string | null

@@ -6,6 +6,10 @@ import {
   budgetWarning,
   coldSessionWarning,
   computeLimit,
+  checkGitOperation,
+  findGitOperations,
+  isAzureUrl,
+  operationDirectory,
   findWorkItem,
   formatEstimate,
   parseColdConfig,
@@ -42,7 +46,13 @@ const WEEK_RESETS = new Date((MONDAY_NOON + 7 * DAY) * 1000).toISOString()
 const FIVE_RESETS = new Date(NOW_MS + 2 * 3600 * 1000).toISOString()
 
 /** Stands for the engine: surfaces, usage, settings files, toasts and the commands run. */
-const engine = async (on: On, surfaces: RenderSurface[], tokens: number, weekPercent = 22) => {
+const engine = async (
+  on: On,
+  surfaces: RenderSurface[],
+  tokens: number,
+  weekPercent = 22,
+  files: Record<string, string> = {},
+) => {
   const toasts: string[] = []
   const commands: string[] = []
   const transcript: { mtimeMs?: number } = {}
@@ -64,11 +74,16 @@ const engine = async (on: On, surfaces: RenderSurface[], tokens: number, weekPer
   } as SessionUsage
   on('session.surfaces', () => ({ value: surfaces }))
   on('session.usage', () => ({ value: usage }))
-  on('fs.read', (_, e) => ({
+  on('fs.read', (_, e) => {
+    const path = e.path.replace(/^[A-Za-z]:/, '').replaceAll('\\', '/')
+    if (path in files) return { value: files[path]! }
+    if (Object.keys(files).length > 0) throw new Error('missing')
+    return {
     value: e.path.endsWith('azure-devops.json')
       ? '{"projectUrl":"https://ado.test/proj"}'
       : 'no settings files in a test: the defaults apply',
-  }))
+    }
+  })
   on('ui.toast', (_, e) => {
     toasts.push(e.text)
     return { value: undefined }
@@ -270,6 +285,18 @@ describe('the model hint', () => {
     expect(await barText($, 'terminal')).toBe('US-212 · M · Sonnet, medium')
   })
 
+  test('puts a Vaihda malli button beside the bar that runs the model picker', async ($, on) => {
+    const h = await hintEngine(on, ['desktop'])
+    await $.prompt.submit(typed('Implement User Story 212'))
+    await h.clock.advance(10)
+    const view = await $.ui.mount({ ...BAND, surface: 'desktop' })
+    const button = await view.find({ type: 'Button', key: 'switch-model' })
+    if (!button) throw new Error('The Vaihda malli button was not drawn')
+    await view.press({ ...button, key: 'switch-model' })
+    expect(h.commands).toEqual(['model'])
+    await view.unmount()
+  })
+
   for (const surfaces of [['terminal'], []] as RenderSurface[][]) {
     test(`looks the work item up and shows the bar with the surfaces [${surfaces}] too`, async ($, on) => {
       const h = await hintEngine(on, surfaces)
@@ -454,5 +481,224 @@ describe('the cold session warning', () => {
     await $.prompt.submit(typed('jatketaan'))
     expect(h.toasts.slice(before)).toHaveLength(1)
     expect(h.toasts[before]).toContain('kylmä')
+  })
+})
+
+describe('the Never guard detection', () => {
+  const reason = (command: string, context: { branch?: string; originIsPublic?: boolean } = {}) =>
+    findGitOperations(command)
+      .map(operation => checkGitOperation(operation, context))
+      .find(Boolean) ?? null
+
+  test('lets feature branch pushes to azure and to a local origin through', () => {
+    expect(reason('git push -u origin feat/US-213_Moodit')).toBeNull()
+    expect(reason('git push -u azure feat/US-213_Moodit')).toBeNull()
+    expect(reason('git push', { branch: 'feat/x' })).toBeNull()
+    expect(reason('git push origin HEAD', { branch: 'feat/x' })).toBeNull()
+    expect(reason('git commit -m "git push origin main"', { branch: 'feat/x' })).toBeNull()
+    expect(reason('git add src/a.ts && git status')).toBeNull()
+  })
+
+  test('blocks pushes to main in every form', () => {
+    for (const command of [
+      'git push origin main',
+      'git push azure HEAD:main',
+      'git push azure +feat/x:refs/heads/main',
+      'git push azure :main',
+      'git push azure --delete main',
+      'git push azure --mirror',
+      'git push azure refs/heads/*:refs/heads/*',
+      'git status && git push azure main',
+      'FOO=1 sudo git -C src push azure main',
+      'bash -c "git push azure main"',
+    ]) {
+      expect(reason(command)).toContain('never push to main')
+    }
+    expect(reason('git push', { branch: 'main' })).toContain('never push to main')
+    expect(reason('git push azure HEAD', { branch: 'main' })).toContain('never push to main')
+  })
+
+  test('blocks pushes to GitHub, other remotes, and origin when it is public', () => {
+    expect(reason('git push github feat/x')).toContain('Azure DevOps')
+    expect(reason('git push https://github.com/a/b.git feat/x')).toContain('Azure DevOps')
+    expect(reason('git push origin feat/x', { originIsPublic: true })).toContain('Azure DevOps')
+    expect(reason('git push azure feat/x', { originIsPublic: true })).toBeNull()
+  })
+
+  test('blocks commits on main and adding the secret files', () => {
+    expect(reason('cd src && git commit -m x', { branch: 'main' })).toContain('commit directly to main')
+    expect(reason('git commit -m x', { branch: 'feat/x' })).toBeNull()
+    expect(reason('git add .env.local')).toContain('.env.local')
+    expect(reason('git add -f -- src/.mcp.json')).toContain('.mcp.json')
+  })
+})
+
+describe('the Never guard parser', () => {
+  const reason = (
+    command: string,
+    context: { branch?: string; originIsPublic?: boolean; azureIsPublic?: boolean } = {},
+    tool = 'Bash',
+  ) =>
+    findGitOperations(command, tool)
+      .map(operation => checkGitOperation(operation, context))
+      .find(Boolean) ?? null
+
+  test('reads wrapped command strings and prefixes', () => {
+    for (const command of [
+      'bash -xc "git push azure main"',
+      'eval git push azure main',
+      'timeout 5 git push azure main',
+      'xargs -n 1 git push azure main',
+      'wsl -d Ubuntu git push azure main',
+      'sudo -u bob git push azure main',
+    ]) {
+      expect(reason(command)).toContain('never push to main')
+    }
+    for (const command of ['pwsh -Command git push azure main', 'powershell -NoProfile -c "git push azure main"', 'cmd /c git push azure main']) {
+      expect(reason(command, {}, 'PowerShell')).toContain('never push to main')
+    }
+    expect(reason('iex "git push github x"', {}, 'PowerShell')).toContain('Azure DevOps')
+    expect(reason('Invoke-Expression "git add .env.local"', {}, 'PowerShell')).toContain('.env.local')
+  })
+
+  test('does not read -c of other commands as a command string', () => {
+    expect(reason('grep -c "git push azure main" notes.txt')).toBeNull()
+    expect(reason('echo "git push github x"')).toBeNull()
+  })
+
+  test('follows a branch switch in the same command', () => {
+    expect(reason('git switch -c feat/x && git commit -m a', { branch: 'main' })).toBeNull()
+    expect(reason('git checkout -b feat/x && git commit -m a', { branch: 'main' })).toBeNull()
+    expect(reason('git checkout main && git commit -m a', { branch: 'feat/x' })).toContain('commit directly to main')
+    expect(reason('git switch main; git push', { branch: 'feat/x' })).toContain('never push to main')
+    expect(reason('git checkout -- src/a.ts && git commit -m a', { branch: 'main' })).toContain('commit directly to main')
+    expect(reason('git checkout . && git commit -m a', { branch: 'main' })).toContain('commit directly to main')
+    expect(reason('git checkout src/app.ts && git commit -am fix', { branch: 'main' })).toContain('commit directly to main')
+    expect(reason('git checkout --ours a.txt && git commit -m a', { branch: 'main' })).toContain('commit directly to main')
+    expect(reason('git checkout -p feat/x && git commit -m a', { branch: 'main' })).toContain('commit directly to main')
+    expect(reason('git checkout --track origin/main && git commit -m a', { branch: 'feat/x' })).toContain('commit directly to main')
+    expect(reason('git switch feat/x && git commit -m a', { branch: 'main' })).toBeNull()
+  })
+
+  test('counts a switch only when && joins it to the operation', () => {
+    expect(reason('git switch -c feat/x; git commit -m a', { branch: 'main' })).toContain('commit directly to main')
+    expect(reason('git switch -c feat/x || git commit -m a', { branch: 'main' })).toContain('commit directly to main')
+    expect(reason('git switch -c feat/x\ngit commit -m a', { branch: 'main' })).toContain('commit directly to main')
+    expect(reason('git switch -c feat/x &&\n git commit -m a', { branch: 'main' })).toBeNull()
+    expect(reason('git switch -c feat/x; git commit -m a', { branch: 'feat/y' })).toBeNull()
+  })
+
+  test('does not trust a switch that an earlier || or | may have skipped', () => {
+    expect(reason('true || git switch -c f && git commit -m a', { branch: 'main' })).toContain('commit directly to main')
+    expect(reason('false | git switch -c f && git commit -m a', { branch: 'main' })).toContain('commit directly to main')
+    expect(reason('true || git switch -c f && git commit -m a', { branch: 'feat/y' })).toBeNull()
+  })
+
+  test('checks the checked-out branch when the switch target is unknown', () => {
+    expect(reason('git checkout - && git commit -m a', { branch: 'main' })).toContain('commit directly to main')
+    expect(reason('git checkout - && git commit -m a', { branch: 'feat/x' })).toBeNull()
+    expect(reason('git checkout -t origin/main && git commit -m a', { branch: 'feat/x' })).toContain('commit directly to main')
+    expect(reason('git checkout -t origin/feat/x && git commit -m a', { branch: 'main' })).toContain('commit directly to main')
+    expect(reason('git checkout -t origin/feat/x && git commit -m a', { branch: 'feat/y' })).toBeNull()
+  })
+
+  test('reads a Bash here-string that a shell runs', () => {
+    expect(reason('bash <<< "git push github x"')).toContain('Azure DevOps')
+    expect(reason('bash -s <<<"git push github x"')).toContain('Azure DevOps')
+    expect(reason('bash <<< "git push azure feat/x"')).toBeNull()
+    expect(reason('cat <<< "git push github x"')).toBeNull()
+  })
+
+  test('skips the values of env options', () => {
+    expect(reason('env -C sub git push github x')).toContain('Azure DevOps')
+    expect(reason('env --unset FOO git push github x')).toContain('Azure DevOps')
+    expect(reason('env --chdir sub git push github x')).toContain('Azure DevOps')
+    expect(reason('env --chdir sub git push azure feat/x')).toBeNull()
+  })
+
+  test('reads escaped backslashes, env options and shell-read blocks', () => {
+    expect(reason('echo "a\\\\" ; git push github x')).toContain('Azure DevOps')
+    expect(reason('env -i git push github x')).toContain('Azure DevOps')
+    expect(reason('env -u FOO git push github x')).toContain('Azure DevOps')
+    expect(reason('env FOO=1 git push azure feat/x')).toBeNull()
+    expect(reason("bash <<'EOF'\ngit push github x\nEOF\n")).toContain('Azure DevOps')
+    expect(reason("cat <<'EOF' | bash\ngit push github x\nEOF\n")).toContain('Azure DevOps')
+    expect(reason('iex @"\ngit push github x\n"@', {}, 'PowerShell')).toContain('Azure DevOps')
+    expect(reason("@'\ngit push github x\n'@ | pwsh -Command -", {}, 'PowerShell')).toContain('Azure DevOps')
+    expect(reason("cat <<'EOF'\ngit push github x\nEOF\n")).toBeNull()
+  })
+
+  test('skips here-strings and heredocs and reads escapes', () => {
+    expect(reason("$m = @'\ngit push github x\n'@\ngit status", {}, 'PowerShell')).toBeNull()
+    expect(reason("git commit -F - <<'EOF'\ngit push github x\nEOF\n", { branch: 'feat/x' })).toBeNull()
+    expect(reason("git commit -m \"$(cat <<'EOF'\ngit push github x\nEOF\n)\"", { branch: 'feat/x' })).toBeNull()
+    expect(reason('git push `\ngithub x', {}, 'PowerShell')).toContain('Azure DevOps')
+    expect(reason('git push \\\ngithub x')).toContain('Azure DevOps')
+    expect(reason('echo "say \\"hi\\"" && git push github x')).toContain('Azure DevOps')
+    expect(reason("echo 'it''s' ; git push github x", {}, 'PowerShell')).toContain('Azure DevOps')
+  })
+
+  test('resolves directories, refs and commit message values', () => {
+    expect(operationDirectory('C:/repo', ['/c/other', 'sub'])).toBe('C:/other/sub')
+    expect(operationDirectory('/repo', ['sub'])).toBe('/repo/sub')
+    expect(findGitOperations('Set-Location -Path src; git commit -m x', 'PowerShell')[0]?.dirs).toEqual(['src'])
+    expect(findGitOperations('cd -P src && git commit -m x')[0]?.dirs).toEqual(['src'])
+    expect(reason('git push azure @:main')).toContain('never push to main')
+    expect(reason('git push azure HEAD:refs/heads/Main')).toContain('never push to main')
+    expect(reason('git push azure heads/main')).toContain('never push to main')
+    expect(reason('git push azure @', { branch: 'main' })).toContain('never push to main')
+    expect(reason('git commit -m x', { branch: 'MAIN' })).toContain('commit directly to main')
+    expect(reason('git push --repo azure main')).toContain('never push to main')
+    expect(reason('git commit -m .env.local')).toBeNull()
+    expect(reason('git commit -am .mcp.json')).toBeNull()
+    expect(reason('git commit --message=.mcp.json -F .env.local')).toBeNull()
+    expect(reason('git commit .env.local -m x')).toContain('.env.local')
+    expect(reason('git add -f .ENV.LOCAL')).toContain('.env.local')
+  })
+
+  test('checks the host of a remote URL', () => {
+    for (const url of ['https://user@dev.azure.com/o/p/_git/r', 'git@ssh.dev.azure.com:v3/o/p/r', 'https://o.visualstudio.com/p/_git/r']) {
+      expect(isAzureUrl(url)).toBe(true)
+      expect(reason(`git push ${url} feat/x`)).toBeNull()
+    }
+    for (const url of ['https://github.com/o/dev.azure.com', 'https://dev.azure.com.evil.test/o', 'git@github.com:o/r.git']) {
+      expect(isAzureUrl(url)).toBe(false)
+      expect(reason(`git push ${url} feat/x`)).toContain('Azure DevOps')
+    }
+    expect(reason('git push azure feat/x', { azureIsPublic: true })).toContain('Azure DevOps')
+  })
+})
+
+describe('the Never guard as a tool.call hook', () => {
+  test('denies a forbidden command and lets others reach the tool', async ($, on) => {
+    await engine(on, ['desktop'], 1000)
+    on('env.get', () => ({ value: undefined }))
+    on('session.cwd', () => ({ value: '/repo' }))
+    on('tool.call', () => ({ result: 'ran' as never }))
+    const denied = await $.tool.call({ tool: 'Bash', command: 'git push azure main' })
+    expect(denied.deny).toContain('never push to main')
+    const allowed = await $.tool.call({ tool: 'Bash', command: 'git push -u azure feat/US-213_x' })
+    expect(allowed.deny).toBeUndefined()
+    const other = await $.tool.call({ tool: 'Bash', command: 'git status' })
+    expect(other.deny).toBeUndefined()
+  })
+
+  test('reads the branch from .git/HEAD and from a worktree gitdir file', async ($, on) => {
+    await engine(on, ['desktop'], 1000, 22, {
+      '/repo/.git/HEAD': 'ref: refs/heads/main\n',
+      '/wt/.git': 'gitdir: /repo/.git/worktrees/wt\n',
+      '/repo/.git/worktrees/wt/HEAD': 'ref: refs/heads/main\n',
+      '/feat/.git/HEAD': 'ref: refs/heads/feat/x\n',
+    })
+    on('env.get', () => ({ value: undefined }))
+    on('session.cwd', () => ({ value: '/repo' }))
+    on('tool.call', () => ({ result: 'ran' as never }))
+    const run = async (command: string) => (await $.tool.call({ tool: 'Bash', command })).deny
+    expect(await run('git commit -m x')).toContain('commit directly to main')
+    expect(await run('git push')).toContain('never push to main')
+    expect(await run('cd /wt && git commit -m x')).toContain('commit directly to main')
+    expect(await run('git -C /feat commit -m x')).toBeUndefined()
+    expect(await run('cd /feat && git commit -m x')).toBeUndefined()
+    expect(await run('git switch -c feat/y && git commit -m x')).toBeUndefined()
   })
 })

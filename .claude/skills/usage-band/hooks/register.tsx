@@ -4,13 +4,18 @@ import type { EngineInterface, Register, SessionMeasureInput } from 'claude-code
 import type { ContextNotice, LastTurn, ModelHint } from '../types'
 import {
   budgetWarning,
+  checkGitOperation,
   coldSessionWarning,
   computeLimit,
   contextStopReason,
   contextWarning,
+  findGitOperations,
+  needsBranch,
   findWorkItem,
   formatEstimate,
+  isShellTool,
   kilo,
+  operationDirectory,
   parseBudgetConfig,
   parseColdConfig,
   parseContextLimits,
@@ -204,7 +209,56 @@ const warnCold = async ($: EngineInterface) => {
   }
 }
 
+/** The branch checked out in a directory, read from its `.git` (a folder, or a worktree's `gitdir:` file); undefined when unknown. */
+const currentBranch = async ($: EngineInterface, start: string): Promise<string | undefined> => {
+  let dir = start.replace(/[/\\]+$/, '')
+  for (let depth = 0; depth < 8 && dir !== ''; depth++) {
+    try {
+      let head: string
+      try {
+        head = await $.fs.read(`${dir}/.git/HEAD`)
+      } catch {
+        const target = /^gitdir:\s*(.+)$/m.exec(await $.fs.read(`${dir}/.git`))?.[1]?.trim()
+        if (!target) throw new Error('not a git file')
+        const gitDir = /^([A-Za-z]:|[/\\])/.test(target) ? target : `${dir}/${target}`
+        head = await $.fs.read(`${gitDir}/HEAD`)
+      }
+      return /^ref:\s*refs\/heads\/(.+)$/m.exec(head)?.[1]?.trim()
+    } catch {
+      dir = dir.replace(/[/\\][^/\\]*$/, '')
+    }
+  }
+  return undefined
+}
+
+/** The Never guard of CLAUDE.md for one shell command: the reason it is forbidden, or null. Any error lets the call through. */
+const neverViolation = async ($: EngineInterface, command: string, tool: string): Promise<string | null> => {
+  try {
+    const operations = findGitOperations(command, tool)
+    if (operations.length === 0) return null
+    const cwd = await $.session.cwd()
+    const originIsPublic = (await $.env.get('CLAUDE_CODE_REMOTE')) === 'true'
+    for (const operation of operations) {
+      const branch = needsBranch(operation) ? await currentBranch($, operationDirectory(cwd, operation.dirs)) : undefined
+      const reason = checkGitOperation(operation, { branch, originIsPublic })
+      if (reason) return reason
+    }
+  } catch {
+    return null
+  }
+  return null
+}
+
 export const register: Register = on => {
+  on('tool.call', async ($, e, next) => {
+    const command = (e as { command?: unknown }).command
+    if (isShellTool(e.tool) && typeof command === 'string') {
+      const deny = await neverViolation($, command, e.tool).catch(() => null)
+      if (deny) return { deny }
+    }
+    return next(e)
+  })
+
   on('session.start', async ($, e, next) => {
     const config = await loadConfig($)
     const nowSeconds = (await $.clock.now()) / 1000
@@ -270,10 +324,16 @@ export const register: Register = on => {
     const usage = e.surface === 'terminal' ? '' : await read($, line)
     const { text: recommendation } = await read($, hint)
     if (usage === '' && recommendation === '') return next(e)
-    const { Box, Text } = $.ui.resolve(e)
+    const { Box, Text, Button } = $.ui.resolve(e)
     return (
       <Box flexDirection="column">
-        {recommendation !== '' && <Text dimColor>{recommendation}</Text>}
+        {recommendation !== '' && (
+          <Box>
+            <Text dimColor>{recommendation}</Text>
+            <Text> </Text>
+            <Button key="switch-model" label="Vaihda malli" plain dimColor onPress={() => { $.command.run({ command: 'model' }).catch(() => undefined) }} />
+          </Box>
+        )}
         {usage !== '' && <Text dimColor>{usage}</Text>}
       </Box>
     )
