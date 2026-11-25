@@ -14,12 +14,17 @@ While the PR is open, its PR pipeline keeps the linked items `In Progress` (see 
 
 ## Remove The Worktree
 
+Rule: a worktree folder exists only until its task is in `main`: after the merge its folder, branch and sessions are all removed. Each folder is about 3 GB.
+
 When the user says the pull request was completed, or the session sees it with `repo_pull_request`, and the session runs in a git worktree (`git rev-parse --git-dir` and `git rev-parse --git-common-dir` print different paths, see [branch.md](branch.md)), the worktree is done:
 
-- **Claude desktop app** (`CLAUDE_CODE_ENTRYPOINT` is `claude-desktop`): offer to archive this session with `archive_session` (`self`), which removes its worktree. Archive only after the user says yes, and as the very last step: archiving `self` ends the conversation at once, so first report anything else, such as the work item states. The local feature branch stays; delete it first with `git branch -D <branch>` if the user wants. The app's `auto_archive_on_pr_close` setting follows GitHub pull requests only, so it never fires for an Azure DevOps pull request; do not change it.
+- **Claude desktop app** (`CLAUDE_CODE_ENTRYPOINT` is `claude-desktop`): offer to archive this session with `archive_session` (`self`). Archive only after the user says yes, and as the very last step: archiving `self` ends the conversation at once, so first report anything else, such as the work item states. Archiving does not remove the folder: the app only detaches its HEAD and the folder stays.
+  - The folder and the branch are removed afterwards with `/clean-branches`, which the user runs from the main checkout or another session, never from inside the folder itself. Say so in the report.
+  - A live Remote Control session, an open Explorer window or a terminal in the folder makes the removal fail with "Permission denied" (*Delete after the user agrees* in `clean-branches`).
+  - The app's `auto_archive_on_pr_close` setting follows GitHub pull requests only, so it never fires for an Azure DevOps pull request; do not change it.
 - **CLI:** tell the user to remove it from the main checkout with `git worktree remove <path>`, and the merged branch with `git branch -D <branch>`. Pull requests are squash-merged, so `git branch -d` refuses with "not fully merged".
 
-Old worktrees and branches of merged work pile up. When the user asks to clean them up, run `/clean-branches`: it checks each pull request with `repo_pull_request` (squash merges mean the branch never shows as merged into `origin/main`), compares the branch tip with `lastMergeSourceCommit`, and deletes only after the user agrees. Do not use `clean_up_worktrees` for this, and do not delete folders by hand.
+Old worktrees and branches of merged work pile up. Run `/clean-branches` after a merge, and whenever the session start hint reports leftovers or the user asks: it checks each pull request with `repo_pull_request` (squash merges mean the branch never shows as merged into `origin/main`), compares the branch tip with `lastMergeSourceCommit`, and deletes only after the user agrees. Do not use `clean_up_worktrees` for this, and do not delete folders by hand, except an empty leftover folder after `git worktree list` no longer shows it.
 
 ## Work Items That Did Not Move
 

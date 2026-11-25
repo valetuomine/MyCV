@@ -62,5 +62,5 @@ End with:
 - What was added to the production notes, if anything
 - Whether a cloud handoff page was deleted
 - In a cloud session, the result of the `git ls-remote` checks
-- In a worktree session, what happens after the merge: in the desktop app, that you will offer to archive this session, which removes the worktree, once the user says the pull request is completed; in the CLI, the `git worktree remove` command (*Remove The Worktree* in [references/after-merge.md](references/after-merge.md))
+- In a worktree session, what happens after the merge: in the desktop app, that you will offer to archive this session once the user says the pull request is completed, and that archiving only detaches the worktree's HEAD, so the user runs `/clean-branches` afterwards to remove the folder and the branch; in the CLI, the `git worktree remove` command (*Remove The Worktree* in [references/after-merge.md](references/after-merge.md))
 - The follow-up prompts, last
