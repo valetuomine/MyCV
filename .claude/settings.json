@@ -23,8 +23,8 @@
           },
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/graphify-session.mjs\"",
-            "timeout": 60
+            "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/session-start.mjs\"",
+            "timeout": 95
           }
         ]
       }
