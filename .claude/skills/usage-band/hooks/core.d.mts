@@ -21,3 +21,12 @@ export type Estimate = { size: string; model: string; effort: string | undefined
 export declare const findWorkItem: (text: string) => WorkItemRef | null
 export declare const parseEstimate: (html: string) => Estimate | null
 export declare const formatEstimate: (label: string, estimate: Estimate) => string
+
+export type ColdConfig = { coldAfterSeconds: number }
+export declare const parseColdConfig: (raw: unknown) => ColdConfig
+export declare const coldSessionWarning: (
+  lastTurnMs: number | undefined,
+  nowMs: number,
+  tokens: number | undefined,
+  config: ColdConfig,
+) => string | null

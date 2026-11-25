@@ -1,9 +1,10 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, SessionMeasureInput } from 'claude-code'
 
-import type { ContextNotice, ModelHint } from '../types'
+import type { ContextNotice, LastTurn, ModelHint } from '../types'
 import {
   budgetWarning,
+  coldSessionWarning,
   computeLimit,
   contextStopReason,
   contextWarning,
@@ -11,6 +12,7 @@ import {
   formatEstimate,
   kilo,
   parseBudgetConfig,
+  parseColdConfig,
   parseContextLimits,
   parseEstimate,
 } from './core.mjs'
@@ -27,6 +29,8 @@ const line = atom({ plugin: 'usage-band', key: 'line' } as const, '')
 const notice = atom({ plugin: 'usage-band', key: 'contextNotice' } as const, { warned: false, handoff: false } as ContextNotice)
 
 const hint = atom({ plugin: 'usage-band', key: 'modelHint' } as const, { checked: false, text: '', generation: 0 } as ModelHint)
+
+const lastTurn = atom({ plugin: 'usage-band', key: 'lastTurn' } as const, { activeAt: 0, running: false } as LastTurn)
 
 type Figures = Pick<SessionMeasureInput, 'context' | 'rateLimits'>
 type Config = { budget: ReturnType<typeof parseBudgetConfig>; context: ReturnType<typeof parseContextLimits> }
@@ -166,6 +170,40 @@ const warnContext = async ($: EngineInterface, tokens: number | undefined, confi
   $.ui.toast(tokens >= stopTokens ? contextStopReason(tokens, stopTokens) : contextWarning(tokens, stopTokens))
 }
 
+/**
+ * When the session last ran a turn, as Unix milliseconds: the stored time, or, in a session that has not run
+ * a turn since Claude Code started (a restart that resumed it), the time the transcript file was last written.
+ * Undefined when neither is known.
+ */
+const lastActiveAt = async ($: EngineInterface, stored: number): Promise<number | undefined> => {
+  if (stored > 0) return stored
+  try {
+    const { transcriptPath } = await $.session.info()
+    return (await $.fs.stat(transcriptPath)).mtimeMs
+  } catch {
+    return undefined
+  }
+}
+
+/**
+ * The cold-session warning: a toast before a message that goes to a session idle for over an hour, whose
+ * prompt cache has expired. It runs on every surface that draws the session (the classic hooks have no
+ * such warning, so the terminal shows nothing twice) and never holds the message back.
+ */
+const warnCold = async ($: EngineInterface) => {
+  try {
+    if ((await $.session.surfaces()).length === 0) return
+    const { activeAt, running } = await read($, lastTurn)
+    if (running) return
+    const cold = parseColdConfig(await readJson($, '../../hooks/cold-session.json'))
+    const { tokens } = (await $.session.usage()).context
+    const text = coldSessionWarning(await lastActiveAt($, activeAt), await $.clock.now(), tokens, cold)
+    if (text) $.ui.toast(text)
+  } catch {
+    return
+  }
+}
+
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     const config = await loadConfig($)
@@ -187,18 +225,33 @@ export const register: Register = on => {
     return next(e)
   })
 
+  on('turn.start', async ($, e, next) => {
+    if (e.agentId === undefined) {
+      const activeAt = await $.clock.now()
+      await update($, lastTurn, () => ({ activeAt, running: true }))
+    }
+    return next(e)
+  })
+
+  on('turn.complete', async ($, e, next) => {
+    if (e.agentId === undefined) {
+      const activeAt = await $.clock.now()
+      await update($, lastTurn, () => ({ activeAt, running: false }))
+    }
+    return next(e)
+  })
+
   on('prompt.submit', async ($, e, next) => {
     if (e.command || e.isMeta || e.text.trimStart().startsWith('/')) return next(e)
-    if (!(await isAppOnly($))) {
+    const pass = async () => {
+      await warnCold($)
       await startHint($, e.text)
       return next(e)
     }
+    if (!(await isAppOnly($))) return pass()
     const config = await loadConfig($)
     const { tokens } = (await $.session.usage()).context
-    if (tokens === undefined || tokens < config.context.stopTokens) {
-      await startHint($, e.text)
-      return next(e)
-    }
+    if (tokens === undefined || tokens < config.context.stopTokens) return pass()
     const reason = contextStopReason(tokens, config.context.stopTokens)
     $.ui.toast(reason)
     if (!(await read($, notice)).handoff) {

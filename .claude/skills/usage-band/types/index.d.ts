@@ -4,8 +4,11 @@ export type ContextNotice = { warned: boolean; handoff: boolean }
 /** The model recommendation of the work item that the first message names: `checked` once the first message was looked at, `text` empty when there is nothing to show, `generation` raised on every new session so that a late lookup of the previous one is ignored. */
 export type ModelHint = { checked: boolean; text: string; generation: number }
 
+/** The last time a main-chain turn started or ended, in Unix milliseconds (0 until the first turn), and whether one is running now: a message sent during a long turn is never cold. */
+export type LastTurn = { activeAt: number; running: boolean }
+
 declare module 'claude-code' {
   interface PluginState {
-    'usage-band': { line: string; contextNotice: ContextNotice; modelHint: ModelHint }
+    'usage-band': { line: string; contextNotice: ContextNotice; modelHint: ModelHint; lastTurn: LastTurn }
   }
 }

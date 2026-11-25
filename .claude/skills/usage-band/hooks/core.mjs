@@ -162,3 +162,33 @@ export const formatEstimate = (label, estimate) => {
   const model = estimate.effort ? `${estimate.model}, ${estimate.effort}` : estimate.model;
   return `${label} · ${estimate.size} · ${model}`;
 };
+
+const COLD_DEFAULT_SECONDS = 3600;
+
+/**
+ * Reads the parsed cold-session.json; a missing object or a bad value falls back to one hour.
+ * @param {any} raw The parsed settings, or anything else when the file was missing or bad.
+ * @returns {{coldAfterSeconds: number}} The idle time after which a session counts as cold.
+ */
+export const parseColdConfig = (raw) => {
+  const value = raw && typeof raw === 'object' ? raw.coldAfterSeconds : undefined;
+  return { coldAfterSeconds: isPositive(value) ? value : COLD_DEFAULT_SECONDS };
+};
+
+/**
+ * Builds the warning shown before a message is sent to a cold session, or null when the session is warm.
+ * The prompt cache expires after some time without a turn (five minutes by default, an hour in the extended mode, so the limit is a setting),
+ * so after the limit the whole context is probably read again at full price.
+ * @param {number | undefined} lastTurnMs The Unix time in milliseconds when the previous turn ended, or undefined when unknown.
+ * @param {number} nowMs The current Unix time in milliseconds.
+ * @param {number | undefined} tokens The context size, or undefined when unknown.
+ * @param {{coldAfterSeconds: number}} config The cold-session settings.
+ * @returns {string | null} The warning, or null when the idle time is under the limit or unknown.
+ */
+export const coldSessionWarning = (lastTurnMs, nowMs, tokens, config) => {
+  if (!isPositive(lastTurnMs) || nowMs - lastTurnMs <= config.coldAfterSeconds * 1000) return null;
+  const idle = Math.floor((nowMs - lastTurnMs) / 60000);
+  const idleText = idle >= 120 ? `${Math.floor(idle / 60)} h` : `${idle} min`;
+  const cost = tokens === undefined ? 'koko keskustelu' : `koko ${kilo(tokens)} tokenin konteksti`;
+  return `Sessio on ollut käyttämättä ${idleText}, joten sen promptivälimuisti on todennäköisesti kylmä ja ${cost} luetaan nyt uudelleen ilman välimuistia. Jatka sellaisenaan tai aloita uusi chat /handoff-skillillä.`;
+};

@@ -2,7 +2,15 @@ import { describe, expect, mock, test } from 'claude-code/testing'
 import type { Engine } from 'claude-code/testing'
 import type { On, RenderSurface, SessionUsage } from 'claude-code'
 
-import { budgetWarning, computeLimit, findWorkItem, formatEstimate, parseEstimate } from '../hooks/core.mjs'
+import {
+  budgetWarning,
+  coldSessionWarning,
+  computeLimit,
+  findWorkItem,
+  formatEstimate,
+  parseColdConfig,
+  parseEstimate,
+} from '../hooks/core.mjs'
 import { formatLine } from '../hooks/register'
 
 const DAY = 86400
@@ -37,6 +45,12 @@ const FIVE_RESETS = new Date(NOW_MS + 2 * 3600 * 1000).toISOString()
 const engine = async (on: On, surfaces: RenderSurface[], tokens: number, weekPercent = 22) => {
   const toasts: string[] = []
   const commands: string[] = []
+  const transcript: { mtimeMs?: number } = {}
+  on('session.info', () => ({ value: { transcriptPath: '/t.jsonl' } as never }))
+  on('fs.stat', () => {
+    if (transcript.mtimeMs === undefined) throw new Error('no transcript')
+    return { value: { kind: 'file', size: 1, mtimeMs: transcript.mtimeMs, isLink: false } as never }
+  })
   const clock = mock.clock(on)
   await clock.set(NOW_MS)
   mock.store(on)
@@ -66,7 +80,9 @@ const engine = async (on: On, surfaces: RenderSurface[], tokens: number, weekPer
   })
   on('session.start', (_, e) => ({ cwd: e.cwd }))
   on('session.measure', (_, e) => ({ changed: e.changed }))
-  return { toasts, commands, usage, clock }
+  on('turn.start', () => ({ turnId: 't' }))
+  on('turn.complete', (_, e) => ({ text: e.answer }))
+  return { toasts, commands, usage, clock, transcript }
 }
 
 describe('the cumulative daily limit', () => {
@@ -319,5 +335,124 @@ describe('the model hint', () => {
     await h.clock.advance(10)
     expect(h.urls).toHaveLength(1)
     expect(await barText($, 'desktop')).toBeUndefined()
+  })
+})
+
+describe('the cold session warning', () => {
+  const HOUR_MS = 3600 * 1000
+  const COLD = { coldAfterSeconds: 3600 }
+
+  test('reads the limit from the settings and falls back to one hour', () => {
+    expect(parseColdConfig({ coldAfterSeconds: 1800 })).toEqual({ coldAfterSeconds: 1800 })
+    for (const bad of [undefined, null, {}, { coldAfterSeconds: 0 }, { coldAfterSeconds: 'x' }, 'x']) {
+      expect(parseColdConfig(bad)).toEqual(COLD)
+    }
+  })
+
+  test('warns only when the idle time is over the limit', () => {
+    expect(coldSessionWarning(NOW_MS - HOUR_MS, NOW_MS, 90_000, COLD)).toBeNull()
+    expect(coldSessionWarning(NOW_MS - 10 * 60000, NOW_MS, 90_000, COLD)).toBeNull()
+    expect(coldSessionWarning(0, NOW_MS, 90_000, COLD)).toBeNull()
+    expect(coldSessionWarning(undefined, NOW_MS, 90_000, COLD)).toBeNull()
+    const text = coldSessionWarning(NOW_MS - HOUR_MS - 60000, NOW_MS, 90_000, COLD)
+    expect(text).toContain('61 min')
+    expect(text).toContain('90k')
+    expect(text).toContain('/handoff')
+    expect(coldSessionWarning(NOW_MS - 3 * HOUR_MS, NOW_MS, undefined, COLD)).toContain('3 h')
+  })
+
+  const turnDone = ($: Engine, agentId?: string) =>
+    $.turn.complete({ answer: '', durationMs: 1, isAborted: false, turnId: 't', reason: 'answer', agentId } as never)
+
+  for (const surfaces of [['desktop'], ['terminal']] as RenderSurface[][]) {
+    test(`warns after over an hour idle and still lets the message through on ${surfaces}`, async ($, on) => {
+      const h = await engine(on, surfaces, 90_000)
+      await turnDone($)
+      await h.clock.advance(HOUR_MS + 60000)
+      expect(await $.prompt.submit(typed('jatketaan'))).toEqual({ text: 'jatketaan' })
+      expect(h.toasts).toHaveLength(1)
+      expect(h.toasts[0]).toContain('kylmä')
+      await turnDone($)
+      await $.prompt.submit(typed('vielä'))
+      expect(h.toasts).toHaveLength(1)
+    })
+  }
+
+  const turnStarted = ($: Engine, agentId?: string) => $.turn.start({ turnId: 't', agentId } as never)
+
+  test('does not warn under an hour, for commands or before any turn', async ($, on) => {
+    const h = await engine(on, ['desktop'], 90_000)
+    await $.prompt.submit(typed('ensimmäinen'))
+    await turnDone($)
+    await h.clock.advance(30 * 60000)
+    await $.prompt.submit(typed('toinen'))
+    await h.clock.advance(HOUR_MS)
+    await $.prompt.submit(typed('/compact'))
+    expect(h.toasts).toHaveLength(0)
+  })
+
+  test('uses the transcript time in a session resumed after a restart, which has run no turn yet', async ($, on) => {
+    const h = await engine(on, ['desktop'], 90_000)
+    h.transcript.mtimeMs = NOW_MS - 3 * HOUR_MS
+    await $.prompt.submit(typed('jatketaan eilisestä'))
+    expect(h.toasts).toHaveLength(1)
+    expect(h.toasts[0]).toContain('3 h')
+  })
+
+  test('a stored turn time wins over an old transcript time', async ($, on) => {
+    const h = await engine(on, ['desktop'], 90_000)
+    await turnDone($)
+    h.transcript.mtimeMs = NOW_MS - 3 * HOUR_MS
+    await $.prompt.submit(typed('juuri ajettu vuoro'))
+    expect(h.toasts).toHaveLength(0)
+  })
+
+  test('stays quiet when the transcript is missing or recent', async ($, on) => {
+    const h = await engine(on, ['desktop'], 90_000)
+    await $.prompt.submit(typed('ensimmäinen'))
+    h.transcript.mtimeMs = NOW_MS - 60000
+    await $.prompt.submit(typed('toinen'))
+    expect(h.toasts).toHaveLength(0)
+  })
+
+  test('a subagent turn does not reset the clock', async ($, on) => {
+    const h = await engine(on, ['desktop'], 90_000)
+    await turnDone($)
+    await h.clock.advance(HOUR_MS + 60000)
+    await turnStarted($, 'agent-1')
+    await turnDone($, 'agent-1')
+    await $.prompt.submit(typed('jatketaan'))
+    expect(h.toasts).toHaveLength(1)
+  })
+
+  test('does not warn while a turn is running, however long it has run', async ($, on) => {
+    const h = await engine(on, ['desktop'], 90_000)
+    await turnStarted($)
+    await h.clock.advance(2 * HOUR_MS)
+    await $.prompt.submit(typed('ohjataan kesken ajon'))
+    expect(h.toasts).toHaveLength(0)
+    await turnDone($)
+    await h.clock.advance(HOUR_MS + 60000)
+    await $.prompt.submit(typed('tauon jälkeen'))
+    expect(h.toasts).toHaveLength(1)
+  })
+
+  test('is not shown for a message that the context stop drops', async ($, on) => {
+    const h = await engine(on, ['desktop'], 210_000)
+    await turnDone($)
+    await h.clock.advance(HOUR_MS + 60000)
+    expect(await $.prompt.submit(typed('jatketaan'))).toEqual({ drop: expect.stringContaining('Konteksti') })
+    expect(h.toasts.filter(t => t.includes('kylmä'))).toHaveLength(0)
+  })
+
+  test('is shown once with a context warning that has already been given', async ($, on) => {
+    const h = await engine(on, ['desktop'], 160_000)
+    await $.session.measure({ context: h.usage.context, rateLimits: h.usage.rateLimits, changed: [] } as never)
+    const before = h.toasts.length
+    await turnDone($)
+    await h.clock.advance(HOUR_MS + 60000)
+    await $.prompt.submit(typed('jatketaan'))
+    expect(h.toasts.slice(before)).toHaveLength(1)
+    expect(h.toasts[before]).toContain('kylmä')
   })
 })
