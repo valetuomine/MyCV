@@ -57,6 +57,7 @@ agent/skills/
 !.claude/skills/check-ideas-artifact/
 !.claude/skills/record-demo-video/
 !.claude/skills/handoff/
+!.claude/skills/clean-branches/
 !.claude/skills/react-useeffect/
 !.claude/skills/usage-band/
 # Claude Code writes the plugin's editor types here when it loads the plugin.

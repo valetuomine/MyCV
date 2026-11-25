@@ -1,7 +1,9 @@
 // SessionStart hook: checks at the start of a session whether the checkout is up to date with origin/main.
 // A worktree with a clean working tree whose HEAD is an ancestor of origin/main is brought up to date with a
 // fast-forward merge. Anything else, and the main checkout, which is never switched, updated or merged, is only
-// reported to Claude as a short additional context. An up-to-date checkout prints nothing. Run by session-start.mjs,
+// reported to Claude as a short additional context. The same note counts the local branches whose upstream is gone
+// and the worktrees on them: a hint for /clean-branches, never proof, and nothing is deleted. An up-to-date checkout
+// without such branches prints nothing. Run by session-start.mjs,
 // which starts the code graph hook only after this one has ended.
 // The hook never fails a session start: a network error or any other failure ends it silently with exit code 0.
 import { execFileSync } from "node:child_process";
@@ -153,18 +155,71 @@ const reportMainCheckout = (behind, branch) => {
 };
 
 /**
- * Fetches origin and builds the session start note.
- * @returns {string} The note; empty when the checkout is up to date.
+ * Builds the note for a worktree: empty when it is not behind origin/main.
+ * @param {number} behind - Number of commits that HEAD is behind origin/main.
+ * @param {string} branch - The current branch, empty on a detached HEAD.
+ * @returns {string} The note.
+ */
+const worktreeNote = (behind, branch) =>
+  behind > 0 ? syncWorktree(behind, branch) : "";
+
+/**
+ * Counts the local branches whose upstream branch is gone and the other worktrees that have such a branch checked
+ * out. This is a local hint only: the pull request of a branch is checked by /clean-branches, never here.
+ * @param {string} current - The current branch, empty on a detached HEAD; it is never counted.
+ * @returns {string} The hint; empty when no branch looks finished.
+ */
+const cleanupHint = (current) => {
+  const gone = git([
+    "for-each-ref",
+    "--format=%(refname:short)\t%(upstream:track)",
+    "refs/heads",
+  ])
+    .split("\n")
+    .map((line) => line.split("\t"))
+    .filter(
+      ([name, track]) =>
+        name && name !== MAIN_BRANCH && name !== current && track === "[gone]",
+    )
+    .map(([name]) => name);
+  if (gone.length === 0) return "";
+  const goneSet = new Set(gone);
+  const worktrees = git(["worktree", "list", "--porcelain"])
+    .split("\n\n")
+    .slice(1)
+    .filter((block) =>
+      block
+        .split("\n")
+        .some(
+          (line) =>
+            line.startsWith("branch refs/heads/") &&
+            goneSet.has(line.slice("branch refs/heads/".length)),
+        ),
+    ).length;
+  return `Branch cleanup hint: ${gone.length} local branch(es) have a deleted upstream and ${worktrees} worktree(s) are on such a branch. This is only a hint, not proof that the work is merged. Nothing was deleted; run /clean-branches to check their pull requests and remove them after the user agrees.`;
+};
+
+/**
+ * Fetches origin (pruning deleted remote branches) and builds the session start note.
+ * @returns {string} The note; empty when the checkout is up to date and no branch looks finished.
  */
 const buildNote = () => {
-  git(["fetch", "--quiet", "origin"], FETCH_TIMEOUT_MS);
+  git(["fetch", "--quiet", "--prune", "origin"], FETCH_TIMEOUT_MS);
   const behind = Number.parseInt(
     git(["rev-list", "--count", "HEAD..origin/main"]).trim(),
     10,
   );
   const branch = git(["branch", "--show-current"]).trim();
-  if (isWorktree()) return behind > 0 ? syncWorktree(behind, branch) : "";
-  return reportMainCheckout(behind, branch);
+  const sync = isWorktree()
+    ? worktreeNote(behind, branch)
+    : reportMainCheckout(behind, branch);
+  let hint = "";
+  try {
+    hint = cleanupHint(branch);
+  } catch {
+    // The hint is optional; the sync note is still given.
+  }
+  return [sync, hint].filter(Boolean).join("\n");
 };
 
 try {
