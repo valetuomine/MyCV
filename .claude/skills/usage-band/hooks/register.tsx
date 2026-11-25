@@ -1,31 +1,40 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, SessionMeasureInput } from 'claude-code'
 
-import type { ContextNotice } from '../types'
+import type { ContextNotice, ModelHint } from '../types'
 import {
   budgetWarning,
   computeLimit,
   contextStopReason,
   contextWarning,
+  findWorkItem,
+  formatEstimate,
   kilo,
   parseBudgetConfig,
   parseContextLimits,
+  parseEstimate,
 } from './core.mjs'
 
 /**
- * The usage row, warnings and context stop for the surfaces that have no status line
+ * The model recommendation bar of the work item that the first message names, drawn on all surfaces,
+ * and the usage row, warnings and context stop for the surfaces that have no status line
  * (the desktop app and the VS Code panel). The terminal keeps the status line and the settings hooks
- * in .claude/hooks/, so this plugin draws and warns nothing while a terminal draws the session.
+ * in .claude/hooks/, so the usage row, warnings and stop are off while a terminal draws the session.
  * The settings files stay in .claude/hooks/ and are read from there, so they remain the only source.
  */
 
 const line = atom({ plugin: 'usage-band', key: 'line' } as const, '')
 const notice = atom({ plugin: 'usage-band', key: 'contextNotice' } as const, { warned: false, handoff: false } as ContextNotice)
 
+const hint = atom({ plugin: 'usage-band', key: 'modelHint' } as const, { checked: false, text: '', generation: 0 } as ModelHint)
+
 type Figures = Pick<SessionMeasureInput, 'context' | 'rateLimits'>
 type Config = { budget: ReturnType<typeof parseBudgetConfig>; context: ReturnType<typeof parseContextLimits> }
 
 const HANDOFF_DELAY_MS = 100
+
+/** `base64(':proxy-injected')`: the placeholder token of the cloud environment, whose network secret the proxy swaps for the real one. */
+const PLACEHOLDER_TOKEN = 'OnByb3h5LWluamVjdGVk'
 
 /** Reads a JSON file relative to the plugin folder; undefined when it is missing or bad. */
 const readJson = async ($: EngineInterface, relative: string): Promise<unknown> => {
@@ -41,6 +50,42 @@ const loadConfig = async ($: EngineInterface): Promise<Config> => ({
   budget: parseBudgetConfig(await readJson($, '../../hooks/usage-budget.json')),
   context: parseContextLimits(await readJson($, '../../hooks/context-budget.json')),
 })
+
+/** Fetches the work item's `Työmäärä` line and keeps its recommendation for the bar; any failure leaves the bar out. */
+const fetchHint = async ($: EngineInterface, label: string, id: string, generation: number) => {
+  try {
+    const { projectUrl } = (await readJson($, '../../azure-devops.json')) as { projectUrl: string }
+    const token = (await $.env.get('AZURE_DEVOPS_MCP')) || PLACEHOLDER_TOKEN
+    const response = await $.http.fetch(`${projectUrl}/_apis/wit/workitems/${id}?fields=System.Description&api-version=7.1`, {
+      headers: { Authorization: `Basic ${token}` },
+    })
+    if (response.status !== 200) return
+    const html = (JSON.parse(response.text) as { fields?: Record<string, string> }).fields?.['System.Description']
+    const estimate = html ? parseEstimate(html) : null
+    if (estimate) await update($, hint, s => (s.generation === generation ? { ...s, text: formatEstimate(label, estimate) } : s))
+  } catch {
+    return
+  }
+}
+
+/**
+ * Looks up the work item that the first message of a chat names, once per chat (a failed lookup is not retried).
+ * The lookup runs from a timer, so the message is never held back.
+ */
+const startHint = async ($: EngineInterface, text: string) => {
+  try {
+    const { checked, generation } = await read($, hint)
+    if (checked) return
+    await update($, hint, s => ({ ...s, checked: true, text: '' }))
+    const item = findWorkItem(text)
+    if (!item) return
+    $.clock.after(0, () => {
+      fetchHint($, item.label, item.id, generation).catch(() => undefined)
+    })
+  } catch {
+    return
+  }
+}
 
 /** True when the session draws on a surface and none of them is the terminal. */
 const isAppOnly = async ($: EngineInterface) => {
@@ -127,6 +172,7 @@ export const register: Register = on => {
     const nowSeconds = (await $.clock.now()) / 1000
     const usage = await $.session.usage()
     await update($, line, () => formatLine(usage, config.budget.shares, nowSeconds, config.context.stopTokens))
+    await update($, hint, s => ({ checked: false, text: '', generation: s.generation + 1 }))
     return next(e)
   })
 
@@ -142,33 +188,40 @@ export const register: Register = on => {
   })
 
   on('prompt.submit', async ($, e, next) => {
-    if (e.command || e.isMeta || e.text.trimStart().startsWith('/') || !(await isAppOnly($))) return next(e)
+    if (e.command || e.isMeta || e.text.trimStart().startsWith('/')) return next(e)
+    if (!(await isAppOnly($))) {
+      await startHint($, e.text)
+      return next(e)
+    }
     const config = await loadConfig($)
     const { tokens } = (await $.session.usage()).context
-    if (tokens !== undefined && tokens >= config.context.stopTokens) {
-      const reason = contextStopReason(tokens, config.context.stopTokens)
-      $.ui.toast(reason)
-      if (!(await read($, notice)).handoff) {
-        await update($, notice, s => ({ ...s, handoff: true }))
-        // A prompt.submit hook may not run a command (it would wait on the turn it holds), and a
-        // submitted '/handoff' text is refused as the person's own command: run it from a timer.
-        $.clock.after(HANDOFF_DELAY_MS, () => {
-          $.command.run({ command: 'handoff' }).catch(() => undefined)
-        })
-      }
-      return { drop: reason }
+    if (tokens === undefined || tokens < config.context.stopTokens) {
+      await startHint($, e.text)
+      return next(e)
     }
-    return next(e)
+    const reason = contextStopReason(tokens, config.context.stopTokens)
+    $.ui.toast(reason)
+    if (!(await read($, notice)).handoff) {
+      await update($, notice, s => ({ ...s, handoff: true }))
+      // A prompt.submit hook may not run a command (it would wait on the turn it holds), and a
+      // submitted '/handoff' text is refused as the person's own command: run it from a timer.
+      $.clock.after(HANDOFF_DELAY_MS, () => {
+        $.command.run({ command: 'handoff' }).catch(() => undefined)
+      })
+    }
+    return { drop: reason }
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
-    if (e.surface === 'terminal' || e.props.hasSurvey) return next(e)
-    const text = await read($, line)
-    if (text === '') return next(e)
+    if (e.props.hasSurvey) return next(e)
+    const usage = e.surface === 'terminal' ? '' : await read($, line)
+    const { text: recommendation } = await read($, hint)
+    if (usage === '' && recommendation === '') return next(e)
     const { Box, Text } = $.ui.resolve(e)
     return (
-      <Box>
-        <Text dimColor>{text}</Text>
+      <Box flexDirection="column">
+        {recommendation !== '' && <Text dimColor>{recommendation}</Text>}
+        {usage !== '' && <Text dimColor>{usage}</Text>}
       </Box>
     )
   })

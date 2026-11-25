@@ -2,7 +2,7 @@ import { describe, expect, mock, test } from 'claude-code/testing'
 import type { Engine } from 'claude-code/testing'
 import type { On, RenderSurface, SessionUsage } from 'claude-code'
 
-import { budgetWarning, computeLimit } from '../hooks/core.mjs'
+import { budgetWarning, computeLimit, findWorkItem, formatEstimate, parseEstimate } from '../hooks/core.mjs'
 import { formatLine } from '../hooks/register'
 
 const DAY = 86400
@@ -50,7 +50,11 @@ const engine = async (on: On, surfaces: RenderSurface[], tokens: number, weekPer
   } as SessionUsage
   on('session.surfaces', () => ({ value: surfaces }))
   on('session.usage', () => ({ value: usage }))
-  on('fs.read', () => ({ value: 'no settings files in a test: the defaults apply' }))
+  on('fs.read', (_, e) => ({
+    value: e.path.endsWith('azure-devops.json')
+      ? '{"projectUrl":"https://ado.test/proj"}'
+      : 'no settings files in a test: the defaults apply',
+  }))
   on('ui.toast', (_, e) => {
     toasts.push(e.text)
     return { value: undefined }
@@ -176,5 +180,144 @@ describe('the context budget', () => {
     await desktop.clock.advance(200)
     expect(desktop.commands).toEqual(['handoff'])
     expect(await $.prompt.submit(typed('/compact'))).toEqual({ text: '/compact' })
+  })
+})
+
+describe('the model hint', () => {
+  const DESCRIPTION =
+    '<div><b>Työmäärä:</b> M, noin 5–12 milj. tokenia, malli Sonnet, effort-taso medium. Syy.</div>'
+
+  test('finds the earliest work item in every spelling', () => {
+    expect(findWorkItem('Implement User Story 212: x. Branch feat/US-212_x')).toEqual({ label: 'US-212', id: '212' })
+    expect(findWorkItem('Jatka Task 50')).toEqual({ label: 'Task-50', id: '50' })
+    expect(findWorkItem('Task-50 ja US-47')).toEqual({ label: 'Task-50', id: '50' })
+    expect(findWorkItem('US-47')).toEqual({ label: 'US-47', id: '47' })
+    expect(findWorkItem('Branch: feat/US-212_Skillit')).toEqual({ label: 'US-212', id: '212' })
+    expect(findWorkItem('ei mitään, Taskista 5')).toBeNull()
+  })
+
+  test('reads the Työmäärä line, with or without an effort level', () => {
+    expect(parseEstimate(DESCRIPTION)).toEqual({ size: 'M', model: 'Sonnet', effort: 'medium' })
+    expect(parseEstimate('<b>Työmäärä:</b> XL, malli Opus')).toEqual({ size: 'XL', model: 'Opus', effort: undefined })
+    expect(parseEstimate('<b>Työmäärä:</b> hmm')).toBeNull()
+    expect(parseEstimate('ei riviä')).toBeNull()
+  })
+
+  test('formats the bar text', () => {
+    expect(formatEstimate('US-47', { size: 'M', model: 'Sonnet', effort: 'medium' })).toBe('US-47 · M · Sonnet, medium')
+    expect(formatEstimate('Task-5', { size: 'S', model: 'Opus', effort: undefined })).toBe('Task-5 · S · Opus')
+  })
+
+  /** Serves the project file, the token and the work item description. */
+  const hintEngine = async (
+    on: On,
+    surfaces: RenderSurface[],
+    status = 200,
+    { token = 'dG9rZW4=', description = DESCRIPTION }: { token?: string; description?: string } = {},
+  ) => {
+    const base = await engine(on, surfaces, 50_000)
+    const urls: string[] = []
+    const auth: (string | undefined)[] = []
+    on('env.get', (_, e) => ({ value: e.name === 'AZURE_DEVOPS_MCP' ? token : undefined }))
+    on('http.fetch', (_, e) => {
+      urls.push(e.url)
+      auth.push(e.init?.headers?.Authorization)
+      return {
+        value: {
+          status,
+          ok: status === 200,
+          headers: {},
+          text: JSON.stringify({ fields: { 'System.Description': description } }),
+        },
+      }
+    })
+    return { ...base, urls, auth }
+  }
+
+  const barText = async ($: Engine, surface: RenderSurface) => {
+    const view = await $.ui.mount({ ...BAND, surface })
+    const bar = await view.find({ type: 'Text', text: /^(US|Task)-\d+ · / })
+    const text = bar?.text
+    await view.unmount()
+    return text
+  }
+
+  test('shows the bar on desktop and on the terminal after the first message, without holding it', async ($, on) => {
+    const h = await hintEngine(on, ['desktop'])
+    expect(await $.prompt.submit(typed('Implement User Story 212: Skillit'))).toEqual({
+      text: 'Implement User Story 212: Skillit',
+    })
+    await h.clock.advance(10)
+    expect(h.urls).toEqual(['https://ado.test/proj/_apis/wit/workitems/212?fields=System.Description&api-version=7.1'])
+    expect(h.auth).toEqual(['Basic dG9rZW4='])
+    expect(await barText($, 'desktop')).toBe('US-212 · M · Sonnet, medium')
+    expect(await barText($, 'terminal')).toBe('US-212 · M · Sonnet, medium')
+  })
+
+  for (const surfaces of [['terminal'], []] as RenderSurface[][]) {
+    test(`looks the work item up and shows the bar with the surfaces [${surfaces}] too`, async ($, on) => {
+      const h = await hintEngine(on, surfaces)
+      expect(await $.prompt.submit(typed('Implement User Story 212'))).toEqual({ text: 'Implement User Story 212' })
+      await h.clock.advance(10)
+      expect(h.urls).toHaveLength(1)
+      expect(await barText($, 'terminal')).toBe('US-212 · M · Sonnet, medium')
+    })
+  }
+
+  test('sends the cloud placeholder token when AZURE_DEVOPS_MCP is not set', async ($, on) => {
+    const h = await hintEngine(on, ['desktop'], 200, { token: '' })
+    await $.prompt.submit(typed('US-47'))
+    await h.clock.advance(10)
+    expect(h.auth).toEqual(['Basic OnByb3h5LWluamVjdGVk'])
+  })
+
+  test('leaves the bar out when the description has no Työmäärä line', async ($, on) => {
+    const h = await hintEngine(on, ['desktop'], 200, { description: '<div>Ei työmäärää</div>' })
+    await $.prompt.submit(typed('US-47'))
+    await h.clock.advance(10)
+    expect(h.urls).toHaveLength(1)
+    expect(await barText($, 'desktop')).toBeUndefined()
+  })
+
+  test('ignores the result of a lookup that started in the previous session', async ($, on) => {
+    const h = await hintEngine(on, ['desktop'])
+    await $.prompt.submit(typed('US-47'))
+    await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+    await h.clock.advance(10)
+    expect(await barText($, 'desktop')).toBeUndefined()
+  })
+
+  test('looks only at the first message and skips commands', async ($, on) => {
+    const h = await hintEngine(on, ['desktop'])
+    await $.prompt.submit(typed('/compact US-1'))
+    await $.prompt.submit(typed('jatketaan'))
+    await $.prompt.submit(typed('US-47 myöhemmin'))
+    await h.clock.advance(10)
+    expect(h.urls).toEqual([])
+    expect(await barText($, 'desktop')).toBeUndefined()
+  })
+
+  test('does not use up the lookup on a dropped first message, and starts over with a new session', async ($, on) => {
+    const h = await hintEngine(on, ['desktop'])
+    h.usage.context.tokens = 210_000
+    expect(await $.prompt.submit(typed('Jatka US-47'))).toEqual({ drop: expect.stringContaining('Konteksti') })
+    h.usage.context.tokens = 50_000
+    await $.prompt.submit(typed('Jatka US-47'))
+    await h.clock.advance(10)
+    expect(h.urls).toHaveLength(1)
+    expect(await barText($, 'desktop')).toBe('US-47 · M · Sonnet, medium')
+    await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+    expect(await barText($, 'desktop')).toBeUndefined()
+    await $.prompt.submit(typed('User Story 212'))
+    await h.clock.advance(10)
+    expect(h.urls).toHaveLength(2)
+  })
+
+  test('leaves the bar out when Azure DevOps does not answer', async ($, on) => {
+    const h = await hintEngine(on, ['desktop'], 401)
+    expect(await $.prompt.submit(typed('Task 50'))).toEqual({ text: 'Task 50' })
+    await h.clock.advance(10)
+    expect(h.urls).toHaveLength(1)
+    expect(await barText($, 'desktop')).toBeUndefined()
   })
 })

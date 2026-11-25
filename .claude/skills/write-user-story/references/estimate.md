@@ -51,7 +51,7 @@ The story's estimate then covers all its Tasks, and each Task with its own `Tote
    <div><b>Työmäärä:</b> S, noin 2–5 milj. tokenia, malli Sonnet, effort-taso medium. Kaksi komponenttia frontendissä ja yksi näkymä selaimessa.</div>
    ```
 
-   The `.claude/hooks/model-hint.mjs` hook reads this line when a chat starts, so keep the wording `malli <Sonnet|Opus>, effort-taso <level>` exactly.
+   The `usage-band` plugin (`.claude/skills/usage-band/`) reads this line when a chat starts and shows it above the prompt, so keep the wording `malli <Sonnet|Opus>, effort-taso <level>` exactly.
 
 2. **`Microsoft.VSTS.Scheduling.Effort`** on a User Story and on a Task: the class number from the table. It makes the size queryable and can be shown on the board cards. The field was added to the Task type in the `CustomWorkflow` process, so one `Effort` column sorts stories and Tasks together. The description's `Työmäärä` line stays the full estimate.
 3. **Draft preview and report:** the `Työmäärä` line, see *Draft Preview* in `SKILL.md`.

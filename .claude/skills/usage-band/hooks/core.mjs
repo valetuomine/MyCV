@@ -122,3 +122,43 @@ export const contextStopReason = (tokens, stopTokens) =>
  */
 export const contextWarning = (tokens, stopTokens) =>
   `Konteksti on ${kilo(tokens)} tokenia. Rajalla ${kilo(stopTokens)} työ pitää jatkaa uudessa chatissa /handoff-skillin kautta.`;
+
+/**
+ * Finds the work item that the first message of a chat names: `US-<id>`, `Task-<id>`, `User Story <id>` or `Task <id>`.
+ * @param {string} text The message text.
+ * @returns {{label: string, id: string} | null} The earliest mention, with `US-<id>` or `Task-<id>` as the label, or null when none.
+ */
+export const findWorkItem = (text) => {
+  const match = /\b(US-|Task-|User Story |Task )(\d+)/.exec(text);
+  if (!match) return null;
+  const prefix = match[1].startsWith('Task') ? 'Task' : 'US';
+  return { label: `${prefix}-${match[2]}`, id: match[2] };
+};
+
+/**
+ * Reads the size, model and effort level from the `Työmäärä` line of a work item description.
+ * @param {string} html The work item description.
+ * @returns {{size: string, model: string, effort: string | undefined} | null} The estimate, or null when absent.
+ */
+export const parseEstimate = (html) => {
+  const text = html
+    .replaceAll(/<[^<>]*>/g, ' ')
+    .replaceAll('&nbsp;', ' ')
+    .replaceAll('&lt;', '<')
+    .replaceAll('&gt;', '>')
+    .replaceAll('&amp;', '&')
+    .replaceAll(/\s+/g, ' ');
+  const match = /Työmäärä:\s*(XS|S|M|L|XL)\b.{0,200}?malli (Sonnet|Opus)(?:, effort-taso (\w+))?/.exec(text);
+  return match ? { size: match[1], model: match[2], effort: match[3] } : null;
+};
+
+/**
+ * Formats the model recommendation shown above the prompt, e.g. `US-47 · M · Sonnet, medium`.
+ * @param {string} label The work item label.
+ * @param {{size: string, model: string, effort: string | undefined}} estimate The parsed estimate.
+ * @returns {string} The text.
+ */
+export const formatEstimate = (label, estimate) => {
+  const model = estimate.effort ? `${estimate.model}, ${estimate.effort}` : estimate.model;
+  return `${label} · ${estimate.size} · ${model}`;
+};

@@ -15,3 +15,9 @@ export declare const parseContextLimits: (raw: unknown) => ContextLimits
 export declare const kilo: (tokens: number) => string
 export declare const contextStopReason: (tokens: number, stopTokens: number) => string
 export declare const contextWarning: (tokens: number, stopTokens: number) => string
+
+export type WorkItemRef = { label: string; id: string }
+export type Estimate = { size: string; model: string; effort: string | undefined }
+export declare const findWorkItem: (text: string) => WorkItemRef | null
+export declare const parseEstimate: (html: string) => Estimate | null
+export declare const formatEstimate: (label: string, estimate: Estimate) => string
