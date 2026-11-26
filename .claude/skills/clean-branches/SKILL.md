@@ -6,7 +6,7 @@ user-invocable: true
 
 # Clean branches
 
-Pull requests are squash-merged, so `git branch --merged` never recognises a finished branch, and `git branch -D` cannot be undone. This skill decides from the pull request, not from git alone, and deletes nothing before the user says yes. The rule it enforces: a worktree folder exists only until its task is in `main`: after the merge its folder, branch and sessions are all removed. Run it after every merge, from the main checkout or another session: the session that did the work archives itself after the merge and cannot remove its own folder (*Wake Up After The Merge* in `create-pull-request/references/after-merge.md`). The table in step 5 is the only approval the removal needs, and it cannot be given in advance. The session start hook only counts branches whose upstream is `gone`; that is a hint and never proof.
+Pull requests are squash-merged, so `git branch --merged` never recognises a finished branch, and `git branch -D` cannot be undone. This skill decides from the pull request, not from git alone, and deletes nothing before the user says yes. It enforces the worktree lifecycle rule in *Remove The Worktree* in `create-pull-request/references/after-merge.md`. Run it after every merge, from the main checkout or another session, because the session that did the work cannot remove its own folder. The table in step 5 is the only approval the removal needs, and it cannot be given in advance. The session start hook only counts branches whose upstream is `gone`; that is a hint and never proof.
 
 ## Steps
 
@@ -29,7 +29,10 @@ Pull requests are squash-merged, so `git branch --merged` never recognises a fin
 6. **Delete after the user agrees**, one candidate at a time:
    1. Its worktree, if any: `git worktree remove <path>`, never with `--force`, and only when the working tree is clean. If git refuses, keep the branch too and report why.
    2. Then the branch: `git branch -D <branch>` (`-d` refuses squash-merged branches).
-   3. If `git worktree remove` fails with "Permission denied" (step 6.1), a live session or an open window or terminal, for example, holds the folder, and git has often already dropped the worktree. Keep the branch, report it and ask the user to close the session or window. When `git worktree list` no longer shows the worktree and the folder is empty, delete the folder (without `-Recurse` or `-Force`) and then the branch, as part of the approval in step 5. If the folder is not empty or the worktree is still listed, keep both and report it.
+
+   **Exception: `git worktree remove` fails with "Permission denied".** A live session, an open window or a terminal holds the folder, and git has often already dropped the worktree. Keep the branch for now, report it and ask the user to close the session or window. After the user has closed it, check `git worktree list`:
+   - The worktree is no longer listed and the folder is empty: delete the folder (without `-Recurse` or `-Force`) and then the branch. The approval in step 5 covers this.
+   - The folder is not empty or the worktree is still listed: keep both and report it.
 7. **Report** what was deleted and what was kept.
 
 ## Never
