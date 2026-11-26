@@ -151,7 +151,7 @@ const reportMainCheckout = (behind, branch) => {
     behind > 0 ? `is ${behind} commit(s) behind origin/main` : "",
   ].filter(Boolean);
   if (problems.length === 0) return "";
-  return `Worktree sync: the main checkout ${problems.join(" and ")}. The hook does not change the main checkout. The usage-band plugin is loaded from this checkout, so it may lack newer changes until the checkout is updated.`;
+  return `Worktree sync: the main checkout ${problems.join(" and ")}. The hook does not change the main checkout; the sync-main-checkout.mjs script does, when it has been scheduled (see hooks.md); check its log when this note keeps coming back. The usage-band plugin is loaded from this checkout, so it may lack newer changes until the checkout is updated.`;
 };
 
 /**

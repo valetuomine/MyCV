@@ -60,6 +60,39 @@ The usage row is left out only on the `terminal` surface itself (`e.surface`), s
 - **Branch cleanup hint**: after the sync note, it counts the local branches (not `main`, not the current one) whose upstream is `gone` (`git for-each-ref`, `%(upstream:track)`) and the linked worktrees of `git worktree list --porcelain` (the first block, the main checkout, is left out) that are on such a branch, and adds one line saying so. It is a local hint only: no Azure DevOps call, nothing is deleted, and a branch without an upstream is never counted. It fires only when the source branch is deleted at pull request completion. The `/clean-branches` skill (`.claude/skills/clean-branches/SKILL.md`) does the real check and the deletion, after the user agrees.
 - Output is a short `additionalContext` like the code graph hook's. `reset --hard`, `stash`, `--force` and `checkout` are not used. Try it by hand with `node .claude/hooks/worktree-sync.mjs` in a worktree and in the main checkout.
 
+## Main checkout sync (scheduled)
+
+`.claude/hooks/sync-main-checkout.mjs` is not a Claude Code hook but a script for a Windows scheduled task. It keeps the main checkout (the folder that holds the real `.git`) on `main` and up to date with `origin/main`, because the usage-band plugin and the toolbar buttons load from that checkout. The worktree sync hook still never changes the main checkout, and sessions never switch its branch.
+
+**Why the checkout was detached:** the main checkout's reflog showed `checkout: moving from claude/us-206-... to origin/main` (2026-11-25), so it had been on a desktop session's branch and then detached at `origin/main`. `.claude/skills/clean-branches/SKILL.md` says archiving a session detaches the worktree's `HEAD` at the branch tip, but the reflog does not say whether archiving or a command run by hand made that move, so the cause is not confirmed. `main` is also checked out in another worktree, so the checkout could not switch to it by hand either.
+
+**What it does:** it fetches `origin` (30 s limit, no credential prompts) and updates the checkout only when nothing can be lost: a clean working tree, no merge, rebase, cherry-pick, revert or bisect in progress, and `HEAD` either on `main` or detached at a commit that `origin/main` contains.
+
+- `main` behind: `git merge --ff-only origin/main`.
+- Detached `HEAD`: when no other worktree has `main`, `git switch main` and the fast-forward (only if `main` itself has no commits that `origin/main` lacks); when another worktree has `main`, it stays detached and fast-forwards the detached `HEAD`. A stale worktree record (folder deleted, record still listed as `prunable`) counts as a worktree on `main`, because git then refuses the switch; the log line names it, and `git worktree prune` or `/clean-branches` clears it. No commit is lost either way.
+- `main` already at `origin/main`: nothing changes.
+- Otherwise (another branch, commits of its own, a dirty working tree, no network, a linked worktree as the folder) it changes nothing and logs the reason. It never uses `reset --hard`, `stash`, `checkout --force`, `--force` or a push, and always exits with 0.
+
+**Log:** one line per run in `%LOCALAPPDATA%\MyCV\sync-main-checkout.log` (the `SYNC_MAIN_LOG` environment variable overrides the path), at most 100 lines. The optional first argument is the repository folder; the default is the one that holds the script.
+
+**Schedule it once (a local, persistent setting, so run it only after deciding to):** replace `<main checkout>` with the path of the main checkout, and run in PowerShell:
+
+```powershell
+$node = (Get-Command node).Source
+$script = '<main checkout>\.claude\hooks\sync-main-checkout.mjs'
+$action = New-ScheduledTaskAction -Execute 'pwsh' -Argument "-NoProfile -WindowStyle Hidden -Command & '$node' '$script'" -WorkingDirectory '<main checkout>'
+$triggers = @(
+  (New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 15)),
+  (New-ScheduledTaskTrigger -AtLogOn)
+)
+$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -MultipleInstances IgnoreNew
+Register-ScheduledTask -TaskName 'MyCV sync main checkout' -Action $action -Trigger $triggers -Settings $settings
+```
+
+The settings let it run on battery power, make up a run that was missed while the machine was off, and skip a run while the previous one is still going. `$node` is the full path of `node`, because a scheduled task may not have the same `PATH` as a terminal. `pwsh` with `-WindowStyle Hidden` is there because a console program run directly (`node`) opens a visible window on every run; even so, a window may flash for a moment. The command has not been run as a scheduled task here, so check the log after the first run.
+
+Remove it with `Unregister-ScheduledTask -TaskName 'MyCV sync main checkout' -Confirm:$false`. The script file is read from the main checkout, so the first run uses whatever version that checkout has; update the checkout once by hand after this change is merged.
+
 ## Code graph at session start
 
 `.claude/hooks/graphify-session.mjs` (`SessionStart`, run by `session-start.mjs` after the worktree sync, 60 s limit) gives Claude the code graph at the start of every session. It looks for `graphify-out/graph.json` in the project folder, and in a worktree session (`git rev-parse --git-common-dir` points outside the project folder) it copies `graph.json` and `manifest.json` from the main checkout when the worktree has none. It compares `built_at_commit` with `HEAD` and runs `python -m graphify update .` (never `--force`) when they differ; `manifest.json` holds only relative paths and the build state is not copied, so the update rebuilds it for the worktree, and the main checkout's graph is never modified from a worktree. A failed update does not stop the session: the summary says so, and in a worktree it adds `--graph <main checkout's graph.json>`. It then prints `additionalContext`: the graph's commit and `HEAD`, the file age, the five most connected nodes (`god-nodes`) and the `query`, `explain` and `affected` commands, about 150 tokens in all. A missing graph or graphify package (a cloud session, a fresh clone) and any other failure print nothing and exit with 0, and the hook runs no LLM and writes only into the git-ignored `graphify-out/`. Run it by hand with `node .claude/hooks/graphify-session.mjs` in the main checkout and in a worktree. The pull request step that refreshes the graph stays as it is (*Code graph* in `references/checks.md` of `/create-pull-request`).
