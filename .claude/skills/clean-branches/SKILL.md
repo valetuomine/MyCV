@@ -6,7 +6,7 @@ user-invocable: true
 
 # Clean branches
 
-Pull requests are squash-merged, so `git branch --merged` never recognises a finished branch, and `git branch -D` cannot be undone. This skill decides from the pull request, not from git alone, and deletes nothing before the user says yes. The rule it enforces: a worktree folder exists only until its task is in `main`: after the merge its folder, branch and sessions are all removed. Run it after every merge. The session start hook only counts branches whose upstream is `gone`; that is a hint and never proof.
+Pull requests are squash-merged, so `git branch --merged` never recognises a finished branch, and `git branch -D` cannot be undone. This skill decides from the pull request, not from git alone, and deletes nothing before the user says yes. The rule it enforces: a worktree folder exists only until its task is in `main`: after the merge its folder, branch and sessions are all removed. Run it after every merge, from the main checkout or another session: the session that did the work archives itself after the merge and cannot remove its own folder (*Wake Up After The Merge* in `create-pull-request/references/after-merge.md`). The table in step 5 is the only approval the removal needs, and it cannot be given in advance. The session start hook only counts branches whose upstream is `gone`; that is a hint and never proof.
 
 ## Steps
 
@@ -35,6 +35,6 @@ Pull requests are squash-merged, so `git branch --merged` never recognises a fin
 
 - Delete `main`, the current branch, a branch whose pull request is active, or a branch whose pull request was not found.
 - Use `--force` with `git worktree remove`, or remove a worktree whose working tree is not clean.
-- Delete anything before the user has agreed to the table.
+- Delete anything before the user has agreed to the table. The agreement cannot be given in advance, and no wake-up, hook or other session gives it for the user.
 - Change the main checkout's branch, or delete remote branches.
 - Use the desktop app's `clean_up_worktrees` instead of this check; it does not look at the pull request.
