@@ -14,6 +14,7 @@ import {
   formatEstimate,
   parseColdConfig,
   parseEstimate,
+  syncStatus,
 } from '../hooks/core.mjs'
 import { formatLine } from '../hooks/register'
 
@@ -52,9 +53,11 @@ const engine = async (
   tokens: number,
   weekPercent = 22,
   files: Record<string, string> = {},
+  failCommands = false,
 ) => {
   const toasts: string[] = []
   const commands: string[] = []
+  const prompts: string[] = []
   const transcript: { mtimeMs?: number } = {}
   on('session.info', () => ({ value: { transcriptPath: '/t.jsonl' } as never }))
   on('fs.stat', () => {
@@ -88,8 +91,12 @@ const engine = async (
     toasts.push(e.text)
     return { value: undefined }
   })
-  on('prompt.submit', (_, e) => ({ text: e.text }))
+  on('prompt.submit', (_, e) => {
+    prompts.push(e.text)
+    return { text: e.text }
+  })
   on('command.run', (_, e) => {
+    if (failCommands) throw new Error('unknown command')
     commands.push(e.command)
     return { text: '' }
   })
@@ -97,7 +104,7 @@ const engine = async (
   on('session.measure', (_, e) => ({ changed: e.changed }))
   on('turn.start', () => ({ turnId: 't' }))
   on('turn.complete', (_, e) => ({ text: e.answer }))
-  return { toasts, commands, usage, clock, transcript }
+  return { toasts, commands, prompts, usage, clock, transcript }
 }
 
 describe('the cumulative daily limit', () => {
@@ -700,5 +707,138 @@ describe('the Never guard as a tool.call hook', () => {
     expect(await run('git -C /feat commit -m x')).toBeUndefined()
     expect(await run('cd /feat && git commit -m x')).toBeUndefined()
     expect(await run('git switch -c feat/y && git commit -m x')).toBeUndefined()
+  })
+})
+
+describe('the session toolbar buttons', () => {
+  /** Serves `git` with the answers of `git` (by its first argument), records every argv, and starts the session. */
+  const toolbarEngine = async (
+    on: On,
+    { remote = false, gitOk = true, counts = '0	0', fetchOk = true, failCommands = false, refuseProcess = false }: { remote?: boolean; gitOk?: boolean; counts?: string; fetchOk?: boolean; failCommands?: boolean; refuseProcess?: boolean } = {},
+  ) => {
+    const base = await engine(on, ['desktop'], 50_000, 22, gitOk ? {} : { '/elsewhere': 'x' }, failCommands)
+    const argvs: string[][] = []
+    const envs: Record<string, string>[] = []
+    on('env.get', (_, e) => ({ value: e.name === 'CLAUDE_CODE_REMOTE' && remote ? 'true' : undefined }))
+    on('process.run', (_, e) => {
+      if (refuseProcess) throw new Error('process is CLI only')
+      argvs.push([...e.argv])
+      envs.push({ ...e.init?.env })
+      const ok = { exitCode: 0, stderr: '', isStdoutTruncated: false, isStderrTruncated: false }
+      const answers: Record<string, { exitCode: number; stdout: string }> = {
+        fetch: { exitCode: fetchOk ? 0 : 1, stdout: '' },
+        'rev-list': { exitCode: 0, stdout: `${counts}\n` },
+        branch: { exitCode: 0, stdout: 'feat/x\n' },
+      }
+      return { value: { ...ok, ...answers[e.argv[1]!]! } as never }
+    })
+    return { ...base, argvs, envs }
+  }
+  const mountToolbar = async ($: Engine) => {
+    await $.session.start({ cwd: '/repo', surface: 'desktop', isInteractive: true })
+    return $.ui.mount({ ...BAND, surface: 'desktop' })
+  }
+
+  test('describes how the branch stands against origin/main', () => {
+    expect(syncStatus(0, 0, 'feat/x')).toContain('ajan tasalla')
+    expect(syncStatus(0, 3, 'feat/x')).toContain('3 commitin jäljessä')
+    expect(syncStatus(0, 3, 'feat/x')).toContain('fast-forward')
+    expect(syncStatus(2, 0, 'feat/x')).toContain('2 omaa committia')
+    expect(syncStatus(2, 0, 'feat/x')).not.toContain('commitin jäljessä')
+    expect(syncStatus(2, 3, '')).toContain('rebasen tai mergen')
+    expect(syncStatus(0, 0, '')).toContain('Irrallinen HEAD')
+  })
+
+  test('draws both buttons in a git folder, also without a model hint', async ($, on) => {
+    await toolbarEngine(on)
+    const view = await mountToolbar($)
+    expect(await view.find({ type: 'Button', key: 'clean-branches' })).toBeTruthy()
+    expect(await view.find({ type: 'Button', key: 'check-origin' })).toBeTruthy()
+    await view.unmount()
+  })
+
+  for (const [name, options] of [
+    ['in a cloud session', { remote: true }],
+    ['outside a git folder', { gitOk: false }],
+  ] as const) {
+    test(`hides both buttons ${name}`, async ($, on) => {
+      await toolbarEngine(on, options)
+      const view = await mountToolbar($)
+      expect(await view.find({ type: 'Button', key: 'clean-branches' })).toBeFalsy()
+      expect(await view.find({ type: 'Button', key: 'check-origin' })).toBeFalsy()
+      await view.unmount()
+    })
+  }
+
+  test('Siivoa haarat runs the clean-branches command and nothing else', async ($, on) => {
+    const h = await toolbarEngine(on)
+    const view = await mountToolbar($)
+    const button = await view.find({ type: 'Button', key: 'clean-branches' })
+    if (!button) throw new Error('The Siivoa haarat button was not drawn')
+    await view.press({ ...button, key: 'clean-branches' })
+    expect(h.commands).toEqual(['clean-branches'])
+    expect(h.argvs).toEqual([])
+    await view.unmount()
+  })
+
+  test('draws the buttons in a git folder even when process.run is refused', async ($, on) => {
+    await toolbarEngine(on, { refuseProcess: true })
+    const view = await mountToolbar($)
+    expect(await view.find({ type: 'Button', key: 'clean-branches' })).toBeTruthy()
+    expect(await view.find({ type: 'Button', key: 'check-origin' })).toBeTruthy()
+    await view.unmount()
+  })
+
+  test('Tarkista origin/main reports a failure when process.run is refused', async ($, on) => {
+    const h = await toolbarEngine(on, { refuseProcess: true })
+    await pressCheck($)
+    expect(h.toasts.at(-1)).toContain('epäonnistui')
+  })
+
+  test('Siivoa haarat asks for the skill in a prompt when the command cannot be run', async ($, on) => {
+    const h = await toolbarEngine(on, { failCommands: true })
+    const view = await mountToolbar($)
+    const button = await view.find({ type: 'Button', key: 'clean-branches' })
+    if (!button) throw new Error('The Siivoa haarat button was not drawn')
+    await view.press({ ...button, key: 'clean-branches' })
+    expect(h.commands).toEqual([])
+    expect(h.prompts).toEqual(['Aja /clean-branches-skilli.'])
+    await view.unmount()
+  })
+
+  const pressCheck = async ($: Engine) => {
+    const view = await mountToolbar($)
+    const button = await view.find({ type: 'Button', key: 'check-origin' })
+    if (!button) throw new Error('The Tarkista origin/main button was not drawn')
+    await view.press({ ...button, key: 'check-origin' })
+    await view.unmount()
+  }
+
+  for (const [counts, expected] of [
+    ['0	0', 'ajan tasalla'],
+    ['0	4', '4 commitin jäljessä'],
+    ['2	0', '2 omaa committia'],
+  ] as const) {
+    test(`Tarkista origin/main fetches and reports "${expected}" for ${JSON.stringify(counts)}`, async ($, on) => {
+      const h = await toolbarEngine(on, { counts })
+      await pressCheck($)
+      expect(h.argvs.map(argv => argv.slice(1).join(' '))).toEqual([
+        'fetch --quiet --prune origin',
+        'rev-list --left-right --count HEAD...origin/main',
+        'branch --show-current',
+      ])
+      expect(h.toasts).toHaveLength(2)
+      expect(h.toasts[0]).toBe('Haetaan origin/mainia...')
+      expect(h.toasts[1]).toContain(expected)
+      expect(h.toasts[1]).toContain('feat/x')
+      expect(h.envs.every(env => env.GIT_TERMINAL_PROMPT === '0' && env.GCM_INTERACTIVE === 'never')).toBe(true)
+    })
+  }
+
+  test('Tarkista origin/main reports a failed fetch and changes nothing', async ($, on) => {
+    const h = await toolbarEngine(on, { fetchOk: false })
+    await pressCheck($)
+    expect(h.toasts).toEqual(['Haetaan origin/mainia...', 'origin/mainin tarkistus epäonnistui: haku ei onnistunut tai origin/main puuttuu.'])
+    expect(h.argvs.some(argv => ['merge', 'rebase', 'checkout', 'switch', 'reset', 'pull'].includes(argv[1]!))).toBe(false)
   })
 })

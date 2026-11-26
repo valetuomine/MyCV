@@ -7,8 +7,11 @@ export type ModelHint = { checked: boolean; text: string; generation: number }
 /** The last time a main-chain turn started or ended, in Unix milliseconds (0 until the first turn), and whether one is running now: a message sent during a long turn is never cold. */
 export type LastTurn = { activeAt: number; running: boolean }
 
+/** Whether the session toolbar buttons work here: a git folder and not a cloud session (`false` until the session start has looked). */
+export type Toolbar = { available: boolean }
+
 declare module 'claude-code' {
   interface PluginState {
-    'usage-band': { line: string; contextNotice: ContextNotice; modelHint: ModelHint; lastTurn: LastTurn }
+    'usage-band': { line: string; contextNotice: ContextNotice; modelHint: ModelHint; lastTurn: LastTurn; toolbar: Toolbar }
   }
 }

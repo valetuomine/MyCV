@@ -1,7 +1,7 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, SessionMeasureInput } from 'claude-code'
 
-import type { ContextNotice, LastTurn, ModelHint } from '../types'
+import type { ContextNotice, LastTurn, ModelHint, Toolbar } from '../types'
 import {
   budgetWarning,
   checkGitOperation,
@@ -20,6 +20,7 @@ import {
   parseColdConfig,
   parseContextLimits,
   parseEstimate,
+  syncStatus,
 } from './core.mjs'
 
 /**
@@ -36,6 +37,8 @@ const notice = atom({ plugin: 'usage-band', key: 'contextNotice' } as const, { w
 const hint = atom({ plugin: 'usage-band', key: 'modelHint' } as const, { checked: false, text: '', generation: 0 } as ModelHint)
 
 const lastTurn = atom({ plugin: 'usage-band', key: 'lastTurn' } as const, { activeAt: 0, running: false } as LastTurn)
+
+const toolbar = atom({ plugin: 'usage-band', key: 'toolbar' } as const, { available: false } as Toolbar)
 
 type Figures = Pick<SessionMeasureInput, 'context' | 'rateLimits'>
 type Config = { budget: ReturnType<typeof parseBudgetConfig>; context: ReturnType<typeof parseContextLimits> }
@@ -231,6 +234,87 @@ const currentBranch = async ($: EngineInterface, start: string): Promise<string 
   return undefined
 }
 
+/** Whether a directory or one of its parents holds a `.git` folder or file, found with `$.fs` because `$.process` is documented for the CLI only. */
+const insideGitFolder = async ($: EngineInterface, start: string): Promise<boolean> => {
+  let dir = start.replace(/[/\\]+$/, '')
+  for (let depth = 0; depth < 8 && dir !== ''; depth++) {
+    try {
+      await $.fs.read(`${dir}/.git/HEAD`)
+      return true
+    } catch {
+      try {
+        await $.fs.read(`${dir}/.git`)
+        return true
+      } catch {
+        dir = dir.replace(/[/\\][^/\\]*$/, '')
+      }
+    }
+  }
+  return false
+}
+
+/** Tells the toolbar buttons whether they can work: a git folder, and not a cloud session where origin is the public mirror. */
+const probeToolbar = async ($: EngineInterface, cwd: string) => {
+  let available = false
+  try {
+    available = (await $.env.get('CLAUDE_CODE_REMOTE')) !== 'true' && (await insideGitFolder($, cwd))
+  } catch {
+    available = false
+  }
+  await update($, toolbar, () => ({ available }))
+}
+
+/** Reads one git result: its trimmed output, or an error when git failed. A fetch never waits for a credential prompt. */
+const gitOutput = async ($: EngineInterface, args: string[]) => {
+  const result = await $.process.run(['git', ...args], {
+    timeoutMs: 20_000,
+    env: { GIT_TERMINAL_PROMPT: '0', GCM_INTERACTIVE: 'never' },
+  })
+  if (result.exitCode !== 0) throw new Error(result.stderr.trim() || `git ${args[0]} failed`)
+  return result.stdout.trim()
+}
+
+let originCheckRunning = false
+
+/**
+ * The "Tarkista origin/main" button: fetches origin and tells in a toast whether the branch is behind, up to date or on
+ * its own commits. It only fetches (the remote-tracking branches; it never touches HEAD, the index or the working tree)
+ * and a second press while a check runs does nothing.
+ */
+const checkOriginMain = async ($: EngineInterface) => {
+  if (originCheckRunning) return
+  originCheckRunning = true
+  try {
+    $.ui.toast('Haetaan origin/mainia...')
+    await gitOutput($, ['fetch', '--quiet', '--prune', 'origin'])
+    const [ahead, behind] = (await gitOutput($, ['rev-list', '--left-right', '--count', 'HEAD...origin/main'])).split(/\s+/).map(Number)
+    if (ahead === undefined || behind === undefined || Number.isNaN(ahead) || Number.isNaN(behind)) throw new Error('bad count')
+    const branch = await gitOutput($, ['branch', '--show-current'])
+    $.ui.toast(syncStatus(ahead, behind, branch))
+  } catch {
+    $.ui.toast('origin/mainin tarkistus epäonnistui: haku ei onnistunut tai origin/main puuttuu.')
+  } finally {
+    originCheckRunning = false
+  }
+}
+
+/**
+ * The "Siivoa haarat" button: starts the /clean-branches skill, which still asks for the person's approval from its
+ * table before it deletes anything. If the command is rejected, the skill is asked for in a prompt instead, and a toast
+ * tells when that fails too.
+ */
+const startCleanBranches = async ($: EngineInterface) => {
+  try {
+    await $.command.run({ command: 'clean-branches' })
+  } catch {
+    try {
+      await $.prompt.submit({ text: 'Aja /clean-branches-skilli.' })
+    } catch {
+      $.ui.toast('/clean-branches ei käynnistynyt painikkeesta: kirjoita komento itse.')
+    }
+  }
+}
+
 /** The Never guard of CLAUDE.md for one shell command: the reason it is forbidden, or null. Any error lets the call through. */
 const neverViolation = async ($: EngineInterface, command: string, tool: string): Promise<string | null> => {
   try {
@@ -265,6 +349,7 @@ export const register: Register = on => {
     const usage = await $.session.usage()
     await update($, line, () => formatLine(usage, config.budget.shares, nowSeconds, config.context.stopTokens))
     await update($, hint, s => ({ checked: false, text: '', generation: s.generation + 1 }))
+    await probeToolbar($, e.cwd)
     return next(e)
   })
 
@@ -323,15 +408,28 @@ export const register: Register = on => {
     if (e.props.hasSurvey) return next(e)
     const usage = e.surface === 'terminal' ? '' : await read($, line)
     const { text: recommendation } = await read($, hint)
-    if (usage === '' && recommendation === '') return next(e)
+    const { available } = await read($, toolbar)
+    if (usage === '' && recommendation === '' && !available) return next(e)
     const { Box, Text, Button } = $.ui.resolve(e)
     return (
       <Box flexDirection="column">
-        {recommendation !== '' && (
+        {(recommendation !== '' || available) && (
           <Box>
-            <Text dimColor>{recommendation}</Text>
-            <Text> </Text>
-            <Button key="switch-model" label="Vaihda malli" plain dimColor onPress={() => { $.command.run({ command: 'model' }).catch(() => undefined) }} />
+            {recommendation !== '' && (
+              <Box>
+                <Text dimColor>{recommendation}</Text>
+                <Text> </Text>
+                <Button key="switch-model" label="Vaihda malli" plain dimColor onPress={() => { $.command.run({ command: 'model' }).catch(() => undefined) }} />
+              </Box>
+            )}
+            {available && (
+              <Box>
+                {recommendation !== '' && <Text> </Text>}
+                <Button key="clean-branches" label="Siivoa haarat" plain dimColor onPress={() => { startCleanBranches($).catch(() => undefined) }} />
+                <Text> </Text>
+                <Button key="check-origin" label="Tarkista origin/main" plain dimColor onPress={() => { checkOriginMain($).catch(() => undefined) }} />
+              </Box>
+            )}
           </Box>
         )}
         {usage !== '' && <Text dimColor>{usage}</Text>}

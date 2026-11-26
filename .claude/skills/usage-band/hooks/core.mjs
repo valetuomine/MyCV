@@ -816,3 +816,21 @@ const possibleBranches = (operation, checkedOut) => {
   if (operation.switchedTo === undefined) return [checkedOut];
   return operation.switchUncertain ? [operation.switchedTo ?? undefined, checkedOut] : [operation.switchedTo ?? undefined];
 };
+
+/**
+ * The toast text of the "Tarkista origin/main" button: how the branch stands against origin/main.
+ * The counts come from `git rev-list --left-right --count HEAD...origin/main`, the same figures that
+ * worktree-sync.mjs reads at session start.
+ * @param {number} ahead - Commits that HEAD has and origin/main lacks.
+ * @param {number} behind - Commits that origin/main has and HEAD lacks.
+ * @param {string} branch - The checked-out branch, empty on a detached HEAD.
+ * @returns {string} A one-line Finnish report.
+ */
+export const syncStatus = (ahead, behind, branch) => {
+  const where = branch ? `Haara ${branch}` : 'Irrallinen HEAD';
+  const own = ahead === 1 ? '1 oma commit' : `${ahead} omaa committia`;
+  if (behind > 0 && ahead > 0) return `${where} on ${behind} commitin jäljessä origin/mainista ja sillä on ${own}: päivitys vaatii rebasen tai mergen.`;
+  if (behind > 0) return `${where} on ${behind} commitin jäljessä origin/mainista ja voidaan päivittää fast-forwardilla.`;
+  if (ahead > 0) return `${where} ei ole jäljessä origin/mainista, sillä on ${own}.`;
+  return `${where} on ajan tasalla origin/mainin kanssa.`;
+};

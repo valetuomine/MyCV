@@ -53,3 +53,4 @@ export function checkGitOperation(
   operation: GitOperation,
   context: { branch?: string; originIsPublic?: boolean; azureIsPublic?: boolean },
 ): string | null
+export declare const syncStatus: (ahead: number, behind: number, branch: string) => string
