@@ -7,9 +7,12 @@
 // which starts the code graph hook only after this one has ended.
 // The hook never fails a session start: a network error or any other failure ends it silently with exit code 0.
 import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+const MAX_LOG_LINE_CHARS = 300;
 const TOTAL_BUDGET_MS = 25_000;
 const MIN_COMMAND_MS = 1_000;
 const FETCH_TIMEOUT_MS = 15_000;
@@ -138,6 +141,36 @@ const syncWorktree = (behind, branch) => {
 };
 
 /**
+ * Finds the log of sync-main-checkout.mjs; keep the logic identical to its logPath.
+ * @returns {string} The path from SYNC_MAIN_LOG, else under %LOCALAPPDATA%\MyCV, else under the home folder.
+ */
+const syncLogPath = () =>
+  process.env.SYNC_MAIN_LOG ||
+  join(
+    process.env.LOCALAPPDATA || join(homedir(), ".local", "state"),
+    "MyCV",
+    "sync-main-checkout.log",
+  );
+
+/**
+ * Reads the last non-empty line of the sync script's log. The hook only reads the log and never writes it.
+ * @returns {string} The line with its timestamp; empty when the log is missing, unreadable or empty.
+ */
+const lastSyncLogLine = () => {
+  try {
+    const lines = readFileSync(syncLogPath(), "utf8")
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+    return lines.length > 0
+      ? lines[lines.length - 1].slice(0, MAX_LOG_LINE_CHARS)
+      : "";
+  } catch {
+    return "";
+  }
+};
+
+/**
  * Builds the note for the main checkout, which the hook never changes.
  * @param {number} behind - Number of commits that HEAD is behind origin/main.
  * @param {string} branch - The current branch, empty on a detached HEAD.
@@ -151,7 +184,11 @@ const reportMainCheckout = (behind, branch) => {
     behind > 0 ? `is ${behind} commit(s) behind origin/main` : "",
   ].filter(Boolean);
   if (problems.length === 0) return "";
-  return `Worktree sync: the main checkout ${problems.join(" and ")}. The hook does not change the main checkout; the sync-main-checkout.mjs script does, when it has been scheduled (see hooks.md); check its log when this note keeps coming back. The usage-band plugin is loaded from this checkout, so it may lack newer changes until the checkout is updated.`;
+  const last = lastSyncLogLine();
+  const why = last
+    ? `The last line of the sync script's log: "${last}".`
+    : "The sync script's log was not found or is empty, so the script may not have run: the schedule may not be set (see hooks.md).";
+  return `Worktree sync: the main checkout ${problems.join(" and ")}. The hook does not change the main checkout; the sync-main-checkout.mjs script does, when it has been scheduled (see hooks.md). ${why} The usage-band plugin is loaded from this checkout, so it may lack newer changes until the checkout is updated.`;
 };
 
 /**
