@@ -14,24 +14,45 @@ While the PR is open, its PR pipeline keeps the linked items `In Progress` (see 
 
 ## Wake Up After The Merge
 
-Rule: the session that did the work notices the merge itself, so the user never has to say that the pull request was completed. This applies to a session in a git worktree in the Claude desktop app (`CLAUDE_CODE_ENTRYPOINT` is `claude-desktop`); in other sessions the user says it.
+Rule: the session that did the work notices the merge itself, so the user never has to say that the pull request was completed. This applies to every session in the Claude desktop app (`CLAUDE_CODE_ENTRYPOINT` is `claude-desktop`), in the main checkout and in a worktree alike; in other sessions the user says it.
 
 1. **Schedule the check** right after the pull request is open (step 8 of `SKILL.md`), once per pull request: call `CronList` first and schedule only when no job for this pull request id exists, because a follow-up push to an active pull request runs step 8 again. Schedule with `CronCreate` (`recurring: true`, cron `17 * * * *`, hourly at an off minute). The prompt must stand alone: the pull request id, the branch, the work item id and the steps below; the live `git rev-parse HEAD` is compared at each wake, so do not store a tip commit. Tell the user in the report that the check exists, that it lives only as long as this session, and that a recurring job expires after 30 days (it fires one last time first, with a note that it is the last run; step 2 says what to answer).
    - Why `CronCreate`: it wakes this very session with its context. `ScheduleWakeup` belongs to `/loop` dynamic mode. `mcp__scheduled-tasks` creates tasks that start a new session, which knows nothing of this work. `set_monitor` and `bind_pr` accept only GitHub pull request URLs, so an Azure DevOps pull request cannot be bound to the app's monitor.
    - The hourly interval is deliberate: a merge is not urgent, and every wake costs tokens. This is a check of the merge, never a poll of CI.
-   - A job fires only while the session is idle, so a wake can come late, and it never fires after the session ends or after the 30 days. A merge that the session slept through is found by `/clean-branches` or by the user's message instead.
+   - A job fires only while the session is idle, so a wake can come late, and it never fires after the session ends or after the 30 days. A merge that the session slept through is found by the user's message or, in a worktree, by `/clean-branches`. In the main checkout `/clean-branches` skips the checked-out branch, so the user's message or the next session start note (the main checkout is on a feature branch, not `main`) leads to *In The Main Checkout* below.
    - The job belongs to this session only. When the context limit ends this chat through `/handoff` before the merge, the new chat has no job: `/handoff` names the pull request and says that the merge check must be scheduled again (steps 1 to 3 here), and the new chat does it with `CronList` first.
-   - After the merge no handoff is written: the work is in `main`, so a handoff has nothing to preserve. When the context is already over `stopTokens` at that wake, give only the short report of the case (merged, different tip or abandoned) and, in the merged case, the archive of step 3, and nothing else. A wake is not a user message, so the context-budget hook does not block it. A wake never deletes a branch or a folder: only `/clean-branches` does, after the user's approval.
-2. **On each wake** read the pull request with `repo_pull_request` (`action` `get`, `pullRequestId`). While it is `active`, answer with one short line and nothing else; when the wake carries the tool's note that this is the job's last run (the 30 days are over), say instead that the check ends and that `/clean-branches` or the user's message takes over. When it is `abandoned`, delete the job with `CronDelete`, tell the user and stop.
+   - After the merge no handoff is written: the work is in `main`, so a handoff has nothing to preserve. When the context is already over `stopTokens` at that wake, give only the short report of the case (merged, different tip or abandoned) and, in the merged case, the last step of step 3 (the switch to `main` in the main checkout, the archive in a worktree), and nothing else. A wake is not a user message, so the context-budget hook does not block it. A wake never deletes a branch or a folder: a branch goes only on the user's yes (*In The Main Checkout*) or through `/clean-branches`, and a folder only through `/clean-branches`.
+2. **On each wake** read the pull request with `repo_pull_request` (`action` `get`, `pullRequestId`). While it is `active`, answer with one short line and nothing else; when the wake carries the tool's note that this is the job's last run (the 30 days are over), say instead that the check ends and that the user's message takes over (in a worktree `/clean-branches` also finds the merge; in the main checkout the next session start note does). When it is `abandoned`, delete the job with `CronDelete`, tell the user and stop.
 3. **When it is `completed`**, delete the job with `CronDelete`, then compare `git rev-parse HEAD` with the pull request's `lastMergeSourceCommit.commitId`:
-   - **Equal:** the work is in `main`. Run the checks after a merge: `git fetch origin` and confirm that the merge commit is on `origin/main`, and read the linked work items' states (the `main` pipeline may still be running, so say what has moved and what has not). Report to the user in the language of the chat, then archive this session as the last step (below).
-   - **Different:** commits were added after the pull request, or the branch was reused. Report it, keep the session and do not archive. The folder and the branch are then cleaned with `/clean-branches` once the user is done with the session.
+   - **Equal:** the work is in `main`. Run the checks after a merge: `git fetch origin` and confirm that the merge commit is on `origin/main`, and read the linked work items' states (the `main` pipeline may still be running, so say what has moved and what has not). Report to the user in the language of the chat, then finish where the session runs: in the main checkout, *In The Main Checkout* below; in a worktree, archive this session as the last step (*Remove The Worktree*).
+   - **Different:** commits were added after the pull request, or the branch was reused. Report it, keep the session and do not archive. In the main checkout, also leave the branch checked out and ask the user what to do with the new commits. In a worktree, the folder and the branch are cleaned with `/clean-branches` once the user is done with the session.
+
+## In The Main Checkout
+
+The default path (see [branch.md](branch.md)): there is no folder to remove and no session to archive, only the merged branch. When the merge check above finds the pull request `completed` with `lastMergeSourceCommit` equal to `HEAD`, or the user says the pull request was completed and `repo_pull_request` confirms it the same way:
+
+1. Run `git status -sb`. Continue only when the current branch is still the pull request's branch and the working tree is clean; otherwise report what is there and stop, because the user may have started other work.
+2. Switch back to an up-to-date `main`, so the next work starts from it and the scheduled sync (*Main checkout sync* in `.claude/rules/hooks.md`) can update the checkout again:
+
+   ```powershell
+   git fetch origin
+   git switch main
+   git pull --ff-only origin main
+   ```
+
+   The stop list of *In The Main Checkout* in [branch.md](branch.md) applies: if `git switch main` refuses because `main` is open in a worktree, or `git pull --ff-only` fails, stop and tell the user. If a command fails because `.git/index.lock` exists, wait a few seconds and run it again, and never delete the lock.
+
+3. Ask the user once whether to delete the merged branch, naming it and the pull request. On a yes, run `git branch -D <branch>`; pull requests are squash-merged, so `git branch -d` refuses with "not fully merged". Without an answer the branch stays, and `/clean-branches` finds it later. A wake asks in its report and deletes nothing itself.
+
+Do not archive a session that works in the main checkout: what archiving does to the main checkout's `HEAD` has not been tested (*Main checkout sync* in `.claude/rules/hooks.md`), and the session has no folder of its own to free. The session stays until the user closes it.
 
 ## Remove The Worktree
 
+The exception path, for a session that ran in a git worktree.
+
 Rule: a worktree folder exists only until its task is in `main`: after the merge its folder, branch and sessions are all removed. Each folder is about 3 GB.
 
-When the session sees the merge by the wake-up above, or the user says the pull request was completed, and the session runs in a git worktree (`git rev-parse --git-dir` and `git rev-parse --git-common-dir` print different paths, see [branch.md](branch.md)), the worktree is done. Removing it takes one approval from the user and is done by someone other than the session whose folder it is, because a session holds its own folder open:
+When the session sees the merge by the wake-up above, or the user says the pull request was completed, and the session runs in a git worktree (`git rev-parse --git-dir` and `git rev-parse --git-common-dir` print different paths, see [branch.md](branch.md)), the worktree is done. In the main checkout, follow *In The Main Checkout* above instead. Removing it takes one approval from the user and is done by someone other than the session whose folder it is, because a session holds its own folder open:
 
 - **Claude desktop app** (`CLAUDE_CODE_ENTRYPOINT` is `claude-desktop`): after the report, archive this session with `archive_session` (`self`) without asking in the chat first. The app shows its own approval card for the call, and that card is the user's answer. Archive as the very last step: archiving `self` ends the conversation at once, so first report everything else, such as the work item states. Archiving does not remove the folder: the app only detaches its HEAD and the folder stays.
   - The folder and the branch are removed afterwards with `/clean-branches`, which the user runs from the main checkout or another session, never from inside the folder itself. Its table is the one approval that the removal needs. Say so in the report.

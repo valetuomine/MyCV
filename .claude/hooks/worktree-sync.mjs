@@ -1,10 +1,11 @@
 // SessionStart hook: checks at the start of a session whether the checkout is up to date with origin/main.
 // A worktree with a clean working tree whose HEAD is an ancestor of origin/main is brought up to date with a
 // fast-forward merge. Anything else, and the main checkout, which is never switched, updated or merged, is only
-// reported to Claude as a short additional context. The same note counts the local branches whose upstream is gone
-// and the worktrees on them: a hint for /clean-branches, never proof, and nothing is deleted. An up-to-date checkout
-// without such branches prints nothing. Run by session-start.mjs,
-// which starts the code graph hook only after this one has ended.
+// reported to Claude as a short additional context; for the main checkout the note also gives the next step
+// (an up-to-date main and a new branch), because work starts there by default. The same note counts the local
+// branches whose upstream is gone and the worktrees on them: a hint for /clean-branches, never proof, and nothing
+// is deleted. An up-to-date checkout without such branches prints nothing. Run by session-start.mjs, which starts
+// the code graph hook only after this one has ended.
 // The hook never fails a session start: a network error or any other failure ends it silently with exit code 0.
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
@@ -171,6 +172,26 @@ const lastSyncLogLine = () => {
 };
 
 /**
+ * Tells the session what to do next in the main checkout, which is where work starts by default (branch.md of
+ * create-pull-request): bring main up to date and create the work's branch from it.
+ * @param {string} branch - The current branch, empty on a detached HEAD.
+ * @returns {string} The next step.
+ */
+const mainCheckoutNextStep = (branch) => {
+  const stop =
+    "Stop and ask the user first (suggest a worktree) when `git status -sb` shows changes that do not belong to this work item, or `list_sessions` shows another active session in this folder.";
+  const create =
+    "switch to an up-to-date main with `git fetch origin`, `git switch main` and `git pull --ff-only origin main`, and create the work's branch with `git switch -c <branch>` (branch.md of create-pull-request). This session's own uncommitted changes carry over.";
+  if (branch === MAIN_BRANCH) {
+    return `Next step: ${stop} Otherwise, before changing any file for a work item, run \`git fetch origin\` and \`git pull --ff-only origin main\`, then create the work's branch with \`git switch -c <branch>\` (branch.md of create-pull-request).`;
+  }
+  const lead = branch
+    ? "Keep this branch only when it is the branch of this work item and its pull request is still active (when the pull request was completed, see *In The Main Checkout* in after-merge.md of create-pull-request)."
+    : "HEAD is detached, so there is no branch to keep.";
+  return `Next step: ${stop} ${lead} Otherwise check \`git log --oneline origin/main..HEAD\` and \`git status -sb\` first (ask the user about commits that are in no completed pull request), then ${create}`;
+};
+
+/**
  * Builds the note for the main checkout, which the hook never changes.
  * @param {number} behind - Number of commits that HEAD is behind origin/main.
  * @param {string} branch - The current branch, empty on a detached HEAD.
@@ -188,7 +209,20 @@ const reportMainCheckout = (behind, branch) => {
   const why = last
     ? `The last line of the sync script's log: "${last}".`
     : "The sync script's log was not found or is empty, so the script may not have run: the schedule may not be set (see hooks.md).";
-  return `Worktree sync: the main checkout ${problems.join(" and ")}. The hook does not change the main checkout; the sync-main-checkout.mjs script does, when it has been scheduled (see hooks.md). ${why} The usage-band plugin is loaded from this checkout, so it may lack newer changes until the checkout is updated.`;
+  let sync =
+    "The hook does not change the main checkout, and the sync-main-checkout.mjs script leaves a feature branch alone until the checkout is back on main (see hooks.md).";
+  if (branch === MAIN_BRANCH) {
+    sync =
+      "The hook does not change the main checkout; the sync-main-checkout.mjs script does, when it has been scheduled (see hooks.md).";
+  } else if (!branch) {
+    sync =
+      "The hook does not change the main checkout; the sync-main-checkout.mjs script switches a detached HEAD that origin/main contains back to main, when it has been scheduled (see hooks.md).";
+  }
+  const plugin =
+    branch === MAIN_BRANCH
+      ? " The usage-band plugin is loaded from this checkout, so it may lack newer changes until the checkout is updated."
+      : "";
+  return `Worktree sync: the main checkout ${problems.join(" and ")}. ${mainCheckoutNextStep(branch)} ${sync} ${why}${plugin}`;
 };
 
 /**
