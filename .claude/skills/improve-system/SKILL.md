@@ -52,4 +52,4 @@ Local files only: the report and the state live in `%LOCALAPPDATA%\MyCV\improve-
 
 ## Scheduled run (`--scheduled`)
 
-Run steps 2–4, ask nothing and create no work items. Write the table of step 5 and the earlier findings' states as Markdown to `%LOCALAPPDATA%\MyCV\improve-system\report-<yyyy-MM-dd>.md` (`state.mjs path` gives the folder), then `apply` a run file with `"scheduled": true`, `"report": "report-<yyyy-MM-dd>.md"`, `observed`, `fixed` and `reopened`, so the next interactive run goes through the report first. The schedule itself is set up by a later Task.
+Run steps 2–4, ask nothing and create no work items. Write the table of step 5 and the earlier findings' states as Markdown to `%LOCALAPPDATA%\MyCV\improve-system\report-<yyyy-MM-dd>.md` (`state.mjs path` gives the folder), then `apply` a run file with `"scheduled": true`, `"report": "report-<yyyy-MM-dd>.md"`, `observed`, `fixed` and `reopened`, so the next interactive run goes through the report first. The schedule is described in the section *Improve system (scheduled)* of `.claude/rules/hooks.md`.
