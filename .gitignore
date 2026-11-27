@@ -60,6 +60,7 @@ agent/skills/
 !.claude/skills/clean-branches/
 !.claude/skills/react-useeffect/
 !.claude/skills/usage-band/
+!.claude/skills/improve-system/
 # Claude Code writes the plugin's editor types here when it loads the plugin.
 .claude/skills/usage-band/.claude-plugin/types/
 # The demo video scripts are used rarely and stay local; SKILL.md is tracked.
