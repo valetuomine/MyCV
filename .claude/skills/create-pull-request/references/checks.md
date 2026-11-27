@@ -12,7 +12,7 @@ Run the same checks as the pull request pipeline for the areas the change touche
 | markdownlint | `.markdownlint-cli2.jsonc` |
 | .NET build and tests | `<NoWarn>` in `src/Directory.Build.props`, with a comment that gives the reason; Sonar findings fail the Release build too, so their rule IDs go there as well |
 
-The frontend `lint` script also lints the Node scripts in `.claude/hooks/` with the Sonar rules (`lint:hooks`, config `src/Frontend/eslint.hooks.config.js`). It uses `--max-warnings 0`, so one warning fails it and the PR pipeline. The warn-level rules in `eslint.config.js` stay at `warn`, so the editor still shows them.
+The frontend `lint` script also lints the Node scripts in `.claude/hooks/`, `.claude/skills/usage-band/hooks/` and `.claude/skills/improve-system/scripts/` with the Sonar rules (`lint:hooks`, config `src/Frontend/eslint.hooks.config.js`). It uses `--max-warnings 0`, so one warning fails it and the PR pipeline. The warn-level rules in `eslint.config.js` stay at `warn`, so the editor still shows them.
 
 **Backend** (anything under `src/Backend`, `src/MyCV.sln` or `templates/dotnet-build-job.yml`):
 
@@ -31,7 +31,7 @@ dotnet ef migrations has-pending-model-changes --project src/Backend/CV.DataAcce
 
 If it reports pending changes, add the missing migration with `dotnet ef migrations add <Name>` and run the check again.
 
-**Frontend** (anything under `src/Frontend`, the `.mjs` scripts in `.claude/hooks/`, or `templates/frontend-build-job.yml`):
+**Frontend** (anything under `src/Frontend`, the `.mjs` scripts in `.claude/hooks/`, `.claude/skills/usage-band/hooks/` or `.claude/skills/improve-system/scripts/`, or `templates/frontend-build-job.yml`):
 
 ```powershell
 npm --prefix src/Frontend ci        # only when package.json or package-lock.json changed

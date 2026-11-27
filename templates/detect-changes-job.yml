@@ -20,6 +20,8 @@ jobs:
   # neither a pull request build nor a push to main (a manual run, for example), run every check.
   # The Markdown check is detected apart from the other two, so a Markdown file under src/ also
   # runs that area's checks.
+  # The .mjs folders of the frontend case below are the folders that the "lint:hooks" script of
+  # src/Frontend/package.json lints; change them together.
   - bash: |
       set -euo pipefail
 
@@ -46,7 +48,7 @@ jobs:
             src/Backend/* | src/MyCV.sln | templates/dotnet-build-job.yml)
               backend=true
               ;;
-            src/Frontend/* | .claude/hooks/*.mjs | templates/frontend-build-job.yml | templates/frontend-build-jobs.yml | templates/pick-agent-job.yml)
+            src/Frontend/* | .claude/hooks/*.mjs | .claude/skills/usage-band/hooks/*.mjs | .claude/skills/improve-system/scripts/*.mjs | templates/frontend-build-job.yml | templates/frontend-build-jobs.yml | templates/pick-agent-job.yml)
               frontend=true
               ;;
           esac
