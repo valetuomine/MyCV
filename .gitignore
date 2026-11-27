@@ -38,6 +38,8 @@ docs/entra-setup.md
 # OS/editor files
 .DS_Store
 Thumbs.db
+# Obsidian vault settings
+.obsidian/
 
 # Impeccable (installed locally via npx impeccable install)
 .impeccable/
