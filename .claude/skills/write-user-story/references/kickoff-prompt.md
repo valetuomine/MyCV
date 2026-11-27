@@ -31,7 +31,7 @@ Reply to me in Finnish, even though this prompt is in English.
 Always also post each kickoff prompt to the discussion of the work item it starts, so it can be copied from Azure DevOps later. Use `wit_work_item_comment_write` (`action: add`, `format: Markdown`) right after creating the work item, with the work estimate, a Finnish heading and the same `text` block:
 
 ````markdown
-**Työmäärä:** <koko>, noin <x–y> milj. tokenia. Aloita uusi chat mallilla <Sonnet|Opus> ja effort-tasolla <low|medium|high> ennen komennon liittämistä, paikallisesti komennolla `claude --model <sonnet|opus> --effort <low|medium|high>`.
+**Työmäärä:** <koko>, noin <x–y> milj. tokenia. Aloita uusi chat mallilla <Sonnet|Opus|Haiku> ja effort-tasolla <low|medium|high> ennen komennon liittämistä, paikallisesti komennolla `claude --model <sonnet|opus|haiku> --effort <low|medium|high>`.
 
 **Kopioi tämä komento uuteen chattiin, jotta saat parhaiten toteutettua halutun lopputuloksen:**
 
@@ -39,5 +39,7 @@ Always also post each kickoff prompt to the discussion of the work item it start
 <the kickoff prompt>
 ```
 ````
+
+For an L story (*Plan And Implement Separately* in [estimate.md](estimate.md)) the comment starts with a planning block before the implementation block above: `**Suunnittelu:** aloita uusi chat mallilla Opus ja effort-tasolla high, ja siirry plan modeen (Shift+Tab) ennen komennon liittämistä.`, then a `text` block whose prompt reads the work item, makes the design choices, writes them into the `Toteutusohje` and the `Avoimet kysymykset`, and ends without editing code. The implementation block follows with the heading `**Toteutus (uusi chat, kun suunnitelma on valmis):**`.
 
 When the prompt or the estimate later changes, for example because the branch, the skills or the scope change, add a new comment that starts with `Päivitetty aloituskomento` and keep the old one.

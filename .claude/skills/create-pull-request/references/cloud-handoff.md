@@ -11,7 +11,7 @@ Part of the `create-pull-request` skill. This is the fallback route: a session i
 5. **Post the handoff comment** to the work item's discussion with `wit_work_item_comment_write` (`action: add`, `format: Markdown`), in this shape:
 
    ````markdown
-   **Työmäärä:** <koko>, alle <x> milj. tokenia. Aloita uusi chat mallilla <Sonnet|Opus> ja effort-tasolla <low|medium|high> ennen komennon liittämistä, paikallisesti komennolla `claude --model <sonnet|opus> --effort <low|medium|high>`.
+   **Työmäärä:** <koko>, alle <x> milj. tokenia. Aloita uusi chat mallilla <Sonnet|Opus|Haiku> ja effort-tasolla <low|medium|high> ennen komennon liittämistä, paikallisesti komennolla `claude --model <sonnet|opus|haiku> --effort <low|medium|high>`.
 
    Työ on jo tehty pilvisessiossa, joka ei voi pushata Azure DevOpsiin. Muutos on patchina yksityisellä sivulla: <artifact url>
 

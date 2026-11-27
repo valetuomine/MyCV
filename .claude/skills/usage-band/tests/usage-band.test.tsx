@@ -237,6 +237,12 @@ describe('the model hint', () => {
   test('reads the Työmäärä line, with or without an effort level', () => {
     expect(parseEstimate(DESCRIPTION)).toEqual({ size: 'M', model: 'Sonnet', effort: 'medium' })
     expect(parseEstimate('<b>Työmäärä:</b> XL, malli Opus')).toEqual({ size: 'XL', model: 'Opus', effort: undefined })
+    expect(parseEstimate('<b>Työmäärä:</b> XS, alle 2 milj. tokenia, malli Haiku, effort-taso low.')).toEqual({
+      size: 'XS',
+      model: 'Haiku',
+      effort: 'low',
+    })
+    expect(parseEstimate('<b>Työmäärä:</b> XS, malli Gemini')).toBeNull()
     expect(parseEstimate('<b>Työmäärä:</b> hmm')).toBeNull()
     expect(parseEstimate('ei riviä')).toBeNull()
   })

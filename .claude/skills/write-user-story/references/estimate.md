@@ -21,17 +21,30 @@ The implementation chat runs from the kickoff prompt to an open pull request, `/
 
 | Size | `Effort` | Typical work | Tokens | Model | Effort level |
 | --- | --- | --- | --- | --- | --- |
-| XS | 1 | Text in a skill, doc, setting or pipeline variable. 1–2 files, no build, no browser. | under 2 M | Sonnet | `low` |
+| XS | 1 | Text in a skill, doc, setting or pipeline variable. 1–2 files, no build, no browser. | under 2 M | Sonnet; Haiku only when the change is purely mechanical, see *Model* below | `low` (none for Haiku) |
 | S | 2 | A small change in one area. 1–3 files, that area's checks, at most one view in the browser. | 2–5 M | Sonnet | `medium` |
 | M | 3 | A feature in one area, or a small change across two. 4–8 files, new tests, or the full browser checklist for one or two views. | 5–12 M | Sonnet; Opus when the `Toteutus` leaves design choices to the agent | `medium` |
-| L | 5 | Backend and frontend together, a migration, several views, or a signed-in view. | 12–30 M | Opus | `high` |
-| XL | 8 | More than L. | over 30 M | Split it, see *Split Large Stories* | Set per Task |
+| L | 5 | Backend and frontend together, a migration, several views, or a signed-in view. | 12–30 M, plan and implementation together | Plan with Opus, implement with Sonnet, see *Plan And Implement Separately* | `high` for the plan, `medium` for the implementation |
+| XL | 8 | More than L. | over 30 M | Split it, see *Split Large Stories*; each Task is sized by this table | Set per Task |
 
 - **Tokens** are the total the chat processes, including the context read again from the cache on every turn, which is most of it. They are starting values: the order of the classes matters more than the exact numbers. When the user reports what a chat actually used and the class was wrong, adjust this table, as `CLAUDE.md` says for corrections.
 - **Pick the larger class** when the work falls between two. When the limit is close, an underestimate hurts more than an overestimate.
-- **Model:** Sonnet uses less of the usage limit than Opus and is enough when the `Toteutusohje` already makes the decisions. Recommend Opus only when the agent has to design something or debug something unfamiliar. The user picks the model in the new chat before pasting the kickoff prompt, so the recommendation goes where they see it then (see *Where It Goes*). It covers the implementation. The frontmatter of `/write-user-story` and `/create-pull-request` sets `model: sonnet`, but only for the turn the skill is invoked in: after the user's next message, such as the code review decision, the chat's own model and effort level resume. The code review subagent of `/create-pull-request` gets its own model and effort level from the size (see its `references/code-review.md`).
+- **Model:** Sonnet uses less of the usage limit than Opus and is enough when the `Toteutusohje` already makes the decisions. Recommend Opus only when the agent has to design something or debug something unfamiliar. For an L the design happens in the planning chat, so its `Työmäärä` line names the implementation model (Sonnet), see *Plan And Implement Separately*. The user picks the model in the new chat before pasting the kickoff prompt, so the recommendation goes where they see it then (see *Where It Goes*). It covers the implementation. The frontmatter of `/write-user-story` and `/create-pull-request` sets `model: sonnet`, but only for the turn the skill is invoked in: after the user's next message, such as the code review decision, the chat's own model and effort level resume. The code review subagent of `/create-pull-request` gets its own model and effort level from the size (see its `references/code-review.md`).
+- **Haiku:** the cheapest model, and the `Työmäärä` line may name it (`malli Haiku`), but only for an XS story or Task whose `Toteutusohje` already gives every edit word for word, such as a renamed term or a copied value, with no design choice and no debugging. Anything else is Sonnet at least. Whether Haiku supports an effort level has not been verified, so a Haiku `Työmäärä` line leaves out `effort-taso` (the `usage-band` reader treats it as optional) and its command has no `--effort`. Haiku is mainly for mechanical subagents, see *Mechanical Subagents* in `references/checks.md` of `create-pull-request`.
 - **Effort level:** how long the model thinks on every turn, set with `/effort`. It is not the `Effort` field, which holds the size class, so the description writes it out as `effort-taso <level>`. A higher level uses more of the limit on every turn, so recommend the lowest one that does the work: `low` for mechanical text changes, `medium` (the default of the current Sonnet and Opus) when the `Toteutusohje` makes the decisions, and `high` when the agent designs or debugs across areas. Never recommend `xhigh` or `max`: they cost the most, and work that would need them is an XL to split.
-- **Set them for the new chat only**, so the user's saved defaults stay put: locally `claude --model <sonnet|opus> --effort <level>`, and in a running chat `s` in the `/model` picker or the `/effort` slider. A level typed as `/effort <level>`, or picked with `Enter`, becomes the default for later chats as well.
+- **Set them for the new chat only**, so the user's saved defaults stay put: locally `claude --model <sonnet|opus> --effort <level>` (for Haiku `claude --model haiku`, with no `--effort`), and in a running chat `s` in the `/model` picker or the `/effort` slider. A level typed as `/effort <level>`, or picked with `Enter`, becomes the default for later chats as well.
+
+## Plan And Implement Separately
+
+Applies to L stories and to an XL story's Tasks that are themselves L. Design choices are where a strong model pays off, and the implementation of a settled plan is not, so split the chat in two:
+
+1. **Plan:** a new chat on Opus with effort level `high`, in plan mode (`EnterPlanMode`). It reads the code, decides and writes the plan into the work item's `Toteutusohje` (and its `Avoimet kysymykset`), then ends without editing code.
+2. **Implement:** a new chat on Sonnet with effort level `medium`, started from the kickoff prompt, which reads the settled `Toteutusohje` and ships with `/create-pull-request`.
+
+- Two chats start from a small context each, so the split also costs less than one long Opus chat.
+- Skip the split when the `Toteutusohje` already makes every decision: the story is then an M, not an L.
+- The `Työmäärä` line of an L names the implementation chat (`malli Sonnet, effort-taso medium`), because that is the chat the `usage-band` bar reads at the start. The sentence after it says that the plan comes first, on Opus with effort level `high`, in plan mode.
+- The kickoff prompt comment gets a second block for the planning chat, see [kickoff-prompt.md](kickoff-prompt.md).
 
 ## Split Large Stories
 
@@ -51,7 +64,7 @@ The story's estimate then covers all its Tasks, and each Task with its own `Tote
    <div><b>Työmäärä:</b> S, noin 2–5 milj. tokenia, malli Sonnet, effort-taso medium. Kaksi komponenttia frontendissä ja yksi näkymä selaimessa.</div>
    ```
 
-   The `usage-band` plugin (`.claude/skills/usage-band/`) reads this line when a chat starts and shows it above the prompt, so keep the wording `malli <Sonnet|Opus>, effort-taso <level>` exactly.
+   The `usage-band` plugin (`.claude/skills/usage-band/`) reads this line when a chat starts and shows it above the prompt, so keep the wording `malli <Sonnet|Opus|Haiku>, effort-taso <level>` exactly.
 
 2. **`Microsoft.VSTS.Scheduling.Effort`** on a User Story and on a Task: the class number from the table. It makes the size queryable and can be shown on the board cards. The field was added to the Task type in the `CustomWorkflow` process, so one `Effort` column sorts stories and Tasks together. The description's `Työmäärä` line stays the full estimate.
 3. **Draft preview and report:** the `Työmäärä` line, see *Draft Preview* in `SKILL.md`.

@@ -148,7 +148,7 @@ export const parseEstimate = (html) => {
     .replaceAll('&gt;', '>')
     .replaceAll('&amp;', '&')
     .replaceAll(/\s+/g, ' ');
-  const match = /Työmäärä:\s*(XS|S|M|L|XL)\b.{0,200}?malli (Sonnet|Opus)(?:, effort-taso (\w+))?/.exec(text);
+  const match = /Työmäärä:\s*(XS|S|M|L|XL)\b.{0,200}?malli (Sonnet|Opus|Haiku)(?:, effort-taso (\w+))?/.exec(text);
   return match ? { size: match[1], model: match[2], effort: match[3] } : null;
 };
 

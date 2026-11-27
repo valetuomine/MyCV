@@ -65,6 +65,15 @@ When the session sees the merge by the wake-up above, or the user says the pull 
 
 Old worktrees and branches of merged work pile up. Run `/clean-branches` after a merge, and whenever the session start hint reports leftovers or the user asks: it checks each pull request with `repo_pull_request` (squash merges mean the branch never shows as merged into `origin/main`), compares the branch tip with `lastMergeSourceCommit`, and deletes only after the user agrees. Do not use `clean_up_worktrees` for this, and do not delete folders by hand, except an empty leftover folder after `git worktree list` no longer shows it.
 
+## Record The Actual Usage
+
+Rule: after the merge, compare what the work really used with its `Työmäärä` line, so the size table in `references/estimate.md` of `write-user-story` improves from real numbers. Do it once per merged work item, as part of the merge report of step 3 of *Wake Up After The Merge* (or of *In The Main Checkout*, when the user reports the merge), when the session did the work itself (a session that only sees a merge it did not work on has no figures).
+
+1. **Get the figure.** In the Claude desktop app, read this session's usage with `get_usage` (`mcp__ccd_session_mgmt__get_usage`). Elsewhere, or when it gives no token total, ask the user once for the figure of `/usage`. With neither, write `ei mitattu` and skip step 3; never guess a number.
+2. **Compare.** Read the work item's `Työmäärä` line (size class, token range, model) and say whether the actual total fell below, inside or above the range. If the chat was split in two (*Plan And Implement Separately* in `estimate.md`), add the planning chat's figure to the implementation chat's.
+3. **Record it.** Add one comment to the work item with `wit_work_item_comment_write` (`action: add`, `format: Markdown`), in Finnish, starting with `Toteutunut kulutus:`: the size class, the estimated range, the actual tokens, the model and effort level used, and one sentence on what drove the difference. A comment is not a state change, so it needs no `Tila:` update.
+4. **Adjust the table only on evidence.** Change the *Size Classes* table in `estimate.md` (and say so, as `CLAUDE.md` does for corrections) when the actual total fell outside the range of its class for the second work item of that class in a row (find the earlier ones with `wit_query` or `wit_work_item` by searching the discussions for `Toteutunut kulutus:`), or the user says the class was wrong. One miss alone is only a comment. Then ask the user whether to ticket the table change as a side note (*Sivuhuomiot* in `CLAUDE.md`); never change the table as a commit on `main` and never inside the merged pull request.
+
 ## Work Items That Did Not Move
 
 If the user says that a merged PR's work items did not move, check the latest run of the `main` pipeline for the *Update work items* stage and report what it logged, so the user can decide what to do.

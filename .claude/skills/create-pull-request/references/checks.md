@@ -14,6 +14,14 @@ Run the same checks as the pull request pipeline for the areas the change touche
 
 The frontend `lint` script also lints the Node scripts in `.claude/hooks/`, `.claude/skills/usage-band/hooks/` and `.claude/skills/improve-system/scripts/` with the Sonar rules (`lint:hooks`, config `src/Frontend/eslint.hooks.config.js`). It uses `--max-warnings 0`, so one warning fails it and the PR pipeline. The warn-level rules in `eslint.config.js` stay at `warn`, so the editor still shows them.
 
+**Mechanical Subagents:** a subagent whose whole task is exact and checkable may run on the cheapest model: `Agent` with `model: haiku` and no `effort` (Haiku's effort support is unverified). It fits only these jobs, and the main chat reads the result before using it:
+
+- finding files, symbols or lines (a search with a stated pattern and a short list as the answer);
+- fixing a lint, `dotnet format` or Prettier warning that the main chat has already diagnosed, with the file, the line and the exact change in the prompt;
+- fixing a markdownlint finding, or running the check and listing its output.
+
+Never use `haiku` for anything that judges or decides: the code review and its delta review (*Run The Review* in [code-review.md](code-review.md) keeps `sonnet` or `opus`), the browser subagent (`sonnet`, `medium`, see *Browser subagent* below), deciding whether a finding is a bug, or any change to behavior. A mechanical subagent that finds the task is not mechanical stops and reports it, instead of guessing. The checks themselves (`dotnet`, `npm`, `markdownlint`) run in the main chat as before, and no check is dropped or weakened to make a cheaper model pass.
+
 **Backend** (anything under `src/Backend`, `src/MyCV.sln` or `templates/dotnet-build-job.yml`):
 
 ```powershell

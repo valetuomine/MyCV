@@ -162,7 +162,7 @@ Show the draft to the user like this before creating anything:
 User Story: <title>
 Parent:     #<feature id> <feature title>
 Tags:       <tags, or "(ei tageja)">
-Työmäärä:   <koko>, noin <x–y> milj. tokenia, malli <Sonnet|Opus>, effort-taso <low|medium|high> (Effort-kenttä <n>): <what drives the size>
+Työmäärä:   <koko>, noin <x–y> milj. tokenia, malli <Sonnet|Opus|Haiku>, effort-taso <low|medium|high> (Effort-kenttä <n>): <what drives the size>
 Rooli:      <the role line of the kickoff prompt, e.g. "Act as a UI designer and front-end developer.">
 Skills:     <installed skills to use; new ones as "<name> (asennetaan työn ensimmäisenä vaiheena: <owner/repo>, <installs> asennusta)", or "(ei skillejä)">
 Description:
